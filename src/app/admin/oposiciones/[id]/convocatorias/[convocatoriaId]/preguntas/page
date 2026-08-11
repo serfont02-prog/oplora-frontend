@@ -1,0 +1,249 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { ArrowLeft, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+
+export default function ImportarPreguntasConvocatoriaPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id as string;
+  const convocatoriaId = params.convocatoriaId as string;
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [preview, setPreview] = useState<any[]>([]);
+  const [resultado, setResultado] = useState<any>(null);
+  const [importando, setImportando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const { data: convocatoria } = useQuery({
+    queryKey: ['convocatoria', convocatoriaId],
+    queryFn: async () => {
+      const res = await api.get(`/convocatorias/${convocatoriaId}`);
+      return res.data;
+    },
+  });
+
+  const handleArchivo = (file: File) => {
+    setArchivo(file);
+    setResultado(null);
+    setError(null);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        if (!Array.isArray(json)) {
+          setError('El JSON debe ser un array de preguntas');
+          setPreview([]);
+          return;
+        }
+        setPreview(json.slice(0, 3)); // mostrar 3 primeras como preview
+      } catch {
+        setError('El archivo no es un JSON válido');
+        setPreview([]);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const importar = async () => {
+    if (!archivo) return;
+    setImportando(true);
+    setError(null);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const preguntas = JSON.parse(e.target?.result as string);
+          const res = await api.post(
+            `/test/importar/convocatoria/${convocatoriaId}`,
+            { preguntas }
+          );
+          setResultado(res.data);
+          setArchivo(null);
+          setPreview([]);
+        } catch {
+          setError('Error al importar. Revisa el formato del JSON.');
+        } finally {
+          setImportando(false);
+        }
+      };
+      reader.readAsText(archivo);
+    } catch {
+      setError('Error al leer el archivo');
+      setImportando(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
+      {/* Breadcrumb */}
+      <div style={{ padding: '10px 1.5rem', borderBottom: '1px solid #f3f4f6', background: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button
+          onClick={() => router.push(`/admin/oposiciones/${id}`)}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          <ArrowLeft size={14} />
+          Volver
+        </button>
+        <span style={{ color: '#d1d5db' }}>/</span>
+        <span style={{ fontSize: '13px', color: '#6b7280' }}>
+          Importar preguntas — Convocatoria {convocatoria?.anyo}
+        </span>
+      </div>
+
+      {/* Contenido */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: '#f9fafb' }}>
+        <div style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* Formato esperado */}
+          <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '10px' }}>
+              Formato del JSON
+            </div>
+            <pre style={{ fontSize: '11px', color: '#6b7280', background: '#f9fafb', padding: '12px', borderRadius: '8px', overflow: 'auto', margin: 0 }}>
+{`[
+  {
+    "temaNumero": 1,
+    "enunciado": "¿Qué regula...?",
+    "opciones": ["A", "B", "C", "D"],
+    "correcta": 0,
+    "explicacion": "Porque...",
+    "dificultad": 1,
+    "origen": "convocatoria",
+    "anyo": 2023
+  }
+]`}
+            </pre>
+          </div>
+
+          {/* Upload */}
+          <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '10px' }}>
+              Subir archivo
+            </div>
+            <div
+              onClick={() => fileRef.current?.click()}
+              style={{
+                border: '2px dashed #e5e7eb',
+                borderRadius: '10px',
+                padding: '24px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'border-color 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#9ca3af')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e5e7eb')}
+            >
+              {archivo ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <Upload size={16} color="#6b7280" />
+                  <span style={{ fontSize: '13px', color: '#374151' }}>{archivo.name}</span>
+                </div>
+              ) : (
+                <>
+                  <Upload size={20} color="#9ca3af" style={{ margin: '0 auto 6px' }} />
+                  <div style={{ fontSize: '13px', color: '#9ca3af' }}>Haz clic para subir un JSON</div>
+                </>
+              )}
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".json"
+              onChange={(e) => e.target.files?.[0] && handleArchivo(e.target.files[0])}
+              style={{ display: 'none' }}
+            />
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 14px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '10px' }}>
+              <AlertCircle size={14} color="#dc2626" />
+              <span style={{ fontSize: '13px', color: '#dc2626' }}>{error}</span>
+            </div>
+          )}
+
+          {/* Preview */}
+          {preview.length > 0 && !resultado && (
+            <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '10px' }}>
+                Preview (primeras 3 preguntas)
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {preview.map((p, i) => (
+                  <div key={i} style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: '8px', fontSize: '12px', color: '#374151' }}>
+                    <div style={{ fontWeight: 600, marginBottom: '2px' }}>Tema {p.temaNumero}</div>
+                    <div style={{ color: '#6b7280' }}>{p.enunciado?.slice(0, 80)}...</div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={importar}
+                disabled={importando}
+                style={{
+                  marginTop: '14px',
+                  width: '100%',
+                  padding: '11px',
+                  background: '#111827',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '9px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: importando ? 'not-allowed' : 'pointer',
+                  opacity: importando ? 0.6 : 1,
+                }}
+              >
+                {importando ? 'Importando...' : 'Importar preguntas'}
+              </button>
+            </div>
+          )}
+
+          {/* Resultado */}
+          {resultado && (
+            <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                <CheckCircle size={16} color="#15803d" />
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>Importación completada</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+                <div style={{ padding: '12px', background: '#f0fdf4', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#15803d' }}>{resultado.importadas}</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>Importadas</div>
+                </div>
+                <div style={{ padding: '12px', background: resultado.errores?.length > 0 ? '#fef2f2' : '#f9fafb', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: resultado.errores?.length > 0 ? '#dc2626' : '#9ca3af' }}>{resultado.errores?.length ?? 0}</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>Errores</div>
+                </div>
+              </div>
+
+              {resultado.errores?.length > 0 && (
+                <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '10px 12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#dc2626', marginBottom: '6px' }}>Errores:</div>
+                  {resultado.errores.map((e: string, i: number) => (
+                    <div key={i} style={{ fontSize: '11px', color: '#dc2626', marginBottom: '2px' }}>• {e}</div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={() => setResultado(null)}
+                style={{ marginTop: '12px', width: '100%', padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer', color: '#374151' }}
+              >
+                Importar más preguntas
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
