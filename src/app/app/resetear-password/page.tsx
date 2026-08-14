@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -17,7 +17,7 @@ function Logo() {
   );
 }
 
-export default function ResetearPasswordPage() {
+function ResetearPasswordContenido() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -62,88 +62,96 @@ export default function ResetearPasswordPage() {
   };
 
   return (
+    <main style={{ background: 'white', borderRadius: 20, padding: '2.25rem 2rem', width: '100%', maxWidth: 400 }}>
+
+      <header style={{ textAlign: 'center', marginBottom: 20 }}>
+        <Logo />
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 10 }}>
+          Nueva contraseña
+        </h1>
+      </header>
+
+      {validando ? (
+        <div style={{ textAlign: 'center', fontSize: 13, color: TEXT_MUTED, padding: '2rem 0' }}>
+          Comprobando enlace...
+        </div>
+      ) : !tokenValido ? (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>
+            Enlace no válido o caducado
+          </div>
+          <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 20 }}>
+            Solicita un nuevo enlace de recuperación
+          </div>
+          <button onClick={() => router.push('/app/recuperar-password')} style={primaryButton(false)}>
+            Solicitar nuevo enlace
+          </button>
+        </div>
+      ) : completado ? (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>
+            Contraseña actualizada
+          </div>
+          <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 20 }}>
+            Ya puedes acceder con tu nueva contraseña
+          </div>
+          <button onClick={() => router.push('/app/login')} style={primaryButton(false)}>
+            Ir al login
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ position: 'relative' }}>
+            <input
+              type={mostrarPassword ? 'text' : 'password'}
+              placeholder="Nueva contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ ...inputStyle, paddingRight: 42 }}
+            />
+            <button type="button" onClick={() => setMostrarPassword(!mostrarPassword)} style={eyeButtonStyle}>
+              {mostrarPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
+
+          <div style={{ position: 'relative' }}>
+            <input
+              type={mostrarPasswordConfirm ? 'text' : 'password'}
+              placeholder="Repetir contraseña"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              style={{ ...inputStyle, paddingRight: 42 }}
+            />
+            <button type="button" onClick={() => setMostrarPasswordConfirm(!mostrarPasswordConfirm)} style={eyeButtonStyle}>
+              {mostrarPasswordConfirm ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
+
+          {error && <div style={errorBoxStyle}>{error}</div>}
+
+          <button onClick={handleSubmit} disabled={cargando} style={primaryButton(cargando)}>
+            {cargando ? 'Guardando...' : 'Guardar nueva contraseña'}
+          </button>
+        </div>
+      )}
+
+      <p style={{ textAlign: 'center', fontSize: 13, color: TEXT_SECONDARY, marginTop: 18 }}>
+        <Link href="/app/login" style={{ color: '#1F7CFF', fontWeight: 600, textDecoration: 'none' }}>
+          ← Volver al login
+        </Link>
+      </p>
+    </main>
+  );
+}
+
+export default function ResetearPasswordPage() {
+  return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', padding: '1.5rem' }}>
-      <main style={{ background: 'white', borderRadius: 20, padding: '2.25rem 2rem', width: '100%', maxWidth: 400 }}>
-
-        <header style={{ textAlign: 'center', marginBottom: 20 }}>
-          <Logo />
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 10 }}>
-            Nueva contraseña
-          </h1>
-        </header>
-
-        {validando ? (
-          <div style={{ textAlign: 'center', fontSize: 13, color: TEXT_MUTED, padding: '2rem 0' }}>
-            Comprobando enlace...
-          </div>
-        ) : !tokenValido ? (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>
-              Enlace no válido o caducado
-            </div>
-            <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 20 }}>
-              Solicita un nuevo enlace de recuperación
-            </div>
-            <button onClick={() => router.push('/app/recuperar-password')} style={primaryButton(false)}>
-              Solicitar nuevo enlace
-            </button>
-          </div>
-        ) : completado ? (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>
-              Contraseña actualizada
-            </div>
-            <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 20 }}>
-              Ya puedes acceder con tu nueva contraseña
-            </div>
-            <button onClick={() => router.push('/app/login')} style={primaryButton(false)}>
-              Ir al login
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={mostrarPassword ? 'text' : 'password'}
-                placeholder="Nueva contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ ...inputStyle, paddingRight: 42 }}
-              />
-              <button type="button" onClick={() => setMostrarPassword(!mostrarPassword)} style={eyeButtonStyle}>
-                {mostrarPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
-            </div>
-
-            <div style={{ position: 'relative' }}>
-              <input
-                type={mostrarPasswordConfirm ? 'text' : 'password'}
-                placeholder="Repetir contraseña"
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                style={{ ...inputStyle, paddingRight: 42 }}
-              />
-              <button type="button" onClick={() => setMostrarPasswordConfirm(!mostrarPasswordConfirm)} style={eyeButtonStyle}>
-                {mostrarPasswordConfirm ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
-            </div>
-
-            {error && <div style={errorBoxStyle}>{error}</div>}
-
-            <button onClick={handleSubmit} disabled={cargando} style={primaryButton(cargando)}>
-              {cargando ? 'Guardando...' : 'Guardar nueva contraseña'}
-            </button>
-          </div>
-        )}
-
-        <p style={{ textAlign: 'center', fontSize: 13, color: TEXT_SECONDARY, marginTop: 18 }}>
-          <Link href="/app/login" style={{ color: '#1F7CFF', fontWeight: 600, textDecoration: 'none' }}>
-            ← Volver al login
-          </Link>
-        </p>
-      </main>
+      <Suspense fallback={<div style={{ color: 'white', fontSize: 13 }}>Cargando...</div>}>
+        <ResetearPasswordContenido />
+      </Suspense>
     </div>
   );
 }
