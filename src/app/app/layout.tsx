@@ -14,8 +14,12 @@ export default function AppLayout({
   const pathname = usePathname();
 
   const esRutaPublica =
-    pathname.startsWith('/app/login') ||
-    pathname.startsWith('/app/registro');
+  pathname.startsWith('/app/login') ||
+  pathname.startsWith('/app/registro') ||
+  pathname.startsWith('/app/recuperar-password') ||
+  pathname.startsWith('/app/resetear-password');
+
+  console.log('pathname actual:', pathname, '¿es pública?', esRutaPublica); // ⭐ temporal
 
   useEffect(() => {
     if (esRutaPublica || cargando) return;

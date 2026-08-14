@@ -5,7 +5,12 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('token')?.value;
 
-  const rutasPublicas = ['/app/login', '/app/registro'];
+  const rutasPublicas = [
+    '/app/login',
+    '/app/registro',
+    '/app/recuperar-password',
+    '/app/resetear-password',
+  ];
   if (rutasPublicas.some((r) => pathname.startsWith(r))) {
     return NextResponse.next();
   }
