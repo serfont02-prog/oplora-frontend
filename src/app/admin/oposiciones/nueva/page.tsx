@@ -18,6 +18,9 @@ export default function NuevaOposicionPage() {
     administracion: 'AGE',
     ministerio: '',
     subgrupo: '',
+    tipoAdministracion: '',
+    categoria: '',
+    turno: '',
   });
 
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -33,12 +36,14 @@ export default function NuevaOposicionPage() {
   });
 
   const validar = () => {
-    const e: Record<string, string> = {};
-    if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio';
-    if (!form.administracion.trim()) e.administracion = 'La administración es obligatoria';
-    setErrores(e);
-    return Object.keys(e).length === 0;
-  };
+  const e: Record<string, string> = {};
+  if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio';
+  if (!form.administracion.trim()) e.administracion = 'La administración es obligatoria';
+  if (!form.tipoAdministracion) e.tipoAdministracion = 'El tipo de administración es obligatorio';
+  if (!form.turno) e.turno = 'El turno es obligatorio';
+  setErrores(e);
+  return Object.keys(e).length === 0;
+};
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -112,6 +117,59 @@ export default function NuevaOposicionPage() {
               </div>
             </div>
 
+            {/* Tipo administración y Categoría */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                  Tipo administración <span style={{ color: '#dc2626' }}>*</span>
+                </label>
+                <select
+                  value={form.tipoAdministracion}
+                  onChange={(e) => setForm({ ...form, tipoAdministracion: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: `1px solid ${errores.tipoAdministracion ? '#fca5a5' : '#e5e7eb'}`, borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                >
+                  <option value="">Selecciona...</option>
+                  <option value="estado">Estado</option>
+                  <option value="ccaa">Comunidad Autónoma</option>
+                  <option value="empresa_publica">Empresa pública</option>
+                </select>
+                {errores.tipoAdministracion && <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '3px' }}>{errores.tipoAdministracion}</p>}
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                  Categoría
+                </label>
+                <select
+                  value={form.categoria}
+                  onChange={(e) => setForm({ ...form, categoria: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                >
+                  <option value="">Sin categoría</option>
+                  <option value="administracion_general">Administración</option>
+                  <option value="seguridad">Seguridad</option>
+                  <option value="justicia">Justicia</option>
+                  <option value="sanidad">Sanidad</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Turno */}
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                Turno <span style={{ color: '#dc2626' }}>*</span>
+              </label>
+              <select
+                value={form.turno}
+                onChange={(e) => setForm({ ...form, turno: e.target.value })}
+                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: `1px solid ${errores.turno ? '#fca5a5' : '#e5e7eb'}`, borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+              >
+                <option value="">Selecciona...</option>
+                <option value="libre">Libre</option>
+                <option value="promocion_interna">Promoción interna</option>
+              </select>
+              {errores.turno && <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '3px' }}>{errores.turno}</p>}
+            </div>
+
             {/* Ministerio */}
             <div>
               <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Ministerio / Organismo</label>
@@ -143,7 +201,9 @@ export default function NuevaOposicionPage() {
           Cancelar
         </button>
         {crear.isError && (
-          <span style={{ fontSize: '12px', color: '#dc2626' }}>Error al guardar. Inténtalo de nuevo.</span>
+          <span style={{ fontSize: '12px', color: '#dc2626' }}>
+            {(crear.error as any)?.response?.data?.message ?? 'Error al guardar. Inténtalo de nuevo.'}
+          </span>
         )}
       </div>
 
