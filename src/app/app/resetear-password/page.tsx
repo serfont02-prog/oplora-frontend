@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import { api } from '@/lib/api';
+import { CheckCircle2 } from 'lucide-react';
 
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
@@ -90,7 +91,13 @@ function ResetearPasswordContenido() {
         </div>
       ) : completado ? (
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+          <div style={{
+            width: 56, height: 56, borderRadius: '50%', background: '#F0FDF4',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 14px',
+            }}>
+            <CheckCircle2 size={24} color="#16A34A" />
+            </div>
           <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>
             Contraseña actualizada
           </div>
@@ -109,6 +116,7 @@ function ResetearPasswordContenido() {
               placeholder="Nueva contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               style={{ ...inputStyle, paddingRight: 42 }}
             />
             <button type="button" onClick={() => setMostrarPassword(!mostrarPassword)} style={eyeButtonStyle}>
@@ -122,6 +130,7 @@ function ResetearPasswordContenido() {
               placeholder="Repetir contraseña"
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
+              autoComplete="new-password"
               style={{ ...inputStyle, paddingRight: 42 }}
             />
             <button type="button" onClick={() => setMostrarPasswordConfirm(!mostrarPasswordConfirm)} style={eyeButtonStyle}>
@@ -137,11 +146,13 @@ function ResetearPasswordContenido() {
         </div>
       )}
 
-      <p style={{ textAlign: 'center', fontSize: 13, color: TEXT_SECONDARY, marginTop: 18 }}>
-        <Link href="/app/login" style={{ color: '#1F7CFF', fontWeight: 600, textDecoration: 'none' }}>
-          ← Volver al login
-        </Link>
-      </p>
+        {!tokenValido || completado ? null : (
+        <p style={{ textAlign: 'center', fontSize: 13, color: TEXT_SECONDARY, marginTop: 18 }}>
+            <Link href="/app/login" style={{ color: '#1F7CFF', fontWeight: 600, textDecoration: 'none' }}>
+            ← Volver al login
+            </Link>
+        </p>
+        )}
     </main>
   );
 }

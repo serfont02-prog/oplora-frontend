@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
+import { Mail } from 'lucide-react';
 
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
@@ -58,7 +59,13 @@ export default function RecuperarPasswordPage() {
 
         {enviado ? (
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📧</div>
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%', background: '#EAF0FF',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 14px',
+            }}>
+              <Mail size={24} color="#1F7CFF" />
+            </div>
             <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>
               Revisa tu correo
             </div>
@@ -87,11 +94,14 @@ export default function RecuperarPasswordPage() {
           </div>
         )}
 
-        <p style={{ textAlign: 'center', fontSize: 13, color: TEXT_SECONDARY, marginTop: 18 }}>
-          <Link href="/app/login" style={{ color: '#1F7CFF', fontWeight: 600, textDecoration: 'none' }}>
-            ← Volver al login
-          </Link>
-        </p>
+        {!enviado && ( // ⭐ solo se muestra si NO se ha enviado ya
+          <p style={{ textAlign: 'center', fontSize: 13, color: TEXT_SECONDARY, marginTop: 18 }}>
+            <Link href="/app/login" style={{ color: '#1F7CFF', fontWeight: 600, textDecoration: 'none' }}>
+              ← Volver al login
+            </Link>
+          </p>
+        )}
+
       </main>
     </div>
   );
