@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { CheckCheck } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { getOploUrl } from '@/lib/oplo';
 
 const BG_APP = '#FDF8E8';
 const TEXT_PRIMARY = '#111827';
@@ -136,7 +137,7 @@ export default function AlertasPage() {
               style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}
             >
               <img
-                src={`/oplo/oplo-${usuario?.nivel ?? 1}.jpg`}
+                src={getOploUrl(usuario?.nivel ?? 1)}
                 alt="Perfil"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
               />

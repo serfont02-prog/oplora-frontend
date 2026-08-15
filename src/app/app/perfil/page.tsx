@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { getOploUrl } from '@/lib/oplo';
 
 import {
   ArrowRightIcon,
@@ -81,7 +82,7 @@ export default function PerfilPage() {
 
   const avatarSrc = usuario.tipoAvatar === 'foto' && usuario.avatarUrl
     ? usuario.avatarUrl
-    : `/oplo/oplo-${nivel}.jpg`;
+    : getOploUrl(nivel);
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>
@@ -166,7 +167,7 @@ export default function PerfilPage() {
                     opacity: conseguido ? 1 : 0.4,
                   }}
                 >
-                  <img src={`/oplo/oplo-${n.nivel}.jpg`} alt={n.nombre} style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 8 }} />
+                  <img src={getOploUrl(n.nivel)} alt={n.nombre} style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 8 }} />
                   <div style={{ fontSize: 11, fontWeight: 700, color: esActual ? '#1F7CFF' : TEXT_PRIMARY, textAlign: 'center' }}>{n.nombre}</div>
                   <div style={{ fontSize: 10, color: TEXT_MUTED }}>{n.puntosMax ? `${n.puntosMin}-${n.puntosMax}` : `${n.puntosMin}+`}</div>
                   {esActual && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 999, background: '#1F7CFF', color: 'white', fontWeight: 700 }}>Actual</span>}
@@ -289,7 +290,7 @@ export default function PerfilPage() {
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', textAlign: 'left' }}
               >
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F4F5F7', overflow: 'hidden' }}>
-                  <img src={`/oplo/oplo-${nivel}.jpg`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  <img src={getOploUrl(nivel)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Usar icono OPLORA</div>
               </button>

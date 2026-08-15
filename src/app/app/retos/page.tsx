@@ -9,6 +9,7 @@ import { Plus, ChevronRight } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { FireIcon } from '@heroicons/react/24/outline';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
+import { getOploUrl } from '@/lib/oplo';
 
 
 type TipoRetoUsuario = 'oposicion' | 'normativa' | 'tema';
@@ -810,7 +811,7 @@ function AvatarUsuario({ persona, size = 64 }: { persona: any; size?: number }) 
   if (persona?.tipoAvatar === 'oplo' || !persona?.tipoAvatar) {
     return (
       <img
-        src={`/oplo/oplo-${persona?.nivel ?? 1}.jpg`}
+        src={getOploUrl(persona?.nivel ?? 1)}
         alt=""
         style={{ width: size, height: size, objectFit: 'contain', borderRadius: '50%', background: '#EFE9E0' }}
       />

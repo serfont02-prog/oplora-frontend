@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { Newspaper, BarChart3, FileText, Archive, ChevronRight } from 'lucide-react';
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
+import { getOploUrl } from '@/lib/oplo';
 
 import {
   BellIcon,
@@ -876,7 +877,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
         >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           <img
-            src={`/oplo/oplo-${nivel}.jpg`}
+            src={getOploUrl(nivel)}
             alt={`OPLO nivel ${nivel}`}
             style={{ width: '64px', height: '64px', objectFit: 'contain', borderRadius: '12px' }}
           />
@@ -943,7 +944,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
 
             <div style={{ textAlign: 'center', marginBottom: '1.25rem', padding: '1rem', background: 'white', borderRadius: '14px' }}>
               <img
-                src={`/oplo/oplo-${nivel}.jpg`}
+                src={getOploUrl(nivel)}
                 alt={nivelActual.nombre}
                 style={{ width: '100px', height: '100px', objectFit: 'contain', marginBottom: '8px' }}
               />
@@ -976,7 +977,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
                     }}
                   >
                     <img
-                      src={`/oplo/oplo-${n.nivel}.jpg`}
+                      src={getOploUrl(n.nivel)}
                       alt={n.nombre}
                       style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '8px', flexShrink: 0 }}
                     />
