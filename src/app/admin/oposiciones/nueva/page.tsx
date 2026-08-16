@@ -44,15 +44,23 @@ export default function NuevaOposicionPage() {
 
   const [errores, setErrores] = useState<Record<string, string>>({});
 
-  const crear = useMutation({
-    mutationFn: async () => {
-      await api.post('/oposiciones', form);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['oposiciones'] });
-      router.push('/admin/oposiciones');
-    },
-  });
+ const crear = useMutation({
+  mutationFn: async () => {
+    const payload = {
+      ...form,
+      subgrupo: form.subgrupo || undefined,
+      categoria: form.categoria || undefined,
+      administracion: form.administracion || undefined,
+      ministerio: form.ministerio || undefined,
+      cuerpo: form.cuerpo || undefined,
+    };
+    await api.post('/oposiciones', payload);
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['oposiciones'] });
+    router.push('/admin/oposiciones');
+  },
+});
 
   const validar = () => {
     const e: Record<string, string> = {};

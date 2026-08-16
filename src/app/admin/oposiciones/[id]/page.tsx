@@ -27,22 +27,7 @@ export default function OposicionDetallePage() {
     anyo: new Date().getFullYear().toString(),
     plazas: '',
     estado: 'activa',
-    urlInap: '',
-    referenciaBoe: '',
-    fechaExamen: '',
-  });
-
-  const [formEditarOpo, setFormEditarOpo] = useState({
-    nombre: '',
-    administracion: '',
-    ministerio: '',
-    subgrupo: '',
-  });
-
-  const [formEditarConv, setFormEditarConv] = useState({
-    anyo: '',
-    plazas: '',
-    estado: 'activa',
+    turno: '',
     urlInap: '',
     referenciaBoe: '',
     fechaExamen: '',
@@ -54,7 +39,58 @@ export default function OposicionDetallePage() {
     fraccionPenalizacion: '',
     notaMinimaAprobado: '',
     diferenciasAnterior: '',
+    requisitos: '',
+    formacionPosterior: '',
+    descripcionAdicional: '',
+    generaBolsaEmpleo: false,
+    bolsaEmpleoDescripcion: '',
+    plazasLibres: '',
+    plazasPromocionInterna: '',
+    plazasMilitares: '',
+    plazasDiscapacidad: '',
+    fasesTexto: '',
+    puestosTexto: '',
+    bloquesTemarioTexto: '',
   });
+
+  const [formEditarOpo, setFormEditarOpo] = useState({
+    nombre: '',
+    administracion: '',
+    ministerio: '',
+    subgrupo: '',
+    tipoAdministracion: '',
+    categoria: '',
+  });
+
+const [formEditarConv, setFormEditarConv] = useState({
+  anyo: '',
+  plazas: '',
+  estado: 'activa',
+  turno: '', // ⭐ nuevo
+  urlInap: '',
+  referenciaBoe: '',
+  fechaExamen: '',
+  numEjercicios: '',
+  tipoEjercicio: '',
+  numPreguntas: '',
+  tiempoMinutos: '',
+  penalizacion: false,
+  fraccionPenalizacion: '',
+  notaMinimaAprobado: '',
+  diferenciasAnterior: '',
+  requisitos: '', // ⭐ nuevo
+  formacionPosterior: '', // ⭐ nuevo
+  descripcionAdicional: '', // ⭐ nuevo
+  generaBolsaEmpleo: false, // ⭐ nuevo
+  bolsaEmpleoDescripcion: '', // ⭐ nuevo
+  plazasLibres: '', // ⭐ nuevo (desglose)
+  plazasPromocionInterna: '', // ⭐ nuevo
+  plazasMilitares: '', // ⭐ nuevo
+  plazasDiscapacidad: '', // ⭐ nuevo
+  fasesTexto: '', // ⭐ nuevo — una fase por línea: "tipo|nombre|descripcion"
+  puestosTexto: '', // ⭐ nuevo — un puesto por línea: "nombre|descripcion|requisitos"
+  bloquesTemarioTexto: '', // ⭐ nuevo — un bloque por línea: "nombre|descripcion"
+});
 
   const { data: oposicion, isLoading } = useQuery({
     queryKey: ['oposicion', id],
@@ -72,16 +108,18 @@ export default function OposicionDetallePage() {
     },
   });
 
-  useEffect(() => {
-    if (oposicion) {
-      setFormEditarOpo({
-        nombre: oposicion.nombre ?? '',
-        administracion: oposicion.administracion ?? '',
-        ministerio: oposicion.ministerio ?? '',
-        subgrupo: oposicion.subgrupo ?? '',
-      });
-    }
-  }, [oposicion]);
+ useEffect(() => {
+  if (oposicion) {
+    setFormEditarOpo({
+      nombre: oposicion.nombre ?? '',
+      administracion: oposicion.administracion ?? '',
+      ministerio: oposicion.ministerio ?? '',
+      subgrupo: oposicion.subgrupo ?? '',
+      tipoAdministracion: oposicion.tipoAdministracion ?? '',
+      categoria: oposicion.categoria ?? '',
+    });
+  }
+}, [oposicion]);
 
   const eliminarOpo = useMutation({
     mutationFn: async () => { await api.delete(`/oposiciones/${id}`); },
@@ -89,12 +127,21 @@ export default function OposicionDetallePage() {
   });
 
   const editarOpo = useMutation({
-    mutationFn: async () => { await api.patch(`/oposiciones/${id}`, formEditarOpo); },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['oposicion', id] });
-      setModalEditarOpo(false);
-    },
-  });
+  mutationFn: async () => {
+    const payload = {
+      ...formEditarOpo,
+      subgrupo: formEditarOpo.subgrupo || null, 
+      categoria: formEditarOpo.categoria || null,
+      administracion: formEditarOpo.administracion || null,
+      ministerio: formEditarOpo.ministerio || null,
+    };
+    await api.patch(`/oposiciones/${id}`, payload);
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['oposicion', id] });
+    setModalEditarOpo(false);
+  },
+});
 
   const eliminarConv = useMutation({
   mutationFn: async (convocatoriaId: string) => {
@@ -105,30 +152,64 @@ export default function OposicionDetallePage() {
   },
 });
 
-  const crearConv = useMutation({
+const crearConv = useMutation({
   mutationFn: async () => {
-    const res = await api.post('/convocatorias', {
-      anyo: parseInt(formNuevaConv.anyo),
-      plazas: formNuevaConv.plazas ? parseInt(formNuevaConv.plazas) : undefined,
-      estado: formNuevaConv.estado,
-      urlInap: formNuevaConv.urlInap || undefined,
-      referenciaBoe: formNuevaConv.referenciaBoe || undefined,
-      fechaExamen: formNuevaConv.fechaExamen || undefined,
-      oposicionId: id,
-    });
+    const plazasDesglose = (formNuevaConv.plazasLibres || formNuevaConv.plazasPromocionInterna || formNuevaConv.plazasMilitares || formNuevaConv.plazasDiscapacidad)
+      ? {
+          libres: formNuevaConv.plazasLibres ? parseInt(formNuevaConv.plazasLibres) : undefined,
+          promocionInterna: formNuevaConv.plazasPromocionInterna ? parseInt(formNuevaConv.plazasPromocionInterna) : undefined,
+          militares: formNuevaConv.plazasMilitares ? parseInt(formNuevaConv.plazasMilitares) : undefined,
+          discapacidad: formNuevaConv.plazasDiscapacidad ? parseInt(formNuevaConv.plazasDiscapacidad) : undefined,
+        }
+      : undefined;
 
-    // ⭐ Si se puso URL, dispara el scraping inmediatamente
-    if (formNuevaConv.urlInap) {
-      await api.post(`/convocatorias/${res.data.id}/scrape`);
-    }
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['convocatorias', id] });
-    queryClient.invalidateQueries({ queryKey: ['oposicion', id] });
-    setModalNuevaConv(false);
-    setFormNuevaConv({ anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', urlInap: '', referenciaBoe: '', fechaExamen: '' });
-  },
-});
+      const res = await api.post('/convocatorias', {
+        anyo: parseInt(formNuevaConv.anyo),
+        plazas: formNuevaConv.plazas ? parseInt(formNuevaConv.plazas) : undefined,
+        estado: formNuevaConv.estado,
+        turno: formNuevaConv.turno || undefined,
+        urlInap: formNuevaConv.urlInap || undefined,
+        referenciaBoe: formNuevaConv.referenciaBoe || undefined,
+        fechaExamen: formNuevaConv.fechaExamen || undefined,
+        numEjercicios: formNuevaConv.numEjercicios ? parseInt(formNuevaConv.numEjercicios) : undefined,
+        tipoEjercicio: formNuevaConv.tipoEjercicio || undefined,
+        numPreguntas: formNuevaConv.numPreguntas ? parseInt(formNuevaConv.numPreguntas) : undefined,
+        tiempoMinutos: formNuevaConv.tiempoMinutos ? parseInt(formNuevaConv.tiempoMinutos) : undefined,
+        penalizacion: formNuevaConv.penalizacion,
+        fraccionPenalizacion: formNuevaConv.fraccionPenalizacion || undefined,
+        notaMinimaAprobado: formNuevaConv.notaMinimaAprobado ? parseFloat(formNuevaConv.notaMinimaAprobado) : undefined,
+        diferenciasAnterior: formNuevaConv.diferenciasAnterior || undefined,
+        requisitos: formNuevaConv.requisitos || undefined,
+        formacionPosterior: formNuevaConv.formacionPosterior || undefined,
+        descripcionAdicional: formNuevaConv.descripcionAdicional || undefined,
+        generaBolsaEmpleo: formNuevaConv.generaBolsaEmpleo,
+        bolsaEmpleoDescripcion: formNuevaConv.bolsaEmpleoDescripcion || undefined,
+        plazasDesglose,
+        fasesAdicionales: parsearFases(formNuevaConv.fasesTexto),
+        puestos: parsearPuestos(formNuevaConv.puestosTexto),
+        bloquesTemario: parsearBloques(formNuevaConv.bloquesTemarioTexto),
+        oposicionId: id,
+      });
+
+      if (formNuevaConv.urlInap) {
+        await api.post(`/convocatorias/${res.data.id}/scrape`);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['convocatorias', id] });
+      queryClient.invalidateQueries({ queryKey: ['oposicion', id] });
+      setModalNuevaConv(false);
+      setFormNuevaConv({
+        anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', turno: '',
+        urlInap: '', referenciaBoe: '', fechaExamen: '', numEjercicios: '', tipoEjercicio: '',
+        numPreguntas: '', tiempoMinutos: '', penalizacion: false, fraccionPenalizacion: '',
+        notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
+        descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
+        plazasLibres: '', plazasPromocionInterna: '', plazasMilitares: '', plazasDiscapacidad: '',
+        fasesTexto: '', puestosTexto: '', bloquesTemarioTexto: '',
+      });
+    },
+  });
 
 
   const copiarConvocatoria = useMutation({
@@ -141,37 +222,58 @@ export default function OposicionDetallePage() {
     },
   });
 
-  const editarConv = useMutation({
-    mutationFn: async () => {
-      const urlCambio = formEditarConv.urlInap !== (convEditando.urlInap ?? '');
-      await api.patch(`/convocatorias/${convEditando.id}`, {
-        anyo: parseInt(formEditarConv.anyo),
-        plazas: formEditarConv.plazas ? parseInt(formEditarConv.plazas) : undefined,
-        estado: formEditarConv.estado,
-        urlInap: formEditarConv.urlInap || undefined,
-        referenciaBoe: formEditarConv.referenciaBoe || undefined,
-        fechaExamen: formEditarConv.fechaExamen || undefined,
-        numEjercicios: formEditarConv.numEjercicios ? parseInt(formEditarConv.numEjercicios) : undefined,
-        tipoEjercicio: formEditarConv.tipoEjercicio || undefined,
-        numPreguntas: formEditarConv.numPreguntas ? parseInt(formEditarConv.numPreguntas) : undefined,
-        tiempoMinutos: formEditarConv.tiempoMinutos ? parseInt(formEditarConv.tiempoMinutos) : undefined,
-        penalizacion: formEditarConv.penalizacion,
-        fraccionPenalizacion: formEditarConv.fraccionPenalizacion || undefined,
-        notaMinimaAprobado: formEditarConv.notaMinimaAprobado ? parseFloat(formEditarConv.notaMinimaAprobado) : undefined,
-        diferenciasAnterior: formEditarConv.diferenciasAnterior || undefined,
-      });
-  if (urlCambio && formEditarConv.urlInap) {
-      await api.patch(`/convocatorias/${convEditando.id}/url-inap`, {
-        urlInap: formEditarConv.urlInap,
-      });
-    }
-  },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['convocatorias', id] });
-      setModalEditarConv(false);
-      setConvEditando(null);
-    },
-  });
+    const editarConv = useMutation({
+      mutationFn: async () => {
+        const urlCambio = formEditarConv.urlInap !== (convEditando.urlInap ?? '');
+
+        const plazasDesglose = (formEditarConv.plazasLibres || formEditarConv.plazasPromocionInterna || formEditarConv.plazasMilitares || formEditarConv.plazasDiscapacidad)
+          ? {
+              libres: formEditarConv.plazasLibres ? parseInt(formEditarConv.plazasLibres) : undefined,
+              promocionInterna: formEditarConv.plazasPromocionInterna ? parseInt(formEditarConv.plazasPromocionInterna) : undefined,
+              militares: formEditarConv.plazasMilitares ? parseInt(formEditarConv.plazasMilitares) : undefined,
+              discapacidad: formEditarConv.plazasDiscapacidad ? parseInt(formEditarConv.plazasDiscapacidad) : undefined,
+            }
+          : null;
+
+        await api.patch(`/convocatorias/${convEditando.id}`, {
+          anyo: parseInt(formEditarConv.anyo),
+          plazas: formEditarConv.plazas ? parseInt(formEditarConv.plazas) : undefined,
+          estado: formEditarConv.estado,
+          turno: formEditarConv.turno || null,
+          urlInap: formEditarConv.urlInap || undefined,
+          referenciaBoe: formEditarConv.referenciaBoe || undefined,
+          fechaExamen: formEditarConv.fechaExamen || undefined,
+          numEjercicios: formEditarConv.numEjercicios ? parseInt(formEditarConv.numEjercicios) : undefined,
+          tipoEjercicio: formEditarConv.tipoEjercicio || undefined,
+          numPreguntas: formEditarConv.numPreguntas ? parseInt(formEditarConv.numPreguntas) : undefined,
+          tiempoMinutos: formEditarConv.tiempoMinutos ? parseInt(formEditarConv.tiempoMinutos) : undefined,
+          penalizacion: formEditarConv.penalizacion,
+          fraccionPenalizacion: formEditarConv.fraccionPenalizacion || undefined,
+          notaMinimaAprobado: formEditarConv.notaMinimaAprobado ? parseFloat(formEditarConv.notaMinimaAprobado) : undefined,
+          diferenciasAnterior: formEditarConv.diferenciasAnterior || undefined,
+          requisitos: formEditarConv.requisitos || null,
+          formacionPosterior: formEditarConv.formacionPosterior || null,
+          descripcionAdicional: formEditarConv.descripcionAdicional || null,
+          generaBolsaEmpleo: formEditarConv.generaBolsaEmpleo,
+          bolsaEmpleoDescripcion: formEditarConv.bolsaEmpleoDescripcion || null,
+          plazasDesglose,
+          fasesAdicionales: parsearFases(formEditarConv.fasesTexto) ?? null,
+          puestos: parsearPuestos(formEditarConv.puestosTexto) ?? null,
+          bloquesTemario: parsearBloques(formEditarConv.bloquesTemarioTexto) ?? null,
+        });
+
+        if (urlCambio && formEditarConv.urlInap) {
+          await api.patch(`/convocatorias/${convEditando.id}/url-inap`, {
+            urlInap: formEditarConv.urlInap,
+          });
+        }
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['convocatorias', id] });
+        setModalEditarConv(false);
+        setConvEditando(null);
+      },
+    });
 
   const scrapeManual = useMutation({
     mutationFn: async (convocatoriaId: string) => {
@@ -180,12 +282,13 @@ export default function OposicionDetallePage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['convocatorias', id] }),
   });
 
-  const abrirEditarConv = (c: any) => {
+    const abrirEditarConv = (c: any) => {
     setConvEditando(c);
     setFormEditarConv({
       anyo: c.anyo?.toString() ?? '',
       plazas: c.plazas?.toString() ?? '',
       estado: c.estado ?? 'activa',
+      turno: c.turno ?? '',
       urlInap: c.urlInap ?? '',
       referenciaBoe: c.referenciaBoe ?? '',
       fechaExamen: c.fechaExamen ? new Date(c.fechaExamen).toISOString().split('T')[0] : '',
@@ -197,6 +300,18 @@ export default function OposicionDetallePage() {
       fraccionPenalizacion: c.fraccionPenalizacion ?? '',
       notaMinimaAprobado: c.notaMinimaAprobado?.toString() ?? '',
       diferenciasAnterior: c.diferenciasAnterior ?? '',
+      requisitos: c.requisitos ?? '',
+      formacionPosterior: c.formacionPosterior ?? '',
+      descripcionAdicional: c.descripcionAdicional ?? '',
+      generaBolsaEmpleo: c.generaBolsaEmpleo ?? false,
+      bolsaEmpleoDescripcion: c.bolsaEmpleoDescripcion ?? '',
+      plazasLibres: c.plazasDesglose?.libres?.toString() ?? '',
+      plazasPromocionInterna: c.plazasDesglose?.promocionInterna?.toString() ?? '',
+      plazasMilitares: c.plazasDesglose?.militares?.toString() ?? '',
+      plazasDiscapacidad: c.plazasDesglose?.discapacidad?.toString() ?? '',
+      fasesTexto: serializarFases(c.fasesAdicionales ?? []),
+      puestosTexto: serializarPuestos(c.puestos ?? []),
+      bloquesTemarioTexto: serializarBloques(c.bloquesTemario ?? []),
     });
     setModalEditarConv(true);
   };
@@ -204,6 +319,41 @@ export default function OposicionDetallePage() {
   if (isLoading) return <div style={{ padding: '2rem', fontSize: '13px', color: '#9ca3af' }}>Cargando...</div>;
   if (!oposicion) return <div style={{ padding: '2rem', fontSize: '13px', color: '#9ca3af' }}>No encontrada</div>;
 
+      function parsearFases(texto: string) {
+      if (!texto.trim()) return undefined;
+      return texto.split('\n').filter(Boolean).map((linea, i) => {
+        const [tipo, nombre, descripcion] = linea.split('|').map((s) => s?.trim());
+        return { tipo: tipo || 'otro', nombre: nombre || '', descripcion: descripcion || undefined, orden: i + 1 };
+      });
+    }
+
+    function parsearPuestos(texto: string) {
+      if (!texto.trim()) return undefined;
+      return texto.split('\n').filter(Boolean).map((linea) => {
+        const [nombre, descripcion, requisitosEspecificos] = linea.split('|').map((s) => s?.trim());
+        return { nombre: nombre || '', descripcion: descripcion || undefined, requisitosEspecificos: requisitosEspecificos || undefined };
+      });
+    }
+
+    function parsearBloques(texto: string) {
+      if (!texto.trim()) return undefined;
+      return texto.split('\n').filter(Boolean).map((linea) => {
+        const [nombre, descripcion] = linea.split('|').map((s) => s?.trim());
+        return { nombre: nombre || '', descripcion: descripcion || undefined };
+      });
+    }
+
+    function serializarFases(fases: any[] = []) {
+      return fases.map((f) => `${f.tipo}|${f.nombre}|${f.descripcion ?? ''}`).join('\n');
+    }
+
+    function serializarPuestos(puestos: any[] = []) {
+      return puestos.map((p) => `${p.nombre}|${p.descripcion ?? ''}|${p.requisitosEspecificos ?? ''}`).join('\n');
+    }
+
+    function serializarBloques(bloques: any[] = []) {
+      return bloques.map((b) => `${b.nombre}|${b.descripcion ?? ''}`).join('\n');
+    }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
@@ -377,54 +527,182 @@ export default function OposicionDetallePage() {
         )}
       </div>
 
+
       {/* Modal nueva convocatoria */}
-      {modalNuevaConv && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: 'white', borderRadius: '12px', padding: '1.5rem', width: '100%', maxWidth: '480px', margin: '0 1rem', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: '#111827', marginBottom: '1.25rem' }}>Nueva convocatoria</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        {modalNuevaConv && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+            <div style={{ background: 'white', borderRadius: '12px', padding: '1.5rem', width: '100%', maxWidth: '480px', margin: '0 1rem', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#111827', marginBottom: '1.25rem' }}>Nueva convocatoria</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Año</label>
+                    <input type="number" value={formNuevaConv.anyo} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, anyo: e.target.value })} min="2000" max="2100" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Plazas</label>
+                    <input type="number" value={formNuevaConv.plazas} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, plazas: e.target.value })} placeholder="1200" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Estado</label>
+                    <select value={formNuevaConv.estado} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, estado: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
+                      <option value="activa">Activa</option>
+                      <option value="cerrada">Cerrada</option>
+                      <option value="borrador">Borrador</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Turno</label>
+                    <select value={formNuevaConv.turno} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, turno: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
+                      <option value="">Sin especificar</option>
+                      <option value="libre">Libre</option>
+                      <option value="promocion_interna">Promoción interna</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Año</label>
-                  <input type="number" value={formNuevaConv.anyo} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, anyo: e.target.value })} min="2000" max="2100" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha examen</label>
+                  <input type="date" value={formNuevaConv.fechaExamen} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fechaExamen: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Plazas</label>
-                  <input type="number" value={formNuevaConv.plazas} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, plazas: e.target.value })} placeholder="1200" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>URL INAP</label>
+                  <input type="text" value={formNuevaConv.urlInap} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, urlInap: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Referencia BOE</label>
+                  <input type="text" value={formNuevaConv.referenciaBoe} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, referenciaBoe: e.target.value })} placeholder="BOE-A-2025-..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+
+                {/* Características del examen */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '10px' }}>Prueba teórica</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº ejercicios</label>
+                        <input type="number" value={formNuevaConv.numEjercicios} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, numEjercicios: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo ejercicio</label>
+                        <select value={formNuevaConv.tipoEjercicio} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, tipoEjercicio: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
+                          <option value="">Sin especificar</option>
+                          <option value="test">Test</option>
+                          <option value="desarrollo">Desarrollo</option>
+                          <option value="oral">Oral</option>
+                          <option value="practico">Práctico</option>
+                          <option value="mixto">Mixto</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº preguntas</label>
+                        <input type="number" value={formNuevaConv.numPreguntas} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, numPreguntas: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tiempo (minutos)</label>
+                        <input type="number" value={formNuevaConv.tiempoMinutos} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, tiempoMinutos: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nota mínima</label>
+                        <input type="number" step="0.01" value={formNuevaConv.notaMinimaAprobado} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, notaMinimaAprobado: e.target.value })} placeholder="5.00" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
+                        <input type="text" value={formNuevaConv.fraccionPenalizacion} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input type="checkbox" id="penalizacion-nueva" checked={formNuevaConv.penalizacion} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, penalizacion: e.target.checked })} style={{ width: '14px', height: '14px', cursor: 'pointer' }} />
+                      <label htmlFor="penalizacion-nueva" style={{ fontSize: '13px', color: '#374151', cursor: 'pointer' }}>Penaliza respuesta incorrecta</label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Requisitos */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Requisitos oficiales</label>
+                  <textarea value={formNuevaConv.requisitos} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, requisitos: e.target.value })} rows={4} placeholder="Nacionalidad española. Edad: desde 18 años..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} />
+                </div>
+
+                {/* Plazas desglose */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Desglose de plazas</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <input type="number" placeholder="Libres" value={formNuevaConv.plazasLibres} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, plazasLibres: e.target.value })} style={{ padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                    <input type="number" placeholder="Promoción interna" value={formNuevaConv.plazasPromocionInterna} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, plazasPromocionInterna: e.target.value })} style={{ padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                    <input type="number" placeholder="Militares" value={formNuevaConv.plazasMilitares} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, plazasMilitares: e.target.value })} style={{ padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                    <input type="number" placeholder="Discapacidad" value={formNuevaConv.plazasDiscapacidad} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, plazasDiscapacidad: e.target.value })} style={{ padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+
+                {/* Fases adicionales */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                    Fases del proceso <span style={{ fontWeight: 400, color: '#9ca3af' }}>(una por línea: tipo|nombre|descripción)</span>
+                  </label>
+                  <textarea value={formNuevaConv.fasesTexto} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fasesTexto: e.target.value })} rows={4} placeholder="fisica|Circuito de agilidad|
+        psicotecnico|Aptitudes cognitivas|Eliminatorio" style={{ width: '100%', padding: '9px 12px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} />
+                </div>
+
+                {/* Puestos */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                    Puestos disponibles <span style={{ fontWeight: 400, color: '#9ca3af' }}>(uno por línea: nombre|descripción|requisitos)</span>
+                  </label>
+                  <textarea value={formNuevaConv.puestosTexto} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, puestosTexto: e.target.value })} rows={4} placeholder="Reparto a Pie|Entrega caminando|" style={{ width: '100%', padding: '9px 12px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} />
+                </div>
+
+                {/* Bloques temario */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                    Bloques del temario <span style={{ fontWeight: 400, color: '#9ca3af' }}>(uno por línea: nombre|descripción)</span>
+                  </label>
+                  <textarea value={formNuevaConv.bloquesTemarioTexto} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, bloquesTemarioTexto: e.target.value })} rows={3} placeholder="Ciencias Jurídicas|Constitución, Penal..." style={{ width: '100%', padding: '9px 12px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} />
+                </div>
+
+                {/* Bolsa de empleo */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <input type="checkbox" id="bolsa-nueva" checked={formNuevaConv.generaBolsaEmpleo} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, generaBolsaEmpleo: e.target.checked })} style={{ width: '14px', height: '14px', cursor: 'pointer' }} />
+                    <label htmlFor="bolsa-nueva" style={{ fontSize: '13px', color: '#374151', cursor: 'pointer' }}>Genera bolsa de empleo</label>
+                  </div>
+                  {formNuevaConv.generaBolsaEmpleo && (
+                    <textarea value={formNuevaConv.bolsaEmpleoDescripcion} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, bolsaEmpleoDescripcion: e.target.value })} rows={2} placeholder="Descripción de cómo funciona la bolsa..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} />
+                  )}
+                </div>
+
+                {/* Formación posterior */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Formación posterior</label>
+                  <textarea value={formNuevaConv.formacionPosterior} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, formacionPosterior: e.target.value })} rows={3} placeholder="Escuela Nacional de Policía (Ávila), 9 meses..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} />
+                </div>
+
+                {/* Notas adicionales */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Notas adicionales</label>
+                  <textarea value={formNuevaConv.descripcionAdicional} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, descripcionAdicional: e.target.value })} rows={3} placeholder="Cualquier información que no encaje en los campos anteriores..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} />
+                </div>
+
               </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Estado</label>
-                <select value={formNuevaConv.estado} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, estado: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
-                  <option value="activa">Activa</option>
-                  <option value="cerrada">Cerrada</option>
-                  <option value="borrador">Borrador</option>
-                </select>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
+                <button onClick={() => crearConv.mutate()} disabled={!formNuevaConv.anyo || crearConv.isPending} style={{ flex: 2, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', opacity: !formNuevaConv.anyo ? 0.4 : 1 }}>
+                  {crearConv.isPending ? 'Guardando...' : 'Guardar'}
+                </button>
+                <button onClick={() => setModalNuevaConv(false)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
               </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha examen</label>
-                <input type="date" value={formNuevaConv.fechaExamen} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fechaExamen: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>URL INAP</label>
-                <input type="text" value={formNuevaConv.urlInap} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, urlInap: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Referencia BOE</label>
-                <input type="text" value={formNuevaConv.referenciaBoe} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, referenciaBoe: e.target.value })} placeholder="BOE-A-2025-..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
-              <button onClick={() => crearConv.mutate()} disabled={!formNuevaConv.anyo || crearConv.isPending} style={{ flex: 2, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', opacity: !formNuevaConv.anyo ? 0.4 : 1 }}>
-                {crearConv.isPending ? 'Guardando...' : 'Guardar'}
-              </button>
-              <button onClick={() => setModalNuevaConv(false)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
-                Cancelar
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Modal editar convocatoria */}
       {modalEditarConv && convEditando && (
@@ -512,6 +790,126 @@ export default function OposicionDetallePage() {
                 </div>
               </div>
 
+              {/* Turno */}
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Turno</label>
+                <select value={formEditarConv.turno} onChange={(e) => setFormEditarConv({ ...formEditarConv, turno: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
+                  <option value="">Sin especificar</option>
+                  <option value="libre">Libre</option>
+                  <option value="promocion_interna">Promoción interna</option>
+                </select>
+              </div>
+
+              {/* Requisitos */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Requisitos oficiales</label>
+                <textarea
+                  value={formEditarConv.requisitos}
+                  onChange={(e) => setFormEditarConv({ ...formEditarConv, requisitos: e.target.value })}
+                  rows={4}
+                  placeholder="Nacionalidad española. Edad: desde 18 años..."
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Plazas desglose */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Desglose de plazas</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <input type="number" placeholder="Libres" value={formEditarConv.plazasLibres} onChange={(e) => setFormEditarConv({ ...formEditarConv, plazasLibres: e.target.value })} style={{ padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  <input type="number" placeholder="Promoción interna" value={formEditarConv.plazasPromocionInterna} onChange={(e) => setFormEditarConv({ ...formEditarConv, plazasPromocionInterna: e.target.value })} style={{ padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  <input type="number" placeholder="Militares" value={formEditarConv.plazasMilitares} onChange={(e) => setFormEditarConv({ ...formEditarConv, plazasMilitares: e.target.value })} style={{ padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  <input type="number" placeholder="Discapacidad" value={formEditarConv.plazasDiscapacidad} onChange={(e) => setFormEditarConv({ ...formEditarConv, plazasDiscapacidad: e.target.value })} style={{ padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+
+              {/* Fases adicionales */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                  Fases del proceso <span style={{ fontWeight: 400, color: '#9ca3af' }}>(una por línea: tipo|nombre|descripción)</span>
+                </label>
+                <textarea
+                  value={formEditarConv.fasesTexto}
+                  onChange={(e) => setFormEditarConv({ ...formEditarConv, fasesTexto: e.target.value })}
+                  rows={4}
+                  placeholder="fisica|Circuito de agilidad|
+              psicotecnico|Aptitudes cognitivas|Eliminatorio
+              entrevista|Entrevista personal|"
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Puestos */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                  Puestos disponibles <span style={{ fontWeight: 400, color: '#9ca3af' }}>(uno por línea: nombre|descripción|requisitos)</span>
+                </label>
+                <textarea
+                  value={formEditarConv.puestosTexto}
+                  onChange={(e) => setFormEditarConv({ ...formEditarConv, puestosTexto: e.target.value })}
+                  rows={4}
+                  placeholder="Reparto a Pie|Entrega caminando|
+              Reparto Motorizado|Entrega en moto o coche|Carnet A1/A2 o B"
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Bloques de temario */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                  Bloques del temario <span style={{ fontWeight: 400, color: '#9ca3af' }}>(uno por línea: nombre|descripción)</span>
+                </label>
+                <textarea
+                  value={formEditarConv.bloquesTemarioTexto}
+                  onChange={(e) => setFormEditarConv({ ...formEditarConv, bloquesTemarioTexto: e.target.value })}
+                  rows={3}
+                  placeholder="Ciencias Jurídicas|Constitución, Penal, Procesal...
+              Ciencias Sociales|Historia, geografía, UE..."
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Bolsa de empleo */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <input type="checkbox" id="bolsa" checked={formEditarConv.generaBolsaEmpleo} onChange={(e) => setFormEditarConv({ ...formEditarConv, generaBolsaEmpleo: e.target.checked })} style={{ width: '14px', height: '14px', cursor: 'pointer' }} />
+                  <label htmlFor="bolsa" style={{ fontSize: '13px', color: '#374151', cursor: 'pointer' }}>Genera bolsa de empleo</label>
+                </div>
+                {formEditarConv.generaBolsaEmpleo && (
+                  <textarea
+                    value={formEditarConv.bolsaEmpleoDescripcion}
+                    onChange={(e) => setFormEditarConv({ ...formEditarConv, bolsaEmpleoDescripcion: e.target.value })}
+                    rows={2}
+                    placeholder="Descripción de cómo funciona la bolsa..."
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                  />
+                )}
+              </div>
+
+              {/* Formación posterior */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Formación posterior</label>
+                <textarea
+                  value={formEditarConv.formacionPosterior}
+                  onChange={(e) => setFormEditarConv({ ...formEditarConv, formacionPosterior: e.target.value })}
+                  rows={3}
+                  placeholder="Escuela Nacional de Policía (Ávila), 9 meses..."
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Descripción adicional */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Notas adicionales</label>
+                <textarea
+                  value={formEditarConv.descripcionAdicional}
+                  onChange={(e) => setFormEditarConv({ ...formEditarConv, descripcionAdicional: e.target.value })}
+                  rows={3}
+                  placeholder="Cualquier información que no encaje en los campos anteriores..."
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                />
+              </div>
+
               {/* Diferencias con convocatoria anterior */}
               <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Diferencias respecto a convocatoria anterior</label>
@@ -543,27 +941,80 @@ export default function OposicionDetallePage() {
           <div style={{ background: 'white', borderRadius: '12px', padding: '1.5rem', width: '100%', maxWidth: '500px', margin: '0 1rem', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
             <div style={{ fontSize: '15px', fontWeight: 600, color: '#111827', marginBottom: '1.25rem' }}>Editar oposición</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nombre *</label>
                 <input type="text" value={formEditarOpo.nombre} onChange={(e) => setFormEditarOpo({ ...formEditarOpo, nombre: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
               </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Subgrupo</label>
-                <select value={formEditarOpo.subgrupo} onChange={(e) => setFormEditarOpo({ ...formEditarOpo, subgrupo: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
-                  <option value="">Sin subgrupo</option>
-                  {['A1', 'A2', 'C1', 'C2', 'E'].map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
+
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Administración</label>
-                <input type="text" value={formEditarOpo.administracion} onChange={(e) => setFormEditarOpo({ ...formEditarOpo, administracion: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                <select
+                  value={formEditarOpo.tipoAdministracion}
+                  onChange={(e) => setFormEditarOpo({ ...formEditarOpo, tipoAdministracion: e.target.value, administracion: '', categoria: '', subgrupo: '' })}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                >
+                  <option value="">Selecciona...</option>
+                  <option value="estado">Estado</option>
+                  <option value="ccaa">Comunidad Autónoma</option>
+                  <option value="empresa_publica">Empresa pública</option>
+                </select>
               </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Ministerio</label>
-                <input type="text" value={formEditarOpo.ministerio} onChange={(e) => setFormEditarOpo({ ...formEditarOpo, ministerio: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
+
+              {formEditarOpo.tipoAdministracion === 'ccaa' && (
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Comunidad Autónoma</label>
+                  <select
+                    value={formEditarOpo.administracion}
+                    onChange={(e) => setFormEditarOpo({ ...formEditarOpo, administracion: e.target.value })}
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                  >
+                    <option value="">Selecciona...</option>
+                    {['Galicia', 'Asturias', 'Cantabria', 'País Vasco', 'Navarra', 'La Rioja', 'Aragón', 'Cataluña', 'Castilla y León', 'Madrid', 'Castilla-La Mancha', 'Extremadura', 'Comunidad Valenciana', 'Murcia', 'Andalucía', 'Baleares', 'Canarias'].map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {formEditarOpo.tipoAdministracion === 'estado' && (
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Ministerio</label>
+                  <input type="text" value={formEditarOpo.ministerio} onChange={(e) => setFormEditarOpo({ ...formEditarOpo, ministerio: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              )}
+
+              {(formEditarOpo.tipoAdministracion === 'estado' || (formEditarOpo.tipoAdministracion === 'ccaa' && formEditarOpo.administracion)) && (
+                <>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Categoría</label>
+                    <select
+                      value={formEditarOpo.categoria}
+                      onChange={(e) => setFormEditarOpo({ ...formEditarOpo, categoria: e.target.value })}
+                      style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                    >
+                      <option value="">Sin categoría</option>
+                      {(formEditarOpo.tipoAdministracion === 'estado'
+                        ? [{ value: 'administracion_general', label: 'AGE' }, { value: 'seguridad', label: 'Seguridad' }, { value: 'justicia', label: 'Justicia' }, { value: 'sanidad', label: 'Sanidad' }]
+                        : [{ value: 'administracion_general', label: 'Administración' }, { value: 'seguridad', label: 'Seguridad' }, { value: 'sanidad', label: 'Sanidad' }]
+                      ).map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Subgrupo</label>
+                    <select value={formEditarOpo.subgrupo} onChange={(e) => setFormEditarOpo({ ...formEditarOpo, subgrupo: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
+                      <option value="">Sin subgrupo</option>
+                      {['A1', 'A2', 'C1', 'C2', 'E'].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
             </div>
             <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
               <button onClick={() => editarOpo.mutate()} disabled={!formEditarOpo.nombre || editarOpo.isPending} style={{ flex: 2, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', opacity: !formEditarOpo.nombre ? 0.4 : 1 }}>

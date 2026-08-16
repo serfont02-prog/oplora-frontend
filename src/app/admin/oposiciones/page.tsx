@@ -93,8 +93,11 @@ export default function OposicionesPage() {
                     ) : <span style={{ fontSize: '13px', color: '#d1d5db' }}>—</span>}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '13px', color: '#6b7280' }}>
-                    {op.administracion ?? '—'}
-                  </td>
+  {op.tipoAdministracion === 'estado' ? 'Estado'
+    : op.tipoAdministracion === 'empresa_publica' ? 'Empresa pública'
+    : op.tipoAdministracion === 'ccaa' ? (op.administracion || 'Comunidad Autónoma')
+    : '—'}
+</td>
                   <td style={{ padding: '12px 16px' }}>
                     <span style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '20px', fontWeight: 500, background: (op as any).convocatoriasActivas > 0 ? '#f0fdf4' : '#f3f4f6', color: (op as any).convocatoriasActivas > 0 ? '#15803d' : '#6b7280' }}>
                       {(op as any).convocatoriasActivas > 0 ? 'Activa' : 'Inactiva'}
