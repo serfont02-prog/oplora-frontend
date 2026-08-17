@@ -16,8 +16,7 @@ const TEXT_MUTED = '#9CA3AF';
 
 type Tipo = 'estado' | 'ccaa' | 'empresa_publica';
 type Categoria = 'administracion_general' | 'seguridad' | 'justicia' | 'sanidad';
-type Turno = 'libre' | 'promocion_interna';
-type Subgrupo = 'A1' | 'A2' | 'C1' | 'C2';
+type Subgrupo = 'A1' | 'A2' | 'B' | 'C1' | 'C2';
 
 type Oposicion = {
   id: string;
@@ -25,8 +24,7 @@ type Oposicion = {
   administracion?: string;
   tipoAdministracion: Tipo;
   categoria?: Categoria;
-  subgrupo: Subgrupo;
-  turno: Turno;
+  subgrupo?: Subgrupo;
 };
 
 /* ================= CONFIG ================= */
@@ -44,12 +42,11 @@ const CATEGORIAS = [
   { id: 'sanidad', label: 'Sanidad', icon: '🏥' },
 ];
 
-const TURNOS = [
-  { id: 'libre', label: 'Libre', icon: '🎯' },
-  { id: 'promocion_interna', label: 'Promoción interna', icon: '📈' },
-];
-
-const SUBGRUPOS: Subgrupo[] = ['A1', 'A2', 'C1', 'C2'];
+const SUBGRUPOS_POR_CATEGORIA: Record<string, Subgrupo[]> = {
+  administracion_general: ['A1', 'A2', 'C1', 'C2'],
+  sanidad: ['A1', 'A2', 'B', 'C1', 'C2'],
+  justicia: ['A1', 'A2', 'C1', 'C2'], // sin B
+};
 
 const iconosCategoria: Record<string, string> = {
   administracion_general: '📄',
@@ -68,10 +65,6 @@ const LABEL_CATEGORIA: Record<string, string> = {
   seguridad: 'Seguridad',
   justicia: 'Justicia',
   sanidad: 'Sanidad',
-};
-const LABEL_TURNO: Record<string, string> = {
-  libre: 'Libre',
-  promocion_interna: 'Promoción interna',
 };
 
 const normalizar = (v: any) => (v || '').toLowerCase().trim();
@@ -128,7 +121,6 @@ export default function OnboardingOposicionPage() {
   const [oposiciones, setOposiciones] = useState<Oposicion[]>([]);
   const [tipo, setTipo] = useState<Tipo | null>(null);
   const [categoria, setCategoria] = useState<Categoria | null>(null);
-  const [turno, setTurno] = useState<Turno | null>(null);
   const [subgrupo, setSubgrupo] = useState<Subgrupo | null>(null);
   const [ccaa, setCcaa] = useState<string | null>(null);
   const [seleccionando, setSeleccionando] = useState<string | null>(null);
@@ -137,32 +129,33 @@ export default function OnboardingOposicionPage() {
     api.get('/oposiciones').then((res) => setOposiciones(res.data));
   }, []);
 
-  const handleTipo = (t: Tipo) => {
-    setTipo(t);
-    if (t === 'estado') setCcaa(null);
-    if (t !== 'estado') setCategoria(null);
-    setTurno(null);
-    setSubgrupo(null);
-  };
-
-  const clearTipo = () => { setTipo(null); setCategoria(null); setCcaa(null); setTurno(null); setSubgrupo(null); };
-  const clearCategoria = () => { setCategoria(null); setCcaa(null); setTurno(null); setSubgrupo(null); };
-  const clearCcaa = () => { setCcaa(null); setTurno(null); setSubgrupo(null); };
-  const clearTurno = () => { setTurno(null); setSubgrupo(null); };
+  const clearTipo = () => { setTipo(null); setCategoria(null); setCcaa(null); setSubgrupo(null); };
+  const clearCategoria = () => { setCategoria(null); setCcaa(null); setSubgrupo(null); };
+  const clearCcaa = () => { setCcaa(null); setSubgrupo(null); };
   const clearSubgrupo = () => { setSubgrupo(null); };
 
+  const necesitaSubgrupo = categoria ? !!SUBGRUPOS_POR_CATEGORIA[categoria] : false;
+
+  const filtroCompleto = !tipo
+    ? false
+    : tipo === 'empresa_publica'
+      ? true
+      : tipo === 'estado'
+        ? (!!categoria && (!necesitaSubgrupo || !!subgrupo))
+        : (!!ccaa && !!categoria && (!necesitaSubgrupo || !!subgrupo)); // ccaa
+
   const filtradas = useMemo(() => {
+    if (!filtroCompleto) return [];
     let lista = oposiciones;
     if (tipo) lista = lista.filter((op) => op.tipoAdministracion === tipo);
-    if (tipo === 'estado' && categoria) lista = lista.filter((op) => op.categoria === categoria);
+    if (categoria) lista = lista.filter((op) => op.categoria === categoria);
     if (tipo === 'ccaa' && ccaa) lista = lista.filter((op) => normalizar(op.administracion) === normalizar(ccaa));
-    if (turno) lista = lista.filter((op) => op.turno === turno);
     if (subgrupo) lista = lista.filter((op) => op.subgrupo === subgrupo);
     return lista;
-  }, [oposiciones, tipo, categoria, turno, subgrupo, ccaa]);
+  }, [oposiciones, tipo, categoria, subgrupo, ccaa, filtroCompleto]);
 
-  const seleccionar = async (id: string) => {
-    await api.post(`/usuarios/activar-oposicion/${id}`);
+  const seleccionar = async (idOpo: string) => {
+    await api.post(`/usuarios/activar-oposicion/${idOpo}`);
     const me = await api.get('/usuarios/me');
     actualizarUsuario(me.data);
 
@@ -184,8 +177,8 @@ export default function OnboardingOposicionPage() {
   const tituloPaso = !tipo ? '¿Dónde quieres trabajar?'
     : (tipo === 'estado' && !categoria) ? '¿Qué área?'
     : (tipo === 'ccaa' && !ccaa) ? '¿En qué comunidad?'
-    : !turno ? '¿Cómo accederás?'
-    : !subgrupo ? '¿Qué subgrupo?'
+    : (tipo === 'ccaa' && ccaa && !categoria) ? '¿Qué área?'
+    : (necesitaSubgrupo && !subgrupo) ? '¿Qué subgrupo?'
     : null;
 
   /* ================= UI HELPERS ================= */
@@ -268,12 +261,11 @@ export default function OnboardingOposicionPage() {
           </p>
         </header>
 
-        {(tipo || categoria || ccaa || turno || subgrupo) && (
+        {(tipo || categoria || ccaa || subgrupo) && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
             {tipo && <Chip label={LABEL_TIPO[tipo]} onClick={clearTipo} />}
-            {categoria && <Chip label={LABEL_CATEGORIA[categoria]} onClick={clearCategoria} />}
             {ccaa && <Chip label={ccaa} onClick={clearCcaa} />}
-            {turno && <Chip label={LABEL_TURNO[turno]} onClick={clearTurno} />}
+            {categoria && <Chip label={LABEL_CATEGORIA[categoria]} onClick={clearCategoria} />}
             {subgrupo && <Chip label={subgrupo} onClick={clearSubgrupo} />}
           </div>
         )}
@@ -293,7 +285,7 @@ export default function OnboardingOposicionPage() {
                   const activo = seleccionando === t.id;
                   const atenuado = seleccionando !== null && !activo;
                   return (
-                    <Card key={t.id} activo={activo} atenuado={atenuado} onClick={() => seleccionarConAnimacion(t.id, () => handleTipo(t.id as Tipo))}>
+                    <Card key={t.id} activo={activo} atenuado={atenuado} onClick={() => seleccionarConAnimacion(t.id, () => setTipo(t.id as Tipo))}>
                       <IconoCaja activo={activo}>{t.icon}</IconoCaja>
                       <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: activo ? '#1F7CFF' : TEXT_PRIMARY }}>{t.label}</div>
                       {activo ? <Check size={15} color="#1F7CFF" /> : <ChevronRight size={15} color="#D1D5DB" />}
@@ -303,7 +295,15 @@ export default function OnboardingOposicionPage() {
               </motion.div>
             )}
 
-            {tipo === 'estado' && !categoria && (
+            {/* CCAA: primero elegir comunidad */}
+            {tipo === 'ccaa' && !ccaa && (
+              <motion.div key="mapa">
+                <MapaCCAA selected={ccaa} onSelect={(c) => seleccionarConAnimacion(c, () => setCcaa(c))} />
+              </motion.div>
+            )}
+
+            {/* Categoría: para Estado directo, o CCAA tras elegir comunidad */}
+            {((tipo === 'estado') || (tipo === 'ccaa' && ccaa)) && !categoria && (
               <motion.div key="categorias" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {CATEGORIAS.map((c) => {
                   const activo = seleccionando === c.id;
@@ -319,31 +319,10 @@ export default function OnboardingOposicionPage() {
               </motion.div>
             )}
 
-            {tipo === 'ccaa' && !ccaa && (
-              <motion.div key="mapa">
-                <MapaCCAA selected={ccaa} onSelect={(c) => seleccionarConAnimacion(c, () => setCcaa(c))} />
-              </motion.div>
-            )}
-
-            {tipo && (tipo !== 'estado' ? ccaa : categoria) && !turno && (
-              <motion.div key="turnos" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {TURNOS.map((t) => {
-                  const activo = seleccionando === t.id;
-                  const atenuado = seleccionando !== null && !activo;
-                  return (
-                    <Card key={t.id} activo={activo} atenuado={atenuado} onClick={() => seleccionarConAnimacion(t.id, () => setTurno(t.id as Turno))}>
-                      <IconoCaja activo={activo}>{t.icon}</IconoCaja>
-                      <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: activo ? '#1F7CFF' : TEXT_PRIMARY }}>{t.label}</div>
-                      {activo ? <Check size={15} color="#1F7CFF" /> : <ChevronRight size={15} color="#D1D5DB" />}
-                    </Card>
-                  );
-                })}
-              </motion.div>
-            )}
-
-            {turno && !subgrupo && (
+            {/* Subgrupo: solo si la categoría lo requiere */}
+            {categoria && necesitaSubgrupo && !subgrupo && (
               <motion.div key="subgrupos" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {SUBGRUPOS.map((s) => {
+                {(SUBGRUPOS_POR_CATEGORIA[categoria] ?? []).map((s) => {
                   const activo = seleccionando === s;
                   const atenuado = seleccionando !== null && !activo;
                   return (
@@ -357,8 +336,8 @@ export default function OnboardingOposicionPage() {
               </motion.div>
             )}
 
-            {/* RESULTADO ÚNICO — secuencia de revelación */}
-            {subgrupo && !seleccionando && filtradas.length === 1 && (
+            {/* RESULTADO ÚNICO */}
+            {filtroCompleto && !seleccionando && filtradas.length === 1 && (
               <motion.div key="resultado" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <motion.div
                   initial={{ opacity: 0, y: -6 }}
@@ -382,7 +361,7 @@ export default function OnboardingOposicionPage() {
                     {filtradas[0].nombre}
                   </div>
                   <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                    {filtradas[0].subgrupo} · Turno {LABEL_TURNO[filtradas[0].turno]?.toLowerCase()}
+                    {filtradas[0].subgrupo ?? 'Sin subgrupo'}
                   </div>
                 </motion.div>
 
@@ -398,7 +377,7 @@ export default function OnboardingOposicionPage() {
               </motion.div>
             )}
 
-            {subgrupo && !seleccionando && filtradas.length > 1 && (
+            {filtroCompleto && !seleccionando && filtradas.length > 1 && (
               <motion.div key="lista-multiple" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 2 }}>
                   Hemos encontrado {filtradas.length} oposiciones
@@ -413,13 +392,13 @@ export default function OnboardingOposicionPage() {
               </motion.div>
             )}
 
-            {subgrupo && !seleccionando && filtradas.length === 0 && (
+            {filtroCompleto && !seleccionando && filtradas.length === 0 && (
               <motion.div key="vacio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                 <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 14 }}>
                   No hay oposiciones disponibles con estos criterios
                 </div>
                 <button
-                  onClick={() => { setCategoria(null); setCcaa(null); setTurno(null); setSubgrupo(null); }}
+                  onClick={() => { setCategoria(null); setCcaa(null); setSubgrupo(null); }}
                   style={{ padding: '10px 18px', background: '#111827', color: 'white', borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
                 >
                   Reiniciar filtros

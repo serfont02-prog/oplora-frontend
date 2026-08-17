@@ -211,18 +211,17 @@ const crearConv = useMutation({
     },
   });
 
+      const copiarConvocatoria = useMutation({
+      mutationFn: async (convocatoriaId: string) => {
+        const res = await api.post(`/convocatorias/${convocatoriaId}/copiar`);
+        return res.data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['convocatorias', id] });
+      },
+    });
 
-  const copiarConvocatoria = useMutation({
-    mutationFn: async (convocatoriaId: string) => {
-      const res = await api.post(`/convocatorias/${convocatoriaId}/copiar`);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['convocatorias', id] });
-    },
-  });
-
-    const editarConv = useMutation({
+      const editarConv = useMutation({
       mutationFn: async () => {
         const urlCambio = formEditarConv.urlInap !== (convEditando.urlInap ?? '');
 
@@ -1030,4 +1029,5 @@ const crearConv = useMutation({
 
     </div>
   );
+  
 }
