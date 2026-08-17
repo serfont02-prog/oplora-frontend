@@ -345,7 +345,7 @@ export default function OnboardingOposicionPage() {
                   transition={{ duration: 0.3, delay: 0.1 }}
                   style={{ fontSize: 13, fontWeight: 600, color: '#16A34A', textAlign: 'center', marginBottom: 12 }}
                 >
-                  ✓ Hemos encontrado una oposición para ti
+                  ✓ Oposicion encontrada
                 </motion.div>
 
                 <motion.div
@@ -360,9 +360,11 @@ export default function OnboardingOposicionPage() {
                   <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.3, marginBottom: 6 }}>
                     {filtradas[0].nombre}
                   </div>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                    {filtradas[0].subgrupo ?? 'Sin subgrupo'}
-                  </div>
+                  {filtradas[0].subgrupo && (
+                    <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                      {filtradas[0].subgrupo}
+                    </div>
+                  )}
                 </motion.div>
 
                 <motion.button

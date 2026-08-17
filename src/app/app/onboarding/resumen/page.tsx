@@ -100,25 +100,17 @@ export default function ResumenPage() {
   </motion.div>
 
   {/* Turno y Subgrupo — en línea, etiqueta-valor */}
-  {[
-    { label: 'Turno', value: usuario.oposicionActiva?.turno === 'libre' ? 'Libre 🔥' : 'Promoción interna 📈' },
-    { label: 'Subgrupo', value: usuario.oposicionActiva?.subgrupo },
-  ].map((fila, i, arr) => (
-    <motion.div
-      key={fila.label}
-      initial={{ opacity: 0, x: -6 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25, delay: 0.48 + i * 0.08 }}
-      style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        gap: 12, padding: '9px 0',
-        borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none',
-      }}
-    >
-      <span style={{ fontSize: 12, color: '#94a3b8' }}>{fila.label}</span>
-      <span style={{ fontSize: 13, fontWeight: 600 }}>{fila.value}</span>
-    </motion.div>
-  ))}
+  {usuario.oposicionActiva?.subgrupo && (
+  <motion.div
+    initial={{ opacity: 0, x: -6 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.25, delay: 0.48 }}
+    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '9px 0' }}
+  >
+    <span style={{ fontSize: 12, color: '#94a3b8' }}>Subgrupo</span>
+    <span style={{ fontSize: 13, fontWeight: 600 }}>{usuario.oposicionActiva.subgrupo}</span>
+  </motion.div>
+)}
 </motion.div>
 
         <motion.button
