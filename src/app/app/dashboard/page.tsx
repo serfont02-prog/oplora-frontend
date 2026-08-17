@@ -247,27 +247,54 @@ const countNoLeidas = countData?.count ?? 0;
     </div>
 
     {/* Iconos flotantes, sobresaliendo del hero */}
-    <div style={{
-      position: 'absolute', bottom: '-30px', left: '12px', right: '12px',
-      display: 'flex', justifyContent: 'space-between',
-    }}>
-      {accesos.map(({ label, icon: Icon, onClick }) => (
-        <button
-          key={label}
-          onClick={onClick}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          <div style={{
-            width: 48, height: 48, borderRadius: '50%',
-            background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
-          }}>
-            <Icon size={19} color="#111827" />
-          </div>
-          <span style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 500 }}>{label}</span>
-        </button>
-      ))}
-    </div>
+<div style={{ display: 'flex', justifyContent: 'space-between' }}>
+  {accesos.map(({ label, icon: Icon, onClick }) => (
+    <button
+      key={label}
+      onClick={onClick}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+        background: 'none', border: 'none', cursor: 'pointer',
+        transition: 'transform 0.15s ease',
+      }}
+      onMouseDown={(e) => {
+        e.currentTarget.style.transform = 'scale(0.92)';
+        const circulo = e.currentTarget.querySelector('.circulo-icono') as HTMLElement;
+        if (circulo) {
+          circulo.style.background = 'white';
+          circulo.style.boxShadow = '0 2px 12px rgba(0,0,0,0.18)';
+        }
+      }}
+      onMouseUp={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+        const circulo = e.currentTarget.querySelector('.circulo-icono') as HTMLElement;
+        if (circulo) {
+          circulo.style.background = 'white';
+          circulo.style.boxShadow = '0 4px 10px rgba(0,0,0,0.12)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+      onTouchStart={(e) => {
+        e.currentTarget.style.transform = 'scale(0.92)';
+      }}
+      onTouchEnd={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+    >
+      <div className="circulo-icono" style={{
+        width: 48, height: 48, borderRadius: '50%',
+        background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
+        transition: 'box-shadow 0.15s ease',
+      }}>
+        <Icon size={19} color="#111827" />
+      </div>
+      <span style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 500 }}>{label}</span>
+    </button>
+  ))}
+</div>
   </div>
 )}
     </header>
