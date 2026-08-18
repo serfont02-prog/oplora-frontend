@@ -35,7 +35,6 @@ export default function OposicionDetallePage() {
     tipoEjercicio: '',
     numPreguntas: '',
     tiempoMinutos: '',
-    penalizacion: false,
     fraccionPenalizacion: '',
     notaMinimaAprobado: '',
     diferenciasAnterior: '',
@@ -66,7 +65,7 @@ const [formEditarConv, setFormEditarConv] = useState({
   anyo: '',
   plazas: '',
   estado: 'activa',
-  turno: '', // ⭐ nuevo
+  turno: '',
   urlInap: '',
   referenciaBoe: '',
   fechaExamen: '',
@@ -74,22 +73,21 @@ const [formEditarConv, setFormEditarConv] = useState({
   tipoEjercicio: '',
   numPreguntas: '',
   tiempoMinutos: '',
-  penalizacion: false,
   fraccionPenalizacion: '',
   notaMinimaAprobado: '',
   diferenciasAnterior: '',
-  requisitos: '', // ⭐ nuevo
-  formacionPosterior: '', // ⭐ nuevo
-  descripcionAdicional: '', // ⭐ nuevo
-  generaBolsaEmpleo: false, // ⭐ nuevo
-  bolsaEmpleoDescripcion: '', // ⭐ nuevo
-  plazasLibres: '', // ⭐ nuevo (desglose)
-  plazasPromocionInterna: '', // ⭐ nuevo
-  plazasMilitares: '', // ⭐ nuevo
-  plazasDiscapacidad: '', // ⭐ nuevo
-  fasesTexto: '', // ⭐ nuevo — una fase por línea: "tipo|nombre|descripcion"
-  puestosTexto: '', // ⭐ nuevo — un puesto por línea: "nombre|descripcion|requisitos"
-  bloquesTemarioTexto: '', // ⭐ nuevo — un bloque por línea: "nombre|descripcion"
+  requisitos: '',
+  formacionPosterior: '',
+  descripcionAdicional: '',
+  generaBolsaEmpleo: false,
+  bolsaEmpleoDescripcion: '',
+  plazasLibres: '', 
+  plazasPromocionInterna: '', 
+  plazasMilitares: '', 
+  plazasDiscapacidad: '', 
+  fasesTexto: '', 
+  puestosTexto: '', 
+  bloquesTemarioTexto: '', 
 });
 
   const { data: oposicion, isLoading } = useQuery({
@@ -175,7 +173,6 @@ const crearConv = useMutation({
         tipoEjercicio: formNuevaConv.tipoEjercicio || undefined,
         numPreguntas: formNuevaConv.numPreguntas ? parseInt(formNuevaConv.numPreguntas) : undefined,
         tiempoMinutos: formNuevaConv.tiempoMinutos ? parseInt(formNuevaConv.tiempoMinutos) : undefined,
-        penalizacion: formNuevaConv.penalizacion,
         fraccionPenalizacion: formNuevaConv.fraccionPenalizacion || undefined,
         notaMinimaAprobado: formNuevaConv.notaMinimaAprobado ? parseFloat(formNuevaConv.notaMinimaAprobado) : undefined,
         diferenciasAnterior: formNuevaConv.diferenciasAnterior || undefined,
@@ -202,7 +199,7 @@ const crearConv = useMutation({
       setFormNuevaConv({
         anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', turno: '',
         urlInap: '', referenciaBoe: '', fechaExamen: '', numEjercicios: '', tipoEjercicio: '',
-        numPreguntas: '', tiempoMinutos: '', penalizacion: false, fraccionPenalizacion: '',
+        numPreguntas: '', tiempoMinutos: '', fraccionPenalizacion: '',
         notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
         plazasLibres: '', plazasPromocionInterna: '', plazasMilitares: '', plazasDiscapacidad: '',
@@ -246,7 +243,6 @@ const crearConv = useMutation({
           tipoEjercicio: formEditarConv.tipoEjercicio || undefined,
           numPreguntas: formEditarConv.numPreguntas ? parseInt(formEditarConv.numPreguntas) : undefined,
           tiempoMinutos: formEditarConv.tiempoMinutos ? parseInt(formEditarConv.tiempoMinutos) : undefined,
-          penalizacion: formEditarConv.penalizacion,
           fraccionPenalizacion: formEditarConv.fraccionPenalizacion || undefined,
           notaMinimaAprobado: formEditarConv.notaMinimaAprobado ? parseFloat(formEditarConv.notaMinimaAprobado) : undefined,
           diferenciasAnterior: formEditarConv.diferenciasAnterior || undefined,
@@ -295,7 +291,6 @@ const crearConv = useMutation({
       tipoEjercicio: c.tipoEjercicio ?? '',
       numPreguntas: c.numPreguntas?.toString() ?? '',
       tiempoMinutos: c.tiempoMinutos?.toString() ?? '',
-      penalizacion: c.penalizacion ?? false,
       fraccionPenalizacion: c.fraccionPenalizacion ?? '',
       notaMinimaAprobado: c.notaMinimaAprobado?.toString() ?? '',
       diferenciasAnterior: c.diferenciasAnterior ?? '',
@@ -618,10 +613,6 @@ const crearConv = useMutation({
                         <input type="text" value={formNuevaConv.fraccionPenalizacion} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <input type="checkbox" id="penalizacion-nueva" checked={formNuevaConv.penalizacion} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, penalizacion: e.target.checked })} style={{ width: '14px', height: '14px', cursor: 'pointer' }} />
-                      <label htmlFor="penalizacion-nueva" style={{ fontSize: '13px', color: '#374151', cursor: 'pointer' }}>Penaliza respuesta incorrecta</label>
-                    </div>
                   </div>
                 </div>
 
@@ -781,10 +772,6 @@ const crearConv = useMutation({
                       <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
                       <input type="text" value={formEditarConv.fraccionPenalizacion} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input type="checkbox" id="penalizacion" checked={formEditarConv.penalizacion} onChange={(e) => setFormEditarConv({ ...formEditarConv, penalizacion: e.target.checked })} style={{ width: '14px', height: '14px', cursor: 'pointer' }} />
-                    <label htmlFor="penalizacion" style={{ fontSize: '13px', color: '#374151', cursor: 'pointer' }}>Penaliza respuesta incorrecta</label>
                   </div>
                 </div>
               </div>

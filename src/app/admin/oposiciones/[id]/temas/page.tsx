@@ -24,6 +24,7 @@ export default function TemasAdminPage() {
     titulo: '',
     tipo: 'con_normativa',
     contexto: '',
+    bloque: ''
   });
 
   const [modalVincular, setModalVincular] = useState(false);
@@ -36,11 +37,13 @@ export default function TemasAdminPage() {
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [temaExpandido, setTemaExpandido] = useState<string | null>(null);
+  
   const [form, setForm] = useState({
     numero: '',
     titulo: '',
     tipo: 'con_normativa',
     contexto: '',
+    bloque: '',
   });
 
   const [modalImportar, setModalImportar] = useState(false);
@@ -141,14 +144,17 @@ const { data: articulosBusqueda = [] } = useQuery({
         tipo: form.tipo,
         contexto: form.contexto || undefined,
         convocatoriaId,
+        bloque: form.bloque || undefined,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['temas-admin', convocatoriaId] });
       setModalAbierto(false);
-      setForm({ numero: '', titulo: '', tipo: 'con_normativa', contexto: '' });
+      setForm({ numero: '', titulo: '', tipo: 'con_normativa', contexto: '', bloque: '' });
     },
   });
+
+  const bloquesDisponibles = convocatoria?.bloquesTemario ?? [];
 
   const eliminar = useMutation({
     mutationFn: async (id: string) => {
@@ -178,7 +184,7 @@ mutationFn: async (articulo: any) => {
     setTemaVinculando((prev: any) => ({
       ...prev,
       normativas: [
-      ...(prev.normativas ?? []), // ⭐ fallback a array vacío
+      ...(prev.normativas ?? []), 
       {
           ...temaNormativa,
           articulo: {
@@ -221,30 +227,36 @@ const desvincularArticulo = useMutation({
   },
 });
 
-const { data: articulosTitulo = [] } = useQuery({
+  const { data: articulosTitulo = [] } = useQuery({
   queryKey: ['articulos-titulo', tituloSeleccionado?.id],
   queryFn: async () => {
     const res = await api.get(`/normativa/articulos-titulo/${tituloSeleccionado.id}`);
     return res.data;
   },
   enabled: !!tituloSeleccionado?.id && capitulos.length === 0,
-});
+  });
 
-  const importarTemario = async () => {
+const importarTemario = async () => {
   if (!textoTemario.trim() || !convocatoriaId) return;
   setImportando(true);
   try {
-    // Parsear el texto — detectar patrones como "1. Título" o "Tema 1. Título"
     const lineas = textoTemario.split('\n').filter(l => l.trim());
-    const temas: { numero: number; titulo: string }[] = [];
-    
+    const temas: { numero: number; titulo: string; bloque?: string }[] = [];
+    let bloqueActual: string | undefined = undefined;
+
     for (const linea of lineas) {
-      // Patrones: "1. Título", "1.- Título", "Tema 1. Título", "TEMA 1. Título"
+      const matchBloque = linea.match(/^##\s*(.+)$/);
+      if (matchBloque) {
+        bloqueActual = matchBloque[1].trim();
+        continue;
+      }
+
       const match = linea.match(/^(?:tema\s+)?(\d+)[.\-)\s]+(.+)$/i);
       if (match) {
         temas.push({
           numero: parseInt(match[1]),
           titulo: match[2].trim(),
+          bloque: bloqueActual,
         });
       }
     }
@@ -254,12 +266,12 @@ const { data: articulosTitulo = [] } = useQuery({
       return;
     }
 
-    // Crear temas en BD
     for (const tema of temas) {
       await api.post('/temas', {
         numero: tema.numero,
         titulo: tema.titulo,
         tipo: 'con_normativa',
+        bloque: tema.bloque,
         convocatoriaId,
       });
     }
@@ -389,11 +401,6 @@ const { data: articulosTitulo = [] } = useQuery({
                   </td>
                   <td style={{ padding: '11px 16px' }}>
                     <div style={{ fontSize: '13px', color: '#111827' }}>{tema.titulo}</div>
-                    {tema.contexto && (
-                      <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '400px' }}>
-                        {tema.contexto.slice(0, 80)}...
-                      </div>
-                    )}
                   </td>
                   <td style={{ padding: '11px 16px' }}>
                     <span style={{
@@ -418,7 +425,7 @@ const { data: articulosTitulo = [] } = useQuery({
                       <button
                         onClick={() => {
                           setTemaEditando(tema);
-                          setFormEditar({ titulo: tema.titulo, tipo: tema.tipo, contexto: tema.contexto ?? '' });
+                          setFormEditar({ titulo: tema.titulo, tipo: tema.tipo, contexto: tema.contexto ?? '', bloque: '' });
                           setModalEditar(true);
                         }}
                         style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#6b7280' }}
@@ -426,17 +433,17 @@ const { data: articulosTitulo = [] } = useQuery({
                         <Pencil size={13} />
                       </button>
                       <button
-  onClick={() => {
-    const temaFresco = temas.find((t: any) => t.id === tema.id) ?? tema;
-    setTemaVinculando(temaFresco);
-    setModalVincular(true);
-  }}
-  style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#6b7280' }}
-  title="Vincular artículos"
->
-  <span style={{ fontSize: '12px' }}>🔗</span>
-</button>
-                      <button
+                        onClick={() => {
+                          const temaFresco = temas.find((t: any) => t.id === tema.id) ?? tema;
+                          setTemaVinculando(temaFresco);
+                          setModalVincular(true);
+                        }}
+                        style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#6b7280' }}
+                        title="Vincular artículos"
+                      >
+                        <span style={{ fontSize: '12px' }}>🔗</span>
+                      </button>
+                       <button
                         onClick={() => { if (confirm('¿Eliminar este tema?')) eliminar.mutate(tema.id); }}
                         style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fee2e2', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#dc2626' }}
                       >
@@ -450,12 +457,21 @@ const { data: articulosTitulo = [] } = useQuery({
                   <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
                     <td colSpan={5} style={{ padding: '0 16px 12px', background: '#f9fafb' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '8px' }}>
-                        <div>
-                          <div style={{ fontSize: '11px', fontWeight: 500, color: '#9ca3af', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Contexto para IA</div>
-                          <div style={{ fontSize: '12px', color: '#374151', lineHeight: 1.6, background: 'white', border: '1px solid #f3f4f6', borderRadius: '8px', padding: '8px 10px' }}>
-                            {tema.contexto ?? <span style={{ color: '#9ca3af' }}>Sin contexto definido</span>}
-                          </div>
-                        </div>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                          Bloque <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opcional)</span>
+                        </label>
+                        <select
+                          value={form.bloque}
+                          onChange={(e) => setForm({ ...form, bloque: e.target.value })}
+                          style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                        >
+                          <option value="">Sin bloque</option>
+                          {bloquesDisponibles.map((b: any) => (
+                            <option key={b.nombre} value={b.nombre}>{b.nombre}</option>
+                          ))}
+                        </select>
+                      </div>
                         <div>
                           <div style={{ fontSize: '11px', fontWeight: 500, color: '#9ca3af', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Normativa vinculada</div>
                           {tema.normativas?.length > 0 ? (
@@ -528,15 +544,18 @@ const { data: articulosTitulo = [] } = useQuery({
 
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
-                  Contexto para IA <span style={{ color: '#9ca3af', fontWeight: 400 }}>(para temas sin normativa directa)</span>
+                  Bloque <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opcional)</span>
                 </label>
-                <textarea
-                  value={form.contexto}
-                  onChange={(e) => setForm({ ...form, contexto: e.target.value })}
-                  rows={4}
-                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'none' }}
-                  placeholder="Texto de contexto que la IA usará para generar preguntas sobre este tema..."
-                />
+                <select
+                  value={form.bloque}
+                  onChange={(e) => setForm({ ...form, bloque: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                >
+                  <option value="">Sin bloque</option>
+                  {bloquesDisponibles.map((b: any) => (
+                    <option key={b.nombre} value={b.nombre}>{b.nombre}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -581,7 +600,7 @@ const { data: articulosTitulo = [] } = useQuery({
       <textarea
         value={textoTemario}
         onChange={(e) => setTextoTemario(e.target.value)}
-        placeholder={`1. La Constitución española de 1978. Estructura y contenido general.\n2. Derechos y deberes fundamentales.\n3. La Corona...`}
+        placeholder={`1. La Constitución española de 1978. Estructura y contenido general.\n2. Derechos y deberes fundamentales.\n3. La Corona...\n##Bloque1\n4.Otro tema`}
         style={{ width: '100%', minHeight: '300px', padding: '10px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', resize: 'vertical', lineHeight: 1.6, fontFamily: 'monospace', boxSizing: 'border-box' }}
       />
 
@@ -844,15 +863,6 @@ const { data: articulosTitulo = [] } = useQuery({
               <option key={t.value} value={t.value}>{t.label}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Contexto para IA</label>
-          <textarea
-            value={formEditar.contexto}
-            onChange={(e) => setFormEditar({ ...formEditar, contexto: e.target.value })}
-            rows={4}
-            style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'none' }}
-          />
         </div>
       </div>
 

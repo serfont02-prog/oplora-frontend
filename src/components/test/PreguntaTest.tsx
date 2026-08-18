@@ -275,10 +275,10 @@ useEffect(() => {
             }}
           >
             ⬜ Dejar en blanco
-            {convocatoria?.penalizacion === false && (
+            {convocatoria?.fraccionPenalizacion === false && (
               <span style={{ fontSize: '11px', color: '#16A34A', marginLeft: '6px' }}>· sin penalización</span>
             )}
-            {convocatoria?.penalizacion === true && convocatoria?.fraccionPenalizacion && (
+            {convocatoria?.fraccionPenalizacion === true && convocatoria?.fraccionPenalizacion && (
               <span style={{ fontSize: '11px', color: '#d97706', marginLeft: '6px' }}>· penaliza {convocatoria.fraccionPenalizacion}</span>
             )}
           </button>

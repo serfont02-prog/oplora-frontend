@@ -91,12 +91,12 @@ function ExamenesPage() {
             <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: '#f3f4f6', color: '#6b7280' }}>
               {examenes.length} examen{examenes.length !== 1 ? 'es' : ''}
             </span>
-            {convocatoria?.tipoEjercicio && (
+            {convocatoria?.ejercicios?.length > 0 && (
               <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: '#E6F1FB', color: '#185FA5' }}>
-                {convocatoria.tipoEjercicio}
+                {convocatoria.ejercicios.map((e: any) => e.tipo).join(', ')}
               </span>
             )}
-          </div>
+           </div>
         </div>
 
         {/* Lista exámenes */}

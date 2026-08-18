@@ -22,11 +22,14 @@ export default function ModalHacerTest({
   onClose,
   temaPreseleccionado,
 }: any) {
+
+  const [esBloque, setEsBloque] = useState(false);
+  const [bloqueSeleccionado, setBloqueSeleccionado] = useState<string | null>(null);
   const [paso, setPaso] = useState<Paso>(temaPreseleccionado ? 'ajustes' : 'tipo');
-const [tipoTest, setTipoTest] = useState<TipoTest>(temaPreseleccionado ? 'tema' : null);
-const [temasSeleccionados, setTemasSeleccionados] = useState<string[]>(
-  temaPreseleccionado ? [temaPreseleccionado.id] : []
-);
+  const [tipoTest, setTipoTest] = useState<TipoTest>(temaPreseleccionado ? 'tema' : null);
+  const [temasSeleccionados, setTemasSeleccionados] = useState<string[]>(
+    temaPreseleccionado ? [temaPreseleccionado.id] : []
+  );
   const [leySeleccionada, setLeySeleccionada] = useState<string | null>(null);
 
   const [numPreguntas, setNumPreguntas] = useState(5);
@@ -58,9 +61,10 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
       const res = await api.get(`/temas/convocatoria/${convocatoria.id}`);
       return res.data;
     },
-    enabled: !!convocatoria?.id && tipoTest === 'tema',
+    enabled: !!convocatoria?.id && (tipoTest === 'tema' || esBloque),
   });
 
+  const bloquesDisponibles = convocatoria?.bloquesTemario ?? [];
   const { data: leyes = [] } = useQuery({
     queryKey: ['leyes-modal-test', oposicion?.id],
     queryFn: async () => {
@@ -86,7 +90,10 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
   };
 
   const volver = () => {
-    if (paso === 'ajustes' && tipoTest !== 'general') {
+    if (paso === 'ajustes' && esBloque) {
+      setPaso('seleccion');
+      setBloqueSeleccionado(null);
+    } else if (paso === 'ajustes' && tipoTest !== 'general') {
       setPaso('seleccion');
     } else if (paso === 'ajustes' && tipoTest === 'general') {
       setPaso('tipo');
@@ -94,6 +101,7 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
     } else if (paso === 'seleccion') {
       setPaso('tipo');
       setTipoTest(null);
+      setEsBloque(false);
     }
   };
 
@@ -123,9 +131,10 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
   return `Temas ${numeros.slice(0, -1).join(', ')} y ${numeros[numeros.length - 1]}`;
 };
 
-  const titulo = paso === 'tipo' ? 'Elige el tipo de test'
-  : paso === 'seleccion' ? (tipoTest === 'tema' ? 'Elige los temas' : 'Elige la ley')
+const titulo = paso === 'tipo' ? 'Elige el tipo de test'
+  : paso === 'seleccion' ? (esBloque ? 'Elige el bloque' : tipoTest === 'tema' ? 'Elige los temas' : 'Elige la ley')
   : temaPreseleccionado ? `Test — Tema ${temaPreseleccionado.numero}`
+  : esBloque && bloqueSeleccionado ? `Test — ${bloqueSeleccionado}`
   : tipoTest === 'tema' ? `Test — ${formatearListaTemas(numerosTemasSeleccionados)}`
   : 'Ajustes del test';
   return (
@@ -156,28 +165,32 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
         {/* PASO 1 — Tipo de test */}
         {paso === 'tipo' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {[
+                {[
               { tipo: 'general' as TipoTest, label: 'Test general', desc: 'Preguntas de todo el temario' },
               { tipo: 'tema' as TipoTest, label: 'Test por temas', desc: 'Elige uno o varios temas' },
+              { tipo: 'bloque' as any, label: 'Test por bloque', desc: 'Elige un bloque completo del temario', esBloque: true }, // ⭐ nuevo
               { tipo: 'ley' as TipoTest, label: 'Test por ley', desc: 'Elige una ley concreta' },
-            ].map(({ tipo, label, desc }) => (
+            ].filter(op => !(op as any).esBloque || bloquesDisponibles.length > 0).map(({ tipo, label, desc }) => (
               <button
                 key={tipo}
-                onClick={() => elegirTipo(tipo)}
-                style={{
-                  display: 'flex', flexDirection: 'column', gap: '2px',
-                  padding: '14px 16px', borderRadius: '14px', textAlign: 'left',
-                  border: 'none', background: 'white', cursor: 'pointer',
+                onClick={() => {
+                  if (tipo === 'bloque') {
+                    setEsBloque(true);
+                    setPaso('seleccion');
+                  } else {
+                    elegirTipo(tipo);
+                  }
                 }}
+                style={{ /* ... mismo estilo que ya tienes ... */ }}
               >
-                <span style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY }}>{label}</span>
-                <span style={{ fontSize: '12px', color: TEXT_MUTED }}>{desc}</span>
+                {/* ... contenido igual ... */}
               </button>
             ))}
-          </div>
+         </div>
         )}
 
         {/* PASO 2 — Selección de tema(s) */}
+
         {paso === 'seleccion' && tipoTest === 'tema' && (
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.25rem', maxHeight: '340px', overflowY: 'auto' }}>
@@ -223,6 +236,39 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
             </button>
           </>
         )}
+
+        {/* PASO 2 — Selección de bloque */}
+
+        {paso === 'seleccion' && esBloque && (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.25rem' }}>
+                {bloquesDisponibles.map((b: any) => {
+                  const seleccionado = bloqueSeleccionado === b.nombre;
+                  return (
+                    <button
+                      key={b.nombre}
+                      onClick={() => {
+                        setBloqueSeleccionado(b.nombre);
+                        const idsDelBloque = temas.filter((t: any) => t.bloque === b.nombre).map((t: any) => t.id);
+                        setTemasSeleccionados(idsDelBloque);
+                        setTipoTest('tema'); // ⭐ reutiliza toda la lógica de "tema" a partir de aquí
+                        setPaso('ajustes');
+                      }}
+                      style={{
+                        display: 'flex', flexDirection: 'column', gap: '2px',
+                        padding: '13px 14px', borderRadius: '12px', textAlign: 'left',
+                        border: seleccionado ? '2px solid #111827' : 'none',
+                        background: 'white', cursor: 'pointer',
+                      }}
+                    >
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>{b.nombre}</span>
+                      {b.descripcion && <span style={{ fontSize: '11px', color: TEXT_MUTED }}>{b.descripcion}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
         {/* PASO 2 — Selección de ley */}
         {paso === 'seleccion' && tipoTest === 'ley' && (
@@ -417,7 +463,7 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>Permitir dejar en blanco</div>
                   <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '1px' }}>
-                    {convocatoria?.penalizacion
+                    {convocatoria?.fraccionPenalizacion
                       ? `Esta convocatoria penaliza ${convocatoria.fraccionPenalizacion ?? ''} por error`
                       : 'Esta convocatoria no penaliza respuestas incorrectas'}
                   </div>
