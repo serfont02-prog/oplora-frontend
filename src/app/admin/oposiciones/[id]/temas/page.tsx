@@ -519,15 +519,21 @@ const importarTemario = async () => {
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo</label>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                    Bloque <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opcional)</span>
+                  </label>
                   <select
-                    value={form.tipo}
-                    onChange={(e) => setForm({ ...form, tipo: e.target.value })}
+                    value={formEditar.bloque}
+                    onChange={(e) => setFormEditar({ ...formEditar, bloque: e.target.value })}
                     style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                   >
-                    {TIPOS.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
+                    <option value="">Sin bloque</option>
+                    {bloquesDisponibles.map((b: any) => (
+                      <option key={b.nombre} value={b.nombre}>{b.nombre}</option>
                     ))}
                   </select>
+                </div>
                 </div>
               </div>
 
@@ -853,14 +859,17 @@ const importarTemario = async () => {
           />
         </div>
         <div>
-          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo</label>
+          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+            Bloque <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opcional)</span>
+          </label>
           <select
-            value={formEditar.tipo}
-            onChange={(e) => setFormEditar({ ...formEditar, tipo: e.target.value })}
+            value={formEditar.bloque}
+            onChange={(e) => setFormEditar({ ...formEditar, bloque: e.target.value })}
             style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
           >
-            {TIPOS.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+            <option value="">Sin bloque</option>
+            {bloquesDisponibles.map((b: any) => (
+              <option key={b.nombre} value={b.nombre}>{b.nombre}</option>
             ))}
           </select>
         </div>

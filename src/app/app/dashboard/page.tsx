@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useMemo, useState } from 'react';
 import { Newspaper, BarChart3, FileText, Archive, ChevronRight } from 'lucide-react';
+import {Cog6ToothIcon} from '@heroicons/react/24/outline';
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { getOploUrl } from '@/lib/oplo';
@@ -130,10 +131,10 @@ function HeaderDashboard({ usuario, ultimaConvocatoria, router }: any) {
   const oposicion = usuario?.oposicionActiva;
 
   const accesos = [
-  { label: 'Noticias', icon: Newspaper, onClick: () => router.push(`/app/oposicion/${oposicionId}?tab=documentos`) },
-  { label: 'Datos', icon: BarChart3, onClick: () => router.push(`/app/oposicion/${oposicionId}`) },
-  { label: 'Documentos', icon: FileText, onClick: () => router.push(`/app/oposicion/${oposicionId}?tab=documentos`) },
-  { label: 'Historial', icon: Archive, onClick: () => router.push(`/app/oposicion/${oposicionId}/historial`) },
+  { label: 'Ajustes', icon: Cog6ToothIcon, size: 23, onClick: () => router.push(`/app/oposicion/${oposicionId}/ajustes`) },
+  { label: 'Noticias', icon: Newspaper, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}?tab=noticias`) },
+  { label: 'Datos', icon: BarChart3, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}`) },
+  { label: 'Historial', icon: Archive, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/historial`) },
 ];
 
 const { data: countData } = useQuery({
@@ -214,22 +215,22 @@ const countNoLeidas = countData?.count ?? 0;
         </div>
       </div>
 
-      {/* Hero oscuro de la oposición (estilo "Documentos oficiales") */}
-{/* Hero oscuro de la oposición */}
-{oposicion && (
-  <div style={{ position: 'relative', marginBottom: '30px' }}>
-    <div style={{
-      background: '#0f172a', borderRadius: '16px', padding: '18px 16px 50px', // ⭐ padding inferior aumentado de 18px a 34px
-      color: 'white', display: 'flex', flexDirection: 'column', gap: '10px',
-    }}>
-      <div>
-        <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Mi oposición
-        </div>
-        <div style={{ fontSize: '16px', fontWeight: 700, lineHeight: 1.3 }}>
-          {oposicion.nombre}
-        </div>
-      </div>
+     
+      {/* Hero oscuro de la oposición */}
+      {oposicion && (
+        <div style={{ position: 'relative', marginBottom: '30px' }}>
+          <div style={{
+            background: '#0f172a', borderRadius: '16px', padding: '18px 16px 40px', // ⭐ padding inferior aumentado de 18px a 34px
+            color: 'white', display: 'flex', flexDirection: 'column', gap: '10px',
+          }}>
+            <div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Mi oposición
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, lineHeight: 1.3 }}>
+                {oposicion.nombre}
+              </div>
+            </div>
 
       {ultimaConvocatoria && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -244,15 +245,24 @@ const countNoLeidas = countData?.count ?? 0;
           </span>
         </div>
       )}
+      
     </div>
-
-    {/* Iconos flotantes, sobresaliendo del hero */}
-
-  </div>
-)}
+        
+        {/* Iconos flotantes, sobresaliendo del hero */}
+        <div style={{
+            position: 'absolute', bottom: '-38px', left: '12px', right: '12px',
+            display: 'flex', justifyContent: 'space-between',
+          }}>
+            {accesos.map(({ label, icon: Icon, size, onClick }) => (
+              <AccesoCirculo key={label} label={label} Icon={Icon} size={size} onClick={onClick} />
+            ))}
+        </div>
+        </div>
+      )}
     </header>
   );
 }
+
 /* -------------------------------------------------------
    FOOTER (neutro, color solo en activo)
 ------------------------------------------------------- */
@@ -991,5 +1001,40 @@ function SeccionOplo({ usuario }: { usuario: any }) {
       )}
 
     </>
+  );
+}
+
+function AccesoCirculo({ label, Icon, size = 19, onClick }: any) {
+  const [pulsado, setPulsado] = useState(false);
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseDown={() => setPulsado(true)}
+      onMouseUp={() => setPulsado(false)}
+      onMouseLeave={() => setPulsado(false)}
+      onTouchStart={() => setPulsado(true)}
+      onTouchEnd={() => setPulsado(false)}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+        background: 'none', border: 'none', cursor: 'pointer',
+        outline: 'none', WebkitTapHighlightColor: 'transparent', padding: 0,
+        transform: pulsado ? 'scale(0.92)' : 'scale(1)',
+        transition: 'transform 0.15s ease',
+      }}
+    >
+      <div style={{
+        width: 48, height: 48, borderRadius: '50%',
+        background: 'white',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: pulsado
+          ? '0 0 0 3px #1F7CFF, 0 4px 10px rgba(0,0,0,0.12)'
+          : '0 4px 10px rgba(0,0,0,0.12)',
+        transition: 'box-shadow 0.15s ease',
+      }}>
+       <Icon style={{ width: size, height: size }} color="#111827" />
+      </div>
+      <span style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 500 }}>{label}</span>
+    </button>
   );
 }
