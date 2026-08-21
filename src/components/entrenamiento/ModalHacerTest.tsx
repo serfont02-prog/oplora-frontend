@@ -162,32 +162,37 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
           </button>
         </div>
 
-        {/* PASO 1 — Tipo de test */}
-        {paso === 'tipo' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {[
-              { tipo: 'general' as TipoTest, label: 'Test general', desc: 'Preguntas de todo el temario' },
-              { tipo: 'tema' as TipoTest, label: 'Test por temas', desc: 'Elige uno o varios temas' },
-              { tipo: 'bloque' as any, label: 'Test por bloque', desc: 'Elige un bloque completo del temario', esBloque: true }, // ⭐ nuevo
-              { tipo: 'ley' as TipoTest, label: 'Test por ley', desc: 'Elige una ley concreta' },
-            ].filter(op => !(op as any).esBloque || bloquesDisponibles.length > 0).map(({ tipo, label, desc }) => (
-              <button
-                key={tipo}
-                onClick={() => {
-                  if (tipo === 'bloque') {
-                    setEsBloque(true);
-                    setPaso('seleccion');
-                  } else {
-                    elegirTipo(tipo);
-                  }
-                }}
-                style={{ /* ... mismo estilo que ya tienes ... */ }}
-              >
-                {/* ... contenido igual ... */}
-              </button>
-            ))}
-         </div>
-        )}
+          {/* PASO 1 — Tipo de test */}
+          {paso === 'tipo' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                { tipo: 'general' as TipoTest, label: 'Test general', desc: 'Preguntas de todo el temario' },
+                { tipo: 'tema' as TipoTest, label: 'Test por temas', desc: 'Elige uno o varios temas' },
+                { tipo: 'bloque' as any, label: 'Test por bloque', desc: 'Elige un bloque completo del temario', esBloque: true },
+                { tipo: 'ley' as TipoTest, label: 'Test por ley', desc: 'Elige una ley concreta' },
+              ].filter(op => !(op as any).esBloque || bloquesDisponibles.length > 0).map(({ tipo, label, desc }) => (
+                <button
+                  key={tipo}
+                  onClick={() => {
+                    if (tipo === 'bloque') {
+                      setEsBloque(true);
+                      setPaso('seleccion');
+                    } else {
+                      elegirTipo(tipo);
+                    }
+                  }}
+                  style={{
+                    display: 'flex', flexDirection: 'column', gap: '2px',
+                    padding: '14px 16px', borderRadius: '14px', textAlign: 'left',
+                    border: 'none', background: 'white', cursor: 'pointer',
+                  }}
+                >
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY }}>{label}</span>
+                  <span style={{ fontSize: '12px', color: TEXT_MUTED }}>{desc}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
         {/* PASO 2 — Selección de tema(s) */}
 
