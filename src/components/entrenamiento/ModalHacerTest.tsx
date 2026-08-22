@@ -90,20 +90,21 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
   };
 
   const volver = () => {
-    if (paso === 'ajustes' && esBloque) {
-      setPaso('seleccion');
-      setBloqueSeleccionado(null);
-    } else if (paso === 'ajustes' && tipoTest !== 'general') {
-      setPaso('seleccion');
-    } else if (paso === 'ajustes' && tipoTest === 'general') {
-      setPaso('tipo');
-      setTipoTest(null);
-    } else if (paso === 'seleccion') {
-      setPaso('tipo');
-      setTipoTest(null);
-      setEsBloque(false);
-    }
-  };
+  if (paso === 'ajustes' && esBloque) {
+    setPaso('seleccion');
+    setBloqueSeleccionado(null);
+    setTemasSeleccionados([]);
+  } else if (paso === 'ajustes' && tipoTest !== 'general') {
+    setPaso('seleccion');
+  } else if (paso === 'ajustes' && tipoTest === 'general') {
+    setPaso('tipo');
+    setTipoTest(null);
+  } else if (paso === 'seleccion') {
+    setPaso('tipo');
+    setTipoTest(null);
+    setEsBloque(false);
+  }
+};
 
   const empezarTest = () => {
     const tiempo = modoTiempo !== 'sin_tiempo' ? `&tiempo=${modoTiempo}` : '';
@@ -196,7 +197,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
 
         {/* PASO 2 — Selección de tema(s) */}
 
-        {paso === 'seleccion' && tipoTest === 'tema' && (
+        {paso === 'seleccion' && tipoTest === 'tema' && !esBloque && ( 
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.25rem', maxHeight: '340px', overflowY: 'auto' }}>
               {temas.map((t: any) => {
