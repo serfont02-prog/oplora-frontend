@@ -383,7 +383,7 @@ const updateProgreso = () => {
             }}>
               {bloque.texto}
             </div>
-          ) : (
+          ) : bloque.nivel === 2 ? (
             <div key={bloque.id} style={{
               fontSize: '14px', fontWeight: 600, color: '#4b5563',
               marginTop: '22px', marginBottom: '10px',
@@ -391,7 +391,47 @@ const updateProgreso = () => {
             }}>
               {bloque.texto}
             </div>
+          ) : (
+            <div key={bloque.id} style={{
+              fontSize: '13px', fontWeight: 700, color: '#1F7CFF',
+              marginTop: '18px', marginBottom: '8px',
+            }}>
+              {bloque.texto}
+            </div>
           );
+
+          case 'destacado':
+            return (
+              <div key={bloque.id} style={{
+                background: '#FEF9E7', border: '1px solid #FDE68A', borderRadius: '12px',
+                padding: '14px 16px', marginBottom: '16px', marginTop: '18px',
+              }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#92400E', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  💡 {bloque.titulo}
+                </div>
+                {bloque.contenido.map((c: any, i: number) => {
+                  if (c.tipo === 'parrafo') {
+                    return (
+                      <div key={i} style={{ fontSize: `${fontSize}px`, color: '#78350F', lineHeight: 1.75, marginBottom: i < bloque.contenido.length - 1 ? '8px' : 0 }}>
+                        {c.texto}
+                      </div>
+                    );
+                  }
+                  if (c.tipo === 'lista') {
+                    return (
+                      <ul key={i} style={{ margin: '0 0 8px', paddingLeft: '18px', listStyleType: c.ordenada ? 'decimal' : 'disc' }}>
+                        {c.items.map((item: string, j: number) => (
+                          <li key={j} style={{ fontSize: `${fontSize}px`, color: '#78350F', lineHeight: 1.7, marginBottom: '4px' }}>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            );
 
         case 'parrafo':
           return (

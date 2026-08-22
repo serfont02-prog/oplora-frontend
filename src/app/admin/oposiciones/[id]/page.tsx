@@ -31,10 +31,7 @@ export default function OposicionDetallePage() {
     urlInap: '',
     referenciaBoe: '',
     fechaExamen: '',
-    numEjercicios: '',
-    tipoEjercicio: '',
-    numPreguntas: '',
-    tiempoMinutos: '',
+    ejercicios: [] as { numero: number; tipo: string; numPreguntas: string; tiempoMinutos: string; descripcion: string }[],
     fraccionPenalizacion: '',
     notaMinimaAprobado: '',
     diferenciasAnterior: '',
@@ -69,10 +66,7 @@ const [formEditarConv, setFormEditarConv] = useState({
   urlInap: '',
   referenciaBoe: '',
   fechaExamen: '',
-  numEjercicios: '',
-  tipoEjercicio: '',
-  numPreguntas: '',
-  tiempoMinutos: '',
+ ejercicios: [] as { numero: number; tipo: string; numPreguntas: string; tiempoMinutos: string; descripcion: string }[],
   fraccionPenalizacion: '',
   notaMinimaAprobado: '',
   diferenciasAnterior: '',
@@ -169,10 +163,15 @@ const crearConv = useMutation({
         urlInap: formNuevaConv.urlInap || undefined,
         referenciaBoe: formNuevaConv.referenciaBoe || undefined,
         fechaExamen: formNuevaConv.fechaExamen || undefined,
-        numEjercicios: formNuevaConv.numEjercicios ? parseInt(formNuevaConv.numEjercicios) : undefined,
-        tipoEjercicio: formNuevaConv.tipoEjercicio || undefined,
-        numPreguntas: formNuevaConv.numPreguntas ? parseInt(formNuevaConv.numPreguntas) : undefined,
-        tiempoMinutos: formNuevaConv.tiempoMinutos ? parseInt(formNuevaConv.tiempoMinutos) : undefined,
+        ejercicios: formNuevaConv.ejercicios.length > 0
+        ? formNuevaConv.ejercicios.map((ej) => ({
+            numero: ej.numero,
+            tipo: ej.tipo,
+            numPreguntas: ej.numPreguntas ? parseInt(ej.numPreguntas) : undefined,
+            tiempoMinutos: ej.tiempoMinutos ? parseInt(ej.tiempoMinutos) : undefined,
+            descripcion: ej.descripcion || undefined,
+          }))
+        : undefined,
         fraccionPenalizacion: formNuevaConv.fraccionPenalizacion || undefined,
         notaMinimaAprobado: formNuevaConv.notaMinimaAprobado ? parseFloat(formNuevaConv.notaMinimaAprobado) : undefined,
         diferenciasAnterior: formNuevaConv.diferenciasAnterior || undefined,
@@ -198,8 +197,8 @@ const crearConv = useMutation({
       setModalNuevaConv(false);
       setFormNuevaConv({
         anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', turno: '',
-        urlInap: '', referenciaBoe: '', fechaExamen: '', numEjercicios: '', tipoEjercicio: '',
-        numPreguntas: '', tiempoMinutos: '', fraccionPenalizacion: '',
+        urlInap: '', referenciaBoe: '', fechaExamen: '', ejercicios: [],
+        fraccionPenalizacion: '',
         notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
         plazasLibres: '', plazasPromocionInterna: '', plazasMilitares: '', plazasDiscapacidad: '',
@@ -239,10 +238,15 @@ const crearConv = useMutation({
           urlInap: formEditarConv.urlInap || undefined,
           referenciaBoe: formEditarConv.referenciaBoe || undefined,
           fechaExamen: formEditarConv.fechaExamen || undefined,
-          numEjercicios: formEditarConv.numEjercicios ? parseInt(formEditarConv.numEjercicios) : undefined,
-          tipoEjercicio: formEditarConv.tipoEjercicio || undefined,
-          numPreguntas: formEditarConv.numPreguntas ? parseInt(formEditarConv.numPreguntas) : undefined,
-          tiempoMinutos: formEditarConv.tiempoMinutos ? parseInt(formEditarConv.tiempoMinutos) : undefined,
+          ejercicios: formEditarConv.ejercicios.length > 0
+          ? formEditarConv.ejercicios.map((ej) => ({
+              numero: ej.numero,
+              tipo: ej.tipo,
+              numPreguntas: ej.numPreguntas ? parseInt(ej.numPreguntas) : undefined,
+              tiempoMinutos: ej.tiempoMinutos ? parseInt(ej.tiempoMinutos) : undefined,
+              descripcion: ej.descripcion || undefined,
+            }))
+          : null,
           fraccionPenalizacion: formEditarConv.fraccionPenalizacion || undefined,
           notaMinimaAprobado: formEditarConv.notaMinimaAprobado ? parseFloat(formEditarConv.notaMinimaAprobado) : undefined,
           diferenciasAnterior: formEditarConv.diferenciasAnterior || undefined,
@@ -287,10 +291,13 @@ const crearConv = useMutation({
       urlInap: c.urlInap ?? '',
       referenciaBoe: c.referenciaBoe ?? '',
       fechaExamen: c.fechaExamen ? new Date(c.fechaExamen).toISOString().split('T')[0] : '',
-      numEjercicios: c.numEjercicios?.toString() ?? '',
-      tipoEjercicio: c.tipoEjercicio ?? '',
-      numPreguntas: c.numPreguntas?.toString() ?? '',
-      tiempoMinutos: c.tiempoMinutos?.toString() ?? '',
+      ejercicios: (c.ejercicios ?? []).map((ej: any) => ({
+        numero: ej.numero,
+        tipo: ej.tipo,
+        numPreguntas: ej.numPreguntas?.toString() ?? '',
+        tiempoMinutos: ej.tiempoMinutos?.toString() ?? '',
+        descripcion: ej.descripcion ?? '',
+      })),
       fraccionPenalizacion: c.fraccionPenalizacion ?? '',
       notaMinimaAprobado: c.notaMinimaAprobado?.toString() ?? '',
       diferenciasAnterior: c.diferenciasAnterior ?? '',
@@ -572,47 +579,132 @@ const crearConv = useMutation({
                   <input type="text" value={formNuevaConv.referenciaBoe} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, referenciaBoe: e.target.value })} placeholder="BOE-A-2025-..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
-                {/* Características del examen */}
-                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '10px' }}>Prueba teórica</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº ejercicios</label>
-                        <input type="number" value={formNuevaConv.numEjercicios} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, numEjercicios: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo ejercicio</label>
-                        <select value={formNuevaConv.tipoEjercicio} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, tipoEjercicio: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
-                          <option value="">Sin especificar</option>
-                          <option value="test">Test</option>
-                          <option value="desarrollo">Desarrollo</option>
-                          <option value="oral">Oral</option>
-                          <option value="practico">Práctico</option>
-                          <option value="mixto">Mixto</option>
-                        </select>
-                      </div>
+                {/* Ejercicios de la prueba */}
+                  <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>Ejercicios de la prueba</div>
+                      <button
+                        type="button"
+                        onClick={() => setFormEditarConv({
+                          ...formEditarConv,
+                          ejercicios: [
+                            ...formEditarConv.ejercicios,
+                            { numero: formEditarConv.ejercicios.length + 1, tipo: 'test', numPreguntas: '', tiempoMinutos: '', descripcion: '' },
+                          ],
+                        })}
+                        style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        + Añadir ejercicio
+                      </button>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº preguntas</label>
-                        <input type="number" value={formNuevaConv.numPreguntas} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, numPreguntas: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tiempo (minutos)</label>
-                        <input type="number" value={formNuevaConv.tiempoMinutos} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, tiempoMinutos: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                      </div>
+
+                    {formEditarConv.ejercicios.length === 0 && (
+                      <div style={{ fontSize: '12px', color: '#9ca3af', padding: '8px 0' }}>Sin ejercicios definidos todavía</div>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {formEditarConv.ejercicios.map((ej, idx) => (
+                        <div key={idx} style={{ background: '#FAFAFA', borderRadius: '10px', padding: '12px', position: 'relative' }}>
+                          <button
+                            type="button"
+                            onClick={() => setFormEditarConv({
+                              ...formEditarConv,
+                              ejercicios: formEditarConv.ejercicios.filter((_, i) => i !== idx),
+                            })}
+                            style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: '12px', fontWeight: 600 }}
+                          >
+                            ✕
+                          </button>
+
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280', marginBottom: '8px' }}>Ejercicio {ej.numero}</div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                            <div>
+                              <label style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo</label>
+                              <select
+                                value={ej.tipo}
+                                onChange={(e) => {
+                                  const nuevos = [...formEditarConv.ejercicios];
+                                  nuevos[idx] = { ...ej, tipo: e.target.value };
+                                  setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                                }}
+                                style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                              >
+                                <option value="test">Test</option>
+                                <option value="desarrollo">Desarrollo</option>
+                                <option value="oral">Oral</option>
+                                <option value="practico">Práctico</option>
+                                <option value="mixto">Mixto</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº preguntas</label>
+                              <input
+                                type="number"
+                                value={ej.numPreguntas}
+                                onChange={(e) => {
+                                  const nuevos = [...formEditarConv.ejercicios];
+                                  nuevos[idx] = { ...ej, numPreguntas: e.target.value };
+                                  setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                                }}
+                                style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            <div>
+                              <label style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tiempo (min)</label>
+                              <input
+                                type="number"
+                                value={ej.tiempoMinutos}
+                                onChange={(e) => {
+                                  const nuevos = [...formEditarConv.ejercicios];
+                                  nuevos[idx] = { ...ej, tiempoMinutos: e.target.value };
+                                  setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                                }}
+                                style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Descripción</label>
+                              <input
+                                type="text"
+                                value={ej.descripcion}
+                                onChange={(e) => {
+                                  const nuevos = [...formEditarConv.ejercicios];
+                                  nuevos[idx] = { ...ej, descripcion: e.target.value };
+                                  setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                                }}
+                                placeholder="Opcional"
+                                style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nota mínima</label>
-                        <input type="number" step="0.01" value={formNuevaConv.notaMinimaAprobado} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, notaMinimaAprobado: e.target.value })} placeholder="5.00" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
-                        <input type="text" value={formNuevaConv.fraccionPenalizacion} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                      </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nota mínima</label>
+                      <input type="number" step="0.01" value={formEditarConv.notaMinimaAprobado} onChange={(e) => setFormEditarConv({ ...formEditarConv, notaMinimaAprobado: e.target.value })} placeholder="5.00" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                     </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
+                      <input type="text" value={formEditarConv.fraccionPenalizacion} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                  </div>
+                {/* Nota mínima y penalización — se quedan igual */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nota mínima</label>
+                    <input type="number" step="0.01" value={formNuevaConv.notaMinimaAprobado} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, notaMinimaAprobado: e.target.value })} placeholder="5.00" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
+                    <input type="text" value={formNuevaConv.fraccionPenalizacion} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                 </div>
 
@@ -732,47 +824,121 @@ const crearConv = useMutation({
                 <input type="text" value={formEditarConv.referenciaBoe} onChange={(e) => setFormEditarConv({ ...formEditarConv, referenciaBoe: e.target.value })} placeholder="BOE-A-2025-..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
               </div>
 
-              {/* Características del examen */}
+              {/* Ejercicios de la prueba */}
               <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>Características del examen</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo ejercicio</label>
-                      <select value={formEditarConv.tipoEjercicio} onChange={(e) => setFormEditarConv({ ...formEditarConv, tipoEjercicio: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
-                        <option value="">Sin especificar</option>
-                        <option value="test">Test</option>
-                        <option value="desarrollo">Desarrollo</option>
-                        <option value="oral">Oral</option>
-                        <option value="practico">Práctico</option>
-                        <option value="mixto">Mixto</option>
-                      </select>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>Ejercicios de la prueba</div>
+                  <button
+                    type="button"
+                    onClick={() => setFormEditarConv({
+                      ...formEditarConv,
+                      ejercicios: [
+                        ...formEditarConv.ejercicios,
+                        { numero: formEditarConv.ejercicios.length + 1, tipo: 'test', numPreguntas: '', tiempoMinutos: '', descripcion: '' },
+                      ],
+                    })}
+                    style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    + Añadir ejercicio
+                  </button>
+                </div>
+
+                {formEditarConv.ejercicios.length === 0 && (
+                  <div style={{ fontSize: '12px', color: '#9ca3af', padding: '8px 0' }}>Sin ejercicios definidos todavía</div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {formEditarConv.ejercicios.map((ej, idx) => (
+                    <div key={idx} style={{ background: '#FAFAFA', borderRadius: '10px', padding: '12px', position: 'relative' }}>
+                      <button
+                        type="button"
+                        onClick={() => setFormEditarConv({
+                          ...formEditarConv,
+                          ejercicios: formEditarConv.ejercicios.filter((_, i) => i !== idx),
+                        })}
+                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: '12px', fontWeight: 600 }}
+                      >
+                        ✕
+                      </button>
+
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280', marginBottom: '8px' }}>Ejercicio {ej.numero}</div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo</label>
+                          <select
+                            value={ej.tipo}
+                            onChange={(e) => {
+                              const nuevos = [...formEditarConv.ejercicios];
+                              nuevos[idx] = { ...ej, tipo: e.target.value };
+                              setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                            }}
+                            style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                          >
+                            <option value="test">Test</option>
+                            <option value="desarrollo">Desarrollo</option>
+                            <option value="oral">Oral</option>
+                            <option value="practico">Práctico</option>
+                            <option value="mixto">Mixto</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº preguntas</label>
+                          <input
+                            type="number"
+                            value={ej.numPreguntas}
+                            onChange={(e) => {
+                              const nuevos = [...formEditarConv.ejercicios];
+                              nuevos[idx] = { ...ej, numPreguntas: e.target.value };
+                              setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                            }}
+                            style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tiempo (min)</label>
+                          <input
+                            type="number"
+                            value={ej.tiempoMinutos}
+                            onChange={(e) => {
+                              const nuevos = [...formEditarConv.ejercicios];
+                              nuevos[idx] = { ...ej, tiempoMinutos: e.target.value };
+                              setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                            }}
+                            style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Descripción</label>
+                          <input
+                            type="text"
+                            value={ej.descripcion}
+                            onChange={(e) => {
+                              const nuevos = [...formEditarConv.ejercicios];
+                              nuevos[idx] = { ...ej, descripcion: e.target.value };
+                              setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                            }}
+                            placeholder="Opcional"
+                            style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº ejercicios</label>
-                      <input type="number" value={formEditarConv.numEjercicios} onChange={(e) => setFormEditarConv({ ...formEditarConv, numEjercicios: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº preguntas</label>
-                      <input type="number" value={formEditarConv.numPreguntas} onChange={(e) => setFormEditarConv({ ...formEditarConv, numPreguntas: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tiempo (minutos)</label>
-                      <input type="number" value={formEditarConv.tiempoMinutos} onChange={(e) => setFormEditarConv({ ...formEditarConv, tiempoMinutos: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nota mínima</label>
-                      <input type="number" step="0.01" value={formEditarConv.notaMinimaAprobado} onChange={(e) => setFormEditarConv({ ...formEditarConv, notaMinimaAprobado: e.target.value })} placeholder="5.00" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
-                      <input type="text" value={formEditarConv.fraccionPenalizacion} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                  </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nota mínima</label>
+                  <input type="number" step="0.01" value={formEditarConv.notaMinimaAprobado} onChange={(e) => setFormEditarConv({ ...formEditarConv, notaMinimaAprobado: e.target.value })} placeholder="5.00" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
+                  <input type="text" value={formEditarConv.fraccionPenalizacion} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               </div>
 
