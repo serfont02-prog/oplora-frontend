@@ -400,38 +400,39 @@ const updateProgreso = () => {
             </div>
           );
 
-          case 'destacado':
+        
+
+        
+           case 'destacado': {
+              const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; emoji: string }> = {
+            EJEMPLO: { bg: '#F0F7FF', border: '#bfdbfe', color: '#1F7CFF', emoji: '📘' },
+            IDEA: { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡' },
+            ESQUEMA: { bg: '#F0FDF4', border: '#86efac', color: '#15803d', emoji: '🗺️' },
+            'TRAMPA DE EXAMEN': { bg: '#FEF2F2', border: '#fca5a5', color: '#dc2626', emoji: '⚠️' },
+            'REGLA DE EXAMEN': { bg: '#F3E8FF', border: '#e9d5ff', color: '#7c3aed', emoji: '📏' },
+          };
+            const cfg = DESTACADO_CONFIG[bloque.titulo] ?? DESTACADO_CONFIG.IDEA;
             return (
               <div key={bloque.id} style={{
-                background: '#FEF9E7', border: '1px solid #FDE68A', borderRadius: '12px',
+                background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '12px',
                 padding: '14px 16px', marginBottom: '16px', marginTop: '18px',
               }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#92400E', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  💡 {bloque.titulo}
+                <div style={{ fontSize: '11px', fontWeight: 700, color: cfg.color, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {cfg.emoji} {bloque.titulo}
                 </div>
                 {bloque.contenido.map((c: any, i: number) => {
                   if (c.tipo === 'parrafo') {
                     return (
-                      <div key={i} style={{ fontSize: `${fontSize}px`, color: '#78350F', lineHeight: 1.75, marginBottom: i < bloque.contenido.length - 1 ? '8px' : 0 }}>
+                      <div key={i} style={{ fontSize: `${fontSize}px`, color: cfg.color, lineHeight: 1.75, marginBottom: i < bloque.contenido.length - 1 ? '8px' : 0, opacity: 0.9 }}>
                         {c.texto}
                       </div>
-                    );
-                  }
-                  if (c.tipo === 'lista') {
-                    return (
-                      <ul key={i} style={{ margin: '0 0 8px', paddingLeft: '18px', listStyleType: c.ordenada ? 'decimal' : 'disc' }}>
-                        {c.items.map((item: string, j: number) => (
-                          <li key={j} style={{ fontSize: `${fontSize}px`, color: '#78350F', lineHeight: 1.7, marginBottom: '4px' }}>
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
                     );
                   }
                   return null;
                 })}
               </div>
             );
+          }
 
         case 'parrafo':
           return (
