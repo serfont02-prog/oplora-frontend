@@ -405,12 +405,13 @@ const updateProgreso = () => {
         
            case 'destacado': {
               const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; emoji: string }> = {
-            EJEMPLO: { bg: '#F0F7FF', border: '#bfdbfe', color: '#1F7CFF', emoji: '📘' },
-            IDEA: { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡' },
-            ESQUEMA: { bg: '#F0FDF4', border: '#86efac', color: '#15803d', emoji: '🗺️' },
-            'TRAMPA DE EXAMEN': { bg: '#FEF2F2', border: '#fca5a5', color: '#dc2626', emoji: '⚠️' },
-            'REGLA DE EXAMEN': { bg: '#F3E8FF', border: '#e9d5ff', color: '#7c3aed', emoji: '📏' },
-          };
+                EJEMPLO: { bg: '#FFFFFF', border: '#E5E7EB', color: '#374151', emoji: '📘' },
+                IDEA: { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡' },
+                ESQUEMA: { bg: '#F3FBF5', border: '#BBF0CB', color: '#15803d', emoji: '🗺️' },
+                'TRAMPA DE EXAMEN': { bg: '#FEF2F2', border: '#fca5a5', color: '#dc2626', emoji: '⚠️' },
+                'REGLA DE EXAMEN': { bg: '#F3E8FF', border: '#e9d5ff', color: '#7c3aed', emoji: '📏' },
+                'PREGUNTA FRECUENTE': { bg: '#FFF7ED', border: '#FED7AA', color: '#C2410C', emoji: '❓' },
+              };
             const cfg = DESTACADO_CONFIG[bloque.titulo] ?? DESTACADO_CONFIG.IDEA;
             return (
               <div key={bloque.id} style={{
