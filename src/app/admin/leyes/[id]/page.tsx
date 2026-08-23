@@ -32,7 +32,7 @@ export default function LeyDetallePage() {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [resultadoVersion, setResultadoVersion] = useState<any>(null);
 
-  const [formLey, setFormLey] = useState({ nombre: '', descripcion: '' });
+  const [formLey, setFormLey] = useState({ nombre: '', siglas: '', descripcion: '' });
   const [formVersion, setFormVersion] = useState({
     version: '',
     referenciaBoe: '',
@@ -84,13 +84,14 @@ export default function LeyDetallePage() {
   });
 
   useEffect(() => {
-    if (ley) {
-      setFormLey({
-        nombre: ley.nombre ?? '',
-        descripcion: ley.descripcion ?? '',
-      });
-    }
-  }, [ley]);
+  if (ley) {
+    setFormLey({
+      nombre: ley.nombre ?? '',
+      siglas: ley.siglas ?? '',
+      descripcion: ley.descripcion ?? '',
+    });
+  }
+}, [ley]);
 
   useEffect(() => {
     if (versiones.length > 0) {
@@ -324,11 +325,13 @@ export default function LeyDetallePage() {
       <div style={{ flex: 1, overflowY: 'auto', background: '#f9fafb', padding: '1.5rem' }}>
         <div style={{ maxWidth: '580px' }}>
 
-          {/* TAB: Información */}
-          {tab === 'info' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827' }}>Datos de la ley</div>
+        {/* TAB: Información */}
+        {tab === 'info' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827' }}>Datos de la ley</div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Nombre</label>
                   <input
@@ -339,28 +342,42 @@ export default function LeyDetallePage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Descripción</label>
-                  <textarea
-                    value={formLey.descripcion}
-                    onChange={(e) => setFormLey({ ...formLey, descripcion: e.target.value })}
-                    rows={3}
-                    placeholder="Descripción breve de la ley..."
-                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'none' }}
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>
+                    Siglas <span style={{ color: '#9ca3af', fontWeight: 400 }}>(ej: CE)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formLey.siglas ?? ''}
+                    onChange={(e) => setFormLey({ ...formLey, siglas: e.target.value.toUpperCase() })}
+                    placeholder="CE"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
 
-              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '12px', padding: '12px 16px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 500, color: '#92400e', marginBottom: '4px' }}>Versiones</div>
-                <div style={{ fontSize: '12px', color: '#b45309' }}>
-                  Esta ley tiene <strong>{versiones.length}</strong> versión(es).
-                  {versiones.find((v: any) => v.activa) && (
-                    <span> Versión activa: <strong>v{versiones.find((v: any) => v.activa)?.version}</strong></span>
-                  )}
-                </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Descripción</label>
+                <textarea
+                  value={formLey.descripcion}
+                  onChange={(e) => setFormLey({ ...formLey, descripcion: e.target.value })}
+                  rows={3}
+                  placeholder="Descripción breve de la ley..."
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'none' }}
+                />
               </div>
             </div>
-          )}
+
+            <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '12px', padding: '12px 16px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 500, color: '#92400e', marginBottom: '4px' }}>Versiones</div>
+              <div style={{ fontSize: '12px', color: '#b45309' }}>
+                Esta ley tiene <strong>{versiones.length}</strong> versión(es).
+                {versiones.find((v: any) => v.activa) && (
+                  <span> Versión activa: <strong>v{versiones.find((v: any) => v.activa)?.version}</strong></span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
           {/* TAB: Versiones */}
           {tab === 'versiones' && (

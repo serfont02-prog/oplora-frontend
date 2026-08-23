@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
@@ -29,6 +29,7 @@ export default function ApunteOploraPage() {
   const textoCompletoRef = useRef<any>(null);
 
   const [articuloModal, setArticuloModal] = useState<{ numero: string; versionLeyId: string } | null>(null);
+
 
   const { data: articuloAbierto, isLoading: cargandoArticulo } = useQuery({
     queryKey: ['articulo-modal', articuloModal?.versionLeyId, articuloModal?.numero],
@@ -73,6 +74,29 @@ export default function ApunteOploraPage() {
     },
     enabled: !!usuario && !!id,
   });
+
+
+// ⭐ derivar oposicionId contemplando ambos casos posibles
+const oposicionId = apunte?.tema?.convocatoria?.oposicion?.id ?? apunte?.oposicion?.id;
+
+const { data: leyesOposicion = [] } = useQuery({
+  queryKey: ['leyes-siglas', oposicionId],
+  queryFn: async () => {
+    const res = await api.get(`/leyes/oposicion/${oposicionId}`);
+    return res.data;
+  },
+  enabled: !!oposicionId,
+});
+
+const mapaSiglas = useMemo(() => {
+  const mapa: Record<string, string> = {};
+  for (const ol of leyesOposicion) {
+    if (ol.ley?.siglas && ol.versionLey?.id) {
+      mapa[ol.ley.siglas.toUpperCase()] = ol.versionLey.id;
+    }
+  }
+  return mapa;
+}, [leyesOposicion]);
 
   useEffect(() => {
     if (progresoGuardado?.porcentaje) {
@@ -443,10 +467,10 @@ const updateProgreso = () => {
               wordBreak: 'break-word', overflowWrap: 'anywhere',
             }}>
               <TextoConReferencias
-                texto={bloque.texto}
-                versionLeyId={bloque.versionLeyId ?? apunte.versionLeyId}
-                onAbrirArticulo={abrirArticulo}
-              />
+              texto={bloque.texto}
+              mapaSiglas={mapaSiglas}
+              onAbrirArticulo={abrirArticulo}
+            />
             </div>
           );
         case 'lista':
@@ -462,7 +486,7 @@ const updateProgreso = () => {
                 }}>
                   <TextoConReferencias
                     texto={item}
-                    versionLeyId={apunte.versionLeyId}
+                    mapaSiglas={mapaSiglas}
                     onAbrirArticulo={abrirArticulo}
                   />
                 </li>
@@ -648,17 +672,15 @@ const updateProgreso = () => {
 
 function TextoConReferencias({
   texto,
-  versionLeyId,
+  mapaSiglas,
   onAbrirArticulo,
 }: {
   texto: string;
-  versionLeyId?: string;
+  mapaSiglas: Record<string, string>; // { "CE": "versionLeyId-xxx", "LOFCS": "versionLeyId-yyy" }
   onAbrirArticulo: (numero: string, versionLeyId: string) => void;
 }) {
-  if (!versionLeyId) return <>{texto}</>;
-
-  const regex = /art(?:ículo|\.)?\s*(\d+)/gi;
-  const partes: (string | { numero: string })[] = [];
+  const regex = /\[([A-ZÁÉÍÓÚÑ]+)\s+art[ií]culo\s+([\d.]+)\]/gi;
+  const partes: (string | { siglas: string; numero: string })[] = [];
   let ultimoIndex = 0;
   let match;
 
@@ -666,7 +688,7 @@ function TextoConReferencias({
     if (match.index > ultimoIndex) {
       partes.push(texto.slice(ultimoIndex, match.index));
     }
-    partes.push({ numero: match[1] });
+    partes.push({ siglas: match[1].toUpperCase(), numero: match[2] });
     ultimoIndex = match.index + match[0].length;
   }
   if (ultimoIndex < texto.length) {
@@ -675,10 +697,16 @@ function TextoConReferencias({
 
   return (
     <>
-      {partes.map((parte, i) =>
-        typeof parte === 'string' ? (
-          <span key={i}>{parte}</span>
-        ) : (
+      {partes.map((parte, i) => {
+        if (typeof parte === 'string') {
+          return <span key={i}>{parte}</span>;
+        }
+        const versionLeyId = mapaSiglas[parte.siglas];
+        if (!versionLeyId) {
+          // Si no encontramos la ley por esas siglas, mostramos el texto tal cual sin enlace
+          return <span key={i}>{parte.siglas} art. {parte.numero}</span>;
+        }
+        return (
           <button
             key={i}
             onClick={() => onAbrirArticulo(parte.numero, versionLeyId)}
@@ -689,10 +717,10 @@ function TextoConReferencias({
               fontSize: 'inherit', fontFamily: 'inherit',
             }}
           >
-            art. {parte.numero}
+            {parte.siglas} art. {parte.numero}
           </button>
-        )
-      )}
+        );
+      })}
     </>
   );
 }

@@ -25,6 +25,7 @@ export default function NuevaLeyPage() {
   const [oposicionesSeleccionadas, setOposicionesSeleccionadas] = useState<string[]>([]);
   const [form, setForm] = useState({
     nombre: '',
+    siglas: '',
     referenciaBoe: '',
     tipoNorma: '',
     fechaPublicacion: '',
@@ -43,8 +44,9 @@ export default function NuevaLeyPage() {
     mutationFn: async () => {
       const formData = new FormData();
       formData.append('nombre', form.nombre);
+      if (form.siglas) formData.append('siglas', form.siglas.toUpperCase());
       if (oposicionesSeleccionadas.length > 0) {
-      formData.append('oposicionIds', JSON.stringify(oposicionesSeleccionadas));
+        formData.append('oposicionIds', JSON.stringify(oposicionesSeleccionadas));
       }
       if (form.referenciaBoe) formData.append('referenciaBoe', form.referenciaBoe);
       if (form.tipoNorma) formData.append('tipoNorma', form.tipoNorma);
@@ -98,34 +100,31 @@ export default function NuevaLeyPage() {
     );
   };
 
-  // ---------------------------
-  // RESULTADO FINAL
-  // ---------------------------
   if (resultado) {
     return (
-      <div className="flex flex-col h-full">
-        <div className="px-6 py-3 border-b border-gray-100 bg-white flex items-center gap-3">
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ padding: '10px 1.5rem', borderBottom: '1px solid #f3f4f6', background: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             onClick={() => router.push('/admin/leyes')}
-            className="flex items-center gap-1.5 text-[13px] text-gray-500 hover:text-gray-900 transition-colors"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
           >
             <ArrowLeft size={14} />
             Leyes
           </button>
-          <span className="text-gray-300">/</span>
-          <span className="text-[13px] text-gray-500">Ley subida</span>
+          <span style={{ color: '#d1d5db' }}>/</span>
+          <span style={{ fontSize: '13px', color: '#6b7280' }}>Ley subida</span>
         </div>
 
-        <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
-          <CheckCircle size={48} className="text-green-600 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+        <div style={{ flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <CheckCircle size={48} color="#16A34A" style={{ marginBottom: '1rem' }} />
+          <div style={{ fontSize: '18px', fontWeight: 600, color: '#111827', marginBottom: '6px' }}>
             Ley subida correctamente
-          </h2>
-          <p className="text-gray-500 mb-6">{resultado.ley?.nombre}</p>
+          </div>
+          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '1.5rem' }}>{resultado.ley?.nombre}</div>
 
           <button
             onClick={() => router.push('/admin/leyes')}
-            className="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            style={{ padding: '9px 20px', fontSize: '13px', background: '#111827', color: 'white', borderRadius: '9px', border: 'none', cursor: 'pointer' }}
           >
             Volver a Leyes
           </button>
@@ -134,118 +133,120 @@ export default function NuevaLeyPage() {
     );
   }
 
-  // ---------------------------
-  // FORMULARIO PRINCIPAL
-  // ---------------------------
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 py-3 border-b border-gray-100 bg-white flex items-center gap-3">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
+      <div style={{ padding: '10px 1.5rem', borderBottom: '1px solid #f3f4f6', background: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <button
           onClick={() => router.push('/admin/leyes')}
-          className="flex items-center gap-1.5 text-[13px] text-gray-500 hover:text-gray-900 transition-colors"
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
         >
           <ArrowLeft size={14} />
           Leyes
         </button>
-        <span className="text-gray-300">/</span>
-        <span className="text-[13px] text-gray-500">Nueva Ley</span>
+        <span style={{ color: '#d1d5db' }}>/</span>
+        <span style={{ fontSize: '13px', color: '#6b7280' }}>Nueva Ley</span>
       </div>
 
-      {/* Formulario */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-xl mx-auto flex flex-col gap-6">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: '#f9fafb' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827', marginBottom: '1.5rem' }}>Nueva ley</div>
 
-          {/* Nombre */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">Nombre</label>
-            <input
-              type="text"
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            />
-            {errores.nombre && (
-              <p className="text-red-500 text-xs mt-1">{errores.nombre}</p>
-            )}
-          </div>
+          <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-          {/* Archivo */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">Archivo</label>
-
-            <div
-              onClick={() => fileRef.current?.click()}
-              className="mt-1 border border-gray-300 rounded-lg px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50"
-            >
-              <Upload size={18} className="text-gray-500" />
-              <span className="text-sm text-gray-600">
-                {archivo ? archivo.name : 'Seleccionar archivo'}
-              </span>
-            </div>
-
-            <input
-              type="file"
-              ref={fileRef}
-              className="hidden"
-              accept=".pdf,.txt"
-              onChange={handleFile}
-            />
-
-            {errores.archivo && (
-              <p className="text-red-500 text-xs mt-1">{errores.archivo}</p>
-            )}
-          </div>
-
-          {/* Tipo de norma */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">Tipo de norma</label>
-            <select
-              value={form.tipoNorma}
-              onChange={(e) => setForm({ ...form, tipoNorma: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="">Seleccionar...</option>
-              {tiposNorma.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Fecha publicación */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">Fecha publicación</label>
-            <input
-              type="date"
-              value={form.fechaPublicacion}
-              onChange={(e) => setForm({ ...form, fechaPublicacion: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            />
-          </div>
-
-          {/* Oposiciones */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">Vincular a oposiciones</label>
-
-            <div className="mt-2 flex flex-col gap-2">
-              {oposiciones.map((o: any) => (
-                <label key={o.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={oposicionesSeleccionadas.includes(o.id)}
-                    onChange={() => toggleOposicion(o.id)}
-                  />
-                  {o.nombre}
+            {/* Nombre + Siglas */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                  Nombre <span style={{ color: '#dc2626' }}>*</span>
                 </label>
-              ))}
+                <input
+                  type="text"
+                  value={form.nombre}
+                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: `1px solid ${errores.nombre ? '#fca5a5' : '#e5e7eb'}`, borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                />
+                {errores.nombre && <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '3px' }}>{errores.nombre}</p>}
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                  Siglas <span style={{ color: '#9ca3af', fontWeight: 400 }}>(ej: CE)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.siglas}
+                  onChange={(e) => setForm({ ...form, siglas: e.target.value.toUpperCase() })}
+                  placeholder="CE"
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+
+            {/* Archivo */}
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Archivo</label>
+              <div
+                onClick={() => fileRef.current?.click()}
+                style={{ padding: '11px 14px', border: `1px solid ${errores.archivo ? '#fca5a5' : '#e5e7eb'}`, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', background: 'white' }}
+              >
+                <Upload size={16} color="#6b7280" />
+                <span style={{ fontSize: '13px', color: '#374151' }}>
+                  {archivo ? archivo.name : 'Seleccionar archivo'}
+                </span>
+              </div>
+              <input type="file" ref={fileRef} style={{ display: 'none' }} accept=".pdf,.txt" onChange={handleFile} />
+              {errores.archivo && <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '3px' }}>{errores.archivo}</p>}
+            </div>
+
+            {/* Tipo de norma */}
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo de norma</label>
+              <select
+                value={form.tipoNorma}
+                onChange={(e) => setForm({ ...form, tipoNorma: e.target.value })}
+                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+              >
+                <option value="">Seleccionar...</option>
+                {tiposNorma.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Fecha publicación */}
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha publicación</label>
+              <input
+                type="date"
+                value={form.fechaPublicacion}
+                onChange={(e) => setForm({ ...form, fechaPublicacion: e.target.value })}
+                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Oposiciones */}
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '8px' }}>Vincular a oposiciones</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {oposiciones.map((o: any) => (
+                  <label key={o.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={oposicionesSeleccionadas.includes(o.id)}
+                      onChange={() => toggleOposicion(o.id)}
+                      style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+                    />
+                    {o.nombre}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Botón enviar */}
           <button
             onClick={() => validar() && subir.mutate()}
             disabled={subir.isPending}
-            className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-40"
+            style={{ marginTop: '1.25rem', padding: '10px 20px', background: '#111827', color: 'white', borderRadius: '9px', fontSize: '13px', fontWeight: 500, border: 'none', cursor: 'pointer', opacity: subir.isPending ? 0.4 : 1 }}
           >
             {subir.isPending ? 'Subiendo...' : 'Subir Ley'}
           </button>
