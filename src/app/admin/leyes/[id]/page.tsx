@@ -75,6 +75,28 @@ export default function LeyDetallePage() {
     },
   });
 
+  //parseo con JSON
+  const [modalImportarJson, setModalImportarJson] = useState(false);
+  const [jsonTexto, setJsonTexto] = useState('');
+  const [versionParaImportar, setVersionParaImportar] = useState<string | null>(null);
+
+  const importarJson = useMutation({
+    mutationFn: async () => {
+      const estructura = JSON.parse(jsonTexto);
+      const res = await api.post(`/leyes/${id}/versiones/${versionParaImportar}/importar-json`, { estructura });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      alert(`Importado: ${data.totalTitulos} títulos, ${data.totalCapitulos} capítulos, ${data.totalArticulos} artículos`);
+      setModalImportarJson(false);
+      setJsonTexto('');
+      queryClient.invalidateQueries({ queryKey: ['ley', id] });
+    },
+    onError: (e: any) => {
+      alert('Error: ' + (e?.response?.data?.message ?? e.message ?? 'JSON inválido'));
+    },
+  });
+
   const { data: todasOposiciones = [] } = useQuery({
     queryKey: ['oposiciones'],
     queryFn: async () => {
@@ -436,7 +458,13 @@ export default function LeyDetallePage() {
                           disabled={parsear.isPending}
                           style={{ fontSize: '11px', padding: '4px 10px', border: '1px solid #bfdbfe', borderRadius: '6px', background: '#eff6ff', color: '#2563eb', cursor: parsear.isPending ? 'not-allowed' : 'pointer', opacity: parsear.isPending ? 0.6 : 1 }}
                         >
-                          {parsear.isPending ? 'Parseando...' : 'Parsear con IA'}
+                          {parsear.isPending ? 'Parseando...' : 'Parsear'}
+                        </button>
+                        <button
+                          onClick={() => { setVersionParaImportar(v.id); setModalImportarJson(true); }}
+                          style={{ fontSize: '12px', padding: '5px 10px', background: '#EFF6FF', color: '#1F7CFF', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}
+                        >
+                          Importar JSON
                         </button>
                         {!v.activa && (
                           <button
@@ -559,17 +587,17 @@ export default function LeyDetallePage() {
                 </div>
                 <pre style={{ fontSize: '11px', color: '#6b7280', background: '#f9fafb', padding: '12px', borderRadius: '8px', overflow: 'auto', margin: 0 }}>
 {`[
-  {
-    "articuloNumero": "1",
-    "enunciado": "¿Qué establece el artículo 1?",
-    "opciones": ["A", "B", "C", "D"],
-    "correcta": 0,
-    "explicacion": "Porque...",
-    "dificultad": 1,
-    "origen": "convocatoria",
-    "anyo": 2023
-  }
-]`}
+                  {
+                    "articuloNumero": "1",
+                    "enunciado": "¿Qué establece el artículo 1?",
+                    "opciones": ["A", "B", "C", "D"],
+                    "correcta": 0,
+                    "explicacion": "Porque...",
+                    "dificultad": 1,
+                    "origen": "convocatoria",
+                    "anyo": 2023
+                  }
+                ]`}
                 </pre>
               </div>
 
@@ -870,6 +898,29 @@ export default function LeyDetallePage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {modalImportarJson && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '700px', maxHeight: '85vh', overflowY: 'auto' }}>
+            <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px' }}>Importar estructura JSON</div>
+            <textarea
+              value={jsonTexto}
+              onChange={(e) => setJsonTexto(e.target.value)}
+              rows={16}
+              placeholder='{ "titulos": [...] }'
+              style={{ width: '100%', padding: '10px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+              <button onClick={() => importarJson.mutate()} disabled={importarJson.isPending} style={{ padding: '9px 18px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                {importarJson.isPending ? 'Importando...' : 'Importar'}
+              </button>
+              <button onClick={() => setModalImportarJson(false)} style={{ padding: '9px 18px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}
