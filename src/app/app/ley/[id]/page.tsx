@@ -21,6 +21,20 @@ function LeyPage() {
   const searchParams = useSearchParams();
 const oposicionId = searchParams.get('oposicionId');
 
+const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>({});
+const [articulosSeccion, setArticulosSeccion] = useState<Record<string, any[]>>({});
+const [seccionesPorCapitulo, setSeccionesPorCapitulo] = useState<Record<string, any[]>>({});
+
+const toggleSeccion = async (seccionId: string, capituloId: string) => {
+  const abierto = !seccionesAbiertas[seccionId];
+  setSeccionesAbiertas((prev) => ({ ...prev, [seccionId]: abierto }));
+
+  if (abierto && !articulosSeccion[seccionId]) {
+    const res = await api.get(`/normativa/articulos-seccion/${seccionId}`);
+    setArticulosSeccion((prev) => ({ ...prev, [seccionId]: res.data }));
+  }
+};
+
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
@@ -73,21 +87,19 @@ const oposicionId = searchParams.get('oposicionId');
     }
   };
 
-  const toggleCapitulo = async (capituloId: string) => {
-    const abierto = !capitulosAbiertos[capituloId];
-    setCapitulosAbiertos((prev) => ({ ...prev, [capituloId]: abierto }));
+    const toggleCapitulo = async (capituloId: string) => {
+      const abierto = !capitulosAbiertos[capituloId];
+      setCapitulosAbiertos((prev) => ({ ...prev, [capituloId]: abierto }));
 
-    if (abierto && !articulosCapitulo[capituloId]) {
-      const res = await api.get(`/normativa/articulos/${capituloId}`);
-      setArticulosCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
-    }
-  };
-
-  if (cargando || isLoading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
-      <div style={{ fontSize: '14px', color: '#9ca3af' }}>Cargando...</div>
-    </div>
-  );
+      if (abierto && !articulosCapitulo[capituloId]) {
+        const res = await api.get(`/normativa/articulos/${capituloId}`);
+        setArticulosCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
+      }
+      if (abierto && !seccionesPorCapitulo[capituloId]) { 
+        const res = await api.get(`/normativa/secciones/${capituloId}`);
+        setSeccionesPorCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
+      }
+    };
 
   if (!ley) return null;
 
@@ -275,6 +287,41 @@ const oposicionId = searchParams.get('oposicionId');
                     <ChevronRight size={13} color="#d1d5db" style={{ flexShrink: 0, marginLeft: '8px' }} />
                   </div>
                 ))}
+
+                              {capitulosAbiertos[capitulo.id] && (seccionesPorCapitulo[capitulo.id] ?? []).map((seccion: any) => (
+                <div key={seccion.id} style={{ borderTop: '1px solid #f9fafb' }}>
+                  <button
+                    onClick={() => toggleSeccion(seccion.id, capitulo.id)}
+                    style={{ width: '100%', padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: seccionesAbiertas[seccion.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    <div style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280' }}>
+                      {seccion.numero ? `Sección ${seccion.numero}` : ''}{seccion.nombre ? ` — ${seccion.nombre}` : ''}
+                    </div>
+                    {seccionesAbiertas[seccion.id] ? <ChevronUp size={12} color="#9ca3af" /> : <ChevronDown size={12} color="#9ca3af" />}
+                  </button>
+
+                  {seccionesAbiertas[seccion.id] && filtrarArticulos(articulosSeccion[seccion.id] ?? []).map((art: any) => (
+                    <div
+                      key={art.id}
+                      onClick={() => router.push(`/app/articulo/${art.id}?leyId=${id}&oposicionId=${oposicionId ?? ''}`)}
+                      style={{ padding: '9px 14px 9px 56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderTop: '1px solid #f9fafb' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151', marginBottom: '1px' }}>
+                          Artículo {art.numero}
+                          {art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {art.contenido?.slice(0, 80)}...
+                        </div>
+                      </div>
+                      <ChevronRight size={13} color="#d1d5db" style={{ flexShrink: 0, marginLeft: '8px' }} />
+                    </div>
+                  ))}
+                </div>
+              ))}
               </div>
             ))}
           </div>
