@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Search } from 'lucide-react';
+import { FooterNavegacion } from '@/app/app/dashboard/page';
 
 function LeyPage() {
   const router = useRouter();
@@ -21,19 +22,6 @@ function LeyPage() {
   const searchParams = useSearchParams();
 const oposicionId = searchParams.get('oposicionId');
 
-const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>({});
-const [articulosSeccion, setArticulosSeccion] = useState<Record<string, any[]>>({});
-const [seccionesPorCapitulo, setSeccionesPorCapitulo] = useState<Record<string, any[]>>({});
-
-const toggleSeccion = async (seccionId: string, capituloId: string) => {
-  const abierto = !seccionesAbiertas[seccionId];
-  setSeccionesAbiertas((prev) => ({ ...prev, [seccionId]: abierto }));
-
-  if (abierto && !articulosSeccion[seccionId]) {
-    const res = await api.get(`/normativa/articulos-seccion/${seccionId}`);
-    setArticulosSeccion((prev) => ({ ...prev, [seccionId]: res.data }));
-  }
-};
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
@@ -59,6 +47,28 @@ const toggleSeccion = async (seccionId: string, capituloId: string) => {
     enabled: !!versionActiva?.id,
   });
 
+  const { data: estadisticas } = useQuery({
+  queryKey: ['estadisticas-ley', versionActiva?.id],
+  queryFn: async () => {
+    const res = await api.get(`/normativa/estadisticas/${versionActiva.id}`);
+    return res.data;
+  },
+  enabled: !!versionActiva?.id,
+});
+
+const { data: disposiciones = [] } = useQuery({
+  queryKey: ['disposiciones-ley', versionActiva?.id],
+  queryFn: async () => {
+    const res = await api.get(`/normativa/disposiciones/${versionActiva.id}`);
+    return res.data;
+  },
+  enabled: !!versionActiva?.id,
+});
+
+const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>({});
+const [articulosSeccion, setArticulosSeccion] = useState<Record<string, any[]>>({});
+const [seccionesPorCapitulo, setSeccionesPorCapitulo] = useState<Record<string, any[]>>({});
+
   const { data: resultadosBusqueda = [] } = useQuery({
   queryKey: ['buscar-articulos', versionActiva?.id, search],
   queryFn: async () => {
@@ -68,6 +78,8 @@ const toggleSeccion = async (seccionId: string, capituloId: string) => {
   },
   enabled: !!versionActiva?.id && search.trim().length >= 2,
   });
+
+
 
   const toggleTitulo = async (tituloId: string) => {
     const abierto = !titulosAbiertos[tituloId];
@@ -87,19 +99,29 @@ const toggleSeccion = async (seccionId: string, capituloId: string) => {
     }
   };
 
-    const toggleCapitulo = async (capituloId: string) => {
-      const abierto = !capitulosAbiertos[capituloId];
-      setCapitulosAbiertos((prev) => ({ ...prev, [capituloId]: abierto }));
+const toggleCapitulo = async (capituloId: string) => {
+  const abierto = !capitulosAbiertos[capituloId];
+  setCapitulosAbiertos((prev) => ({ ...prev, [capituloId]: abierto }));
 
-      if (abierto && !articulosCapitulo[capituloId]) {
-        const res = await api.get(`/normativa/articulos/${capituloId}`);
-        setArticulosCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
-      }
-      if (abierto && !seccionesPorCapitulo[capituloId]) { 
-        const res = await api.get(`/normativa/secciones/${capituloId}`);
-        setSeccionesPorCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
-      }
-    };
+  if (abierto && !articulosCapitulo[capituloId]) {
+    const res = await api.get(`/normativa/articulos/${capituloId}`);
+    setArticulosCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
+  }
+  if (abierto && !seccionesPorCapitulo[capituloId]) {
+    const res = await api.get(`/normativa/secciones/${capituloId}`);
+    setSeccionesPorCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
+  }
+};
+
+const toggleSeccion = async (seccionId: string) => {
+  const abierto = !seccionesAbiertas[seccionId];
+  setSeccionesAbiertas((prev) => ({ ...prev, [seccionId]: abierto }));
+
+  if (abierto && !articulosSeccion[seccionId]) {
+    const res = await api.get(`/normativa/articulos-seccion/${seccionId}`);
+    setArticulosSeccion((prev) => ({ ...prev, [seccionId]: res.data }));
+  }
+};
 
   if (!ley) return null;
 
@@ -150,20 +172,22 @@ const toggleSeccion = async (seccionId: string, capituloId: string) => {
       </span>
     )}
   </div>
-  {titulos.length > 0 && (
-    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-      {[
-        { label: 'Títulos', value: titulos.length },
-        { label: 'Capítulos', value: titulos.reduce((acc: number, t: any) => acc + (capitulosPorTitulo[t.id]?.length ?? 0), 0) || '—' },
-        { label: 'Artículos', value: versionActiva?.totalArticulos ?? '—' },
-      ].map(({ label, value }) => (
-        <div key={label} style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 600, color: '#111827' }}>{value}</div>
-          <div style={{ fontSize: '11px', color: '#9ca3af' }}>{label}</div>
-        </div>
-      ))}
-    </div>
-  )}
+    {estadisticas && (
+      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+        {[
+          { label: 'Títulos', value: estadisticas.titulos },
+          { label: 'Capítulos', value: estadisticas.capitulos },
+          { label: 'Secciones', value: estadisticas.secciones },
+          { label: 'Artículos', value: estadisticas.articulos },
+          { label: 'Disposiciones', value: estadisticas.disposiciones },
+        ].filter((s) => s.value > 0).map(({ label, value }) => (
+          <div key={label} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '18px', fontWeight: 600, color: '#111827' }}>{value}</div>
+            <div style={{ fontSize: '11px', color: '#9ca3af' }}>{label}</div>
+          </div>
+        ))}
+      </div>
+    )}
 </div>  
 
         {/* Buscador */}
@@ -291,7 +315,7 @@ const toggleSeccion = async (seccionId: string, capituloId: string) => {
                               {capitulosAbiertos[capitulo.id] && (seccionesPorCapitulo[capitulo.id] ?? []).map((seccion: any) => (
                 <div key={seccion.id} style={{ borderTop: '1px solid #f9fafb' }}>
                   <button
-                    onClick={() => toggleSeccion(seccion.id, capitulo.id)}
+                    onClick={() => toggleSeccion(seccion.id)}
                     style={{ width: '100%', padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: seccionesAbiertas[seccion.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
                   >
                     <div style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280' }}>
@@ -331,28 +355,34 @@ const toggleSeccion = async (seccionId: string, capituloId: string) => {
   </div>
 )}
 
+            {disposiciones.length > 0 && (
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '10px' }}>
+                Disposiciones
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {disposiciones.map((d: any) => (
+                  <div
+                    key={d.id}
+                    style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '10px', padding: '10px 14px' }}
+                  >
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px', textTransform: 'capitalize' }}>
+                      Disposición {d.categoria}{d.etiqueta ? ` ${d.etiqueta}` : ''}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6 }}>
+                      {d.contenido}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
       </div> {/* cierre maxWidth */}
 
 
                     
-     {/* Nav inferior */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1px solid #f3f4f6', display: 'flex', zIndex: 10 }}>
-        {[
-          { label: 'Inicio', icon: '🏠', path: '/app/dashboard' },
-          { label: 'Retos', icon: '⚡', path: '/app/retos' },
-          { label: 'Ranking', icon: '🏆', path: '/app/ranking' },
-          { label: 'Alertas', icon: '🔔', path: '/app/alertas' },
-        ].map(({ label, icon, path }) => (
-          <button
-            key={label}
-            onClick={() => router.push(path)}
-            style={{ flex: 1, padding: '10px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', border: 'none', background: 'none', cursor: 'pointer' }}
-          >
-            <span style={{ fontSize: '18px' }}>{icon}</span>
-            <span style={{ fontSize: '10px', color: '#9ca3af' }}>{label}</span>
-          </button>
-        ))}
-      </div>
+
+      <FooterNavegacion usuario={usuario} oposicionId={oposicionId ?? undefined} activo="estudiar" />
     </div>
   );
 }
