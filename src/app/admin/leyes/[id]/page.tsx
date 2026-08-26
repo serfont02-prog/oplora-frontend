@@ -44,6 +44,36 @@ export default function LeyDetallePage() {
     versionAnteriorId: '',
   });
 
+    const [versionEditando, setVersionEditando] = useState<any>(null);
+  const [formEditarVersion, setFormEditarVersion] = useState({
+    referenciaBoe: '',
+    tipoNorma: '',
+    fechaPublicacion: '',
+    fechaVigencia: '',
+    notas: '',
+  });
+
+  const abrirEditarVersion = (v: any) => {
+    setVersionEditando(v);
+    setFormEditarVersion({
+      referenciaBoe: v.referenciaBoe ?? '',
+      tipoNorma: v.tipoNorma ?? '',
+      fechaPublicacion: v.fechaPublicacion ? v.fechaPublicacion.slice(0, 10) : '',
+      fechaVigencia: v.fechaVigencia ? v.fechaVigencia.slice(0, 10) : '',
+      notas: v.notas ?? '',
+    });
+  };
+
+  const editarVersion = useMutation({
+    mutationFn: async () => {
+      await api.patch(`/leyes/versiones/${versionEditando.id}`, formEditarVersion);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ley', id] });
+      setVersionEditando(null);
+    },
+  });
+
   const [archivoPreguntas, setArchivoPreguntas] = useState<File | null>(null);
   const [previewPreguntas, setPreviewPreguntas] = useState<any[]>([]);
   const [resultadoPreguntas, setResultadoPreguntas] = useState<any>(null);
@@ -164,28 +194,22 @@ export default function LeyDetallePage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['versiones', id] }),
   });
 
-  const parsear = useMutation({
-    mutationFn: async (versionId: string) => {
-      const res = await api.post(`/leyes/${id}/versiones/${versionId}/parsear`);
-      return res.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['versiones', id] });
-      alert(`Parseo completado. Títulos: ${data.resumen.totalTitulos}, Capítulos: ${data.resumen.totalCapitulos}, Artículos: ${data.resumen.totalArticulos}`);
-    },
-    onError: () => {
-      alert('Error al parsear. Revisa que Ollama está corriendo.');
-    },
-  });
+  const [versionElegidaPorOposicion, setVersionElegidaPorOposicion] = useState<Record<string, string>>({});
 
-  const vincular = useMutation({
-    mutationFn: async (oposicionId: string) => {
-      const versionActiva = versiones.find((v: any) => v.activa);
+    const vincular = useMutation({
+    mutationFn: async ({ oposicionId, versionLeyId }: { oposicionId: string; versionLeyId: string }) => {
       await api.post('/leyes/vincular', {
         leyId: id,
         oposicionId,
-        versionLeyId: versionActiva?.id,
+        versionLeyId,
       });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ley-oposiciones', id] }),
+  });
+
+    const cambiarVersionVinculo = useMutation({
+    mutationFn: async ({ oposicionId, versionLeyId }: { oposicionId: string; versionLeyId: string }) => {
+      await api.post('/leyes/vincular', { leyId: id, oposicionId, versionLeyId });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ley-oposiciones', id] }),
   });
@@ -432,6 +456,12 @@ export default function LeyDetallePage() {
                             {v.tipoCambio?.replace('_', ' ')}
                           </span>
                         </div>
+                        <button
+                            onClick={() => abrirEditarVersion(v)}
+                            style={{ fontSize: '11px', padding: '4px 10px', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', color: '#6b7280', cursor: 'pointer' }}
+                          >
+                            Editar
+                          </button>
                         {v.tipoNorma && (
                           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>{v.tipoNorma}</div>
                         )}
@@ -448,18 +478,6 @@ export default function LeyDetallePage() {
                         )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm(`¿Parsear v${v.version} con IA? Puede tardar varios minutos.`)) {
-                              parsear.mutate(v.id);
-                            }
-                          }}
-                          disabled={parsear.isPending}
-                          style={{ fontSize: '11px', padding: '4px 10px', border: '1px solid #bfdbfe', borderRadius: '6px', background: '#eff6ff', color: '#2563eb', cursor: parsear.isPending ? 'not-allowed' : 'pointer', opacity: parsear.isPending ? 0.6 : 1 }}
-                        >
-                          {parsear.isPending ? 'Parseando...' : 'Parsear'}
-                        </button>
                         <button
                           onClick={() => { setVersionParaImportar(v.id); setModalImportarJson(true); }}
                           style={{ fontSize: '12px', padding: '5px 10px', background: '#EFF6FF', color: '#1F7CFF', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}
@@ -499,19 +517,27 @@ export default function LeyDetallePage() {
                     {oposicionesVinculadas.map((v: any, i: number) => (
                       <div
                         key={v.id}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: i < oposicionesVinculadas.length - 1 ? '1px solid #f3f4f6' : 'none' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: i < oposicionesVinculadas.length - 1 ? '1px solid #f3f4f6' : 'none', gap: '10px' }}
                       >
-                        <div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827' }}>{v.oposicion?.nombre}</div>
-                          {v.versionLey && (
-                            <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
-                              Versión: v{v.versionLey.version}
-                            </div>
-                          )}
                         </div>
+
+                        <select
+                          value={v.versionLey?.id ?? ''}
+                          onChange={(e) => cambiarVersionVinculo.mutate({ oposicionId: v.oposicion.id, versionLeyId: e.target.value })}
+                          style={{ fontSize: '12px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', outline: 'none', maxWidth: '140px' }}
+                        >
+                          {versiones.map((ver: any) => (
+                            <option key={ver.id} value={ver.id}>
+                              v{ver.version}{ver.activa ? ' (activa)' : ''}
+                            </option>
+                          ))}
+                        </select>
+
                         <button
                           onClick={() => desvincular.mutate(v.oposicion?.id)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
                           onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                         >
@@ -525,23 +551,40 @@ export default function LeyDetallePage() {
               )}
 
               {oposicionesNoVinculadas.length > 0 && (
-                <div>
-                  <div style={{ fontSize: '12px', fontWeight: 500, color: '#9ca3af', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vincular a oposición</div>
-                  <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
-                    {oposicionesNoVinculadas.map((o: any, i: number) => (
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 500, color: '#9ca3af', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vincular a oposición</div>
+                <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+                  {oposicionesNoVinculadas.map((o: any, i: number) => {
+                    const versionActiva = versiones.find((ver: any) => ver.activa);
+                    const versionSeleccionada = versionElegidaPorOposicion[o.id] ?? versionActiva?.id ?? '';
+                    return (
                       <div
                         key={o.id}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: i < oposicionesNoVinculadas.length - 1 ? '1px solid #f3f4f6' : 'none' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: i < oposicionesNoVinculadas.length - 1 ? '1px solid #f3f4f6' : 'none', gap: '10px' }}
                       >
-                        <div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827' }}>{o.nombre}</div>
                           {o.administracion && (
                             <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{o.administracion}</div>
                           )}
                         </div>
+
+                        <select
+                          value={versionSeleccionada}
+                          onChange={(e) => setVersionElegidaPorOposicion((prev) => ({ ...prev, [o.id]: e.target.value }))}
+                          style={{ fontSize: '12px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', outline: 'none', maxWidth: '140px' }}
+                        >
+                          {versiones.map((ver: any) => (
+                            <option key={ver.id} value={ver.id}>
+                              v{ver.version}{ver.activa ? ' (activa)' : ''}
+                            </option>
+                          ))}
+                        </select>
+
                         <button
-                          onClick={() => vincular.mutate(o.id)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px' }}
+                          onClick={() => vincular.mutate({ oposicionId: o.id, versionLeyId: versionSeleccionada })}
+                          disabled={!versionSeleccionada}
+                          style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
                           onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                         >
@@ -549,10 +592,11 @@ export default function LeyDetallePage() {
                           Vincular
                         </button>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
+            )}
 
             </div>
           )}
@@ -682,6 +726,49 @@ export default function LeyDetallePage() {
                   </button>
                 </div>
               )}
+
+                //Editar versiones
+                  {versionEditando && (
+                  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+                    <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '440px' }}>
+                      <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '14px' }}>
+                        Editar v{versionEditando.version}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div>
+                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Referencia BOE</label>
+                          <input type="text" value={formEditarVersion.referenciaBoe} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, referenciaBoe: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo de norma</label>
+                          <input type="text" value={formEditarVersion.tipoNorma} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, tipoNorma: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha publicación</label>
+                            <input type="date" value={formEditarVersion.fechaPublicacion} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, fechaPublicacion: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Última modificación</label>
+                            <input type="date" value={formEditarVersion.fechaVigencia} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, fechaVigencia: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Notas</label>
+                          <textarea value={formEditarVersion.notas} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, notas: e.target.value })} rows={2} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'none' }} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                        <button onClick={() => editarVersion.mutate()} disabled={editarVersion.isPending} style={{ flex: 1, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+                          {editarVersion.isPending ? 'Guardando...' : 'Guardar'}
+                        </button>
+                        <button onClick={() => setVersionEditando(null)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               {/* Resultado */}
               {resultadoPreguntas && (
