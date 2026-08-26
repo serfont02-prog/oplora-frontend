@@ -68,6 +68,7 @@ const { data: disposiciones = [] } = useQuery({
 const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>({});
 const [articulosSeccion, setArticulosSeccion] = useState<Record<string, any[]>>({});
 const [seccionesPorCapitulo, setSeccionesPorCapitulo] = useState<Record<string, any[]>>({});
+const [disposicionesAbiertas, setDisposicionesAbiertas] = useState<Record<string, boolean>>({});
 
   const { data: resultadosBusqueda = [] } = useQuery({
   queryKey: ['buscar-articulos', versionActiva?.id, search],
@@ -136,10 +137,7 @@ const toggleSeccion = async (seccionId: string) => {
       {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.25rem', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
         <button
-          onClick={() => oposicionId 
-            ? router.push(`/app/oposicion/${oposicionId}?tab=normativa`) 
-            : router.back()
-            }
+          onClick={() => router.back()}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
         >
           <ArrowLeft size={14} />
@@ -173,11 +171,10 @@ const toggleSeccion = async (seccionId: string) => {
     )}
   </div>
     {estadisticas && (
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
         {[
           { label: 'Títulos', value: estadisticas.titulos },
           { label: 'Capítulos', value: estadisticas.capitulos },
-          { label: 'Secciones', value: estadisticas.secciones },
           { label: 'Artículos', value: estadisticas.articulos },
           { label: 'Disposiciones', value: estadisticas.disposiciones },
         ].filter((s) => s.value > 0).map(({ label, value }) => (
@@ -186,6 +183,11 @@ const toggleSeccion = async (seccionId: string) => {
             <div style={{ fontSize: '11px', color: '#9ca3af' }}>{label}</div>
           </div>
         ))}
+        {(versionActiva?.fechaVigencia || versionActiva?.fechaPublicacion) && (
+          <div style={{ marginLeft: 'auto', fontSize: '11px', color: '#9ca3af' }}>
+            Actualizada: {new Date(versionActiva.fechaVigencia || versionActiva.fechaPublicacion).toLocaleDateString('es-ES')}
+          </div>
+        )}
       </div>
     )}
 </div>  
@@ -355,28 +357,50 @@ const toggleSeccion = async (seccionId: string) => {
   </div>
 )}
 
-            {disposiciones.length > 0 && (
-            <div style={{ marginTop: '16px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '10px' }}>
-                Disposiciones
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {disposiciones.map((d: any) => (
-                  <div
-                    key={d.id}
-                    style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '10px', padding: '10px 14px' }}
-                  >
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px', textTransform: 'capitalize' }}>
-                      Disposición {d.categoria}{d.etiqueta ? ` ${d.etiqueta}` : ''}
+          {disposiciones.length > 0 && (() => {
+            const categorias = ['adicional', 'transitoria', 'derogatoria', 'final'];
+            const labels: Record<string, string> = {
+              adicional: 'Disposiciones adicionales',
+              transitoria: 'Disposiciones transitorias',
+              derogatoria: 'Disposición derogatoria',
+              final: 'Disposición final',
+            };
+            return (
+              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {categorias.filter((cat) => disposiciones.some((d: any) => d.categoria === cat)).map((cat) => {
+                  const items = disposiciones.filter((d: any) => d.categoria === cat);
+                  const abierto = disposicionesAbiertas[cat];
+                  return (
+                    <div key={cat} style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+                      <button
+                        onClick={() => setDisposicionesAbiertas((prev) => ({ ...prev, [cat]: !prev[cat] }))}
+                        style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                      >
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>{labels[cat]}</div>
+                        {abierto ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
+                      </button>
+                      {abierto && (
+                        <div style={{ borderTop: '1px solid #f3f4f6' }}>
+                          {items.map((d: any) => (
+                            <div key={d.id} style={{ padding: '10px 14px 10px 28px', borderTop: '1px solid #f9fafb' }}>
+                              <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px', textTransform: 'capitalize' }}>
+                                {d.etiqueta || cat}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6 }}>
+                                {d.contenido.split(/(?<=\.)\s+(?=[A-ZÁÉÍÓÚÑ0-9])/).map((frase: string, i: number) => (
+                                  <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{frase}</p>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6 }}>
-                      {d.contenido}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
-          )}
+            );
+          })()}
       </div> {/* cierre maxWidth */}
 
 

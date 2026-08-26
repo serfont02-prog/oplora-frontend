@@ -28,6 +28,7 @@ export default function NuevaLeyPage() {
     siglas: '',
     referenciaBoe: '',
     tipoNorma: '',
+    tipoNormaOtro: '',
     fechaPublicacion: '',
   });
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -49,7 +50,9 @@ export default function NuevaLeyPage() {
         formData.append('oposicionIds', JSON.stringify(oposicionesSeleccionadas));
       }
       if (form.referenciaBoe) formData.append('referenciaBoe', form.referenciaBoe);
-      if (form.tipoNorma) formData.append('tipoNorma', form.tipoNorma);
+      const tipoNormaFinal = form.tipoNorma === 'Otra' ? form.tipoNormaOtro : form.tipoNorma;
+      if (tipoNormaFinal) formData.append('tipoNorma', tipoNormaFinal);
+      
       if (form.fechaPublicacion) formData.append('fechaPublicacion', form.fechaPublicacion);
       if (archivo) formData.append('archivo', archivo);
 
@@ -59,19 +62,11 @@ export default function NuevaLeyPage() {
 
       return res.data;
     },
-    onSuccess: async (data) => {
-      setResultado(data);
-
-      for (const oposicionId of oposicionesSeleccionadas) {
-        await api.post('/leyes/vincular', {
-          leyId: data.ley.id,
-          oposicionId,
-        });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['leyes'] });
-    },
-  });
+      onSuccess: (data) => {
+        setResultado(data);
+        queryClient.invalidateQueries({ queryKey: ['leyes'] });
+      },
+    });
 
   const validar = () => {
     const e: Record<string, string> = {};
@@ -201,16 +196,26 @@ export default function NuevaLeyPage() {
             {/* Tipo de norma */}
             <div>
               <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo de norma</label>
-              <select
-                value={form.tipoNorma}
-                onChange={(e) => setForm({ ...form, tipoNorma: e.target.value })}
-                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
-              >
-                <option value="">Seleccionar...</option>
-                {tiposNorma.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+            <select
+              value={form.tipoNorma}
+              onChange={(e) => setForm({ ...form, tipoNorma: e.target.value })}
+              style={{ /* ... */ }}
+            >
+              <option value="">Seleccionar...</option>
+              {tiposNorma.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+
+            {form.tipoNorma === 'Otra' && (
+              <input
+                type="text"
+                value={form.tipoNormaOtro}
+                onChange={(e) => setForm({ ...form, tipoNormaOtro: e.target.value })}
+                placeholder="Especifica el tipo de norma"
+                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', marginTop: '8px' }}
+              />
+            )}
             </div>
 
             {/* Fecha publicación */}

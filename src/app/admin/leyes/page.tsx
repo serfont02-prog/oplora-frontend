@@ -69,7 +69,7 @@ export default function LeyesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                {['Nombre', 'Tipo', 'BOE', 'Versión activa', 'Versiones', 'Oposiciones', ''].map((h) => (
+                {['Nombre', 'Tipo', 'Última modificación', 'Versión activa', 'Versiones', 'Oposiciones', ''].map((h) => (
                   <th key={h} style={{ textAlign: ['Versión activa', 'Versiones', 'Oposiciones'].includes(h) ? 'center' : 'left', padding: '10px 16px', fontSize: '11px', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', background: '#f9fafb' }}>
                     {h}
                   </th>
@@ -102,7 +102,11 @@ export default function LeyesPage() {
                       ) : <span style={{ fontSize: '13px', color: '#9ca3af' }}>—</span>}
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#6b7280' }}>
-                      {versionActiva?.referenciaBoe ?? '—'}
+                      {versionActiva?.fechaVigencia
+                        ? new Date(versionActiva.fechaVigencia).toLocaleDateString('es-ES')
+                        : versionActiva?.fechaPublicacion
+                          ? new Date(versionActiva.fechaPublicacion).toLocaleDateString('es-ES')
+                          : '—'}
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       {versionActiva ? (
