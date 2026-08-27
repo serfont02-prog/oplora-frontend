@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Link, Unlink, Plus, Upload, CheckCircle, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Link, Unlink, Plus, Upload, CheckCircle, FileText, Pencil, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '@/lib/api';
 
 const tiposNorma = [
@@ -18,6 +18,24 @@ const tiposCambio = [
   { value: 'derogacion', label: 'Derogación' },
 ];
 
+function FilaArticulo({ art, onEditar }: { art: any; onEditar: (art: any) => void }) {
+  return (
+    <div style={{ padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid #f9fafb' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151' }}>
+          Artículo {art.numero}{art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
+        </div>
+        <div style={{ fontSize: '11px', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {art.contenido?.slice(0, 90)}...
+        </div>
+      </div>
+      <button onClick={() => onEditar(art)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: '4px', flexShrink: 0 }}>
+        <Pencil size={13} />
+      </button>
+    </div>
+  );
+}
+
 export default function LeyDetallePage() {
   const router = useRouter();
   const params = useParams();
@@ -26,11 +44,60 @@ export default function LeyDetallePage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const fileRefPreguntas = useRef<HTMLInputElement>(null);
 
-  const [tab, setTab] = useState<'info' | 'versiones' | 'oposiciones' | 'preguntas'>('info');
+  const [tab, setTab] = useState<'info' | 'versiones' | 'oposiciones' | 'preguntas' | 'estructura'>('info');
   const [guardado, setGuardado] = useState(false);
   const [modalVersion, setModalVersion] = useState(false);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [resultadoVersion, setResultadoVersion] = useState<any>(null);
+  const [titulosAbiertos, setTitulosAbiertos] = useState<Record<string, boolean>>({});
+const [capitulosAbiertos, setCapitulosAbiertos] = useState<Record<string, boolean>>({});
+const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>({});
+const [capitulosPorTitulo, setCapitulosPorTitulo] = useState<Record<string, any[]>>({});
+const [seccionesPorCapitulo, setSeccionesPorCapitulo] = useState<Record<string, any[]>>({});
+const [articulosTitulo, setArticulosTitulo] = useState<Record<string, any[]>>({});
+const [articulosCapitulo, setArticulosCapitulo] = useState<Record<string, any[]>>({});
+const [articulosSeccion, setArticulosSeccion] = useState<Record<string, any[]>>({});
+
+
+
+
+const toggleTitulo = async (tituloId: string) => {
+  const abierto = !titulosAbiertos[tituloId];
+  setTitulosAbiertos((prev) => ({ ...prev, [tituloId]: abierto }));
+
+  if (abierto && !capitulosPorTitulo[tituloId]) {
+    const res = await api.get(`/normativa/capitulos/${tituloId}`);
+    setCapitulosPorTitulo((prev) => ({ ...prev, [tituloId]: res.data }));
+  }
+  if (abierto && !articulosTitulo[tituloId]) {
+    const res = await api.get(`/normativa/articulos-titulo/${tituloId}`);
+    setArticulosTitulo((prev) => ({ ...prev, [tituloId]: res.data }));
+  }
+};
+
+const toggleCapitulo = async (capituloId: string) => {
+  const abierto = !capitulosAbiertos[capituloId];
+  setCapitulosAbiertos((prev) => ({ ...prev, [capituloId]: abierto }));
+
+  if (abierto && !articulosCapitulo[capituloId]) {
+    const res = await api.get(`/normativa/articulos/${capituloId}`);
+    setArticulosCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
+  }
+  if (abierto && !seccionesPorCapitulo[capituloId]) {
+    const res = await api.get(`/normativa/secciones/${capituloId}`);
+    setSeccionesPorCapitulo((prev) => ({ ...prev, [capituloId]: res.data }));
+  }
+};
+
+const toggleSeccion = async (seccionId: string) => {
+  const abierto = !seccionesAbiertas[seccionId];
+  setSeccionesAbiertas((prev) => ({ ...prev, [seccionId]: abierto }));
+
+  if (abierto && !articulosSeccion[seccionId]) {
+    const res = await api.get(`/normativa/articulos-seccion/${seccionId}`);
+    setArticulosSeccion((prev) => ({ ...prev, [seccionId]: res.data }));
+  }
+};
 
   const [formLey, setFormLey] = useState({ nombre: '', siglas: '', descripcion: '' });
   const [formVersion, setFormVersion] = useState({
@@ -96,6 +163,16 @@ export default function LeyDetallePage() {
       return res.data;
     },
   });
+
+const versionActiva = versiones.find((v: any) => v.activa);
+const { data: titulosEstructura = [] } = useQuery({
+  queryKey: ['titulos-estructura', versionActiva?.id],
+  queryFn: async () => {
+    const res = await api.get(`/normativa/titulos/${versionActiva.id}`);
+    return res.data;
+  },
+  enabled: !!versionActiva?.id && tab === 'estructura',
+});
 
   const { data: oposicionesVinculadas = [] } = useQuery({
     queryKey: ['ley-oposiciones', id],
@@ -170,6 +247,23 @@ export default function LeyDetallePage() {
     },
   });
 
+  const [modalCopiarVersion, setModalCopiarVersion] = useState(false);
+  const [formCopiarVersion, setFormCopiarVersion] = useState({
+    version: '', referenciaBoe: '', tipoNorma: '', fechaVigencia: '', notas: '',
+  });
+
+  const copiarVersion = useMutation({
+    mutationFn: async () => {
+      const versionActiva = versiones.find((v: any) => v.activa);
+      await api.post(`/leyes/versiones/${versionActiva.id}/copiar`, formCopiarVersion);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ley', id] });
+      setModalCopiarVersion(false);
+      setFormCopiarVersion({ version: '', referenciaBoe: '', tipoNorma: '', fechaVigencia: '', notas: '' });
+    },
+  });
+
   const subirVersion = useMutation({
     mutationFn: async () => {
       const formData = new FormData();
@@ -219,6 +313,43 @@ export default function LeyDetallePage() {
       api.delete(`/leyes/${id}/oposicion/${oposicionId}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ley-oposiciones', id] }),
   });
+
+  const [articuloEditando, setArticuloEditando] = useState<any>(null);
+const [formEditarArticulo, setFormEditarArticulo] = useState({ numero: '', titulo: '', contenido: '' });
+
+const abrirEditarArticulo = (art: any) => {
+  setArticuloEditando(art);
+  setFormEditarArticulo({
+    numero: art.numero ?? '',
+    titulo: art.titulo ?? '',
+    contenido: art.contenido ?? '',
+  });
+};
+
+const editarArticulo = useMutation({
+  mutationFn: async () => {
+    await api.patch(`/normativa/articulo/${articuloEditando.id}`, {
+      titulo: formEditarArticulo.titulo || undefined,
+      contenido: formEditarArticulo.contenido,
+    });
+  },
+ onSuccess: () => {
+  const actualizar = (mapa: Record<string, any[]>) => {
+    const nuevo: Record<string, any[]> = {};
+    for (const key in mapa) {
+      nuevo[key] = mapa[key].map((a: any) =>
+        a.id === articuloEditando.id ? { ...a, titulo: formEditarArticulo.titulo, contenido: formEditarArticulo.contenido } : a
+      );
+    }
+    return nuevo;
+  };
+  setArticulosTitulo(actualizar);
+  setArticulosCapitulo(actualizar);
+  setArticulosSeccion(actualizar);
+  setArticuloEditando(null);
+},
+});
+
 
   const handleArchivoPreguntas = (file: File) => {
     setArchivoPreguntas(file);
@@ -342,6 +473,16 @@ export default function LeyDetallePage() {
             Nueva versión
           </button>
         )}
+        {tab === 'estructura' && (
+          <button
+            onClick={() => setTab('estructura')}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+          >
+            <Plus size={14} />
+            Estructura
+          </button>
+        )}
+
       </div>
 
       {/* Tabs */}
@@ -727,48 +868,6 @@ export default function LeyDetallePage() {
                 </div>
               )}
 
-                //Editar versiones
-                  {versionEditando && (
-                  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
-                    <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '440px' }}>
-                      <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '14px' }}>
-                        Editar v{versionEditando.version}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div>
-                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Referencia BOE</label>
-                          <input type="text" value={formEditarVersion.referenciaBoe} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, referenciaBoe: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                        </div>
-                        <div>
-                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo de norma</label>
-                          <input type="text" value={formEditarVersion.tipoNorma} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, tipoNorma: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                          <div>
-                            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha publicación</label>
-                            <input type="date" value={formEditarVersion.fechaPublicacion} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, fechaPublicacion: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Última modificación</label>
-                            <input type="date" value={formEditarVersion.fechaVigencia} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, fechaVigencia: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                          </div>
-                        </div>
-                        <div>
-                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Notas</label>
-                          <textarea value={formEditarVersion.notas} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, notas: e.target.value })} rows={2} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'none' }} />
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                        <button onClick={() => editarVersion.mutate()} disabled={editarVersion.isPending} style={{ flex: 1, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
-                          {editarVersion.isPending ? 'Guardando...' : 'Guardar'}
-                        </button>
-                        <button onClick={() => setVersionEditando(null)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
-                          Cancelar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
               {/* Resultado */}
               {resultadoPreguntas && (
@@ -970,6 +1069,12 @@ export default function LeyDetallePage() {
 
                 <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
                   <button
+                    onClick={() => setModalCopiarVersion(true)}
+                    style={{ fontSize: '12px', padding: '6px 12px', background: '#F3F0FC', color: '#7c3aed', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}
+                  >
+                    Nueva versión (copiar actual)
+                  </button>
+                  <button
                     onClick={() => subirVersion.mutate()}
                     disabled={!archivo || !formVersion.version || subirVersion.isPending}
                     style={{ flex: 2, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', opacity: !archivo || !formVersion.version ? 0.4 : 1 }}
@@ -985,6 +1090,43 @@ export default function LeyDetallePage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {modalCopiarVersion && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '440px' }}>
+            <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>Nueva versión</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '14px' }}>
+              Se copiará toda la estructura de la versión activa. Después podrás editar los artículos que hayan cambiado.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Número de versión</label>
+                <input type="text" value={formCopiarVersion.version} onChange={(e) => setFormCopiarVersion({ ...formCopiarVersion, version: e.target.value })} placeholder="2.0" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Referencia BOE (de la modificación)</label>
+                <input type="text" value={formCopiarVersion.referenciaBoe} onChange={(e) => setFormCopiarVersion({ ...formCopiarVersion, referenciaBoe: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Última modificación</label>
+                <input type="date" value={formCopiarVersion.fechaVigencia} onChange={(e) => setFormCopiarVersion({ ...formCopiarVersion, fechaVigencia: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Notas del cambio</label>
+                <textarea value={formCopiarVersion.notas} onChange={(e) => setFormCopiarVersion({ ...formCopiarVersion, notas: e.target.value })} rows={2} placeholder="Ej: Reforma del artículo 49 (discapacidad)" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'none' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+              <button onClick={() => copiarVersion.mutate()} disabled={!formCopiarVersion.version || copiarVersion.isPending} style={{ flex: 1, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+                {copiarVersion.isPending ? 'Copiando...' : 'Crear versión'}
+              </button>
+              <button onClick={() => setModalCopiarVersion(false)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1011,6 +1153,119 @@ export default function LeyDetallePage() {
           </div>
         </div>
       )}
+
+      
+                  {versionEditando && (
+                  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+                    <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '440px' }}>
+                      <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '14px' }}>
+                        Editar v{versionEditando.version}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div>
+                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Referencia BOE</label>
+                          <input type="text" value={formEditarVersion.referenciaBoe} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, referenciaBoe: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo de norma</label>
+                          <input type="text" value={formEditarVersion.tipoNorma} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, tipoNorma: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha publicación</label>
+                            <input type="date" value={formEditarVersion.fechaPublicacion} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, fechaPublicacion: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Última modificación</label>
+                            <input type="date" value={formEditarVersion.fechaVigencia} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, fechaVigencia: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Notas</label>
+                          <textarea value={formEditarVersion.notas} onChange={(e) => setFormEditarVersion({ ...formEditarVersion, notas: e.target.value })} rows={2} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'none' }} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                        <button onClick={() => editarVersion.mutate()} disabled={editarVersion.isPending} style={{ flex: 1, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+                          {editarVersion.isPending ? 'Guardando...' : 'Guardar'}
+                        </button>
+                        <button onClick={() => setVersionEditando(null)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {tab === 'estructura' && (
+  <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+    {!versionActiva && (
+      <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+        No hay versión activa
+      </div>
+    )}
+    {titulosEstructura.map((titulo: any) => (
+      <div key={titulo.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+        <button
+          onClick={() => toggleTitulo(titulo.id)}
+          style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: titulosAbiertos[titulo.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+        >
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
+            Título {titulo.numero}{titulo.nombre ? ` — ${titulo.nombre}` : ''}
+          </div>
+          {titulosAbiertos[titulo.id] ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
+        </button>
+
+        {titulosAbiertos[titulo.id] && (
+          <div>
+            {(articulosTitulo[titulo.id] ?? []).map((art: any) => (
+              <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
+            ))}
+
+            {(capitulosPorTitulo[titulo.id] ?? []).map((capitulo: any) => (
+              <div key={capitulo.id} style={{ borderTop: '1px solid #f9fafb' }}>
+                <button
+                  onClick={() => toggleCapitulo(capitulo.id)}
+                  style={{ width: '100%', padding: '9px 14px 9px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: capitulosAbiertos[capitulo.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>
+                    Capítulo {capitulo.numero}{capitulo.nombre ? ` — ${capitulo.nombre}` : ''}
+                  </div>
+                  {capitulosAbiertos[capitulo.id] ? <ChevronUp size={13} color="#9ca3af" /> : <ChevronDown size={13} color="#9ca3af" />}
+                </button>
+
+                {capitulosAbiertos[capitulo.id] && (
+                  <div>
+                    {(articulosCapitulo[capitulo.id] ?? []).map((art: any) => (
+                      <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
+                    ))}
+
+                    {(seccionesPorCapitulo[capitulo.id] ?? []).map((seccion: any) => (
+                      <div key={seccion.id} style={{ borderTop: '1px solid #f9fafb' }}>
+                        <button
+                          onClick={() => toggleSeccion(seccion.id)}
+                          style={{ width: '100%', padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: seccionesAbiertas[seccion.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                        >
+                          <div style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280' }}>
+                            {seccion.numero ? `Sección ${seccion.numero}` : ''}{seccion.nombre ? ` — ${seccion.nombre}` : ''}
+                          </div>
+                          {seccionesAbiertas[seccion.id] ? <ChevronUp size={12} color="#9ca3af" /> : <ChevronDown size={12} color="#9ca3af" />}
+                        </button>
+                        {seccionesAbiertas[seccion.id] && (articulosSeccion[seccion.id] ?? []).map((art: any) => (
+                          <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+)}
 
     </div>
   );
