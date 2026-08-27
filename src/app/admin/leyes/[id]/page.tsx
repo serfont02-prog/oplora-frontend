@@ -1258,7 +1258,48 @@ const editarArticulo = useMutation({
     ))}
   </div>
 )}
-
+{articuloEditando && (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+    <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto' }}>
+      <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '14px' }}>
+        Editar artículo {formEditarArticulo.numero}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div>
+          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+            Título del artículo <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opcional)</span>
+          </label>
+          <input
+            type="text"
+            value={formEditarArticulo.titulo}
+            onChange={(e) => setFormEditarArticulo({ ...formEditarArticulo, titulo: e.target.value })}
+            style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Contenido</label>
+          <textarea
+            value={formEditarArticulo.contenido}
+            onChange={(e) => setFormEditarArticulo({ ...formEditarArticulo, contenido: e.target.value })}
+            rows={12}
+            style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+          />
+          <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+            Usa doble salto de línea para separar párrafos/apartados numerados.
+          </p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+        <button onClick={() => editarArticulo.mutate()} disabled={editarArticulo.isPending} style={{ flex: 1, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+          {editarArticulo.isPending ? 'Guardando...' : 'Guardar'}
+        </button>
+        <button onClick={() => setArticuloEditando(null)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
