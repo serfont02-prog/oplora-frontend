@@ -412,6 +412,7 @@ const editarArticulo = useMutation({
     { key: 'versiones', label: `Versiones (${versiones.length})` },
     { key: 'oposiciones', label: `Oposiciones (${oposicionesVinculadas.length})` },
     { key: 'preguntas', label: 'Preguntas' },
+    { key: 'estructura', label: 'Estructura' },
   ];
 
   if (isLoading) return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#9ca3af' }}>Cargando...</div>;
@@ -471,15 +472,6 @@ const editarArticulo = useMutation({
           >
             <Plus size={14} />
             Nueva versión
-          </button>
-        )}
-        {tab === 'estructura' && (
-          <button
-            onClick={() => setTab('estructura')}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
-          >
-            <Plus size={14} />
-            Estructura
           </button>
         )}
 
