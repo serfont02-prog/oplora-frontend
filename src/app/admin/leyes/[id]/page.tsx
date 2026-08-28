@@ -177,6 +177,17 @@ const { data: titulosEstructura = [] } = useQuery({
   enabled: !!versionActiva?.id && tab === 'estructura',
 });
 
+    const [disposicionesAbiertas, setDisposicionesAbiertas] = useState<Record<string, boolean>>({});
+
+    const { data: disposiciones = [] } = useQuery({
+      queryKey: ['disposiciones-ley', versionActiva?.id],
+      queryFn: async () => {
+        const res = await api.get(`/normativa/disposiciones/${versionActiva.id}`);
+        return res.data;
+      },
+      enabled: !!versionActiva?.id && tab === 'estructura',
+    });
+
   const { data: oposicionesVinculadas = [] } = useQuery({
     queryKey: ['ley-oposiciones', id],
     queryFn: async () => {
@@ -318,7 +329,25 @@ const { data: titulosEstructura = [] } = useQuery({
   });
 
   const [articuloEditando, setArticuloEditando] = useState<any>(null);
-const [formEditarArticulo, setFormEditarArticulo] = useState({ numero: '', titulo: '', contenido: '' });
+  const [formEditarArticulo, setFormEditarArticulo] = useState({ numero: '', titulo: '', contenido: '' });
+
+  const [disposicionEditando, setDisposicionEditando] = useState<any>(null);
+  const [formEditarDisposicion, setFormEditarDisposicion] = useState({ etiqueta: '', contenido: '' });
+
+  const abrirEditarDisposicion = (d: any) => {
+    setDisposicionEditando(d);
+    setFormEditarDisposicion({ etiqueta: d.etiqueta ?? '', contenido: d.contenido ?? '' });
+  };
+
+  const editarDisposicion = useMutation({
+    mutationFn: async () => {
+      await api.patch(`/normativa/disposicion/${disposicionEditando.id}`, formEditarDisposicion);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['disposiciones-ley', versionActiva?.id] });
+      setDisposicionEditando(null);
+    },
+  });
 
 const abrirEditarArticulo = (art: any) => {
   setArticuloEditando(art);
@@ -1261,8 +1290,58 @@ const editarArticulo = useMutation({
       </div>
     ))}
     </div>
+
+{disposiciones.length > 0 && (() => {
+      const categorias = ['adicional', 'transitoria', 'derogatoria', 'final'];
+      const labels: Record<string, string> = {
+        adicional: 'Disposiciones adicionales',
+        transitoria: 'Disposiciones transitorias',
+        derogatoria: 'Disposición derogatoria',
+        final: 'Disposición final',
+      };
+      return (
+        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {categorias.filter((cat) => disposiciones.some((d: any) => d.categoria === cat)).map((cat) => {
+            const items = disposiciones.filter((d: any) => d.categoria === cat);
+            const abierto = disposicionesAbiertas[cat];
+            return (
+              <div key={cat} style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+                <button
+                  onClick={() => setDisposicionesAbiertas((prev) => ({ ...prev, [cat]: !prev[cat] }))}
+                  style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>{labels[cat]}</div>
+                  {abierto ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
+                </button>
+                {abierto && (
+                  <div style={{ borderTop: '1px solid #f3f4f6' }}>
+                    {items.map((d: any) => (
+                      <div
+                        key={d.id}
+                        onClick={() => abrirEditarDisposicion(d)}
+                        style={{ padding: '10px 14px 10px 28px', borderTop: '1px solid #f9fafb', cursor: 'pointer' }}
+                      >
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px', textTransform: 'capitalize' }}>
+                          {d.etiqueta || cat}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6 }}>
+                          {d.contenido.split(/(?<=\.)\s+(?=[A-ZÁÉÍÓÚÑ0-9])/).map((frase: string, i: number) => (
+                            <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{frase}</p>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    })()}
   </div>
 )}
+
 {articuloEditando && (
   <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
     <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto' }}>
@@ -1299,6 +1378,45 @@ const editarArticulo = useMutation({
           {editarArticulo.isPending ? 'Guardando...' : 'Guardar'}
         </button>
         <button onClick={() => setArticuloEditando(null)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{disposicionEditando && (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+    <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto' }}>
+      <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '14px' }}>
+        Editar disposición
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div>
+          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Etiqueta</label>
+          <input
+            type="text"
+            value={formEditarDisposicion.etiqueta}
+            onChange={(e) => setFormEditarDisposicion({ ...formEditarDisposicion, etiqueta: e.target.value })}
+            placeholder="primera, segunda, única..."
+            style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Contenido</label>
+          <textarea
+            value={formEditarDisposicion.contenido}
+            onChange={(e) => setFormEditarDisposicion({ ...formEditarDisposicion, contenido: e.target.value })}
+            rows={8}
+            style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+          />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+        <button onClick={() => editarDisposicion.mutate()} disabled={editarDisposicion.isPending} style={{ flex: 1, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
+          {editarDisposicion.isPending ? 'Guardando...' : 'Guardar'}
+        </button>
+        <button onClick={() => setDisposicionEditando(null)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}>
           Cancelar
         </button>
       </div>
