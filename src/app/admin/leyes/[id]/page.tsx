@@ -20,7 +20,12 @@ const tiposCambio = [
 
 function FilaArticulo({ art, onEditar }: { art: any; onEditar: (art: any) => void }) {
   return (
-    <div style={{ padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid #f9fafb' }}>
+    <div
+      onClick={() => onEditar(art)}
+      style={{ padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid #f9fafb', cursor: 'pointer' }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
+    >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151' }}>
           Artículo {art.numero}{art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
@@ -29,9 +34,7 @@ function FilaArticulo({ art, onEditar }: { art: any; onEditar: (art: any) => voi
           {art.contenido?.slice(0, 90)}...
         </div>
       </div>
-      <button onClick={() => onEditar(art)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: '4px', flexShrink: 0 }}>
-        <Pencil size={13} />
-      </button>
+      <Pencil size={13} color="#d1d5db" />
     </div>
   );
 }
@@ -501,7 +504,7 @@ const editarArticulo = useMutation({
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto', background: '#f9fafb', padding: '1.5rem' }}>
+      <div style={{ flex: 1, overflowY: 'auto', background: '#f9fafb', padding: '1.5rem', minHeight: 0 }}>
         <div style={{ maxWidth: '580px' }}>
 
         {/* TAB: Información */}
