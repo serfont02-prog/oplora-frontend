@@ -504,7 +504,7 @@ const editarArticulo = useMutation({
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto', background: '#f9fafb', padding: '1.5rem', minHeight: 0 }}>
+      <div style={{ flex: 1, overflowY: 'auto', background: '#f9fafb', padding: '1.5rem' }}>
         <div style={{ maxWidth: '580px' }}>
 
         {/* TAB: Información */}
@@ -1193,13 +1193,14 @@ const editarArticulo = useMutation({
                 )}
 
                 {tab === 'estructura' && (
-  <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
-    {!versionActiva && (
-      <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
-        No hay versión activa
-      </div>
-    )}
-    {titulosEstructura.map((titulo: any) => (
+  <div style={{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
+    <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+      {!versionActiva && (
+        <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+          No hay versión activa
+        </div>
+      )}
+      {titulosEstructura.map((titulo: any) => (
       <div key={titulo.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
         <button
           onClick={() => toggleTitulo(titulo.id)}
@@ -1259,6 +1260,7 @@ const editarArticulo = useMutation({
         )}
       </div>
     ))}
+    </div>
   </div>
 )}
 {articuloEditando && (
