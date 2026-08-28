@@ -245,13 +245,17 @@ const importarTemario = async () => {
     let bloqueActual: string | undefined = undefined;
 
     for (const linea of lineas) {
-      const matchBloque = linea.match(/^##\s*(.+)$/);
+      const lineaTrim = linea.trim();
+
+      // ⭐ Detectar cabecera de bloque: "## Bloque" o "##Bloque"
+      const matchBloque = lineaTrim.match(/^##\s*(.+)$/);
       if (matchBloque) {
         bloqueActual = matchBloque[1].trim();
         continue;
       }
 
-      const match = linea.match(/^(?:tema\s+)?(\d+)[.\-)\s]+(.+)$/i);
+      // Patrones: "1. Título", "1.- Título", "Tema 1. Título", "TEMA 1. Título"
+      const match = lineaTrim.match(/^(?:tema\s+)?(\d+)[.\-)\s]+(.+)$/i);
       if (match) {
         temas.push({
           numero: parseInt(match[1]),
@@ -271,7 +275,7 @@ const importarTemario = async () => {
         numero: tema.numero,
         titulo: tema.titulo,
         tipo: 'con_normativa',
-        bloque: tema.bloque,
+        bloque: tema.bloque, 
         convocatoriaId,
       });
     }
