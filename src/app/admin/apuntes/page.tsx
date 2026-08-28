@@ -20,17 +20,7 @@ export default function ApuntesAdminPage() {
   const queryClient = useQueryClient();
   const [vinculacion, setVinculacion] = useState<'tema' | 'oposicion'>('tema');
 
-  const [versionLeyId, setVersionLeyId] = useState('');
-
-  const { data: leyesDisponibles = [] } = useQuery({
-    queryKey: ['leyes-oposicion-apuntes', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/leyes/oposicion/${oposicionId}`);
-      return res.data;
-    },
-    enabled: !!oposicionId,
-  });
-
+  
   const { data: oposiciones = [] } = useQuery({
     queryKey: ['oposiciones-admin'],
     queryFn: async () => {
@@ -96,7 +86,7 @@ const subir = async () => {
     formData.append('titulo', titulo);
     formData.append('descripcion', descripcion);
     formData.append('orden', orden);
-    if (versionLeyId) formData.append('versionLeyId', versionLeyId); // ⭐ añadir
+    
 
     const endpoint = vinculacion === 'tema'
       ? `/apuntes-oplora/tema/${temaId}`
@@ -111,7 +101,6 @@ const subir = async () => {
     setTitulo('');
     setDescripcion('');
     setOrden('0');
-    setVersionLeyId(''); // ⭐ resetear
     if (vinculacion === 'tema') {
       queryClient.invalidateQueries({ queryKey: ['apuntes-oplora-tema', temaId] });
       if (temaExpandido !== temaId) setTemaExpandido(temaId);
@@ -244,24 +233,7 @@ const subir = async () => {
         style={{ width: '100%', minHeight: '60px', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', resize: 'vertical', color: '#374151', fontFamily: 'inherit', boxSizing: 'border-box' }}
       />
     </div>
-    <div>
-      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>
-        Ley principal <span style={{ color: '#9ca3af', fontWeight: 400 }}>(para enlazar referencias "art. X" del texto)</span>
-      </label>
-      <select
-        value={versionLeyId}
-        onChange={(e) => setVersionLeyId(e.target.value)}
-        style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', color: '#374151' }}
-      >
-        <option value="">Sin ley vinculada</option>
-        {leyesDisponibles.map((ol: any) => (
-          <option key={ol.versionLey?.id} value={ol.versionLey?.id}>
-            {ol.ley?.nombre} {ol.versionLey ? `(v${ol.versionLey.version})` : ''}
-          </option>
-        ))}
-      </select>
-    </div>
-    <div>
+     <div>
       <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Orden</label>
       <input
         type="number"

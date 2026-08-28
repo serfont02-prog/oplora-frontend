@@ -45,6 +45,7 @@ export default function TemaPage() {
   const [flippedCard, setFlippedCard] = useState<string | null>(null);
   const [subiendoApunte, setSubiendoApunte] = useState(false);
   const [modalTest, setModalTest] = useState(false);
+  const [tituloExpandido, setTituloExpandido] = useState(false);
 
   
 
@@ -365,9 +366,25 @@ const hoy = new Date().toISOString().split('T')[0];
 
       {/* Título del tema */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827', lineHeight: 1.35 }}>
+        <div
+          style={{
+            fontSize: '14px', fontWeight: 700, color: '#111827', lineHeight: 1.35,
+            display: '-webkit-box',
+            WebkitLineClamp: tituloExpandido ? 'unset' : 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
           {tema?.titulo ?? 'Cargando...'}
         </div>
+        {tema?.titulo && tema.titulo.length > 90 && (
+          <button
+            onClick={() => setTituloExpandido(!tituloExpandido)}
+            style={{ fontSize: '11px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: '2px', fontWeight: 600 }}
+          >
+            {tituloExpandido ? 'Ver menos' : 'Ver más'}
+          </button>
+        )}
       </div>
     </div>
 
