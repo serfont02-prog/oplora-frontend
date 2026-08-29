@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
@@ -24,7 +24,7 @@ export default function TemasAdminPage() {
     titulo: '',
     tipo: 'con_normativa',
     contexto: '',
-    bloque: ''
+    bloque: '',
   });
 
   const [modalVincular, setModalVincular] = useState(false);
@@ -112,9 +112,14 @@ const { data: articulosBusqueda = [] } = useQuery({
     },
   });
 
+  const searchParams = useSearchParams();
+  const [convocatoriaSeleccionadaId, setConvocatoriaSeleccionadaId] = useState<string | null>(searchParams.get('convocatoriaId'));
   // Usar la convocatoria activa o la más reciente
-  const convocatoria = convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0];
+    const convocatoria = convocatoriaSeleccionadaId
+    ? convocatorias.find((c: any) => c.id === convocatoriaSeleccionadaId)
+    : convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0];
   const convocatoriaId = convocatoria?.id;
+ 
 
   const { data: temas = [], isLoading } = useQuery({
     queryKey: ['temas-admin', convocatoriaId],
@@ -354,6 +359,7 @@ const importarTemario = async () => {
           {convocatorias.map((c: any) => (
             <span
               key={c.id}
+              onClick={() => setConvocatoriaSeleccionadaId(c.id)}
               style={{ fontSize: '12px', padding: '3px 9px', borderRadius: '20px', background: c.id === convocatoriaId ? '#111827' : '#f3f4f6', color: c.id === convocatoriaId ? 'white' : '#6b7280', cursor: 'pointer' }}
             >
               {c.anyo}
@@ -386,7 +392,7 @@ const importarTemario = async () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                {['Nº', 'Título', 'Tipo', 'Normativa', ''].map((h) => (
+                {['Nº', 'Título', 'Bloque', ''].map((h) => (
                   <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontSize: '11px', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', background: '#f9fafb' }}>
                     {h}
                   </th>
@@ -406,32 +412,17 @@ const importarTemario = async () => {
                   <td style={{ padding: '11px 16px' }}>
                     <div style={{ fontSize: '13px', color: '#111827' }}>{tema.titulo}</div>
                   </td>
-                  <td style={{ padding: '11px 16px' }}>
-                    <span style={{
-                      fontSize: '11px', padding: '3px 9px', borderRadius: '20px', fontWeight: 500,
-                      background: tema.tipo === 'con_normativa' ? '#E6F1FB' : tema.tipo === 'conceptual' ? '#FAEEDA' : '#EEEDFE',
-                      color: tema.tipo === 'con_normativa' ? '#185FA5' : tema.tipo === 'conceptual' ? '#854F0B' : '#3C3489',
-                    }}>
-                      {TIPOS.find((t) => t.value === tema.tipo)?.label ?? tema.tipo}
-                    </span>
-                  </td>
-                  <td style={{ padding: '11px 16px', fontSize: '13px', color: '#9ca3af' }}>
-                    {tema.normativas?.length ?? 0} entradas
-                  </td>
+                  <td style={{ padding: '11px 16px', fontSize: '12px', color: tema.bloque ? '#374151' : '#d1d5db' }}>
+                    {tema.bloque ?? '—'}
+                  </td> 
                   <td style={{ padding: '11px 16px' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
                       <button
-                        onClick={() => setTemaExpandido(temaExpandido === tema.id ? null : tema.id)}
-                        style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f3f4f6', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#9ca3af' }}
-                      >
-                        {temaExpandido === tema.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                      </button>
-                      <button
                         onClick={() => {
-                          setTemaEditando(tema);
-                          setFormEditar({ titulo: tema.titulo, tipo: tema.tipo, contexto: tema.contexto ?? '', bloque: '' });
-                          setModalEditar(true);
-                        }}
+                            setTemaEditando(tema);
+                            setFormEditar({ titulo: tema.titulo, tipo: tema.tipo, contexto: tema.contexto ?? '', bloque: tema.bloque ?? '' });
+                            setModalEditar(true);
+                          }}
                         style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#6b7280' }}
                       >
                         <Pencil size={13} />
@@ -457,46 +448,7 @@ const importarTemario = async () => {
                   </td>
                 </tr>
 
-                {temaExpandido === tema.id && (
-                  <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td colSpan={5} style={{ padding: '0 16px 12px', background: '#f9fafb' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '8px' }}>
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
-                          Bloque <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opcional)</span>
-                        </label>
-                        <select
-                          value={form.bloque}
-                          onChange={(e) => setForm({ ...form, bloque: e.target.value })}
-                          style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
-                        >
-                          <option value="">Sin bloque</option>
-                          {bloquesDisponibles.map((b: any) => (
-                            <option key={b.nombre} value={b.nombre}>{b.nombre}</option>
-                          ))}
-                        </select>
-                      </div>
-                        <div>
-                          <div style={{ fontSize: '11px', fontWeight: 500, color: '#9ca3af', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Normativa vinculada</div>
-                          {tema.normativas?.length > 0 ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              {tema.normativas.map((tn: any) => (
-                                <div key={tn.id} style={{ fontSize: '12px', color: '#374151', background: 'white', border: '1px solid #f3f4f6', borderRadius: '8px', padding: '6px 10px' }}>
-                                  <span style={{ color: '#9ca3af', marginRight: '6px' }}>{tn.nivel}</span>
-                                  {tn.articulo?.numero ?? tn.capitulo?.nombre ?? tn.titulo?.nombre ?? tn.versionLey?.version ?? '—'}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div style={{ fontSize: '12px', color: '#9ca3af', background: 'white', border: '1px solid #f3f4f6', borderRadius: '8px', padding: '8px 10px' }}>
-                              Sin normativa vinculada
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
+
               </tbody>
             ))}
           </table>
@@ -755,7 +707,9 @@ const importarTemario = async () => {
             >
               <option value="">Selecciona un título...</option>
               {titulos.map((t: any) => (
-                <option key={t.id} value={t.id}>{t.nombre ?? `Título ${t.orden}`}</option>
+                <option key={t.id} value={t.id}>
+                  {t.nombre ? `Título ${t.numero} — ${t.nombre}` : `Título ${t.numero}`}
+                </option>
               ))}
             </select>
           </div>
@@ -863,9 +817,7 @@ const importarTemario = async () => {
           />
         </div>
         <div>
-          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
-            Bloque <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opcional)</span>
-          </label>
+          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Bloque</label>
           <select
             value={formEditar.bloque}
             onChange={(e) => setFormEditar({ ...formEditar, bloque: e.target.value })}
