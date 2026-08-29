@@ -159,7 +159,15 @@ const { data: articulosBusqueda = [] } = useQuery({
     },
   });
 
-  const bloquesDisponibles = convocatoria?.bloquesTemario ?? [];
+  const bloquesDeConvocatoria = convocatoria?.bloquesTemario ?? [];
+  const bloquesUsadosEnTemas: string[] = Array.from(new Set(temas.map((t: any) => t.bloque).filter(Boolean))) as string[];
+
+  const bloquesDisponibles = [
+    ...bloquesDeConvocatoria,
+    ...bloquesUsadosEnTemas
+      .filter((nombre: string) => !bloquesDeConvocatoria.some((b: any) => b.nombre === nombre))
+      .map((nombre: string) => ({ nombre })),
+  ];
 
   const eliminar = useMutation({
     mutationFn: async (id: string) => {
