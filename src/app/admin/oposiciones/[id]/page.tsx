@@ -29,7 +29,9 @@ export default function OposicionDetallePage() {
     estado: 'activa',
     turno: '',
     urlInap: '',
-    referenciaBoe: '',
+    fechaConvocatoria: '',
+    numeroSolicitudes: '',
+    numeroPresentados: '',
     fechaExamen: '',
     ejercicios: [] as { numero: number; tipo: string; numPreguntas: string; tiempoMinutos: string; descripcion: string }[],
     fraccionPenalizacion: '',
@@ -64,7 +66,9 @@ const [formEditarConv, setFormEditarConv] = useState({
   estado: 'activa',
   turno: '',
   urlInap: '',
-  referenciaBoe: '',
+  fechaConvocatoria: '',
+  numeroSolicitudes: '',
+  numeroPresentados: '',
   fechaExamen: '',
  ejercicios: [] as { numero: number; tipo: string; numPreguntas: string; tiempoMinutos: string; descripcion: string }[],
   fraccionPenalizacion: '',
@@ -161,7 +165,9 @@ const crearConv = useMutation({
         estado: formNuevaConv.estado,
         turno: formNuevaConv.turno || undefined,
         urlInap: formNuevaConv.urlInap || undefined,
-        referenciaBoe: formNuevaConv.referenciaBoe || undefined,
+        fechaConvocatoria: formNuevaConv.fechaConvocatoria,
+        numeroSolicitudes: formNuevaConv.numeroSolicitudes||undefined,
+        numeroPresentados: formNuevaConv.numeroPresentados||undefined,
         fechaExamen: formNuevaConv.fechaExamen || undefined,
         ejercicios: formNuevaConv.ejercicios.length > 0
         ? formNuevaConv.ejercicios.map((ej) => ({
@@ -197,7 +203,7 @@ const crearConv = useMutation({
       setModalNuevaConv(false);
       setFormNuevaConv({
         anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', turno: '',
-        urlInap: '', referenciaBoe: '', fechaExamen: '', ejercicios: [],
+        urlInap: '', fechaConvocatoria: '', numeroSolicitudes: '', numeroPresentados: '', fechaExamen: '', ejercicios: [],
         fraccionPenalizacion: '',
         notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
@@ -236,7 +242,9 @@ const crearConv = useMutation({
           estado: formEditarConv.estado,
           turno: formEditarConv.turno || null,
           urlInap: formEditarConv.urlInap || undefined,
-          referenciaBoe: formEditarConv.referenciaBoe || undefined,
+          fechaConvocatoria: formEditarConv.fechaConvocatoria,
+          numeroSolicitudes: formEditarConv.numeroSolicitudes||undefined,
+          numeroPresentados: formEditarConv.numeroPresentados||undefined,
           fechaExamen: formEditarConv.fechaExamen || undefined,
           ejercicios: formEditarConv.ejercicios.length > 0
           ? formEditarConv.ejercicios.map((ej) => ({
@@ -289,7 +297,9 @@ const crearConv = useMutation({
       estado: c.estado ?? 'activa',
       turno: c.turno ?? '',
       urlInap: c.urlInap ?? '',
-      referenciaBoe: c.referenciaBoe ?? '',
+      fechaConvocatoria: c.fechaConvocatoria??``,
+      numeroSolicitudes: c.numeroSolicitudes??'',
+      numeroPresentados: c.numeroPresentados??'',
       fechaExamen: c.fechaExamen ? new Date(c.fechaExamen).toISOString().split('T')[0] : '',
       ejercicios: (c.ejercicios ?? []).map((ej: any) => ({
         numero: ej.numero,
@@ -500,12 +510,14 @@ const crearConv = useMutation({
                   </div>
 
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '12px', color: '#6b7280' }}>
-                    {c.referenciaBoe && <span>📄 {c.referenciaBoe}</span>}
-                    {c.fechaExamen && <span>📅 {new Date(c.fechaExamen).toLocaleDateString('es-ES')}</span>}
+                    {c.fechaConvocatoria && <span>📅 Convocatoria: {new Date(c.fechaConvocatoria).toLocaleDateString('es-ES')}</span>}
+                    {c.numeroSolicitudes && <span>📝 {c.numeroSolicitudes} solicitudes</span>}
+                    {c.numeroPresentados && <span>🙋 {c.numeroPresentados} presentados</span>}
+                    {c.fechaExamen && <span>📅 Examen: {new Date(c.fechaExamen).toLocaleDateString('es-ES')}</span>}
                     <span>📎 {c.documentos?.length ?? 0} documentos</span>
                   </div>
 
-                  {c.urlInap ? (
+                  {c.urlInap && (
                     <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: '#f9fafb', borderRadius: '8px' }}>
                       <a href={c.urlInap} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#185FA5', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px' }}>
                         <ExternalLink size={11} />
@@ -514,11 +526,6 @@ const crearConv = useMutation({
                       <button onClick={() => scrapeManual.mutate(c.id)} disabled={scrapeManual.isPending} style={{ fontSize: '11px', padding: '4px 10px', background: '#111827', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }}>
                         {scrapeManual.isPending ? '...' : '↻ Actualizar'}
                       </button>
-                    </div>
-                  ) : (
-                    <div style={{ marginTop: '8px', padding: '6px 10px', background: '#fffbeb', borderRadius: '8px', fontSize: '11px', color: '#92400e', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span>⚠ Sin URL del INAP</span>
-                      <button onClick={() => abrirEditarConv(c)} style={{ fontSize: '11px', color: '#92400e', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Añadir →</button>
                     </div>
                   )}
                 </div>
@@ -575,8 +582,19 @@ const crearConv = useMutation({
                   <input type="text" value={formNuevaConv.urlInap} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, urlInap: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Referencia BOE</label>
-                  <input type="text" value={formNuevaConv.referenciaBoe} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, referenciaBoe: e.target.value })} placeholder="BOE-A-2025-..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha de convocatoria</label>
+                  <input type="date" value={formNuevaConv.fechaConvocatoria} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fechaConvocatoria: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº solicitudes</label>
+                    <input type="number" value={formNuevaConv.numeroSolicitudes} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, numeroSolicitudes: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº presentados</label>
+                    <input type="number" value={formNuevaConv.numeroPresentados} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, numeroPresentados: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
                 </div>
 
                 {/* Ejercicios de la prueba */}
@@ -820,8 +838,19 @@ const crearConv = useMutation({
                 <input type="text" value={formEditarConv.urlInap} onChange={(e) => setFormEditarConv({ ...formEditarConv, urlInap: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Referencia BOE</label>
-                <input type="text" value={formEditarConv.referenciaBoe} onChange={(e) => setFormEditarConv({ ...formEditarConv, referenciaBoe: e.target.value })} placeholder="BOE-A-2025-..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha de convocatoria</label>
+                <input type="date" value={formEditarConv.fechaConvocatoria} onChange={(e) => setFormEditarConv({ ...formEditarConv, fechaConvocatoria: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº solicitudes</label>
+                  <input type="number" value={formEditarConv.numeroSolicitudes} onChange={(e) => setFormEditarConv({ ...formEditarConv, numeroSolicitudes: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nº presentados</label>
+                  <input type="number" value={formEditarConv.numeroPresentados} onChange={(e) => setFormEditarConv({ ...formEditarConv, numeroPresentados: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
               </div>
 
               {/* Ejercicios de la prueba */}
