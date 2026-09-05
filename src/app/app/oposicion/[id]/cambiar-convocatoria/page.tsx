@@ -11,12 +11,11 @@ const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';
 
-const { actualizarUsuario } = useAuth();
-
 export default function CambiarConvocatoriaPage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { actualizarUsuario } = useAuth();
   const oposicionId = params.id as string;
 
   const { data, isLoading } = useQuery({
