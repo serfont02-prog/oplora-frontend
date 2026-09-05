@@ -4,11 +4,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 
 const BG_APP = '#F4F5F7';
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';
+
+const { actualizarUsuario } = useAuth();
 
 export default function CambiarConvocatoriaPage() {
   const params = useParams();
@@ -28,9 +31,11 @@ export default function CambiarConvocatoriaPage() {
     mutationFn: async (convocatoriaId: string) => {
       await api.post('/usuarios/cambiar-convocatoria', { oposicionId, convocatoriaId });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      const me = await api.get('/usuarios/me');
+      actualizarUsuario(me.data); // ⭐ refresca el objeto usuario completo, incluida su convocatoria activa
       queryClient.invalidateQueries();
-      router.push(`/app/oposicion/${oposicionId}`);
+      router.push('/app/dashboard');
     },
   });
 
