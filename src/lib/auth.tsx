@@ -9,6 +9,13 @@ type TipoAdministracion =
   | 'local'
   | 'empresa_publica';
 
+  interface ConvocatoriaActiva {
+  id: string;
+  anyo: number;
+  estado: string;
+  plazas?: number;
+}
+
 interface Usuario {
   id: string;
   email: string;
@@ -23,8 +30,6 @@ interface Usuario {
 
 
   // Datos de progreso
-  puntos: number;
-  nivel: number;
   estado: string;          // "nuevo" | "iniciado" | "activo"
   rachaActual: number;
 
@@ -39,6 +44,9 @@ interface Usuario {
     subgrupo: string;
     turno: string;
     tipoAdministracion: TipoAdministracion;
+    puntos: number;
+    nivel: number;
+    convocatoriaActiva?: ConvocatoriaActiva | null;
   };
 
   // Suscripción del usuario
@@ -53,7 +61,7 @@ interface AuthContextType {
   registro: (datos: any) => Promise<any>;
   logout: () => void;
   cargando: boolean;
-  actualizarUsuario: (data: Partial<Usuario>) => void; // ⭐ Añadido
+  actualizarUsuario: (data: Partial<Usuario>) => void; 
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -63,7 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
 
-  // ⭐ Función añadida correctamente
   const actualizarUsuario = (data: Partial<Usuario>) => {
     setUsuario((prev) => (prev ? { ...prev, ...data } : prev));
   };
@@ -76,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.defaults.headers.common['Authorization'] = `Bearer ${tokenGuardado}`;
 
     api
-      .get('/usuarios/me')   // ⭐ AHORA SÍ TRAE oposicionActiva, suscripcion, estado, etc.
+      .get('/usuarios/me') 
       .then((res) => {
   setUsuario(res.data);
 })

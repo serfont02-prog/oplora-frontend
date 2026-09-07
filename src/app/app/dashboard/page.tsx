@@ -80,13 +80,18 @@ export default function DashboardPage() {
   });
 
   
+const ultimaConvocatoria = useMemo(() => {
+  if (!convocatorias.length) return null;
 
+  const convocatoriaActivaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
 
-  const ultimaConvocatoria = useMemo(() => {
-    return convocatorias.length
-      ? [...convocatorias].sort((a, b) => b.anyo - a.anyo)[0]
-      : null;
-  }, [convocatorias]);
+  const convocatoriaUsuario = convocatoriaActivaId
+    ? convocatorias.find((c: any) => c.id === convocatoriaActivaId)
+    : null;
+
+  return convocatoriaUsuario ?? [...convocatorias].sort((a, b) => b.anyo - a.anyo)[0];
+}, [convocatorias, usuario]);
+
 
   if (cargando) return null;
   if (!usuario) return null;
@@ -829,17 +834,12 @@ const acciones = [
    SECCIÓN OPLO (mismo gris de widget)
 ------------------------------------------------------- */
 function SeccionOplo({ usuario }: { usuario: any }) {
-  console.log('SeccionOplo usuario:', usuario); // ⭐ temporal
-  
-  
   const [modalAbierto, setModalAbierto] = useState(false);
   const router = useRouter();
 
-  const nivel = usuario?.nivel ?? 1;
-  const puntos = usuario?.puntos ?? 0;
+  const nivel = usuario?.oposicionActiva?.nivel ?? 1;
+  const puntos = usuario?.oposicionActiva?.puntos ?? 0;
   const racha = usuario?.rachaActual ?? 0;
-
-  console.log('racha calculada:', racha); // ⭐ temporal
 
   const niveles = [
     { nivel: 1, nombre: 'Opositor', puntosMin: 0, puntosMax: 100 },
@@ -1019,22 +1019,22 @@ function AccesoCirculo({ label, Icon, size = 19, onClick }: any) {
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
         background: 'none', border: 'none', cursor: 'pointer',
         outline: 'none', WebkitTapHighlightColor: 'transparent', padding: 0,
-        transform: pulsado ? 'scale(0.92)' : 'scale(1)',
-        transition: 'transform 0.15s ease',
+        transform: pulsado ? 'scale(0.88)' : 'scale(1)', // ⭐ más pronunciado (antes 0.92)
+        transition: 'transform 0.12s ease',
       }}
     >
       <div style={{
         width: 48, height: 48, borderRadius: '50%',
-        background: 'white',
+        background: pulsado ? '#1F7CFF' : 'white', // ⭐ relleno azul completo al pulsar
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: pulsado
-          ? '0 0 0 3px #1F7CFF, 0 4px 10px rgba(0,0,0,0.12)'
+          ? '0 2px 8px rgba(31,124,255,0.4)' // ⭐ sombra azul en vez de solo anillo
           : '0 4px 10px rgba(0,0,0,0.12)',
-        transition: 'box-shadow 0.15s ease',
+        transition: 'background 0.15s ease, box-shadow 0.15s ease',
       }}>
-       <Icon style={{ width: size, height: size }} color="#111827" />
+       <Icon style={{ width: size, height: size, transition: 'color 0.15s ease' }} color={pulsado ? 'white' : '#111827'} />
       </div>
-      <span style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 10, color: pulsado ? '#1F7CFF' : TEXT_SECONDARY, fontWeight: pulsado ? 700 : 500, transition: 'color 0.15s ease' }}>{label}</span>
     </button>
   );
 }

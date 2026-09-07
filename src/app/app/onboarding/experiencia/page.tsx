@@ -25,13 +25,13 @@ const OPCIONES = [
 
 export default function ExperienciaPage() {
   const router = useRouter();
-  const { actualizarUsuario } = useAuth();
+  const { usuario, actualizarUsuario } = useAuth();
   const [seleccionado, setSeleccionado] = useState<number | null>(null);
 
   const handleSelect = async (nivel: number) => {
     setSeleccionado(nivel);
     try {
-      const res = await api.patch('/usuarios/nivel', { nivel });
+      const res = await api.patch('/usuarios/nivel', { nivel, oposicionId: usuario?.oposicionActiva?.id });
       actualizarUsuario(res.data);
       setTimeout(() => {
         router.push('/app/onboarding/minireto');
