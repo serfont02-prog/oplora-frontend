@@ -42,8 +42,8 @@ export default function PerfilPage() {
 
   if (!usuario) return null;
 
-  const nivel = usuario.nivel ?? 1;
-  const puntos = usuario.puntos ?? 0;
+  const nivel = usuario.oposicionActiva?.nivel ?? 1;
+  const puntos = usuario.oposicionActiva?.puntos ?? 0;
   const nivelActual = NIVELES.find(n => n.nivel === nivel) ?? NIVELES[0];
   const nivelSiguiente = NIVELES.find(n => n.nivel === nivel + 1);
 

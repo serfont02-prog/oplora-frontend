@@ -5,7 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Search, CheckCircle2, Lock, ChevronRight, BookOpen, FileText, Upload, Layers } from 'lucide-react';
+import { Search, CheckCircle2, ChevronRight, BookOpen, FileText, Upload, Layers } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 
@@ -106,7 +106,7 @@ export default function TemarioOposicionPage() {
     enabled: !!usuario,
   });
 
-  const nivel = usuario?.nivel ?? 'principiante';
+  
 
   const temasFiltrados = useMemo(() => {
     if (!busqueda) return temas;
@@ -225,79 +225,75 @@ export default function TemarioOposicionPage() {
         </div>
       </div>
     ) : (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {temasFiltrados.map((tema: any) => {
-          const prog = progresoPorTemaId[tema.id];
-          const porcentaje = prog?.porcentajeTotal ?? 0;
-          const completado = porcentaje >= 80;
-          const bloqueado = nivel === 'principiante' && tema.numero > 10;
-          const clickable = modoEstudiar && !bloqueado;
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    {temasFiltrados.map((tema: any) => {
+      const prog = progresoPorTemaId[tema.id];
+      const porcentaje = prog?.porcentajeTotal ?? 0;
+      const completado = porcentaje >= 80;
+      const clickable = modoEstudiar;
 
-          // Cálculo del anillo SVG
-          const radio = 22;
-          const circunferencia = 2 * Math.PI * radio;
-          const offset = circunferencia - (Math.min(porcentaje, 100) / 100) * circunferencia;
-          const colorAnillo = completado ? '#16A34A' : porcentaje > 0 ? COLOR_ESTUDIAR : '#D1D5DB';
-          const grosorAnillo = porcentaje > 0 || completado ? '4' : '2.5'; // ⭐ más fino cuando es 0%
+      // Cálculo del anillo SVG
+      const radio = 22;
+      const circunferencia = 2 * Math.PI * radio;
+      const offset = circunferencia - (Math.min(porcentaje, 100) / 100) * circunferencia;
+      const colorAnillo = completado ? '#16A34A' : porcentaje > 0 ? COLOR_ESTUDIAR : '#D1D5DB';
+      const grosorAnillo = porcentaje > 0 || completado ? '4' : '2.5';
 
-          return (
-            <button
-              key={tema.id}
-              onClick={() => clickable && router.push(`/app/tema/${oposicionId}/${tema.numero}`)}
-              style={{
-                background: 'white', border: 'none', borderRadius: '16px',
-                padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '14px',
-                cursor: clickable ? 'pointer' : 'default',
-                opacity: bloqueado ? 0.55 : 1,
-                width: '100%', textAlign: 'left', boxSizing: 'border-box',
-                minHeight: '78px',
-                transition: 'transform 150ms ease, box-shadow 150ms ease',
-              }}
-              onTouchStart={(e) => { if (clickable) { e.currentTarget.style.transform = 'scale(0.99)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; } }}
-              onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
-              onMouseDown={(e) => { if (clickable) { e.currentTarget.style.transform = 'scale(0.99)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; } }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
-            >
-              {/* Bloque izquierdo: anillo + número + % debajo */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '52px' }}>
-                <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="52" height="52" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
-                    <circle cx="26" cy="26" r={radio} fill="none" stroke="#F1F5F9" strokeWidth={grosorAnillo} />
-                    <circle
-                      cx="26" cy="26" r={radio} fill="none"
-                      stroke={colorAnillo} strokeWidth={grosorAnillo} strokeLinecap="round"
-                      strokeDasharray={circunferencia} strokeDashoffset={offset}
-                      style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                    />
-                  </svg>
-                  {completado ? (
-                    <CheckCircle2 size={20} color="#16A34A" />
-                  ) : (
-                    <span style={{ fontSize: '15px', fontWeight: 700, color: porcentaje > 0 ? TEXT_PRIMARY : TEXT_MUTED }}>
-                      {tema.numero}
-                    </span>
-                  )}
-                </div>
-                {porcentaje > 0 && porcentaje < 100 && (
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: colorAnillo, marginTop: '2px' }}>
-                    {porcentaje}%
-                  </span>
-                )}
-              </div>
+      return (
+        <button
+          key={tema.id}
+          onClick={() => clickable && router.push(`/app/tema/${oposicionId}/${tema.numero}`)}
+          style={{
+            background: 'white', border: 'none', borderRadius: '16px',
+            padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '14px',
+            cursor: clickable ? 'pointer' : 'default',
+            width: '100%', textAlign: 'left', boxSizing: 'border-box',
+            minHeight: '78px',
+            transition: 'transform 150ms ease, box-shadow 150ms ease',
+          }}
+          onTouchStart={(e) => { if (clickable) { e.currentTarget.style.transform = 'scale(0.99)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; } }}
+          onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+          onMouseDown={(e) => { if (clickable) { e.currentTarget.style.transform = 'scale(0.99)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; } }}
+          onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+        >
+          {/* Bloque izquierdo: anillo + número + % debajo */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '52px' }}>
+            <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="52" height="52" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
+                <circle cx="26" cy="26" r={radio} fill="none" stroke="#F1F5F9" strokeWidth={grosorAnillo} />
+                <circle
+                  cx="26" cy="26" r={radio} fill="none"
+                  stroke={colorAnillo} strokeWidth={grosorAnillo} strokeLinecap="round"
+                  strokeDasharray={circunferencia} strokeDashoffset={offset}
+                  style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                />
+              </svg>
+              {completado ? (
+                <CheckCircle2 size={20} color="#16A34A" />
+              ) : (
+                <span style={{ fontSize: '15px', fontWeight: 700, color: porcentaje > 0 ? TEXT_PRIMARY : TEXT_MUTED }}>
+                  {tema.numero}
+                </span>
+              )}
+            </div>
+            {porcentaje > 0 && porcentaje < 100 && (
+              <span style={{ fontSize: '10px', fontWeight: 700, color: colorAnillo, marginTop: '2px' }}>
+                {porcentaje}%
+              </span>
+            )}
+          </div>
 
-              {/* Título del tema */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_PRIMARY, lineHeight: 1.4 }}>
-                  {tema.titulo}
-                </div>
-              </div>
-
-              {bloqueado && <Lock size={14} color="#d1d5db" style={{ flexShrink: 0 }} />}
-            </button>
-          );
-        })}
-      </div>
+          {/* Título del tema */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_PRIMARY, lineHeight: 1.4 }}>
+              {tema.titulo}
+            </div>
+          </div>
+        </button>
+      );
+    })}
+  </div>
     )}
   </>
 )}
