@@ -52,7 +52,7 @@ export default function MiniRetoPage() {
   const [shaking, setShaking] = useState<string | null>(null);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
 
-  const nivel = (usuario?.nivel as 1 | 2 | 3) ?? 1;
+  const nivel = (usuario?.oposicionActiva?.nivel as 1 | 2 | 3) ?? 1;
   const { pregunta, opciones } = PREGUNTAS[nivel] ?? PREGUNTAS[1];
 
   useEffect(() => {
