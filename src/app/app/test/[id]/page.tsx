@@ -39,7 +39,7 @@ export default function TestPage({ params }: TestPageProps) {
   const permitirBlancos = searchParams.get('blancos') !== 'false'; // ⭐ movido aquí arriba
   const tiempoPorPregunta = searchParams.get('tiempo');             // ⭐ movido aquí arriba
   const numPreguntas = Number(searchParams.get('n')) || Number(searchParams.get('num')) || 5;
-  const nivel = modo === 'primer_reto' ? 1 : usuario?.nivel;
+  const nivel = modo === 'primer_reto' ? 1 : usuario?.oposicionActiva?.nivel;
   const queryClient = useQueryClient();
   const [preguntaActual, setPreguntaActual] = useState(0);
   const [seleccionada, setSeleccionada] = useState<number | null>(null);
