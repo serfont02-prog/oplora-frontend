@@ -137,7 +137,7 @@ export default function AlertasPage() {
               style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}
             >
               <img
-                src={getOploUrl(usuario?.nivel ?? 1)}
+                src={getOploUrl(usuario?.oposicionActiva?.nivel ?? 1)}
                 alt="Perfil"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
               />

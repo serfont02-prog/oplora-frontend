@@ -50,11 +50,52 @@ export default function RetosPage() {
   });
   const [error, setError] = useState('');
 
+const [validacion, setValidacion] = useState<any>(null);
+const [validando, setValidando] = useState(false);
+const [modalInvitar, setModalInvitar] = useState(false);
+
+
+const compartirInvitacion = async () => {
+  const url = `https://oplora.app/app/registro?ref=${usuario?.nick ?? ''}`;
+  const texto = `¡Te reto a superarme en OPLORA! Únete y prepara tu oposición conmigo 💪`;
+
+  if (navigator.share) {
+    await navigator.share({ title: 'OPLORA', text: texto, url });
+  } else {
+    await navigator.clipboard.writeText(`${texto} ${url}`);
+    alert('Enlace copiado al portapapeles');
+  }
+  setModalInvitar(false);
+};
+const puedeEnviar = validacion?.encontrado && !validacion?.error && validacion?.mismaOposicion && validacion?.mismaConvocatoria;
+const oposicionId = usuario?.oposicionActiva?.id;
+
+  useEffect(() => {
+  if (!form.retadoNickOEmail || form.retadoNickOEmail.length < 2) {
+    setValidacion(null);
+    return;
+  }
+
+  setValidando(true);
+  const timeout = setTimeout(async () => {
+    try {
+      const res = await api.get('/retos/validar-destinatario', {
+        params: { nickOEmail: form.retadoNickOEmail, oposicionId },
+      });
+      setValidacion(res.data);
+    } catch {
+      setValidacion(null);
+    } finally {
+      setValidando(false);
+    }
+  }, 500); // 500ms de debounce
+
+  return () => clearTimeout(timeout);
+}, [form.retadoNickOEmail, oposicionId]);
+
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
-
-  const oposicionId = usuario?.oposicionActiva?.id;
 
   const { data: retoDiario } = useQuery({
     queryKey: ['reto-diario', oposicionId],
@@ -317,7 +358,7 @@ export default function RetosPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY }}>Reto diario</div>
                 <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '2px' }}>
-                  {retoDiario?.preguntas?.length ?? '—'} preguntas · Nivel {usuario?.nivel ?? 1} · Caduca hoy
+                  {retoDiario?.preguntas?.length ?? '—'} preguntas · Nivel {usuario?.oposicionActiva?.nivel ?? 1} ·
                 </div>
               </div>
               {yaHizoRetoDiario ? (
@@ -472,6 +513,37 @@ export default function RetosPage() {
                   placeholder="nick_amigo o email@ejemplo.com"
                   style={{ width: '100%', padding: '10px 12px', fontSize: '13px', border: 'none', borderRadius: '10px', outline: 'none', boxSizing: 'border-box', background: 'white' }}
                 />
+                {validando && (
+                  <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>Comprobando...</div>
+                )}
+
+              {!validando && validacion && (
+                <div style={{ marginTop: '6px' }}>
+                  {!validacion.encontrado && (
+                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <span>😕 No hemos encontrado a ese usuario</span>
+                      <button
+                        onClick={() => setModalInvitar(true)}
+                        style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}
+                      >
+                        Invitar
+                      </button>
+                    </div>
+                  )}
+                  {validacion.encontrado && validacion.error && (
+                    <div style={{ fontSize: '12px', color: '#dc2626' }}>⚠ {validacion.error}</div>
+                  )}
+                  {validacion.encontrado && !validacion.error && !validacion.mismaOposicion && (
+                    <div style={{ fontSize: '12px', color: '#dc2626' }}>⚠ {validacion.nombre} no está preparando esta oposición</div>
+                  )}
+                  {validacion.encontrado && !validacion.error && validacion.mismaOposicion && !validacion.mismaConvocatoria && (
+                    <div style={{ fontSize: '12px', color: '#dc2626' }}>⚠ {validacion.nombre} está en otra convocatoria</div>
+                  )}
+                  {validacion.encontrado && !validacion.error && validacion.mismaOposicion && validacion.mismaConvocatoria && (
+                    <div style={{ fontSize: '12px', color: '#15803d' }}>✓ {validacion.nombre} — listo para retar</div>
+                  )}
+                </div>
+              )}
               </div>
 
               <div>
@@ -579,10 +651,10 @@ export default function RetosPage() {
 
               <button
                 onClick={() => crearReto.mutate()}
-                disabled={!formularioValido || crearReto.isPending}
-                style={{ width: '100%', padding: '13px', background: !formularioValido ? '#e5e7eb' : '#111827', color: !formularioValido ? '#9ca3af' : 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: !formularioValido ? 'not-allowed' : 'pointer' }}
+                disabled={!puedeEnviar || crearReto.isPending}
+                style={{ /* ... */ opacity: !puedeEnviar ? 0.5 : 1 }}
               >
-                {crearReto.isPending ? 'Generando reto' : '⚡ Enviar reto'}
+                {crearReto.isPending ? 'Enviando...' : 'Enviar reto'}
               </button>
 
             </div>
@@ -628,6 +700,34 @@ export default function RetosPage() {
                 Dejarlo para más adelante
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal INVITAR */}
+
+      {modalInvitar && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '340px', textAlign: 'center' }}>
+            <div style={{ fontSize: '32px', marginBottom: '10px' }}>😕</div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', marginBottom: '6px' }}>
+              No hemos encontrado a "{form.retadoNickOEmail}"
+            </div>
+            <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '18px' }}>
+              ¿Quieres invitarle a OPLORA para poder retarle?
+            </div>
+            <button
+              onClick={compartirInvitacion}
+              style={{ width: '100%', padding: '12px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginBottom: '8px' }}
+            >
+              Compartir invitación
+            </button>
+            <button
+              onClick={() => setModalInvitar(false)}
+              style={{ width: '100%', padding: '12px', background: 'white', color: '#6b7280', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       )}
@@ -795,7 +895,10 @@ export default function RetosPage() {
 
     </div>
   );
+
 }
+
+
 
 function AvatarUsuario({ persona, size = 64 }: { persona: any; size?: number }) {
   if (persona?.tipoAvatar === 'foto' && persona?.avatarUrl) {

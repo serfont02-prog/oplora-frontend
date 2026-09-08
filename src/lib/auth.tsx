@@ -24,6 +24,7 @@ interface Usuario {
   rol: string;
   tipoAvatar?: 'oplo' | 'foto';
   avatarUrl?: string | null;
+  nick?: string;
 
   //¿Completo en onboarding general
   onboardingGeneralCompletado?: boolean;
