@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { ArrowLeft, ChevronRight, Bell, RefreshCw, Share2, Download, LogOut } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Bell, RefreshCw, Share2, Download, LogOut, RotateCcw } from 'lucide-react';
 
 const BG_APP = '#F4F5F7';
 const TEXT_PRIMARY = '#111827';
@@ -21,6 +21,26 @@ export default function AjustesOposicionPage() {
 
   const [modalAbandonar, setModalAbandonar] = useState(false);
   const [notificaciones, setNotificaciones] = useState(true);
+  const [modalResetear, setModalResetear] = useState(false);
+  const [conservar, setConservar] = useState({
+    puntosYNivel: false,
+    racha: false,
+    flashcards: false,
+    lectura: false,
+    historialTests: false,
+    notas: false,
+  });
+
+  const resetear = useMutation({
+    mutationFn: async () => {
+      await api.post('/usuarios/resetear-progreso', { oposicionId, conservar });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      setModalResetear(false);
+      router.push('/app/dashboard');
+    },
+  });
 
   const { data: oposicion } = useQuery({
     queryKey: ['oposicion', oposicionId],
@@ -158,8 +178,72 @@ export default function AjustesOposicionPage() {
           <LogOut size={16} />
           Abandonar esta oposición
         </button>
+        <button
+          onClick={() => setModalResetear(true)}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 13, background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, color: '#D97706', fontWeight: 600, fontSize: 13, cursor: 'pointer', marginTop: 10 }}
+        >
+          <RotateCcw size={16} />
+          Reiniciar mi progreso
+        </button>
 
       </div>
+
+      {modalResetear && (
+      <div
+        onClick={() => setModalResetear(false)}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', width: '100%', maxWidth: 480 }}
+        >
+          <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center' }}>⚠️</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6, textAlign: 'center' }}>
+            Reiniciar progreso
+          </div>
+          <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 18, textAlign: 'center' }}>
+            Elige qué quieres conservar. Todo lo demás se borrará.
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            {[
+              { key: 'puntosYNivel', label: 'Puntos y nivel' },
+              { key: 'racha', label: 'Racha actual' },
+              { key: 'flashcards', label: 'Flashcards dominadas' },
+              { key: 'lectura', label: 'Progreso de lectura de apuntes' },
+              { key: 'historialTests', label: 'Historial de tests realizados' },
+              { key: 'notas', label: 'Notas personales' },
+            ].map(({ key, label }) => (
+              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F9FAFB', borderRadius: 12, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={(conservar as any)[key]}
+                  onChange={(e) => setConservar({ ...conservar, [key]: e.target.checked })}
+                  style={{ width: 16, height: 16, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 13, color: '#374151' }}>{label}</span>
+              </label>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setModalResetear(false)}
+              style={{ flex: 1, padding: 13, background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => resetear.mutate()}
+              disabled={resetear.isPending}
+              style={{ flex: 1, padding: 13, background: '#DC2626', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+            >
+              {resetear.isPending ? 'Reiniciando...' : 'Reiniciar progreso'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
       {modalAbandonar && (
         <div

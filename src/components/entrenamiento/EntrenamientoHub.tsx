@@ -37,7 +37,7 @@ export default function EntrenamientoHub({
   const router = useRouter();
 
   const estado = usuario.estado;
-  const nivel = usuario.nivel;
+  const nivel = usuario.oposicionActiva?.nivel ?? 1;
   const suscripcion = usuario.suscripcion;
 
   return (
