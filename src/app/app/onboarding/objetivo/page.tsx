@@ -18,30 +18,29 @@ function Logo() {
 }
 
 const OPCIONES = [
-  { key: 'aprobar', icon: '🎯', title: 'Aprobar mi oposición', subtitle: 'Voy a por todas' },
-  { key: 'trabajo', icon: '🛡️', title: 'Conseguir un trabajo estable', subtitle: 'Quiero un cambio' },
-  { key: 'mejorar', icon: '📈', title: 'Mejorar mis resultados', subtitle: 'Quiero subir nivel' },
-  { key: 'cero', icon: '🌱', title: 'Empezar desde cero', subtitle: 'Necesito claridad' },
+  { valor: 'menos_1h', icon: '⏰', title: 'Menos de 1 hora al día', subtitle: 'Voy poco a poco, pero constante' },
+  { valor: '1_3h', icon: '🕑', title: '1-3 horas al día', subtitle: 'Le dedico un buen rato cada día' },
+  { valor: 'mas_3h', icon: '🔥', title: 'Más de 3 horas al día', subtitle: 'Estoy a tope con esto' },
+  { valor: 'variable', icon: '📅', title: 'Depende del día', subtitle: 'Mi disponibilidad varía mucho' },
 ];
 
-export default function ObjetivoPage() {
+export default function TiempoDisponiblePage() {
   const router = useRouter();
   const { actualizarUsuario } = useAuth();
   const [seleccionado, setSeleccionado] = useState<string | null>(null);
 
-  const handleSelect = async (objetivo: string) => {
-    setSeleccionado(objetivo);
-
-    let nivel = 1;
-    if (objetivo === 'mejorar') nivel = 2;
-
-    const res = await api.patch('/usuarios/objetivo', { objetivo, nivel });
-    actualizarUsuario(res.data);
-
-    // Pequeña pausa para que se vea la animación antes de navegar
-    setTimeout(() => {
-      router.push('/app/onboarding/oposicion');
-    }, 350);
+  const handleSelect = async (valor: string) => {
+    setSeleccionado(valor);
+    try {
+      const res = await api.patch('/usuarios/tiempo-disponible', { tiempoDisponible: valor });
+      actualizarUsuario(res.data);
+      setTimeout(() => {
+        router.push('/app/onboarding/oposicion');
+      }, 350);
+    } catch (error) {
+      console.error(error);
+      setSeleccionado(null);
+    }
   };
 
   return (
@@ -61,22 +60,22 @@ export default function ObjetivoPage() {
           </div>
 
           <h1 style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, margin: '0 0 4px' }}>
-            Vamos a construir tu camino
+            ¿Cuánto tiempo puedes dedicarle?
           </h1>
           <p style={{ fontSize: 13, color: TEXT_SECONDARY, margin: 0 }}>
-            ¿Cuál es tu meta?
+            Así adaptamos tu plan de estudio
           </p>
         </header>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {OPCIONES.map(({ key, icon, title, subtitle }) => {
-            const activo = seleccionado === key;
-            const otraSeleccionada = seleccionado !== null && !activo;
+          {OPCIONES.map(({ valor, icon, title, subtitle }) => {
+            const activo = seleccionado === valor;
+            const atenuado = seleccionado !== null && !activo;
 
             return (
               <button
-                key={key}
-                onClick={() => !seleccionado && handleSelect(key)}
+                key={valor}
+                onClick={() => !seleccionado && handleSelect(valor)}
                 disabled={seleccionado !== null}
                 style={{
                   width: '100%', textAlign: 'left', padding: '13px 14px',
@@ -86,11 +85,9 @@ export default function ObjetivoPage() {
                   cursor: seleccionado ? 'default' : 'pointer',
                   display: 'flex', gap: 12, alignItems: 'center',
                   transform: activo ? 'scale(1.015)' : 'scale(1)',
-                  opacity: otraSeleccionada ? 0.4 : 1,
+                  opacity: atenuado ? 0.4 : 1,
                   transition: 'transform 0.2s ease, opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease',
                 }}
-                onMouseEnter={(e) => { if (!seleccionado) e.currentTarget.style.background = '#FAFAFA'; }}
-                onMouseLeave={(e) => { if (!seleccionado) e.currentTarget.style.background = 'white'; }}
               >
                 <div style={{
                   width: 38, height: 38, borderRadius: 10,

@@ -154,17 +154,12 @@ export default function OnboardingOposicionPage() {
     return lista;
   }, [oposiciones, tipo, categoria, subgrupo, ccaa, filtroCompleto]);
 
-  const seleccionar = async (idOpo: string) => {
-    await api.post(`/usuarios/activar-oposicion/${idOpo}`);
-    const me = await api.get('/usuarios/me');
-    actualizarUsuario(me.data);
-
-    if (me.data.objetivo === 'aprobar' || me.data.objetivo === 'trabajo') {
-      router.push('/app/onboarding/experiencia');
-      return;
-    }
-    router.push('/app/onboarding/minireto');
-  };
+const seleccionar = async (idOpo: string) => {
+  await api.post(`/usuarios/activar-oposicion/${idOpo}`);
+  const me = await api.get('/usuarios/me');
+  actualizarUsuario(me.data);
+  router.push('/app/onboarding/experiencia');
+};
 
   const seleccionarConAnimacion = (id: string, callback: () => void) => {
     setSeleccionando(id);
