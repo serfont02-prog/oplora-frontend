@@ -80,8 +80,6 @@ export default function HistoricoPage() {
           </div>
         )}
       </div>
-
-      <FooterNavegacion usuario={usuario} oposicionId={oposicionId} activo="estudiar" />
     </div>
   );
 }

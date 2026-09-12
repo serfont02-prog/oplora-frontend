@@ -220,29 +220,20 @@ if (!convocatoria) {
         )}
 
         {/* Fases adicionales */}
-       {convocatoria.fasesAdicionales?.length > 0 && (
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Fases del proceso</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {convocatoria.fasesAdicionales.map((f: any, i: number) => (
+                {convocatoria.fasesAdicionales.map((f: any, i: number) => (
                 <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: f.descripcion ? 4 : 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY }}>
-                    {f.nombre}
-                    </div>
-                    <div style={{ fontSize: 10, fontWeight: 400, color: TEXT_MUTED, textTransform: 'capitalize', marginTop: 1 }}>
-                    {f.tipo}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>{f.tipo}</div>
+                        {f.nombre && <div style={{ fontSize: 11, fontWeight: 400, color: TEXT_MUTED, marginTop: 1 }}>{f.nombre}</div>}
                     </div>
                     {f.eliminatoria && (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#DC2626', flexShrink: 0 }}>Eliminatoria</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#DC2626', flexShrink: 0 }}>Eliminatoria</span>
                     )}
+                    </div>
+                    {f.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginTop: 6 }}>{f.descripcion}</div>}
                 </div>
-                {f.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY }}>{f.descripcion}</div>}
-                </div>
-            ))}
-            </div>
-        </div>
-        )}
+                ))}
 
         {/* Bolsa de empleo */}
         {convocatoria.generaBolsaEmpleo && (
