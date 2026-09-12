@@ -143,40 +143,62 @@ const convocatoria = convocatoriaIdParam
 
         {/* Bloques del temario */}
         {convocatoria.bloquesTemario?.length > 0 && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Bloques del temario</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {convocatoria.bloquesTemario.map((b: any, i: number) => (
-                <div key={i}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY }}>{b.nombre}</div>
-                  {b.descripcion && <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{b.descripcion}</div>}
-                </div>
-              ))}
+        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Bloques del temario</div>
+            <button
+                onClick={() => router.push(`/app/tema/${oposicionId}?modo=estudiar`)}
+                style={{ fontSize: 12, color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            >
+                Ver temas →
+            </button>
             </div>
-          </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {convocatoria.bloquesTemario.map((b: any, i: number) => (
+                <div key={i}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY }}>{b.nombre}</div>
+                {b.descripcion && <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{b.descripcion}</div>}
+                </div>
+            ))}
+            </div>
+        </div>
         )}
 
         {/* Requisitos */}
         {convocatoria.requisitos && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 8 }}>Requisitos</div>
-            <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.7 }}>{convocatoria.requisitos}</div>
-          </div>
+            <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.7 }}>
+            {convocatoria.requisitos.split('\n').filter((l: string) => l.trim()).map((linea: string, i: number) => (
+                <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{linea}</p>
+            ))}
+            </div>
+        </div>
         )}
 
         {/* Fases adicionales */}
-        {convocatoria.fasesAdicionales?.length > 0 && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+       {convocatoria.fasesAdicionales?.length > 0 && (
+        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Fases del proceso</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {convocatoria.fasesAdicionales.map((f: any, i: number) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                  <span style={{ color: TEXT_PRIMARY, fontWeight: 500 }}>{f.nombre}</span>
-                  {f.eliminatoria && <span style={{ color: '#DC2626', fontSize: 11 }}>Eliminatoria</span>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {convocatoria.fasesAdicionales.map((f: any, i: number) => (
+                <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: f.descripcion ? 4 : 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY }}>
+                    {f.nombre}
+                    <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 500, color: TEXT_MUTED, textTransform: 'capitalize' }}>
+                        ({f.tipo})
+                    </span>
+                    </div>
+                    {f.eliminatoria && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#DC2626', flexShrink: 0 }}>Eliminatoria</span>
+                    )}
                 </div>
-              ))}
+                {f.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY }}>{f.descripcion}</div>}
+                </div>
+            ))}
             </div>
-          </div>
+        </div>
         )}
 
         {/* Bolsa de empleo */}
@@ -197,10 +219,14 @@ const convocatoria = convocatoriaIdParam
 
         {/* Notas adicionales */}
         {convocatoria.descripcionAdicional && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>Notas adicionales</div>
-            <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.6 }}>{convocatoria.descripcionAdicional}</div>
-          </div>
+            <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.7 }}>
+            {convocatoria.descripcionAdicional.split('\n').filter((l: string) => l.trim()).map((linea: string, i: number) => (
+                <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{linea}</p>
+            ))}
+            </div>
+        </div>
         )}
 
         {/* Documentación oficial */}
