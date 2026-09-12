@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+
 
 const BG_APP = '#F4F5F7';
 const TEXT_PRIMARY = '#111827';
@@ -29,6 +29,10 @@ export default function ConvocatoriaFichaPage() {
   const oposicionId = params.id as string;
   const convocatoriaIdParam = searchParams.get('convocatoriaId');
 
+  const convocatoriaActivaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
+
+  
+
   const { data: convocatorias = [], isLoading } = useQuery({
     queryKey: ['convocatorias-ficha', oposicionId],
     queryFn: async () => {
@@ -36,8 +40,6 @@ export default function ConvocatoriaFichaPage() {
       return res.data;
     },
   });
-
-  const convocatoriaActivaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
 
 const convocatoria = convocatoriaIdParam
   ? convocatorias.find((c: any) => c.id === convocatoriaIdParam)
@@ -54,6 +56,17 @@ const convocatoria = convocatoriaIdParam
       </div>
     );
   }
+
+  const [modalTemas, setModalTemas] = useState(false);
+
+    const { data: temasModal = [] } = useQuery({
+        queryKey: ['temas-convocatoria-ficha', convocatoria?.id],
+        queryFn: async () => {
+        const res = await api.get(`/temas/convocatoria/${convocatoria.id}`);
+    return res.data;
+  },
+  enabled: !!convocatoria?.id && modalTemas,
+});
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 90 }}>
@@ -77,6 +90,30 @@ const convocatoria = convocatoriaIdParam
             )}
           </div>
         </div>
+
+        {modalTemas && (
+        <div
+            onClick={() => setModalTemas(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
+        >
+            <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.5rem', width: '100%', maxWidth: 560, maxHeight: '75vh', overflowY: 'auto' }}
+            >
+            <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 14 }}>Temas de la convocatoria</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {temasModal.map((t: any) => (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'white', borderRadius: 12 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12, color: '#1F7CFF', flexShrink: 0 }}>
+                    {t.numero}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT_PRIMARY }}>{t.titulo}</div>
+                </div>
+                ))}
+            </div>
+            </div>
+        </div>
+        )}
 
         {/* Datos generales */}
         <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
@@ -110,36 +147,27 @@ const convocatoria = convocatoriaIdParam
         )}
 
         {/* Ejercicios */}
-        {convocatoria.ejercicios?.length > 0 && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Ejercicios</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {convocatoria.ejercicios.map((ej: any, i: number) => (
-                <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 4, textTransform: 'capitalize' }}>
+            {convocatoria.ejercicios.map((ej: any, i: number) => (
+            <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
                     Ejercicio {ej.numero} — {ej.tipo}
-                  </div>
-                  <div style={{ fontSize: 11, color: TEXT_MUTED }}>
-                    {ej.numPreguntas ? `${ej.numPreguntas} preguntas` : ''}
-                    {ej.numPreguntas && ej.tiempoMinutos ? ' · ' : ''}
-                    {ej.tiempoMinutos ? `${ej.tiempoMinutos} min` : ''}
-                  </div>
-                  {ej.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginTop: 4 }}>{ej.descripcion}</div>}
                 </div>
-              ))}
+                <button
+                    onClick={() => router.push(`/app/entrenamiento?modo=simulacro&ejercicio=${ej.numero}`)}
+                    style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', background: '#F3E8FF', border: 'none', borderRadius: 999, padding: '3px 10px', cursor: 'pointer', flexShrink: 0 }}
+                >
+                    🎯 Simulacro
+                </button>
+                </div>
+                <div style={{ fontSize: 11, color: TEXT_MUTED }}>
+                {ej.numPreguntas ? `${ej.numPreguntas} preguntas` : ''}
+                {ej.numPreguntas && ej.tiempoMinutos ? ' · ' : ''}
+                {ej.tiempoMinutos ? `${ej.tiempoMinutos} min` : ''}
+                </div>
+                {ej.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginTop: 4 }}>{ej.descripcion}</div>}
             </div>
-            {convocatoria.fraccionPenalizacion && (
-              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 10 }}>
-                Penalización por error: {convocatoria.fraccionPenalizacion}
-              </div>
-            )}
-            {convocatoria.notaMinimaAprobado && (
-              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>
-                Nota mínima: {convocatoria.notaMinimaAprobado}
-              </div>
-            )}
-          </div>
-        )}
+            ))}
 
         {/* Bloques del temario */}
         {convocatoria.bloquesTemario?.length > 0 && (
@@ -147,9 +175,9 @@ const convocatoria = convocatoriaIdParam
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Bloques del temario</div>
             <button
-                onClick={() => router.push(`/app/tema/${oposicionId}?modo=estudiar`)}
+                onClick={() => setModalTemas(true)}
                 style={{ fontSize: 12, color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
-            >
+                >
                 Ver temas →
             </button>
             </div>
@@ -184,11 +212,11 @@ const convocatoria = convocatoriaIdParam
             {convocatoria.fasesAdicionales.map((f: any, i: number) => (
                 <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: f.descripcion ? 4 : 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY }}>
                     {f.nombre}
-                    <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 500, color: TEXT_MUTED, textTransform: 'capitalize' }}>
-                        ({f.tipo})
-                    </span>
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 400, color: TEXT_MUTED, textTransform: 'capitalize', marginTop: 1 }}>
+                    {f.tipo}
                     </div>
                     {f.eliminatoria && (
                     <span style={{ fontSize: 10, fontWeight: 700, color: '#DC2626', flexShrink: 0 }}>Eliminatoria</span>
@@ -255,7 +283,6 @@ const convocatoria = convocatoriaIdParam
         )}
       </div>
 
-      <FooterNavegacion usuario={usuario} oposicionId={oposicionId} activo="estudiar" />
     </div>
   );
 }
