@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useMemo, useState } from 'react';
-import { Newspaper, BarChart3, FileText, Archive, ChevronRight } from 'lucide-react';
-import {Cog6ToothIcon} from '@heroicons/react/24/outline';
+import { Newspaper, FileText} from 'lucide-react';
+import {Cog6ToothIcon, ArchiveBoxIcon, ClipboardDocumentListIcon} from '@heroicons/react/24/outline';
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { getOploUrl } from '@/lib/oplo';
@@ -137,9 +137,9 @@ function HeaderDashboard({ usuario, ultimaConvocatoria, router }: any) {
 
   const accesos = [
   { label: 'Ajustes', icon: Cog6ToothIcon, size: 23, onClick: () => router.push(`/app/oposicion/${oposicionId}/ajustes`) },
-  { label: 'Noticias', icon: Newspaper, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}?tab=noticias`) },
-  { label: 'Datos', icon: BarChart3, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}`) },
-  { label: 'Historial', icon: Archive, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/historial`) },
+  { label: 'Noticias', icon: Newspaper, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/noticias`) }, // ⭐ corregido, sin ?tab=
+  { label: 'Convocatoria', icon: ClipboardDocumentListIcon, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/convocatoria`) }, // ⭐ renombrado
+  { label: 'Histórico', icon: ArchiveBoxIcon, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/historial`) }, // ⭐ renombrado (misma ruta)
 ];
 
 const { data: countData } = useQuery({

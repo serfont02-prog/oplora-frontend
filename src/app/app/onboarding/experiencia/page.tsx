@@ -28,19 +28,12 @@ export default function ExperienciaPage() {
   const { usuario, actualizarUsuario } = useAuth();
   const [seleccionado, setSeleccionado] = useState<number | null>(null);
 
-  const handleSelect = async (nivel: number) => {
-    setSeleccionado(nivel);
-    try {
-      const res = await api.patch('/usuarios/nivel', { nivel, oposicionId: usuario?.oposicionActiva?.id });
-      actualizarUsuario(res.data);
-      setTimeout(() => {
-        router.push('/app/onboarding/minireto');
-      }, 350);
-    } catch (error) {
-      console.error(error);
-      setSeleccionado(null);
-    }
-  };
+const handleSelect = async (nivel: number) => {
+  setSeleccionado(nivel);
+  setTimeout(() => {
+    router.push('/app/onboarding/minireto');
+  }, 350);
+};;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', padding: '1.5rem' }}>

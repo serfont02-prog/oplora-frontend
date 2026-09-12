@@ -28,7 +28,7 @@ export default function OposicionDetallePage() {
     plazas: '',
     estado: 'activa',
     turno: '',
-    urlInap: '',
+    urlOficial: '',
     fechaConvocatoria: '',
     numeroSolicitudes: '',
     numeroPresentados: '',
@@ -65,7 +65,7 @@ const [formEditarConv, setFormEditarConv] = useState({
   plazas: '',
   estado: 'activa',
   turno: '',
-  urlInap: '',
+  urlOficial: '',
   fechaConvocatoria: '',
   numeroSolicitudes: '',
   numeroPresentados: '',
@@ -164,7 +164,7 @@ const crearConv = useMutation({
         plazas: formNuevaConv.plazas ? parseInt(formNuevaConv.plazas) : undefined,
         estado: formNuevaConv.estado,
         turno: formNuevaConv.turno || undefined,
-        urlInap: formNuevaConv.urlInap || undefined,
+        urlOficial: formNuevaConv.urlOficial || undefined,
         fechaConvocatoria: formNuevaConv.fechaConvocatoria || undefined,
         numeroSolicitudes: formNuevaConv.numeroSolicitudes||undefined,
         numeroPresentados: formNuevaConv.numeroPresentados||undefined,
@@ -193,7 +193,7 @@ const crearConv = useMutation({
         oposicionId: id,
       });
 
-      if (formNuevaConv.urlInap) {
+      if (formNuevaConv.urlOficial) {
         await api.post(`/convocatorias/${res.data.id}/scrape`);
       }
     },
@@ -203,7 +203,7 @@ const crearConv = useMutation({
       setModalNuevaConv(false);
       setFormNuevaConv({
         anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', turno: '',
-        urlInap: '', fechaConvocatoria: '', numeroSolicitudes: '', numeroPresentados: '', fechaExamen: '', ejercicios: [],
+        urlOficial: '', fechaConvocatoria: '', numeroSolicitudes: '', numeroPresentados: '', fechaExamen: '', ejercicios: [],
         fraccionPenalizacion: '',
         notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
@@ -225,7 +225,7 @@ const crearConv = useMutation({
 
       const editarConv = useMutation({
       mutationFn: async () => {
-        const urlCambio = formEditarConv.urlInap !== (convEditando.urlInap ?? '');
+        const urlCambio = formEditarConv.urlOficial !== (convEditando.urlOficial ?? '');
 
         const plazasDesglose = (formEditarConv.plazasLibres || formEditarConv.plazasPromocionInterna || formEditarConv.plazasMilitares || formEditarConv.plazasDiscapacidad)
           ? {
@@ -241,7 +241,7 @@ const crearConv = useMutation({
           plazas: formEditarConv.plazas ? parseInt(formEditarConv.plazas) : undefined,
           estado: formEditarConv.estado,
           turno: formEditarConv.turno || null,
-          urlInap: formEditarConv.urlInap || undefined,
+          urlOficial: formEditarConv.urlOficial || undefined,
           fechaConvocatoria: formEditarConv.fechaConvocatoria || undefined,
           numeroSolicitudes: formEditarConv.numeroSolicitudes||undefined,
           numeroPresentados: formEditarConv.numeroPresentados||undefined,
@@ -269,9 +269,9 @@ const crearConv = useMutation({
           bloquesTemario: parsearBloques(formEditarConv.bloquesTemarioTexto) ?? null,
         });
 
-        if (urlCambio && formEditarConv.urlInap) {
+        if (urlCambio && formEditarConv.urlOficial) {
           await api.patch(`/convocatorias/${convEditando.id}/url-inap`, {
-            urlInap: formEditarConv.urlInap,
+            urlOficial: formEditarConv.urlOficial,
           });
         }
       },
@@ -296,7 +296,7 @@ const crearConv = useMutation({
       plazas: c.plazas?.toString() ?? '',
       estado: c.estado ?? 'activa',
       turno: c.turno ?? '',
-      urlInap: c.urlInap ?? '',
+      urlOficial: c.urlOficial ?? '',
       fechaConvocatoria: c.fechaConvocatoria??``,
       numeroSolicitudes: c.numeroSolicitudes??'',
       numeroPresentados: c.numeroPresentados??'',
@@ -517,11 +517,11 @@ const crearConv = useMutation({
                     <span>📎 {c.documentos?.length ?? 0} documentos</span>
                   </div>
 
-                  {c.urlInap && (
+                  {c.urlOficial && (
                     <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: '#f9fafb', borderRadius: '8px' }}>
-                      <a href={c.urlInap} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#185FA5', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px' }}>
+                      <a href={c.urlOficial} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#185FA5', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px' }}>
                         <ExternalLink size={11} />
-                        {c.urlInap}
+                        {c.urlOficial}
                       </a>
                       <button onClick={() => scrapeManual.mutate(c.id)} disabled={scrapeManual.isPending} style={{ fontSize: '11px', padding: '4px 10px', background: '#111827', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }}>
                         {scrapeManual.isPending ? '...' : '↻ Actualizar'}
@@ -579,7 +579,7 @@ const crearConv = useMutation({
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>URL INAP</label>
-                  <input type="text" value={formNuevaConv.urlInap} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, urlInap: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  <input type="text" value={formNuevaConv.urlOficial} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, urlOficial: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha de convocatoria</label>
@@ -835,7 +835,7 @@ const crearConv = useMutation({
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>URL INAP</label>
-                <input type="text" value={formEditarConv.urlInap} onChange={(e) => setFormEditarConv({ ...formEditarConv, urlInap: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                <input type="text" value={formEditarConv.urlOficial} onChange={(e) => setFormEditarConv({ ...formEditarConv, urlOficial: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha de convocatoria</label>

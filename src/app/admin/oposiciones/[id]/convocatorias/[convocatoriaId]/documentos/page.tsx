@@ -119,7 +119,7 @@ export default function DocumentosPage() {
             {documentos.length} documentos detectados por el scraper
           </div>
         </div>
-        {convocatoria?.urlInap && (
+        {convocatoria?.urlOficial && (
           <button
             onClick={() => scrape.mutate()}
             disabled={scrape.isPending}
@@ -143,7 +143,7 @@ export default function DocumentosPage() {
             <div style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '12px' }}>
               No hay documentos. Pulsa "Actualizar" para ejecutar el scraper.
             </div>
-            {!convocatoria?.urlInap && (
+            {!convocatoria?.urlOficial && (
               <div style={{ fontSize: '12px', color: '#d97706', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 14px', display: 'inline-block' }}>
                 ⚠ Añade la URL del INAP en la convocatoria para poder usar el scraper
               </div>

@@ -30,7 +30,7 @@
     plazas?: number;
     estado: 'activa' | 'cerrada' | 'borrador';
     fechaExamen?: string;
-    urlInap?: string;
+    urlOficial?: string;
     referenciaBoe?: string;
     plazoInscripcionInicio?: string;
     plazoInscripcionFin?: string;

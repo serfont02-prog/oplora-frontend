@@ -48,6 +48,7 @@ interface Usuario {
     puntos: number;
     nivel: number;
     convocatoriaActiva?: ConvocatoriaActiva | null;
+    nivelExperiencia?: number;
   };
 
   // Suscripción del usuario
