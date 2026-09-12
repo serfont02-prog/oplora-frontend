@@ -28,19 +28,18 @@ export default function ConvocatoriaFichaPage() {
   const router = useRouter();
   const { usuario } = useAuth();
   const oposicionId = params.id as string;
-  const convocatoriaIdParam = searchParams.get('convocatoriaId');
+const convocatoriaIdParam = searchParams.get('convocatoriaId');
+const [modalTemas, setModalTemas] = useState(false);
 
-  const convocatoriaActivaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
+const convocatoriaActivaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
 
-  
-
-  const { data: convocatorias = [], isLoading } = useQuery({
-    queryKey: ['convocatorias-ficha', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
-      return res.data;
-    },
-  });
+const { data: convocatorias = [], isLoading } = useQuery({
+  queryKey: ['convocatorias-ficha', oposicionId],
+  queryFn: async () => {
+    const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
+    return res.data;
+  },
+});
 
 const convocatoria = convocatoriaIdParam
   ? convocatorias.find((c: any) => c.id === convocatoriaIdParam)
@@ -48,26 +47,24 @@ const convocatoria = convocatoriaIdParam
       ? convocatorias.find((c: any) => c.id === convocatoriaActivaId)
       : convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0]);
 
-  if (isLoading) return null;
-
-  if (!convocatoria) {
-    return (
-      <div style={{ minHeight: '100vh', background: BG_APP, padding: '2rem 1.25rem', textAlign: 'center' }}>
-        <div style={{ fontSize: 13, color: TEXT_MUTED }}>No hay convocatoria disponible</div>
-      </div>
-    );
-  }
-
-  const [modalTemas, setModalTemas] = useState(false);
-
-    const { data: temasModal = [] } = useQuery({
-        queryKey: ['temas-convocatoria-ficha', convocatoria?.id],
-        queryFn: async () => {
-        const res = await api.get(`/temas/convocatoria/${convocatoria.id}`);
+const { data: temasModal = [] } = useQuery({
+  queryKey: ['temas-convocatoria-ficha', convocatoria?.id],
+  queryFn: async () => {
+    const res = await api.get(`/temas/convocatoria/${convocatoria.id}`);
     return res.data;
   },
   enabled: !!convocatoria?.id && modalTemas,
 });
+
+if (isLoading) return null;
+
+if (!convocatoria) {
+  return (
+    <div style={{ minHeight: '100vh', background: BG_APP, padding: '2rem 1.25rem', textAlign: 'center' }}>
+      <div style={{ fontSize: 13, color: TEXT_MUTED }}>No hay convocatoria disponible</div>
+    </div>
+  );
+}
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 90 }}>
@@ -147,28 +144,45 @@ const convocatoria = convocatoriaIdParam
           </div>
         )}
 
-        {/* Ejercicios */}
-            {convocatoria.ejercicios.map((ej: any, i: number) => (
-            <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
-                    Ejercicio {ej.numero} — {ej.tipo}
+            {/* Ejercicios */}
+            {convocatoria.ejercicios?.length > 0 && (
+            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Ejercicios</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {convocatoria.ejercicios.map((ej: any, i: number) => (
+                    <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
+                        Ejercicio {ej.numero} — {ej.tipo}
+                        </div>
+                        <button
+                        onClick={() => router.push(`/app/entrenamiento?modo=simulacro&ejercicio=${ej.numero}`)}
+                        style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', background: '#F3E8FF', border: 'none', borderRadius: 999, padding: '3px 10px', cursor: 'pointer', flexShrink: 0 }}
+                        >
+                        🎯 Simulacro
+                        </button>
+                    </div>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED }}>
+                        {ej.numPreguntas ? `${ej.numPreguntas} preguntas` : ''}
+                        {ej.numPreguntas && ej.tiempoMinutos ? ' · ' : ''}
+                        {ej.tiempoMinutos ? `${ej.tiempoMinutos} min` : ''}
+                    </div>
+                    {ej.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginTop: 4 }}>{ej.descripcion}</div>}
+                    </div>
+                ))}
                 </div>
-                <button
-                    onClick={() => router.push(`/app/entrenamiento?modo=simulacro&ejercicio=${ej.numero}`)}
-                    style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', background: '#F3E8FF', border: 'none', borderRadius: 999, padding: '3px 10px', cursor: 'pointer', flexShrink: 0 }}
-                >
-                    🎯 Simulacro
-                </button>
+                {convocatoria.fraccionPenalizacion && (
+                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 10 }}>
+                    Penalización por error: {convocatoria.fraccionPenalizacion}
                 </div>
-                <div style={{ fontSize: 11, color: TEXT_MUTED }}>
-                {ej.numPreguntas ? `${ej.numPreguntas} preguntas` : ''}
-                {ej.numPreguntas && ej.tiempoMinutos ? ' · ' : ''}
-                {ej.tiempoMinutos ? `${ej.tiempoMinutos} min` : ''}
+                )}
+                {convocatoria.notaMinimaAprobado && (
+                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>
+                    Nota mínima: {convocatoria.notaMinimaAprobado}
                 </div>
-                {ej.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginTop: 4 }}>{ej.descripcion}</div>}
+                )}
             </div>
-            ))}
+            )}
 
         {/* Bloques del temario */}
         {convocatoria.bloquesTemario?.length > 0 && (
