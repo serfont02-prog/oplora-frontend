@@ -37,11 +37,13 @@ export default function ConvocatoriaFichaPage() {
     },
   });
 
-  const convocatoria = convocatoriaIdParam
-    ? convocatorias.find((c: any) => c.id === convocatoriaIdParam)
-    : (usuario?.oposicionActiva?.convocatoriaActiva
-        ? convocatorias.find((c: any) => c.id === usuario.oposicionActiva.convocatoriaActiva.id)
-        : convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0]);
+  const convocatoriaActivaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
+
+const convocatoria = convocatoriaIdParam
+  ? convocatorias.find((c: any) => c.id === convocatoriaIdParam)
+  : (convocatoriaActivaId
+      ? convocatorias.find((c: any) => c.id === convocatoriaActivaId)
+      : convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0]);
 
   if (isLoading) return null;
 
@@ -203,7 +205,7 @@ export default function ConvocatoriaFichaPage() {
 
         {/* Documentación oficial */}
         {convocatoria.urlOficial && (
-          
+          <a
             href={convocatoria.urlOficial}
             target="_blank"
             rel="noreferrer"
