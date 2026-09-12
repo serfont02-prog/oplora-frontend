@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
 
 
 const BG_APP = '#F4F5F7';
