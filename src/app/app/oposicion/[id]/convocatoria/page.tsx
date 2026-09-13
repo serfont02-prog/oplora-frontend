@@ -66,6 +66,15 @@ if (!convocatoria) {
   );
 }
 
+    const { data: examenes = [] } = useQuery({
+    queryKey: ['examenes-ficha', convocatoria?.id],
+    queryFn: async () => {
+        const res = await api.get(`/temas/examenes/convocatoria/${convocatoria.id}`);
+        return res.data;
+    },
+    enabled: !!convocatoria?.id,
+    });
+
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 90 }}>
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem' }}>
@@ -145,44 +154,80 @@ if (!convocatoria) {
         )}
 
             {/* Ejercicios */}
-            {convocatoria.ejercicios?.length > 0 && (
-            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Ejercicios</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {convocatoria.ejercicios.map((ej: any, i: number) => (
-                    <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
+        {convocatoria.ejercicios?.length > 0 && (
+        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Ejercicios</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {convocatoria.ejercicios.map((ej: any, i: number) => {
+                const examenesDelEjercicio = examenes.filter((ex: any) => ex.parte === ej.numero);
+
+                return (
+                <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
                         Ejercicio {ej.numero} — {ej.tipo}
-                        </div>
-                        <button
+                    </div>
+                    <button
                         onClick={() => router.push(`/app/entrenamiento?modo=simulacro&ejercicio=${ej.numero}`)}
                         style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', background: '#F3E8FF', border: 'none', borderRadius: 999, padding: '3px 10px', cursor: 'pointer', flexShrink: 0 }}
-                        >
+                    >
                         🎯 Simulacro
-                        </button>
+                    </button>
                     </div>
                     <div style={{ fontSize: 11, color: TEXT_MUTED }}>
-                        {ej.numPreguntas ? `${ej.numPreguntas} preguntas` : ''}
-                        {ej.numPreguntas && ej.tiempoMinutos ? ' · ' : ''}
-                        {ej.tiempoMinutos ? `${ej.tiempoMinutos} min` : ''}
+                    {ej.numPreguntas ? `${ej.numPreguntas} preguntas` : ''}
+                    {ej.numPreguntas && ej.tiempoMinutos ? ' · ' : ''}
+                    {ej.tiempoMinutos ? `${ej.tiempoMinutos} min` : ''}
                     </div>
                     {ej.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginTop: 4 }}>{ej.descripcion}</div>}
+
+                    {/* ⭐ Exámenes reales de este ejercicio concreto */}
+                    {examenesDelEjercicio.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, paddingTop: 8, borderTop: '1px solid #F1F5F9' }}>
+                        {examenesDelEjercicio.map((ex: any) => (
+                        <div key={ex.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                            <div style={{ fontSize: 10, color: TEXT_SECONDARY, minWidth: 0 }}>
+                            {ex.nombre} · {ex.anyo}{ex.mes ? ` (${ex.mes})` : ''}
+                            {ex.totalPreguntas > 0 && <span style={{ color: TEXT_MUTED }}> · {ex.totalPreguntas} preg.</span>}
+                            </div>
+                            <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+                            <a
+                                href={ex.urlArchivo}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ fontSize: 10, fontWeight: 600, color: '#374151', background: 'white', border: '1px solid #E5E7EB', borderRadius: 7, padding: '4px 8px', textDecoration: 'none' }}
+                            >
+                                📄 PDF
+                            </a>
+                            {ex.totalPreguntas > 0 && (
+                                <button
+                                onClick={() => router.push(`/app/entrenamiento/simulacro/${ex.id}`)}
+                                style={{ fontSize: 10, fontWeight: 700, color: 'white', background: '#7C3AED', border: 'none', borderRadius: 7, padding: '4px 8px', cursor: 'pointer' }}
+                                >
+                                Hacer examen
+                                </button>
+                            )}
+                            </div>
+                        </div>
+                        ))}
                     </div>
-                ))}
+                    )}
                 </div>
-                {convocatoria.fraccionPenalizacion && (
-                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 10 }}>
-                    Penalización por error: {convocatoria.fraccionPenalizacion}
-                </div>
-                )}
-                {convocatoria.notaMinimaAprobado && (
-                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>
-                    Nota mínima: {convocatoria.notaMinimaAprobado}
-                </div>
-                )}
+                );
+            })}
+            </div>
+            {convocatoria.fraccionPenalizacion && (
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 10 }}>
+                Penalización por error: {convocatoria.fraccionPenalizacion}
             </div>
             )}
+            {convocatoria.notaMinimaAprobado && (
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>
+                Nota mínima: {convocatoria.notaMinimaAprobado}
+            </div>
+            )}
+        </div>
+        )}
 
         {/* Bloques del temario */}
         {convocatoria.bloquesTemario?.length > 0 && (

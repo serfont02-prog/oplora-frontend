@@ -8,11 +8,15 @@ import { ArrowLeft, Upload, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ImportarPreguntasConvocatoriaPage() {
   const params = useParams();
+  const searchParamsUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const router = useRouter();
   const id = params.id as string;
   const convocatoriaId = params.convocatoriaId as string;
+  const examenIdInicial = searchParamsUrl?.get('examenId') ?? '';
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [modo, setModo] = useState<'banco' | 'oficial'>(examenIdInicial ? 'oficial' : 'banco');
+  const [examenSeleccionadoId, setExamenSeleccionadoId] = useState(examenIdInicial);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [preview, setPreview] = useState<any[]>([]);
   const [resultado, setResultado] = useState<any>(null);
@@ -25,6 +29,15 @@ export default function ImportarPreguntasConvocatoriaPage() {
       const res = await api.get(`/convocatorias/${convocatoriaId}`);
       return res.data;
     },
+  });
+
+  const { data: examenes = [] } = useQuery({
+    queryKey: ['examenes-para-importar', convocatoriaId],
+    queryFn: async () => {
+      const res = await api.get(`/temas/examenes/convocatoria/${convocatoriaId}`);
+      return res.data;
+    },
+    enabled: modo === 'oficial',
   });
 
   const handleArchivo = (file: File) => {
@@ -41,7 +54,7 @@ export default function ImportarPreguntasConvocatoriaPage() {
           setPreview([]);
           return;
         }
-        setPreview(json.slice(0, 3)); // mostrar 3 primeras como preview
+        setPreview(json.slice(0, 3));
       } catch {
         setError('El archivo no es un JSON válido');
         setPreview([]);
@@ -52,6 +65,10 @@ export default function ImportarPreguntasConvocatoriaPage() {
 
   const importar = async () => {
     if (!archivo) return;
+    if (modo === 'oficial' && !examenSeleccionadoId) {
+      setError('Selecciona a qué examen pertenecen estas preguntas');
+      return;
+    }
     setImportando(true);
     setError(null);
     try {
@@ -61,7 +78,10 @@ export default function ImportarPreguntasConvocatoriaPage() {
           const preguntas = JSON.parse(e.target?.result as string);
           const res = await api.post(
             `/test/importar/convocatoria/${convocatoriaId}`,
-            { preguntas }
+            {
+              preguntas,
+              examenAnteriorId: modo === 'oficial' ? examenSeleccionadoId : undefined,
+            }
           );
           setResultado(res.data);
           setArchivo(null);
@@ -100,6 +120,62 @@ export default function ImportarPreguntasConvocatoriaPage() {
       {/* Contenido */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: '#f9fafb' }}>
         <div style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* Selector de destino */}
+          <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '10px' }}>
+              ¿Qué tipo de preguntas son?
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: modo === 'oficial' ? '14px' : 0 }}>
+              <button
+                onClick={() => setModo('banco')}
+                style={{
+                  flex: 1, padding: '11px', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                  border: modo === 'banco' ? '2px solid #111827' : '1px solid #e5e7eb',
+                  background: modo === 'banco' ? '#111827' : 'white',
+                  color: modo === 'banco' ? 'white' : '#374151',
+                }}
+              >
+                Banco general
+              </button>
+              <button
+                onClick={() => setModo('oficial')}
+                style={{
+                  flex: 1, padding: '11px', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                  border: modo === 'oficial' ? '2px solid #111827' : '1px solid #e5e7eb',
+                  background: modo === 'oficial' ? '#111827' : 'white',
+                  color: modo === 'oficial' ? 'white' : '#374151',
+                }}
+              >
+                Examen oficial
+              </button>
+            </div>
+
+            {modo === 'oficial' && (
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>
+                  ¿A qué examen pertenecen?
+                </label>
+                <select
+                  value={examenSeleccionadoId}
+                  onChange={(e) => setExamenSeleccionadoId(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+                >
+                  <option value="">Seleccionar examen...</option>
+                  {examenes.map((ex: any) => (
+                    <option key={ex.id} value={ex.id}>
+                      {ex.nombre} ({ex.anyo}{ex.mes ? ` - ${ex.mes}` : ''}) — Parte {ex.parte}
+                    </option>
+                  ))}
+                </select>
+                {examenes.length === 0 && (
+                  <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px' }}>
+                    No hay exámenes subidos todavía para esta convocatoria.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Formato esperado */}
           <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
