@@ -28,19 +28,26 @@
     const [archivo, setArchivo] = useState<File | null>(null);
     const [form, setForm] = useState({
       nombre: '',
-      anyo: new Date().getFullYear().toString(),
-      tipo: 'unico',
-      mes: '',
-      parte: '1',
+      parte: '', // se autocompleta cuando sepamos los ejercicios
     });
 
     const { data: convocatoria } = useQuery({
-      queryKey: ['convocatoria', convocatoriaId],
-      queryFn: async () => {
-        const res = await api.get(`/convocatorias/${convocatoriaId}`);
-        return res.data;
-      },
-    });
+  queryKey: ['convocatoria', convocatoriaId],
+  queryFn: async () => {
+    const res = await api.get(`/convocatorias/${convocatoriaId}`);
+    return res.data;
+  },
+});
+
+const ejercicios = convocatoria?.ejercicios ?? [];
+const soloUnEjercicio = ejercicios.length === 1;
+const ejercicioElegido = ejercicios.find((e: any) => e.numero === Number(form.parte)) ?? (soloUnEjercicio ? ejercicios[0] : null);
+
+const fechaExamen = convocatoria?.fechaExamen ? new Date(convocatoria.fechaExamen) : null;
+const anyoDerivado = fechaExamen ? fechaExamen.getFullYear() : convocatoria?.anyo;
+const mesDerivado = fechaExamen ? MESES[fechaExamen.getMonth()] : '';
+
+
 
     const { data: examenes = [], isLoading } = useQuery({
       queryKey: ['examenes-admin', convocatoriaId],
@@ -63,26 +70,23 @@
       if (!archivo) return;
       setSubiendo(true);
       try {
+        const parteFinal = soloUnEjercicio ? ejercicios[0].numero : Number(form.parte);
+
         const formData = new FormData();
         formData.append('archivo', archivo);
-        formData.append('nombre', form.nombre || `Examen ${form.anyo}`);
-        formData.append('anyo', form.anyo);
-        formData.append('tipo', form.tipo);
-        formData.append('mes', form.mes);
-        formData.append('parte', form.parte);
+        formData.append('nombre', form.nombre || `Examen ${anyoDerivado}`);
+        formData.append('anyo', String(anyoDerivado));
+        formData.append('tipo', ejercicioElegido?.tipo ?? 'test');
+        formData.append('mes', mesDerivado);
+        formData.append('parte', String(parteFinal));
+
         await api.post(`/temas/examenes/convocatoria/${convocatoriaId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         queryClient.invalidateQueries({ queryKey: ['examenes-admin', convocatoriaId] });
         setModalAbierto(false);
         setArchivo(null);
-        setForm({
-          nombre: '',
-          anyo: new Date().getFullYear().toString(),
-          tipo: 'unico',
-          mes: '',
-          parte: '1',
-        });
+        setForm({ nombre: '', parte: '' });
       } catch (e) {
         console.error('Error subiendo examen:', e);
       } finally {
@@ -204,62 +208,41 @@
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nombre</label>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                    Nombre <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opcional)</span>
+                  </label>
                   <input
                     type="text"
                     value={form.nombre}
                     onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                    placeholder="Ej: Examen mayo 2018 — Parte 1"
+                    placeholder={`Examen ${anyoDerivado ?? ''}`}
                     style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {!soloUnEjercicio && ejercicios.length > 1 && (
                   <div>
-                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Año *</label>
-                    <input
-                      type="number"
-                      value={form.anyo}
-                      onChange={(e) => setForm({ ...form, anyo: e.target.value })}
-                      min="2000" max="2030"
-                      style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Ejercicio nº</label>
-                  <input
-                      type="number"
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>¿A qué ejercicio pertenece? *</label>
+                    <select
                       value={form.parte}
                       onChange={(e) => setForm({ ...form, parte: e.target.value })}
-                      min="1" max="5"
-                      style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
-                  />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Mes</label>
-                    <select
-                      value={form.mes}
-                      onChange={(e) => setForm({ ...form, mes: e.target.value })}
                       style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                     >
-                      <option value="">Sin especificar</option>
-                      {MESES.map(m => <option key={m} value={m}>{m}</option>)}
+                      <option value="">Seleccionar...</option>
+                      {ejercicios.map((ej: any) => (
+                        <option key={ej.numero} value={ej.numero}>
+                          Ejercicio {ej.numero} — {TIPO_LABEL[ej.tipo] ?? ej.tipo}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo</label>
-                  <select
-                    value={form.tipo}
-                    onChange={(e) => setForm({ ...form, tipo: e.target.value })}
-                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
-                  >
-                    {Object.entries(TIPO_LABEL).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                </div>
+                {ejercicios.length === 0 && (
+                  <p style={{ fontSize: '11px', color: '#9ca3af', margin: 0 }}>
+                    Esta convocatoria no tiene ejercicios configurados todavía.
+                  </p>
+                )}
 
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>PDF del examen *</label>
@@ -285,7 +268,7 @@
               <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
                 <button
                   onClick={subirExamen}
-                  disabled={!archivo || !form.anyo || subiendo}
+                  disabled={!archivo || subiendo || (!soloUnEjercicio && ejercicios.length > 1 && !form.parte)}
                   style={{ flex: 2, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', opacity: !archivo ? 0.4 : 1 }}
                 >
                   {subiendo ? 'Subiendo...' : 'Subir examen'}
