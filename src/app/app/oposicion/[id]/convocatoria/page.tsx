@@ -47,6 +47,15 @@ const convocatoria = convocatoriaIdParam
       ? convocatorias.find((c: any) => c.id === convocatoriaActivaId)
       : convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0]);
 
+const { data: examenes = [] } = useQuery({
+    queryKey: ['examenes-ficha', convocatoria?.id],
+    queryFn: async () => {
+        const res = await api.get(`/temas/examenes/convocatoria/${convocatoria.id}`);
+        return res.data;
+    },
+    enabled: !!convocatoria?.id,
+    });      
+
 const { data: temasModal = [] } = useQuery({
   queryKey: ['temas-convocatoria-ficha', convocatoria?.id],
   queryFn: async () => {
@@ -66,15 +75,7 @@ if (!convocatoria) {
   );
 }
 
-    const { data: examenes = [] } = useQuery({
-    queryKey: ['examenes-ficha', convocatoria?.id],
-    queryFn: async () => {
-        const res = await api.get(`/temas/examenes/convocatoria/${convocatoria.id}`);
-        return res.data;
-    },
-    enabled: !!convocatoria?.id,
-    });
-
+    
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 90 }}>
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem' }}>
