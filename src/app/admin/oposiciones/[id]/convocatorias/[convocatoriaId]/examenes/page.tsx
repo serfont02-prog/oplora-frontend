@@ -179,7 +179,7 @@ const mesDerivado = fechaExamen ? MESES[fechaExamen.getMonth()] : '';
                             📄 Ver PDF
                           </a>
                           <button
-                            onClick={() => router.push(`/admin/preguntas/${oposicionId}?examenId=${examen.id}`)}
+                            onClick={() => router.push(`/admin/oposiciones/${oposicionId}/convocatorias/${convocatoriaId}/preguntas?examenId=${examen.id}`)}
                             style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: '#111827', color: 'white', border: 'none', borderRadius: '7px', fontSize: '12px', cursor: 'pointer' }}
                           >
                             + Preguntas
