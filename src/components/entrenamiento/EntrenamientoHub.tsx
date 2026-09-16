@@ -196,8 +196,12 @@ if (estado === 'inactivo') {
 const handleClick = (modo: string) => {
   if (!oposicion?.id) return;
 
-  if (modo === 'simulacro' && !limites?.limites?.simulacros) {
-    router.push('/app/suscripciones');
+  if (modo === 'simulacro') {
+    if (!limites?.limites?.simulacros) {
+      router.push('/app/suscripciones');
+      return;
+    }
+    router.push('/app/entrenamiento/simulacro');
     return;
   }
 
