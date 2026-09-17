@@ -24,18 +24,17 @@ export default function SimulacroOficialPage() {
   const { usuario } = useAuth();
   const oposicionId = usuario?.oposicionActiva?.id;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['examenes-oficiales', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/temas/examenes/mi-convocatoria/${oposicionId}`);
-      return res.data;
-    },
-    enabled: !!oposicionId,
-  });
+  const { data: examenes = [], isLoading } = useQuery({
+  queryKey: ['examenes-oficiales-todos', oposicionId],
+  queryFn: async () => {
+    const res = await api.get(`/temas/examenes/oposicion/${oposicionId}`);
+    return res.data;
+  },
+  enabled: !!oposicionId,
+});
 
-  const convocatoria = data?.convocatoria;
-  const examenes = data?.examenes ?? [];
-  const ejercicios = convocatoria?.ejercicios ?? [];
+// Agrupar por año de convocatoria
+const anyosPresentes = [...new Set(examenes.map((ex: any) => ex.convocatoria.anyo))].sort((a: any, b: any) => b - a);
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP }}>
@@ -54,52 +53,51 @@ export default function SimulacroOficialPage() {
         </div>
 
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', fontSize: 13, color: TEXT_MUTED }}>Cargando...</div>
+        <div style={{ textAlign: 'center', padding: '2rem', fontSize: 13, color: TEXT_MUTED }}>Cargando...</div>
         ) : examenes.length === 0 ? (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: '2rem', textAlign: 'center' }}>
+        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: '2rem', textAlign: 'center' }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>📭</div>
             <div style={{ fontSize: 13, color: TEXT_MUTED }}>Todavía no hay exámenes oficiales disponibles</div>
-          </div>
+        </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {ejercicios.map((ej: any) => {
-              const examenesDelEjercicio = examenes.filter((ex: any) => ex.parte === ej.numero);
-              if (examenesDelEjercicio.length === 0) return null;
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {anyosPresentes.map((anyo: any) => {
+            const examenesDelAnyo = examenes.filter((ex: any) => ex.convocatoria.anyo === anyo);
 
-              return (
-                <div key={ej.numero}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, textTransform: 'capitalize' }}>
-                    Ejercicio {ej.numero} — {TIPO_LABEL[ej.tipo] ?? ej.tipo}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {examenesDelEjercicio.map((ex: any) => (
-                      <button
+            return (
+                <div key={anyo}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8 }}>
+                    Convocatoria {anyo}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {examenesDelAnyo.map((ex: any) => (
+                    <button
                         key={ex.id}
                         onClick={() => ex.totalPreguntas > 0 && router.push(`/app/entrenamiento/simulacro/${ex.id}`)}
                         disabled={ex.totalPreguntas === 0}
                         style={{
-                          textAlign: 'left', background: 'white', border: '1px solid #F1F5F9', borderRadius: 14,
-                          padding: '14px 16px', cursor: ex.totalPreguntas > 0 ? 'pointer' : 'not-allowed',
-                          opacity: ex.totalPreguntas > 0 ? 1 : 0.5,
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        textAlign: 'left', background: 'white', border: '1px solid #F1F5F9', borderRadius: 14,
+                        padding: '14px 16px', cursor: ex.totalPreguntas > 0 ? 'pointer' : 'not-allowed',
+                        opacity: ex.totalPreguntas > 0 ? 1 : 0.5,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         }}
-                      >
+                    >
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>
-                            {ex.nombre} · {ex.anyo}{ex.mes ? ` (${ex.mes})` : ''}
-                          </div>
-                          <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>
+                            {ex.nombre}{ex.mes ? ` · ${ex.mes}` : ''} — Ejercicio {ex.parte}
+                        </div>
+                        <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>
                             {ex.totalPreguntas > 0 ? `${ex.totalPreguntas} preguntas` : 'Sin preguntas disponibles'}
-                          </div>
+                        </div>
                         </div>
                         <span style={{ fontSize: 18 }}>🎯</span>
-                      </button>
+                    </button>
                     ))}
-                  </div>
                 </div>
-              );
+                </div>
+            );
             })}
-          </div>
+        </div>
         )}
       </div>
     </div>

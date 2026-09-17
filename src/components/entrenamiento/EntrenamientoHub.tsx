@@ -181,7 +181,7 @@ if (estado === 'activo') {
     { title: 'Flashcards del día', modo: 'flashcards' },
   );
   if (nivel >= 2) acciones.push({ title: 'Repaso inteligente', modo: 'repaso' });
-  if (nivel === 3) acciones.push({ title: 'Simulacro real', modo: 'simulacro' });
+  acciones.push({ title: 'Simulacro real', modo: 'simulacro' }); 
 }
 
 if (estado === 'inactivo') {
