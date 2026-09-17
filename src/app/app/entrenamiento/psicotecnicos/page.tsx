@@ -67,11 +67,6 @@ export default function PsicotecnicosHubPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>{m.nombre}</span>
-                    {m.oficial && (
-                      <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 999, background: '#EEF2FF', color: '#4338CA', fontWeight: 700 }}>
-                        OFICIAL
-                      </span>
-                    )}
                   </div>
                   <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 2, lineHeight: 1.4 }}>
                     {m.descripcion}

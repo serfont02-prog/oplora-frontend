@@ -490,7 +490,7 @@ const crearConv = useMutation({
                           <span style={{ fontSize: '12px' }}>🗂️</span>
                         </button>
                       <button
-                          onClick={() => router.push(`/admin/oposiciones/${id}/psicotecnicos`)}
+                          onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/psicotecnicos`)}
                           style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }}
                           title="Psicotécnicos"
                         >

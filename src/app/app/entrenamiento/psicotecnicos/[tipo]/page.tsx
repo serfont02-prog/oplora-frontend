@@ -27,6 +27,7 @@ export default function PsicotecnicoTipoPage() {
   const { usuario } = useAuth();
   const tipo = params.tipo as string;
   const oposicionId = usuario?.oposicionActiva?.id;
+  const convocatoriaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
 
   const [fase, setFase] = useState<Fase>('config');
   const [numPreguntas, setNumPreguntas] = useState(10);
@@ -65,6 +66,7 @@ export default function PsicotecnicoTipoPage() {
     try {
       const res = await api.post('/psicotecnicos/generar', {
         oposicionId,
+        convocatoriaId,
         tipo,
         dificultad: dificultad || undefined,
         numPreguntas,
