@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Zap, BookOpen, Trophy, RotateCcw, ChevronRight, Target, Settings, Lock, X } from 'lucide-react';
+import { Brain, Zap, BookOpen, Trophy, RotateCcw, ChevronRight, Target, Settings, Lock, X, Puzzle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import WidgetProgresoGlobal from '@/components/widgets/WidgetProgreso';
@@ -25,6 +25,7 @@ const COLOR_ACTIVIDAD: Record<string, { bg: string; icon: string }> = {
   repaso:      { bg: '#FADEF7', icon: '#9333EA' },
   simulacro:   { bg: '#EDE9DD', icon: '#6B5F3E' },
   racha:       { bg: '#FACCC0', icon: '#C2410C' },
+  psicotecnicos: { bg: '#E0F2FE', icon: '#0369A1' },
 };
 
 export default function EntrenamientoHub({
@@ -150,6 +151,7 @@ const ACCIONES_CONFIG: Record<string, { icon: any; descripcion: string; esHeroic
   repaso:      { icon: Brain,      descripcion: 'Refuerza lo que más falla' },
   simulacro:   { icon: Trophy,     descripcion: 'Examen completo con tiempo real' },
   racha:       { icon: Target,     descripcion: 'Recupera tu racha diaria' },
+  psicotecnicos: { icon: Puzzle,   descripcion: 'Numérico, verbal, lógico y más' },
 };
 
 
@@ -165,7 +167,17 @@ function WidgetAcciones({ estado, nivel, suscripcion, oposicion, router, limites
   const acciones: { title: string; modo: string }[] = [];
   const opcionesNumPreguntas = [5, 10, 20, 50].filter(n => n <= maxPorTest);
   const [modalTest, setModalTest] = useState(false);
-  
+
+  const { data: configPsicotecnicos = [] } = useQuery({
+    queryKey: ['psicotecnicos-config', oposicion?.id, convocatoria?.id],
+    queryFn: async () => {
+      const res = await api.get(`/psicotecnicos/config/${oposicion.id}`, {
+        params: convocatoria?.id ? { convocatoriaId: convocatoria.id } : {},
+      });
+      return res.data;
+    },
+    enabled: !!oposicion?.id,
+  });
 
 if (estado === 'nuevo') {
   acciones.push(
@@ -181,7 +193,11 @@ if (estado === 'activo') {
     { title: 'Flashcards del día', modo: 'flashcards' },
   );
   if (nivel >= 2) acciones.push({ title: 'Repaso inteligente', modo: 'repaso' });
-  acciones.push({ title: 'Simulacro real', modo: 'simulacro' }); 
+  acciones.push({ title: 'Simulacro real', modo: 'simulacro' });
+}
+
+if (configPsicotecnicos.length > 0 && (estado === 'activo' || estado === 'inactivo')) {
+  acciones.push({ title: 'Psicotécnicos', modo: 'psicotecnicos' });
 }
 
 if (estado === 'inactivo') {
@@ -212,6 +228,11 @@ const handleClick = (modo: string) => {
 
   if (modo === 'flashcards') {
     router.push(`/app/flashcards`);
+    return;
+  }
+
+  if (modo === 'psicotecnicos') {
+    router.push('/app/entrenamiento/psicotecnicos');
     return;
   }
 };

@@ -482,22 +482,19 @@ const crearConv = useMutation({
                       <button onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/documentos`)} style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }} title="Documentos">
                         <FileText size={12} />
                       </button>
-                      <button onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/examenes`)} style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }} title="Exámenes">
-                        <span style={{ fontSize: '12px' }}>📝</span>
-                      </button>
-                      <button
-                          onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/preguntas`)}
-                          style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }}
-                          title="Importar preguntas"
-                        >
-                          <span style={{ fontSize: '12px' }}>❓</span>
-                        </button>
                       <button
                           onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/banco-preguntas`)}
                           style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }}
-                          title="Banco de preguntas (centralizado)"
+                          title="Banco de preguntas"
                         >
                           <span style={{ fontSize: '12px' }}>🗂️</span>
+                        </button>
+                      <button
+                          onClick={() => router.push(`/admin/oposiciones/${id}/psicotecnicos`)}
+                          style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }}
+                          title="Psicotécnicos"
+                        >
+                          <span style={{ fontSize: '12px' }}>🧠</span>
                         </button>
                       <button style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }} title="Estadísticas">
                         <BarChart2 size={12} />
