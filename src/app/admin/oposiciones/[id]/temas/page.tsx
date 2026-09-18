@@ -483,21 +483,15 @@ const importarTemario = async () => {
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Tipo</label>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
-                    Bloque <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opcional)</span>
-                  </label>
                   <select
-                    value={formEditar.bloque}
-                    onChange={(e) => setFormEditar({ ...formEditar, bloque: e.target.value })}
+                    value={form.tipo}
+                    onChange={(e) => setForm({ ...form, tipo: e.target.value })}
                     style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                   >
-                    <option value="">Sin bloque</option>
-                    {bloquesDisponibles.map((b: any) => (
-                      <option key={b.nombre} value={b.nombre}>{b.nombre}</option>
-                    ))}
+                    <option value="con_normativa">Con normativa</option>
+                    <option value="conceptual">Conceptual</option>
+                    <option value="mixto">Mixto</option>
                   </select>
-                </div>
                 </div>
               </div>
 

@@ -37,6 +37,8 @@ export default function OposicionDetallePage() {
     fechaExamen: '',
     ejercicios: [] as { numero: number; tipo: string; numPreguntas: string; tiempoMinutos: string; descripcion: string }[],
     fraccionPenalizacion: '',
+    permiteBlancos: true,
+    fraccionPenalizacionBlanco: '',
     notaMinimaAprobado: '',
     diferenciasAnterior: '',
     requisitos: '',
@@ -76,6 +78,8 @@ const [formEditarConv, setFormEditarConv] = useState({
   fechaExamen: '',
  ejercicios: [] as { numero: number; tipo: string; numPreguntas: string; tiempoMinutos: string; descripcion: string }[],
   fraccionPenalizacion: '',
+  permiteBlancos: true,
+  fraccionPenalizacionBlanco: '',
   notaMinimaAprobado: '',
   diferenciasAnterior: '',
   requisitos: '',
@@ -185,6 +189,8 @@ const crearConv = useMutation({
           }))
         : undefined,
         fraccionPenalizacion: formNuevaConv.fraccionPenalizacion || undefined,
+        permiteBlancos: formNuevaConv.permiteBlancos,
+        fraccionPenalizacionBlanco: formNuevaConv.permiteBlancos ? undefined : (formNuevaConv.fraccionPenalizacionBlanco || undefined),
         notaMinimaAprobado: formNuevaConv.notaMinimaAprobado ? parseFloat(formNuevaConv.notaMinimaAprobado) : undefined,
         diferenciasAnterior: formNuevaConv.diferenciasAnterior || undefined,
         requisitos: formNuevaConv.requisitos || undefined,
@@ -210,7 +216,7 @@ const crearConv = useMutation({
       setFormNuevaConv({
         anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', turno: '',
         urlOficial: '', fechaConvocatoria: '', plazoInscripcionInicio: '', plazoInscripcionFin: '', numeroSolicitudes: '', numeroPresentados: '', fechaExamen: '', ejercicios: [],
-        fraccionPenalizacion: '',
+        fraccionPenalizacion: '', permiteBlancos: true, fraccionPenalizacionBlanco: '',
         notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
         plazasLibres: '', plazasPromocionInterna: '', plazasMilitares: '', plazasDiscapacidad: '',
@@ -264,6 +270,8 @@ const crearConv = useMutation({
             }))
           : null,
           fraccionPenalizacion: formEditarConv.fraccionPenalizacion || undefined,
+          permiteBlancos: formEditarConv.permiteBlancos,
+          fraccionPenalizacionBlanco: formEditarConv.permiteBlancos ? '' : (formEditarConv.fraccionPenalizacionBlanco || undefined),
           notaMinimaAprobado: formEditarConv.notaMinimaAprobado ? parseFloat(formEditarConv.notaMinimaAprobado) : undefined,
           diferenciasAnterior: formEditarConv.diferenciasAnterior || undefined,
           requisitos: formEditarConv.requisitos || null,
@@ -319,6 +327,8 @@ const crearConv = useMutation({
         descripcion: ej.descripcion ?? '',
       })),
       fraccionPenalizacion: c.fraccionPenalizacion ?? '',
+      permiteBlancos: c.permiteBlancos ?? true,
+      fraccionPenalizacionBlanco: c.fraccionPenalizacionBlanco ?? '',
       notaMinimaAprobado: c.notaMinimaAprobado?.toString() ?? '',
       diferenciasAnterior: c.diferenciasAnterior ?? '',
       requisitos: c.requisitos ?? '',
@@ -742,6 +752,25 @@ const crearConv = useMutation({
                       <input type="text" value={formEditarConv.fraccionPenalizacion} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                     </div>
                   </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: formEditarConv.permiteBlancos ? '1fr' : '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+                      <input
+                        type="checkbox"
+                        id="permiteBlancosEditar"
+                        checked={formEditarConv.permiteBlancos}
+                        onChange={(e) => setFormEditarConv({ ...formEditarConv, permiteBlancos: e.target.checked })}
+                        style={{ width: '16px', height: '16px' }}
+                      />
+                      <label htmlFor="permiteBlancosEditar" style={{ fontSize: '13px', color: '#374151' }}>Permite blancos (no penalizan)</label>
+                    </div>
+                    {!formEditarConv.permiteBlancos && (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización blanco</label>
+                        <input type="text" value={formEditarConv.fraccionPenalizacionBlanco} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacionBlanco: e.target.value })} placeholder="1/4" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                    )}
+                  </div>
                 {/* Nota mínima y penalización — se quedan igual */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
@@ -752,6 +781,25 @@ const crearConv = useMutation({
                     <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
                     <input type="text" value={formNuevaConv.fraccionPenalizacion} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                   </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: formNuevaConv.permiteBlancos ? '1fr' : '1fr 1fr', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+                    <input
+                      type="checkbox"
+                      id="permiteBlancosNueva"
+                      checked={formNuevaConv.permiteBlancos}
+                      onChange={(e) => setFormNuevaConv({ ...formNuevaConv, permiteBlancos: e.target.checked })}
+                      style={{ width: '16px', height: '16px' }}
+                    />
+                    <label htmlFor="permiteBlancosNueva" style={{ fontSize: '13px', color: '#374151' }}>Permite blancos (no penalizan)</label>
+                  </div>
+                  {!formNuevaConv.permiteBlancos && (
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización blanco</label>
+                      <input type="text" value={formNuevaConv.fraccionPenalizacionBlanco} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fraccionPenalizacionBlanco: e.target.value })} placeholder="1/4" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                  )}
                 </div>
 
                 {/* Requisitos */}
