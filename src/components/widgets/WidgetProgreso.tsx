@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 const BG_WIDGET = '#F7F8FA';
+const BG_CARD_ITEM = '#FFFFFF';
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';
@@ -44,9 +45,11 @@ function Donut({ porcentaje, color, size = 64, grosor = 7 }: { porcentaje: numbe
 export default function WidgetProgreso({
   ubicacion,
   oposicionId,
+  convocatoriaId,
 }: {
   ubicacion: string; // ej: 'entrenamiento_progreso', 'inicio_progreso'
   oposicionId: string;
+  convocatoriaId?: string;
 }) {
   const [modalDetalle, setModalDetalle] = useState(false);
   const queryClient = useQueryClient();
@@ -89,6 +92,34 @@ export default function WidgetProgreso({
 
     const datosFC = fcPeriodo?.[cfg.key] ?? { porcentajeDominadas: 0, dominadas: 0 };
 
+  // Psicotécnicos: solo se muestra si hay alguna modalidad activa para esta oposición/convocatoria
+  const { data: configPsico = [] } = useQuery({
+    queryKey: ['psicotecnicos-config-widget', oposicionId, convocatoriaId],
+    queryFn: async () => {
+      const res = await api.get(`/psicotecnicos/config/${oposicionId}`, {
+        params: convocatoriaId ? { convocatoriaId } : {},
+      });
+      return res.data;
+    },
+    enabled: !!oposicionId,
+  });
+  const hayPsicotecnicos = configPsico.length > 0;
+
+  const { data: psicoPeriodo } = useQuery({
+    queryKey: ['psico-periodo', oposicionId],
+    queryFn: async () => (await api.get(`/psicotecnicos/progreso-periodo/${oposicionId}`)).data,
+    enabled: !!oposicionId && hayPsicotecnicos,
+  });
+  const datosPsico = psicoPeriodo?.[cfg.key] ?? { precision: 0, totalPreguntas: 0 };
+
+  const items = [
+    { key: 'test', label: 'Precisión Test', porcentaje: datos.precision, color: colorPorPrecision(datos.precision) },
+    { key: 'fc', label: 'FC dominadas', porcentaje: datosFC.porcentajeDominadas, color: '#FADEF7' },
+    ...(hayPsicotecnicos
+      ? [{ key: 'psico', label: 'Psicotécnicos', porcentaje: datosPsico.precision, color: colorPorPrecision(datosPsico.precision) }]
+      : []),
+  ];
+
   return (
     <>
       <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
@@ -104,25 +135,25 @@ export default function WidgetProgreso({
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '14px 8px' }}>
-            <div style={{ position: 'relative', width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Donut porcentaje={datos.precision} color={colorPorPrecision(datos.precision)} />
-              <div style={{ position: 'absolute', fontSize: '15px', fontWeight: 800, color: TEXT_PRIMARY }}>
-                {datos.precision}%
-              </div>
-            </div>
-            <span style={{ fontSize: '11px', color: TEXT_SECONDARY, fontWeight: 500, textAlign: 'center' }}>Precisión Test</span>
-          </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '14px 8px' }}>
-            <div style={{ position: 'relative', width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Donut porcentaje={datosFC.porcentajeDominadas} color="#FADEF7" />
-                <div style={{ position: 'absolute', fontSize: '15px', fontWeight: 800, color: TEXT_PRIMARY }}>
-                {datosFC.porcentajeDominadas}%
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
+          {items.map((item) => (
+            <div
+              key={item.key}
+              style={{
+                flexShrink: 0, width: '92px', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', gap: '8px', padding: '12px 6px', borderRadius: '14px',
+                background: BG_CARD_ITEM,
+              }}
+            >
+              <div style={{ position: 'relative', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Donut porcentaje={item.porcentaje} color={item.color} size={56} grosor={6} />
+                <div style={{ position: 'absolute', fontSize: '13px', fontWeight: 800, color: TEXT_PRIMARY }}>
+                  {item.porcentaje}%
                 </div>
+              </div>
+              <span style={{ fontSize: '10px', color: TEXT_SECONDARY, fontWeight: 500, textAlign: 'center', lineHeight: 1.2 }}>{item.label}</span>
             </div>
-            <span style={{ fontSize: '11px', color: TEXT_SECONDARY, fontWeight: 500, textAlign: 'center' }}>FC dominadas</span>
-            </div>
+          ))}
         </div>
       </div>
 
@@ -142,8 +173,17 @@ export default function WidgetProgreso({
 
 {Object.entries(VARIANTES).map(([key, v]) => {
   const datosVariante = progresoPeriodo?.[v.key] ?? { precision: 0, totalPreguntas: 0 };
-  const datosFCVariante = fcPeriodo?.[v.key] ?? { porcentajeDominadas: 0, dominadas: 0 }; // ⭐ añadir esta línea
+  const datosFCVariante = fcPeriodo?.[v.key] ?? { porcentajeDominadas: 0, dominadas: 0 };
+  const datosPsicoVariante = psicoPeriodo?.[v.key] ?? { precision: 0, totalPreguntas: 0 };
   const esActual = variantePreferida === key;
+
+  const itemsVariante = [
+    { key: 'test', label: 'Precisión Test', porcentaje: datosVariante.precision, color: colorPorPrecision(datosVariante.precision) },
+    { key: 'fc', label: 'FC dominadas', porcentaje: datosFCVariante.porcentajeDominadas, color: '#FADEF7' },
+    ...(hayPsicotecnicos
+      ? [{ key: 'psico', label: 'Psicotécnicos', porcentaje: datosPsicoVariante.precision, color: colorPorPrecision(datosPsicoVariante.precision) }]
+      : []),
+  ];
 
   return (
     <div
@@ -164,25 +204,18 @@ export default function WidgetProgreso({
           </span>
         )}
       </div>
-      <div style={{ display: 'flex', gap: '16px' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-          <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Donut porcentaje={datosVariante.precision} color={colorPorPrecision(datosVariante.precision)} size={52} grosor={6} />
-            <div style={{ position: 'absolute', fontSize: '12px', fontWeight: 800, color: TEXT_PRIMARY }}>
-              {datosVariante.precision}%
+      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '2px' }}>
+        {itemsVariante.map((item) => (
+          <div key={item.key} style={{ flexShrink: 0, width: '76px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Donut porcentaje={item.porcentaje} color={item.color} size={52} grosor={6} />
+              <div style={{ position: 'absolute', fontSize: '12px', fontWeight: 800, color: TEXT_PRIMARY }}>
+                {item.porcentaje}%
+              </div>
             </div>
+            <span style={{ fontSize: '10px', color: TEXT_MUTED, textAlign: 'center', lineHeight: 1.2 }}>{item.label}</span>
           </div>
-          <span style={{ fontSize: '10px', color: TEXT_MUTED }}>Precisión Test</span>
-        </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-          <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Donut porcentaje={datosFCVariante.porcentajeDominadas} color="#FADEF7" size={52} grosor={6} />
-            <div style={{ position: 'absolute', fontSize: '12px', fontWeight: 800, color: TEXT_PRIMARY }}>
-              {datosFCVariante.porcentajeDominadas}%
-            </div>
-          </div>
-          <span style={{ fontSize: '10px', color: TEXT_MUTED }}>FC dominadas</span>
-        </div>
+        ))}
       </div>
     </div>
   );

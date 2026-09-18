@@ -47,7 +47,7 @@ export default function EntrenamientoHub({
 
         <HeroEntrenamiento oposicion={oposicion} usuario={usuario} router={router} />
 
-        <WidgetProgresoGlobal ubicacion="entrenamiento_progreso" oposicionId={oposicion?.id} />
+        <WidgetProgresoGlobal ubicacion="entrenamiento_progreso" oposicionId={oposicion?.id} convocatoriaId={convocatoria?.id} />
 
         <WidgetAcciones
           estado={estado}
