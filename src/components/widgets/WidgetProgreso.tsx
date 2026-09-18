@@ -102,6 +102,8 @@ export default function WidgetProgreso({
       return res.data;
     },
     enabled: !!oposicionId,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
   const hayPsicotecnicos = configPsico.length > 0;
 

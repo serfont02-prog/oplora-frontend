@@ -177,6 +177,8 @@ function WidgetAcciones({ estado, nivel, suscripcion, oposicion, router, limites
       return res.data;
     },
     enabled: !!oposicion?.id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
 if (estado === 'nuevo') {

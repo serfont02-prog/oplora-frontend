@@ -30,6 +30,8 @@ export default function OposicionDetallePage() {
     turno: '',
     urlOficial: '',
     fechaConvocatoria: '',
+    plazoInscripcionInicio: '',
+    plazoInscripcionFin: '',
     numeroSolicitudes: '',
     numeroPresentados: '',
     fechaExamen: '',
@@ -67,6 +69,8 @@ const [formEditarConv, setFormEditarConv] = useState({
   turno: '',
   urlOficial: '',
   fechaConvocatoria: '',
+  plazoInscripcionInicio: '',
+  plazoInscripcionFin: '',
   numeroSolicitudes: '',
   numeroPresentados: '',
   fechaExamen: '',
@@ -166,6 +170,8 @@ const crearConv = useMutation({
         turno: formNuevaConv.turno || undefined,
         urlOficial: formNuevaConv.urlOficial || undefined,
         fechaConvocatoria: formNuevaConv.fechaConvocatoria || undefined,
+        plazoInscripcionInicio: formNuevaConv.plazoInscripcionInicio || undefined,
+        plazoInscripcionFin: formNuevaConv.plazoInscripcionFin || undefined,
         numeroSolicitudes: formNuevaConv.numeroSolicitudes||undefined,
         numeroPresentados: formNuevaConv.numeroPresentados||undefined,
         fechaExamen: formNuevaConv.fechaExamen || undefined,
@@ -203,7 +209,7 @@ const crearConv = useMutation({
       setModalNuevaConv(false);
       setFormNuevaConv({
         anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', turno: '',
-        urlOficial: '', fechaConvocatoria: '', numeroSolicitudes: '', numeroPresentados: '', fechaExamen: '', ejercicios: [],
+        urlOficial: '', fechaConvocatoria: '', plazoInscripcionInicio: '', plazoInscripcionFin: '', numeroSolicitudes: '', numeroPresentados: '', fechaExamen: '', ejercicios: [],
         fraccionPenalizacion: '',
         notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
@@ -243,6 +249,8 @@ const crearConv = useMutation({
           turno: formEditarConv.turno || null,
           urlOficial: formEditarConv.urlOficial || undefined,
           fechaConvocatoria: formEditarConv.fechaConvocatoria || undefined,
+          plazoInscripcionInicio: formEditarConv.plazoInscripcionInicio || '',
+          plazoInscripcionFin: formEditarConv.plazoInscripcionFin || '',
           numeroSolicitudes: formEditarConv.numeroSolicitudes||undefined,
           numeroPresentados: formEditarConv.numeroPresentados||undefined,
           fechaExamen: formEditarConv.fechaExamen || undefined,
@@ -298,6 +306,8 @@ const crearConv = useMutation({
       turno: c.turno ?? '',
       urlOficial: c.urlOficial ?? '',
       fechaConvocatoria: c.fechaConvocatoria??``,
+      plazoInscripcionInicio: c.plazoInscripcionInicio ? new Date(c.plazoInscripcionInicio).toISOString().split('T')[0] : '',
+      plazoInscripcionFin: c.plazoInscripcionFin ? new Date(c.plazoInscripcionFin).toISOString().split('T')[0] : '',
       numeroSolicitudes: c.numeroSolicitudes??'',
       numeroPresentados: c.numeroPresentados??'',
       fechaExamen: c.fechaExamen ? new Date(c.fechaExamen).toISOString().split('T')[0] : '',
@@ -515,6 +525,9 @@ const crearConv = useMutation({
 
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '12px', color: '#6b7280' }}>
                     {c.fechaConvocatoria && <span>📅 Convocatoria: {new Date(c.fechaConvocatoria).toLocaleDateString('es-ES')}</span>}
+                    {c.plazoInscripcionInicio && c.plazoInscripcionFin && (
+                      <span>🗓️ Plazo: {new Date(c.plazoInscripcionInicio).toLocaleDateString('es-ES')} - {new Date(c.plazoInscripcionFin).toLocaleDateString('es-ES')}</span>
+                    )}
                     {c.numeroSolicitudes && <span>📝 {c.numeroSolicitudes} solicitudes</span>}
                     {c.numeroPresentados && <span>🙋 {c.numeroPresentados} presentados</span>}
                     {c.fechaExamen && <span>📅 Examen: {new Date(c.fechaExamen).toLocaleDateString('es-ES')}</span>}
@@ -588,6 +601,17 @@ const crearConv = useMutation({
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha de convocatoria</label>
                   <input type="date" value={formNuevaConv.fechaConvocatoria} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, fechaConvocatoria: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Plazo inscripción · inicio</label>
+                    <input type="date" value={formNuevaConv.plazoInscripcionInicio} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, plazoInscripcionInicio: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Plazo inscripción · fin</label>
+                    <input type="date" value={formNuevaConv.plazoInscripcionFin} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, plazoInscripcionFin: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -844,6 +868,17 @@ const crearConv = useMutation({
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha de convocatoria</label>
                 <input type="date" value={formEditarConv.fechaConvocatoria} onChange={(e) => setFormEditarConv({ ...formEditarConv, fechaConvocatoria: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Plazo inscripción · inicio</label>
+                  <input type="date" value={formEditarConv.plazoInscripcionInicio} onChange={(e) => setFormEditarConv({ ...formEditarConv, plazoInscripcionInicio: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Plazo inscripción · fin</label>
+                  <input type="date" value={formEditarConv.plazoInscripcionFin} onChange={(e) => setFormEditarConv({ ...formEditarConv, plazoInscripcionFin: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
