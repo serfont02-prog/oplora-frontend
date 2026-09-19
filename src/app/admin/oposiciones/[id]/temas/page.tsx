@@ -21,6 +21,7 @@ export default function TemasAdminPage() {
   const [modalEditar, setModalEditar] = useState(false);
   const [temaEditando, setTemaEditando] = useState<any>(null);
   const [formEditar, setFormEditar] = useState({
+    numero: '',
     titulo: '',
     tipo: 'con_normativa',
     contexto: '',
@@ -132,7 +133,10 @@ const { data: articulosBusqueda = [] } = useQuery({
 
   const editar = useMutation({
   mutationFn: async () => {
-    await api.patch(`/temas/${temaEditando.id}`, formEditar);
+    await api.patch(`/temas/${temaEditando.id}`, {
+      ...formEditar,
+      numero: formEditar.numero ? parseInt(formEditar.numero) : undefined,
+    });
   },
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['temas-admin', convocatoriaId] });
@@ -428,7 +432,7 @@ const importarTemario = async () => {
                       <button
                         onClick={() => {
                             setTemaEditando(tema);
-                            setFormEditar({ titulo: tema.titulo, tipo: tema.tipo, contexto: tema.contexto ?? '', bloque: tema.bloque ?? '' });
+                            setFormEditar({ numero: tema.numero?.toString() ?? '', titulo: tema.titulo, tipo: tema.tipo, contexto: tema.contexto ?? '', bloque: tema.bloque ?? '' });
                             setModalEditar(true);
                           }}
                         style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#6b7280' }}
@@ -810,6 +814,15 @@ const importarTemario = async () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div>
+          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Número *</label>
+          <input
+            type="number"
+            value={formEditar.numero}
+            onChange={(e) => setFormEditar({ ...formEditar, numero: e.target.value })}
+            style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+        <div>
           <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Título *</label>
           <input
             type="text"
@@ -836,8 +849,8 @@ const importarTemario = async () => {
       <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
         <button
           onClick={() => editar.mutate()}
-          disabled={!formEditar.titulo || editar.isPending}
-          style={{ flex: 2, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', opacity: !formEditar.titulo ? 0.4 : 1 }}
+          disabled={!formEditar.titulo || !formEditar.numero || editar.isPending}
+          style={{ flex: 2, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', opacity: (!formEditar.titulo || !formEditar.numero) ? 0.4 : 1 }}
         >
           {editar.isPending ? 'Guardando...' : 'Guardar cambios'}
         </button>
