@@ -88,19 +88,6 @@ export default function BoePage() {
     },
   });
 
-  const extraer = useMutation({
-  mutationFn: async (id: string) => {
-    const res = await api.post(`/boe/${id}/extraer`);
-    return { id, datos: res.data };
-  },
-  onSuccess: (result) => {
-    setDatosExtraidos(result);
-    setExtrayendo(null);
-    queryClient.invalidateQueries({ queryKey: ['boe-pendientes'] });
-  },
-  onError: () => setExtrayendo(null),
-});
-
   const ESTADO_BADGE: Record<string, { bg: string; color: string; label: string }> = {
     pendiente: { bg: '#fffbeb', color: '#92400e', label: 'Pendiente' },
     aprobada: { bg: '#f0fdf4', color: '#15803d', label: 'Aprobada' },

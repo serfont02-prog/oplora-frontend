@@ -31,8 +31,6 @@ const [temaSeleccionado, setTemaSeleccionado] = useState<any>(null);
     respuesta: '',
     explicacion: '',
     oposicionId: '',
-    temaId: '',
-    articuloId: '',
   });
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -132,7 +130,7 @@ const guardarManual = async () => {
       }],
     });
     setGuardado(true);
-    setForm({ tipo: 'vf', nivel: 'basico', pregunta: '', respuesta: '', explicacion: '', oposicionId: form.oposicionId, temaId: '', articuloId: '' });
+    setForm({ tipo: 'vf', nivel: 'basico', pregunta: '', respuesta: '', explicacion: '', oposicionId: form.oposicionId });
     setTemaSeleccionado(null);
     setArticuloSeleccionado(null);
     setBusquedaArticulo('');

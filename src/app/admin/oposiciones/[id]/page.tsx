@@ -641,11 +641,11 @@ const crearConv = useMutation({
                       <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>Ejercicios de la prueba</div>
                       <button
                         type="button"
-                        onClick={() => setFormEditarConv({
-                          ...formEditarConv,
+                        onClick={() => setFormNuevaConv({
+                          ...formNuevaConv,
                           ejercicios: [
-                            ...formEditarConv.ejercicios,
-                            { numero: formEditarConv.ejercicios.length + 1, tipo: 'test', numPreguntas: '', tiempoMinutos: '', descripcion: '' },
+                            ...formNuevaConv.ejercicios,
+                            { numero: formNuevaConv.ejercicios.length + 1, tipo: 'test', numPreguntas: '', tiempoMinutos: '', descripcion: '' },
                           ],
                         })}
                         style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
@@ -654,18 +654,18 @@ const crearConv = useMutation({
                       </button>
                     </div>
 
-                    {formEditarConv.ejercicios.length === 0 && (
+                    {formNuevaConv.ejercicios.length === 0 && (
                       <div style={{ fontSize: '12px', color: '#9ca3af', padding: '8px 0' }}>Sin ejercicios definidos todavía</div>
                     )}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {formEditarConv.ejercicios.map((ej, idx) => (
+                      {formNuevaConv.ejercicios.map((ej, idx) => (
                         <div key={idx} style={{ background: '#FAFAFA', borderRadius: '10px', padding: '12px', position: 'relative' }}>
                           <button
                             type="button"
-                            onClick={() => setFormEditarConv({
-                              ...formEditarConv,
-                              ejercicios: formEditarConv.ejercicios.filter((_, i) => i !== idx),
+                            onClick={() => setFormNuevaConv({
+                              ...formNuevaConv,
+                              ejercicios: formNuevaConv.ejercicios.filter((_, i) => i !== idx),
                             })}
                             style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: '12px', fontWeight: 600 }}
                           >
@@ -680,9 +680,9 @@ const crearConv = useMutation({
                               <select
                                 value={ej.tipo}
                                 onChange={(e) => {
-                                  const nuevos = [...formEditarConv.ejercicios];
+                                  const nuevos = [...formNuevaConv.ejercicios];
                                   nuevos[idx] = { ...ej, tipo: e.target.value };
-                                  setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                                  setFormNuevaConv({ ...formNuevaConv, ejercicios: nuevos });
                                 }}
                                 style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                               >
@@ -699,9 +699,9 @@ const crearConv = useMutation({
                                 type="number"
                                 value={ej.numPreguntas}
                                 onChange={(e) => {
-                                  const nuevos = [...formEditarConv.ejercicios];
+                                  const nuevos = [...formNuevaConv.ejercicios];
                                   nuevos[idx] = { ...ej, numPreguntas: e.target.value };
-                                  setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                                  setFormNuevaConv({ ...formNuevaConv, ejercicios: nuevos });
                                 }}
                                 style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                               />
@@ -715,9 +715,9 @@ const crearConv = useMutation({
                                 type="number"
                                 value={ej.tiempoMinutos}
                                 onChange={(e) => {
-                                  const nuevos = [...formEditarConv.ejercicios];
+                                  const nuevos = [...formNuevaConv.ejercicios];
                                   nuevos[idx] = { ...ej, tiempoMinutos: e.target.value };
-                                  setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                                  setFormNuevaConv({ ...formNuevaConv, ejercicios: nuevos });
                                 }}
                                 style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                               />
@@ -728,9 +728,9 @@ const crearConv = useMutation({
                                 type="text"
                                 value={ej.descripcion}
                                 onChange={(e) => {
-                                  const nuevos = [...formEditarConv.ejercicios];
+                                  const nuevos = [...formNuevaConv.ejercicios];
                                   nuevos[idx] = { ...ej, descripcion: e.target.value };
-                                  setFormEditarConv({ ...formEditarConv, ejercicios: nuevos });
+                                  setFormNuevaConv({ ...formNuevaConv, ejercicios: nuevos });
                                 }}
                                 placeholder="Opcional"
                                 style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
@@ -742,36 +742,6 @@ const crearConv = useMutation({
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nota mínima</label>
-                      <input type="number" step="0.01" value={formEditarConv.notaMinimaAprobado} onChange={(e) => setFormEditarConv({ ...formEditarConv, notaMinimaAprobado: e.target.value })} placeholder="5.00" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización</label>
-                      <input type="text" value={formEditarConv.fraccionPenalizacion} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: formEditarConv.permiteBlancos ? '1fr' : '1fr 1fr', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
-                      <input
-                        type="checkbox"
-                        id="permiteBlancosEditar"
-                        checked={formEditarConv.permiteBlancos}
-                        onChange={(e) => setFormEditarConv({ ...formEditarConv, permiteBlancos: e.target.checked })}
-                        style={{ width: '16px', height: '16px' }}
-                      />
-                      <label htmlFor="permiteBlancosEditar" style={{ fontSize: '13px', color: '#374151' }}>Permite blancos (no penalizan)</label>
-                    </div>
-                    {!formEditarConv.permiteBlancos && (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fracción penalización blanco</label>
-                        <input type="text" value={formEditarConv.fraccionPenalizacionBlanco} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacionBlanco: e.target.value })} placeholder="1/4" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
-                      </div>
-                    )}
-                  </div>
-                {/* Nota mínima y penalización — se quedan igual */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Nota mínima</label>
