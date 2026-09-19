@@ -30,6 +30,7 @@ export default function NuevaLeyPage() {
     tipoNorma: '',
     tipoNormaOtro: '',
     fechaPublicacion: '',
+    fechaVigencia: '',
   });
   const [errores, setErrores] = useState<Record<string, string>>({});
 
@@ -54,6 +55,7 @@ export default function NuevaLeyPage() {
       if (tipoNormaFinal) formData.append('tipoNorma', tipoNormaFinal);
       
       if (form.fechaPublicacion) formData.append('fechaPublicacion', form.fechaPublicacion);
+      if (form.fechaVigencia) formData.append('fechaVigencia', form.fechaVigencia);
       if (archivo) formData.append('archivo', archivo);
 
       const res = await api.post('/leyes/subir', formData, {
@@ -225,6 +227,17 @@ export default function NuevaLeyPage() {
                 type="date"
                 value={form.fechaPublicacion}
                 onChange={(e) => setForm({ ...form, fechaPublicacion: e.target.value })}
+                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Última modificación */}
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Última modificación</label>
+              <input
+                type="date"
+                value={form.fechaVigencia}
+                onChange={(e) => setForm({ ...form, fechaVigencia: e.target.value })}
                 style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>

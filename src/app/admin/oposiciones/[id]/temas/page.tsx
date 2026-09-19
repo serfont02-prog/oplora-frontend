@@ -12,6 +12,16 @@ const TIPOS = [
   { value: 'mixto', label: 'Mixto' },
 ];
 
+// Normaliza un nombre de bloque para comparar sin tildes/mayúsculas/espacios extra,
+// evitando que "Práctica" y "practica" (o con espacios distintos) se traten como bloques distintos.
+const normalizarNombreBloque = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // quita acentos
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
 export default function TemasAdminPage() {
   const params = useParams();
   const router = useRouter();
@@ -169,7 +179,12 @@ const { data: articulosBusqueda = [] } = useQuery({
   const bloquesDisponibles = [
     ...bloquesDeConvocatoria,
     ...bloquesUsadosEnTemas
-      .filter((nombre: string) => !bloquesDeConvocatoria.some((b: any) => b.nombre === nombre))
+      .filter(
+        (nombre: string) =>
+          !bloquesDeConvocatoria.some(
+            (b: any) => normalizarNombreBloque(b.nombre) === normalizarNombreBloque(nombre),
+          ),
+      )
       .map((nombre: string) => ({ nombre })),
   ];
 
@@ -261,13 +276,29 @@ const importarTemario = async () => {
     const temas: { numero: number; titulo: string; bloque?: string }[] = [];
     let bloqueActual: string | undefined = undefined;
 
+    // Bloques ya existentes (los oficiales de la convocatoria + los usados en temas)
+    // para poder resolver variantes con distinta tilde/mayúscula al nombre canónico.
+    const bloquesCanonicos: string[] = Array.from(
+      new Set([
+        ...bloquesDeConvocatoria.map((b: any) => b.nombre),
+        ...bloquesUsadosEnTemas,
+      ]),
+    ) as string[];
+
     for (const linea of lineas) {
       const lineaTrim = linea.trim();
 
       // ⭐ Detectar cabecera de bloque: "## Bloque" o "##Bloque"
       const matchBloque = lineaTrim.match(/^##\s*(.+)$/);
       if (matchBloque) {
-        bloqueActual = matchBloque[1].trim();
+        const nombreDetectado = matchBloque[1].trim();
+        // Si ya existe un bloque equivalente (mismo texto salvo tildes/mayúsculas),
+        // reutilizamos su nombre exacto en vez de crear una variante nueva.
+        const existente = bloquesCanonicos.find(
+          (b) => normalizarNombreBloque(b) === normalizarNombreBloque(nombreDetectado),
+        );
+        bloqueActual = existente ?? nombreDetectado;
+        if (!existente) bloquesCanonicos.push(bloqueActual);
         continue;
       }
 
