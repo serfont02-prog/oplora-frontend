@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useMemo, useState } from 'react';
-import { Newspaper, FileText} from 'lucide-react';
+import { Newspaper, FileText, Scale, Sparkles } from 'lucide-react';
 import {Cog6ToothIcon, ArchiveBoxIcon, ClipboardDocumentListIcon} from '@heroicons/react/24/outline';
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
@@ -536,6 +536,10 @@ const tipoIconoBg: Record<string, string> = {
   normas_especificas: '#FAEEDA',
   guia_inscripcion: '#F1EFE8',
   otro: '#F1EFE8',
+  // Tipos de Noticia (feed unificado): oficial / legislativa / oplora
+  oficial: '#E6F1FB',
+  legislativa: '#EEEDFE',
+  oplora: '#FDF1DC',
 };
 
 const tipoIconoColor: Record<string, string> = {
@@ -549,6 +553,27 @@ const tipoIconoColor: Record<string, string> = {
   normas_especificas: '#854F0B',
   guia_inscripcion: '#5F5E5A',
   otro: '#5F5E5A',
+  // Tipos de Noticia (feed unificado): oficial / legislativa / oplora
+  oficial: '#185FA5',
+  legislativa: '#3C3489',
+  oplora: '#B45309',
+};
+
+interface Noticia {
+  id: string;
+  tipo: 'oficial' | 'legislativa' | 'oplora';
+  titulo: string;
+  resumen?: string | null;
+  urlOrigen?: string | null;
+  destacada: boolean;
+  fechaPublicacion?: string | null;
+  creadoEn: string;
+}
+
+const ICONO_TIPO_NOTICIA: Record<Noticia['tipo'], any> = {
+  oficial: Newspaper,
+  legislativa: Scale,
+  oplora: Sparkles,
 };
 
 function formatearFecha(fecha: string | Date): string {
@@ -562,13 +587,28 @@ function formatearFecha(fecha: string | Date): string {
 function WidgetNoticias({ oposicionId, router }: any) {
   const [expandido, setExpandido] = useState(false);
 
-  const { data: noticias = [], isLoading } = useQuery({
-    queryKey: ['noticias-oposicion', oposicionId],
+  // Misma lógica que ConvocatoriaService.getNoticiasByOposicion: se usa la
+  // convocatoria en estado 'activa' y, si no hay ninguna, la más reciente.
+  const { data: convocatorias = [] } = useQuery({
+    queryKey: ['convocatorias-oposicion', oposicionId],
     queryFn: async () => {
-      const res = await api.get(`/convocatorias/oposicion/${oposicionId}/noticias?limite=3`);
-      return res.data;
+      const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
+      return res.data as { id: string; anyo: number; estado: string }[];
     },
     enabled: !!oposicionId,
+  });
+
+  const convocatoriaRelevante = convocatorias.find((c) => c.estado === 'activa') ?? convocatorias[0];
+
+  const { data: noticias = [], isLoading } = useQuery<Noticia[]>({
+    queryKey: ['noticias-feed', oposicionId, convocatoriaRelevante?.id],
+    queryFn: async () => {
+      const res = await api.get('/noticias/feed', {
+        params: { convocatoriaId: convocatoriaRelevante?.id, oposicionId, limite: 3 },
+      });
+      return res.data;
+    },
+    enabled: !!oposicionId && convocatorias.length > 0,
   });
 
   if (!oposicionId || isLoading) return null;
@@ -581,7 +621,7 @@ function WidgetNoticias({ oposicionId, router }: any) {
       accion={
         noticias.length > 0
           ? expandido
-            ? { label: 'Ver todas', onClick: () => router.push(`/app/oposicion/${oposicionId}?tab=documentos`) }
+            ? { label: 'Ver todas', onClick: () => router.push(`/app/oposicion/${oposicionId}/noticias`) }
             : { label: 'Ver más', onClick: () => setExpandido(true) }
           : undefined
       }
@@ -592,37 +632,40 @@ function WidgetNoticias({ oposicionId, router }: any) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {noticiasAMostrar.map((n: any) => (
-            <div
-              key={n.id}
-              onClick={() => n.urlPdf && window.open(n.urlPdf, '_blank')}
-              style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 4px', cursor: n.urlPdf ? 'pointer' : 'default' }}
-            >
-              <div style={{
-                width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-                background: tipoIconoBg[n.tipo] ?? '#F4F5F7',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginTop: 1,
-              }}>
-                <FileText size={13} color={tipoIconoColor[n.tipo] ?? TEXT_MUTED} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontSize: 10, color: TEXT_PRIMARY, fontWeight: 700, flexShrink: 0 }}>
-                    {formatearFecha(n.fecha)}
-                  </span>
-                  <span style={{ fontSize: 12, color: TEXT_PRIMARY, fontWeight: 500, lineHeight: 1.3 }}>
-                    {n.titular}
-                  </span>
+          {noticiasAMostrar.map((n) => {
+            const Icono = ICONO_TIPO_NOTICIA[n.tipo] ?? FileText;
+            return (
+              <div
+                key={n.id}
+                onClick={() => n.urlOrigen && window.open(n.urlOrigen, '_blank')}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 4px', cursor: n.urlOrigen ? 'pointer' : 'default' }}
+              >
+                <div style={{
+                  width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                  background: tipoIconoBg[n.tipo] ?? '#F4F5F7',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginTop: 1,
+                }}>
+                  <Icono size={13} color={tipoIconoColor[n.tipo] ?? TEXT_MUTED} />
                 </div>
-                {n.descripcion && (
-                  <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.4 }}>
-                    {n.descripcion}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ fontSize: 10, color: TEXT_PRIMARY, fontWeight: 700, flexShrink: 0 }}>
+                      {formatearFecha(n.fechaPublicacion ?? n.creadoEn)}
+                    </span>
+                    <span style={{ fontSize: 12, color: TEXT_PRIMARY, fontWeight: 500, lineHeight: 1.3 }}>
+                      {n.titulo}
+                    </span>
                   </div>
-                )}
+                  {n.resumen && (
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.4 }}>
+                      {n.resumen}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </Widget>

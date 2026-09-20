@@ -8,6 +8,7 @@ const navItems = [
   { href: '/admin', label: 'Inicio', icon: Home, exact: true },
   { href: '/admin/oposiciones', label: 'Oposiciones', icon: FileText },
   { href: '/admin/leyes', label: 'Leyes', icon: BookOpen },
+  { href: '/admin/noticias', label: 'Noticias', icon: Newspaper },
   { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
   { href: '/admin/estadisticas', label: 'Estadísticas', icon: BarChart2 },
   { href: '/admin/boe', label: 'BOE', icon: Newspaper },

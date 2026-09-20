@@ -4,35 +4,59 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, Newspaper, Scale } from 'lucide-react';
+import { ArrowLeft, Newspaper, Scale, Sparkles } from 'lucide-react';
 
 const BG_APP = '#F4F5F7';
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';
 
-const TIPO_ICONO_BG: Record<string, string> = {
-  resolucion_convocatoria: '#FAEEDA',
-  lista_admitidos_provisional: '#EAF3DE',
-  lista_admitidos_definitiva: '#EAF3DE',
-  lista_excluidos_provisional: '#FCEBEB',
-  lista_excluidos_definitiva: '#FCEBEB',
-  cronograma: '#E6F1FB',
-  nota_informativa: '#F1EFE8',
-  otro: '#F1EFE8',
-};
-const TIPO_ICONO_COLOR: Record<string, string> = {
-  resolucion_convocatoria: '#854F0B',
-  lista_admitidos_provisional: '#3B6D11',
-  lista_admitidos_definitiva: '#3B6D11',
-  lista_excluidos_provisional: '#A32D2D',
-  lista_excluidos_definitiva: '#A32D2D',
-  cronograma: '#185FA5',
-  nota_informativa: '#5F5E5A',
-  otro: '#5F5E5A',
+type TipoNoticia = 'oficial' | 'legislativa' | 'oplora';
+
+interface Convocatoria {
+  id: string;
+  anyo: number;
+  estado: 'activa' | 'cerrada' | 'borrador';
+}
+
+interface Noticia {
+  id: string;
+  tipo: TipoNoticia;
+  titulo: string;
+  resumen?: string | null;
+  urlOrigen?: string | null;
+  destacada: boolean;
+  fechaPublicacion?: string | null;
+  creadoEn: string;
+}
+
+const FILTROS: { key: TipoNoticia | 'todas'; label: string }[] = [
+  { key: 'todas', label: 'Todas' },
+  { key: 'oficial', label: 'Oficiales' },
+  { key: 'legislativa', label: 'Legislativas' },
+  { key: 'oplora', label: 'OPLORA' },
+];
+
+const TIPO_ICONO: Record<TipoNoticia, any> = {
+  oficial: Newspaper,
+  legislativa: Scale,
+  oplora: Sparkles,
 };
 
-function formatearFecha(fecha: string): string {
+const TIPO_ICONO_BG: Record<TipoNoticia, string> = {
+  oficial: '#E6F1FB',
+  legislativa: '#EEEDFE',
+  oplora: '#FDF1DC',
+};
+
+const TIPO_ICONO_COLOR: Record<TipoNoticia, string> = {
+  oficial: '#185FA5',
+  legislativa: '#3C3489',
+  oplora: '#B45309',
+};
+
+function formatearFecha(fecha?: string | null): string {
+  if (!fecha) return '';
   const d = new Date(fecha);
   return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getFullYear()).slice(-2)}`;
 }
@@ -41,27 +65,30 @@ export default function NoticiasPage() {
   const params = useParams();
   const router = useRouter();
   const oposicionId = params.id as string;
-  const [tab, setTab] = useState<'oficiales' | 'legislacion'>('oficiales');
+  const [filtro, setFiltro] = useState<TipoNoticia | 'todas'>('todas');
 
-  const { data: oficiales = [], isLoading: cargandoOficiales } = useQuery({
-    queryKey: ['documentos-completos', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/convocatorias/oposicion/${oposicionId}/documentos-completos`);
-      return res.data;
-    },
+  // Misma lógica que usaba WidgetNoticias / ConvocatoriaService.getNoticiasByOposicion:
+  // se elige la convocatoria en estado 'activa', y si no hay ninguna, la más reciente.
+  const { data: convocatorias = [] } = useQuery<Convocatoria[]>({
+    queryKey: ['convocatorias-oposicion', oposicionId],
+    queryFn: async () => (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data,
+    enabled: !!oposicionId,
   });
 
-  const { data: legislacion = [], isLoading: cargandoLegislacion } = useQuery({
-    queryKey: ['noticias-legislacion', oposicionId],
+  const convocatoriaRelevante = convocatorias.find((c) => c.estado === 'activa') ?? convocatorias[0];
+
+  const { data: noticias = [], isLoading } = useQuery<Noticia[]>({
+    queryKey: ['noticias-feed', oposicionId, convocatoriaRelevante?.id],
     queryFn: async () => {
-      const res = await api.get(`/leyes/oposicion/${oposicionId}/noticias-legislacion`);
+      const res = await api.get('/noticias/feed', {
+        params: { convocatoriaId: convocatoriaRelevante?.id, oposicionId },
+      });
       return res.data;
     },
-    enabled: tab === 'legislacion',
+    enabled: !!oposicionId && convocatorias.length > 0,
   });
 
-  const lista = tab === 'oficiales' ? oficiales : legislacion;
-  const cargando = tab === 'oficiales' ? cargandoOficiales : cargandoLegislacion;
+  const lista = filtro === 'todas' ? noticias : noticias.filter((n) => n.tipo === filtro);
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>
@@ -84,80 +111,71 @@ export default function NoticiasPage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', background: '#E5E7EB', borderRadius: 12, padding: 3, gap: 3, marginBottom: 18 }}>
-          {[
-            { key: 'oficiales', label: 'Oficiales', icon: Newspaper },
-            { key: 'legislacion', label: 'Legislación', icon: Scale },
-          ].map(({ key, label, icon: Icon }) => (
+        {/* Chips de filtro */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 18, overflowX: 'auto' }}>
+          {FILTROS.map(({ key, label }) => (
             <button
               key={key}
-              onClick={() => setTab(key as any)}
+              onClick={() => setFiltro(key)}
               style={{
-                flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9,
-                background: tab === key ? 'white' : 'none',
-                boxShadow: tab === key ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                cursor: 'pointer', fontSize: 13,
-                fontWeight: tab === key ? 700 : 500,
-                color: tab === key ? TEXT_PRIMARY : TEXT_SECONDARY,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                transition: 'all 0.15s',
+                padding: '7px 14px', borderRadius: 20, border: filtro === key ? 'none' : '1px solid #E5E7EB',
+                background: filtro === key ? TEXT_PRIMARY : 'white',
+                color: filtro === key ? 'white' : TEXT_SECONDARY,
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
               }}
             >
-              <Icon size={14} />
               {label}
             </button>
           ))}
         </div>
 
         {/* Lista */}
-        {cargando ? (
+        {isLoading ? (
           <div style={{ textAlign: 'center', padding: '3rem', fontSize: 13, color: TEXT_MUTED }}>Cargando...</div>
         ) : lista.length === 0 ? (
           <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 14, padding: '3rem 1.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>{tab === 'oficiales' ? '📰' : '⚖️'}</div>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📰</div>
             <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 4 }}>Sin noticias por ahora</div>
             <div style={{ fontSize: 13, color: TEXT_MUTED }}>Te avisaremos en cuanto haya novedades</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {lista.map((n: any) => (
-              <div
-                key={n.id}
-                onClick={() => n.urlPdf && window.open(n.urlPdf, '_blank')}
-                style={{
-                  background: 'white', border: '1px solid #F1F5F9', borderRadius: 14,
-                  padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
-                  cursor: n.urlPdf ? 'pointer' : 'default', minHeight: 70, boxSizing: 'border-box',
-                }}
-              >
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                  background: tab === 'oficiales' ? (TIPO_ICONO_BG[n.tipo] ?? '#F1EFE8') : '#EEEDFE',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {tab === 'oficiales'
-                    ? <Newspaper size={16} color={TIPO_ICONO_COLOR[n.tipo] ?? '#5F5E5A'} />
-                    : <Scale size={16} color="#3C3489" />
-                  }
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                    <span style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 700, flexShrink: 0 }}>
-                      {formatearFecha(n.fecha)}
-                    </span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
-                      {n.titular}
-                    </span>
+            {lista.map((n) => {
+              const Icon = TIPO_ICONO[n.tipo];
+              return (
+                <div
+                  key={n.id}
+                  onClick={() => n.urlOrigen && window.open(n.urlOrigen, '_blank')}
+                  style={{
+                    background: 'white', border: n.destacada ? '1px solid #FDE68A' : '1px solid #F1F5F9', borderRadius: 14,
+                    padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
+                    cursor: n.urlOrigen ? 'pointer' : 'default', minHeight: 70, boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: TIPO_ICONO_BG[n.tipo], display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Icon size={16} color={TIPO_ICONO_COLOR[n.tipo]} />
                   </div>
-                  {n.descripcion && (
-                    <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 4, lineHeight: 1.5 }}>
-                      {n.descripcion}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 700, flexShrink: 0 }}>
+                        {formatearFecha(n.fechaPublicacion ?? n.creadoEn)}
+                      </span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
+                        {n.titulo}
+                      </span>
                     </div>
-                  )}
+                    {n.resumen && (
+                      <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 4, lineHeight: 1.5 }}>
+                        {n.resumen}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
