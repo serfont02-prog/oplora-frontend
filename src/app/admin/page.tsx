@@ -160,6 +160,23 @@ export default function AdminHomePage() {
   </div>
 )}
 
+{tareas?.noticiasPendientes > 0 && (
+  <div
+    onClick={() => router.push('/admin/noticias')}
+    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', border: '1px solid #fde68a', borderRadius: '10px', padding: '10px 14px', cursor: 'pointer' }}
+    onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#fbbf24')}
+    onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#fde68a')}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <span style={{ fontSize: '16px' }}>📰</span>
+      <span style={{ fontSize: '13px', color: '#374151' }}>
+        <strong>{tareas.noticiasPendientes}</strong> noticia{tareas.noticiasPendientes !== 1 ? 's' : ''} pendiente{tareas.noticiasPendientes !== 1 ? 's' : ''} de revisar
+      </span>
+    </div>
+    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: '#fffbeb', color: '#92400e', fontWeight: 500 }}>Revisar →</span>
+  </div>
+)}
+
 {tareas?.oposicionesSinTemas?.length > 0 && (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
     {tareas.oposicionesSinTemas.map((o: any) => (

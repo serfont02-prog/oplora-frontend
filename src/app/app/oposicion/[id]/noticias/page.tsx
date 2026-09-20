@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, Newspaper, Scale, Sparkles } from 'lucide-react';
+import { ArrowLeft, Newspaper, Scale, Sparkles, X } from 'lucide-react';
 
 const BG_APP = '#F4F5F7';
 const TEXT_PRIMARY = '#111827';
@@ -24,10 +24,47 @@ interface Noticia {
   tipo: TipoNoticia;
   titulo: string;
   resumen?: string | null;
+  contenido?: string | null;
   urlOrigen?: string | null;
   destacada: boolean;
   fechaPublicacion?: string | null;
   creadoEn: string;
+}
+
+function ModalNoticia({ noticia, onClose }: { noticia: Noticia; onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.25rem' }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 520, maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.35 }}>{noticia.titulo}</div>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 2, display: 'flex' }}
+            aria-label="Cerrar"
+          >
+            <X size={18} color={TEXT_MUTED} />
+          </button>
+        </div>
+        <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+          {noticia.contenido}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const FILTROS: { key: TipoNoticia | 'todas'; label: string }[] = [
@@ -66,6 +103,7 @@ export default function NoticiasPage() {
   const router = useRouter();
   const oposicionId = params.id as string;
   const [filtro, setFiltro] = useState<TipoNoticia | 'todas'>('todas');
+  const [noticiaAbierta, setNoticiaAbierta] = useState<Noticia | null>(null);
 
   // Misma lógica que usaba WidgetNoticias / ConvocatoriaService.getNoticiasByOposicion:
   // se elige la convocatoria en estado 'activa', y si no hay ninguna, la más reciente.
@@ -142,15 +180,24 @@ export default function NoticiasPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {lista.map((n) => {
               const Icon = TIPO_ICONO[n.tipo];
+              const tieneContenido = !!n.contenido && n.contenido.trim().length > 0;
+              const esClicable = tieneContenido || !!n.urlOrigen;
+              const alClicar = () => {
+                if (tieneContenido) setNoticiaAbierta(n);
+                else if (n.urlOrigen) window.open(n.urlOrigen, '_blank');
+              };
               return (
                 <div
                   key={n.id}
-                  onClick={() => n.urlOrigen && window.open(n.urlOrigen, '_blank')}
+                  onClick={esClicable ? alClicar : undefined}
                   style={{
                     background: 'white', border: n.destacada ? '1px solid #FDE68A' : '1px solid #F1F5F9', borderRadius: 14,
                     padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
-                    cursor: n.urlOrigen ? 'pointer' : 'default', minHeight: 70, boxSizing: 'border-box',
+                    cursor: esClicable ? 'pointer' : 'default', minHeight: 70, boxSizing: 'border-box',
+                    transition: 'border-color 0.15s',
                   }}
+                  onMouseEnter={(e) => { if (esClicable) e.currentTarget.style.borderColor = '#D1D5DB'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = n.destacada ? '#FDE68A' : '#F1F5F9'; }}
                 >
                   <div style={{
                     width: 36, height: 36, borderRadius: 10, flexShrink: 0,
@@ -179,6 +226,7 @@ export default function NoticiasPage() {
           </div>
         )}
       </div>
+      {noticiaAbierta && <ModalNoticia noticia={noticiaAbierta} onClose={() => setNoticiaAbierta(null)} />}
     </div>
   );
 }

@@ -31,6 +31,7 @@
     estado: 'activa' | 'cerrada' | 'borrador';
     fechaExamen?: string;
     urlOficial?: string;
+    urlOficialNoAplica?: boolean;
     referenciaBoe?: string;
     plazoInscripcionInicio?: string;
     plazoInscripcionFin?: string;

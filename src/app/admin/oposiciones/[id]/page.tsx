@@ -29,6 +29,7 @@ export default function OposicionDetallePage() {
     estado: 'activa',
     turno: '',
     urlOficial: '',
+    urlOficialNoAplica: false,
     fechaConvocatoria: '',
     plazoInscripcionInicio: '',
     plazoInscripcionFin: '',
@@ -70,6 +71,7 @@ const [formEditarConv, setFormEditarConv] = useState({
   estado: 'activa',
   turno: '',
   urlOficial: '',
+  urlOficialNoAplica: false,
   fechaConvocatoria: '',
   plazoInscripcionInicio: '',
   plazoInscripcionFin: '',
@@ -173,6 +175,7 @@ const crearConv = useMutation({
         estado: formNuevaConv.estado,
         turno: formNuevaConv.turno || undefined,
         urlOficial: formNuevaConv.urlOficial || undefined,
+        urlOficialNoAplica: formNuevaConv.urlOficialNoAplica,
         fechaConvocatoria: formNuevaConv.fechaConvocatoria || undefined,
         plazoInscripcionInicio: formNuevaConv.plazoInscripcionInicio || undefined,
         plazoInscripcionFin: formNuevaConv.plazoInscripcionFin || undefined,
@@ -215,7 +218,7 @@ const crearConv = useMutation({
       setModalNuevaConv(false);
       setFormNuevaConv({
         anyo: new Date().getFullYear().toString(), plazas: '', estado: 'activa', turno: '',
-        urlOficial: '', fechaConvocatoria: '', plazoInscripcionInicio: '', plazoInscripcionFin: '', numeroSolicitudes: '', numeroPresentados: '', fechaExamen: '', ejercicios: [],
+        urlOficial: '', urlOficialNoAplica: false, fechaConvocatoria: '', plazoInscripcionInicio: '', plazoInscripcionFin: '', numeroSolicitudes: '', numeroPresentados: '', fechaExamen: '', ejercicios: [],
         fraccionPenalizacion: '', permiteBlancos: true, fraccionPenalizacionBlanco: '',
         notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
@@ -254,6 +257,7 @@ const crearConv = useMutation({
           estado: formEditarConv.estado,
           turno: formEditarConv.turno || null,
           urlOficial: formEditarConv.urlOficial || undefined,
+          urlOficialNoAplica: formEditarConv.urlOficialNoAplica,
           fechaConvocatoria: formEditarConv.fechaConvocatoria || undefined,
           plazoInscripcionInicio: formEditarConv.plazoInscripcionInicio || '',
           plazoInscripcionFin: formEditarConv.plazoInscripcionFin || '',
@@ -313,6 +317,7 @@ const crearConv = useMutation({
       estado: c.estado ?? 'activa',
       turno: c.turno ?? '',
       urlOficial: c.urlOficial ?? '',
+      urlOficialNoAplica: c.urlOficialNoAplica ?? false,
       fechaConvocatoria: c.fechaConvocatoria??``,
       plazoInscripcionInicio: c.plazoInscripcionInicio ? new Date(c.plazoInscripcionInicio).toISOString().split('T')[0] : '',
       plazoInscripcionFin: c.plazoInscripcionFin ? new Date(c.plazoInscripcionFin).toISOString().split('T')[0] : '',
@@ -606,7 +611,11 @@ const crearConv = useMutation({
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>URL INAP</label>
-                  <input type="text" value={formNuevaConv.urlOficial} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, urlOficial: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                  <input type="text" disabled={formNuevaConv.urlOficialNoAplica} value={formNuevaConv.urlOficial} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, urlOficial: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', background: formNuevaConv.urlOficialNoAplica ? '#f3f4f6' : 'white', color: formNuevaConv.urlOficialNoAplica ? '#9ca3af' : 'inherit' }} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '12px', color: '#6b7280', marginTop: '6px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={formNuevaConv.urlOficialNoAplica} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, urlOficialNoAplica: e.target.checked })} />
+                    Esta convocatoria no depende del INAP / no tiene URL oficial
+                  </label>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha de convocatoria</label>
@@ -881,7 +890,11 @@ const crearConv = useMutation({
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>URL INAP</label>
-                <input type="text" value={formEditarConv.urlOficial} onChange={(e) => setFormEditarConv({ ...formEditarConv, urlOficial: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                <input type="text" disabled={formEditarConv.urlOficialNoAplica} value={formEditarConv.urlOficial} onChange={(e) => setFormEditarConv({ ...formEditarConv, urlOficial: e.target.value })} placeholder="https://sede.inap.gob.es/..." style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', background: formEditarConv.urlOficialNoAplica ? '#f3f4f6' : 'white', color: formEditarConv.urlOficialNoAplica ? '#9ca3af' : 'inherit' }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '12px', color: '#6b7280', marginTop: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formEditarConv.urlOficialNoAplica} onChange={(e) => setFormEditarConv({ ...formEditarConv, urlOficialNoAplica: e.target.checked })} />
+                  Esta convocatoria no depende del INAP / no tiene URL oficial
+                </label>
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Fecha de convocatoria</label>

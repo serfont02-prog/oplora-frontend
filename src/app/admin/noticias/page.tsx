@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Newspaper, Scale, Sparkles, Star, Eye, EyeOff, Pencil, Trash2, Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -95,6 +95,38 @@ const FORM_VACIO: FormState = {
   fechaProgramada: '',
 };
 
+function ModalContenido({ noticia, onClose }: { noticia: Noticia; onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.25rem' }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: 'white', borderRadius: 14, padding: 24, width: '100%', maxWidth: 520, maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', lineHeight: 1.35 }}>{noticia.titulo}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 2, display: 'flex' }} aria-label="Cerrar">
+            <X size={18} color="#9ca3af" />
+          </button>
+        </div>
+        <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+          {noticia.contenido}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function formatearFecha(fecha?: string | null): string {
   if (!fecha) return '—';
   const d = new Date(fecha);
@@ -107,6 +139,7 @@ export default function AdminNoticiasPage() {
   const [filtroEstado, setFiltroEstado] = useState<'' | 'publicada' | 'borrador' | 'programada'>('');
   const [formAbierto, setFormAbierto] = useState(false);
   const [form, setForm] = useState<FormState>(FORM_VACIO);
+  const [noticiaAbierta, setNoticiaAbierta] = useState<Noticia | null>(null);
 
   const { data: pendientes = [] } = useQuery<Noticia[]>({
     queryKey: ['noticias-pendientes-revision'],
@@ -270,8 +303,15 @@ export default function AdminNoticiasPage() {
         ) : (
           noticias.map((n) => {
             const Icon = TIPO_ICONO[n.tipo];
+            const tieneContenido = !!n.contenido && n.contenido.trim().length > 0;
             return (
-              <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid #f3f4f6' }}>
+              <div
+                key={n.id}
+                onClick={tieneContenido ? () => setNoticiaAbierta(n) : undefined}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid #f3f4f6', cursor: tieneContenido ? 'pointer' : 'default' }}
+                onMouseEnter={(e) => { if (tieneContenido) e.currentTarget.style.background = '#fafafa'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: `${TIPO_COLOR[n.tipo]}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={15} color={TIPO_COLOR[n.tipo]} />
                 </div>
@@ -288,7 +328,7 @@ export default function AdminNoticiasPage() {
                 <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, fontWeight: 500, background: n.publicada ? '#f0fdf4' : '#fef2f2', color: n.publicada ? '#15803d' : '#b91c1c' }}>
                   {n.publicada ? 'Publicada' : 'Borrador'}
                 </span>
-                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                   <button title="Destacar" onClick={() => mutDestacar.mutate({ id: n.id, destacada: !n.destacada })} style={botonIconoEstilo}>
                     <Star size={14} color={n.destacada ? '#F59E0B' : '#9ca3af'} fill={n.destacada ? '#F59E0B' : 'none'} />
                   </button>
@@ -437,6 +477,8 @@ export default function AdminNoticiasPage() {
           </div>
         </div>
       )}
+
+      {noticiaAbierta && <ModalContenido noticia={noticiaAbierta} onClose={() => setNoticiaAbierta(null)} />}
     </div>
   );
 }
