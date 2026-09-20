@@ -177,6 +177,23 @@ export default function AdminHomePage() {
   </div>
 )}
 
+{tareas?.ticketsSoporteAbiertos > 0 && (
+  <div
+    onClick={() => router.push('/admin/soporte')}
+    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', border: '1px solid #fee2e2', borderRadius: '10px', padding: '10px 14px', cursor: 'pointer' }}
+    onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#fca5a5')}
+    onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#fee2e2')}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <span style={{ fontSize: '16px' }}>💬</span>
+      <span style={{ fontSize: '13px', color: '#374151' }}>
+        <strong>{tareas.ticketsSoporteAbiertos}</strong> ticket{tareas.ticketsSoporteAbiertos !== 1 ? 's' : ''} de soporte sin responder
+      </span>
+    </div>
+    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: '#fef2f2', color: '#dc2626', fontWeight: 500 }}>Responder →</span>
+  </div>
+)}
+
 {tareas?.oposicionesSinTemas?.length > 0 && (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
     {tareas.oposicionesSinTemas.map((o: any) => (
