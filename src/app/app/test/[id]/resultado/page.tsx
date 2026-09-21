@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { RotateCcw, Share2, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { RotateCcw, Share2, ChevronDown, ChevronUp, ChevronRight, X } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 
 export default function ResultadoTestPage() {
@@ -25,6 +25,16 @@ export default function ResultadoTestPage() {
       return res.data;
     },
     enabled: !!usuario,
+  });
+
+  // ⭐ Tras un Repaso inteligente, avisamos si además hay flashcards pendientes de repasar
+  const { data: fcPendientes = [] } = useQuery({
+    queryKey: ['fc-pendientes-tras-repaso', oposicionId],
+    queryFn: async () => {
+      const res = await api.get(`/flashcards/pendientes/${oposicionId}`, { params: { limite: 20 } });
+      return res.data ?? [];
+    },
+    enabled: !!usuario && modo === 'repaso',
   });
 
   const compartir = async () => {
@@ -106,6 +116,28 @@ export default function ResultadoTestPage() {
       </div>
 
       <div style={{ maxWidth: '480px', margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+        {/* CTA para continuar el Repaso inteligente con flashcards pendientes */}
+        {modo === 'repaso' && fcPendientes.length > 0 && (
+          <button
+            onClick={() => router.push('/app/flashcards')}
+            style={{
+              width: '100%', textAlign: 'left', cursor: 'pointer',
+              background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: '14px',
+              padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#6b21a8' }}>
+                Completa tu repaso inteligente
+              </div>
+              <div style={{ fontSize: '12px', color: '#9333ea', marginTop: '2px' }}>
+                Tienes {fcPendientes.length} flashcard{fcPendientes.length === 1 ? '' : 's'} pendiente{fcPendientes.length === 1 ? '' : 's'} de lo que más fallas
+              </div>
+            </div>
+            <ChevronRight size={16} color="#9333ea" style={{ flexShrink: 0 }} />
+          </button>
+        )}
 
         {/* Stats — 4 columnas si hay blancos, 3 si no */}
         <div style={{ display: 'grid', gridTemplateColumns: hayBlancos ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)', gap: '8px' }}>

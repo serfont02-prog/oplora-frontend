@@ -237,6 +237,11 @@ const handleClick = (modo: string) => {
     router.push('/app/entrenamiento/psicotecnicos');
     return;
   }
+
+  if (modo === 'repaso') {
+    router.push(`/app/test/${oposicion.id}?modo=repaso&n=10`);
+    return;
+  }
 };
 
   return (

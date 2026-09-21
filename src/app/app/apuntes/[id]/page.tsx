@@ -27,7 +27,6 @@ export default function ApunteOploraPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const ultimoGuardado = useRef(0);
   const throttleTimeout = useRef<any>(null);
-  const textoCompletoRef = useRef<any>(null);
 
   const [articuloModal, setArticuloModal] = useState<{ numero: string; versionLeyId: string } | null>(null);
 
@@ -116,10 +115,6 @@ const mapaSiglas = useMemo(() => {
       }).join(' ')
     : secciones.map((s: any) => `${s.titulo}. ${s.contenido}`).join(' ');
 
-  useEffect(() => {
-    textoCompletoRef.current = textoCompleto;
-  }, [textoCompleto]);
-
   // Guardar progreso final al salir
   useEffect(() => {
     return () => {
@@ -136,22 +131,34 @@ const mapaSiglas = useMemo(() => {
       requestAnimationFrame(() => {
         const seleccion = window.getSelection();
         const texto = seleccion?.toString().trim() ?? '';
-        if (!texto || texto.length < 3) {
+        if (!texto || texto.length < 3 || !seleccion || seleccion.rangeCount === 0) {
           setMenuSubrayado(null);
           return;
         }
-        const contenido = textoCompletoRef.current ?? '';
-        const inicio = contenido.indexOf(texto);
-        if (inicio === -1) { setMenuSubrayado(null); return; }
-        const fin = inicio + texto.length;
 
         try {
-          const range = seleccion!.getRangeAt(0);
+          const range = seleccion.getRangeAt(0);
+          // Buscamos el bloque (párrafo, ítem de lista o artículo) que lleva
+          // registrado su desplazamiento (data-bloque-offset) dentro del texto
+          // completo del apunte. Si la selección cae fuera de un bloque con ese
+          // atributo (p. ej. en un título o un destacado), no se puede subrayar.
+          const nodoInicio = range.startContainer;
+          const elementoInicio = nodoInicio.nodeType === Node.ELEMENT_NODE
+            ? (nodoInicio as Element)
+            : nodoInicio.parentElement;
+          const contenedor = elementoInicio?.closest('[data-bloque-offset]');
+          if (!contenedor) { setMenuSubrayado(null); return; }
+
+          const base = parseInt(contenedor.getAttribute('data-bloque-offset') || '0', 10);
+          const offsetLocal = calcularOffsetEnContenedor(contenedor, range);
+          const inicio = base + offsetLocal;
+          const fin = inicio + texto.length;
+
           const rect = range.getBoundingClientRect();
           if (rect.width === 0) return;
           setMenuSubrayado({
             x: rect.left + rect.width / 2,
-            y: rect.top + window.scrollY - 50,
+            y: rect.top - 50,
             inicio,
             fin,
             texto,
@@ -184,50 +191,6 @@ const mapaSiglas = useMemo(() => {
     await api.delete(`/apuntes-oplora/subrayados/${subId}`);
     setSubrayadoSeleccionado(null);
     refetchSubrayados();
-  };
-
-  const renderTextoConSubrayados = (texto: string, offsetBase: number) => {
-    const subsEnRango = subrayados.filter((s: any) => s.inicio >= offsetBase && s.fin <= offsetBase + texto.length);
-    if (!subsEnRango.length) return <span>{texto}</span>;
-
-    const partes: { texto: string; subrayado?: any }[] = [];
-    let pos = 0;
-    const ordenados = [...subsEnRango].sort((a: any, b: any) => a.inicio - b.inicio);
-
-    for (const sub of ordenados) {
-      const inicioRel = sub.inicio - offsetBase;
-      const finRel = sub.fin - offsetBase;
-      if (inicioRel > pos) partes.push({ texto: texto.slice(pos, inicioRel) });
-      partes.push({ texto: texto.slice(inicioRel, finRel), subrayado: sub });
-      pos = finRel;
-    }
-    if (pos < texto.length) partes.push({ texto: texto.slice(pos) });
-
-    return (
-      <>
-        {partes.map((parte, i) =>
-          parte.subrayado ? (
-            <mark
-              key={i}
-              onClick={() => setSubrayadoSeleccionado(subrayadoSeleccionado === parte.subrayado.id ? null : parte.subrayado.id)}
-              style={{ background: '#fef08a', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
-            >
-              {parte.texto}
-              {subrayadoSeleccionado === parte.subrayado.id && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); borrarSubrayado(parte.subrayado.id); }}
-                  style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: '#111827', color: 'white', border: 'none', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
-                >
-                  🗑 Borrar
-                </button>
-              )}
-            </mark>
-          ) : (
-            <span key={i}>{parte.texto}</span>
-          )
-        )}
-      </>
-    );
   };
 
   useEffect(() => {
@@ -453,6 +416,20 @@ const updateProgreso = () => {
   // ⭐ NUEVO FORMATO — renderizado por tipo de bloque
   <>
     {bloques.map((bloque: any) => {
+      // ⭐ Cada bloque ocupa, dentro de `textoCompleto` (usado también para el audio),
+      // el mismo tramo que le corresponde aquí: su texto (o sus items unidos por ". "
+      // en el caso de las listas, o "" si es un destacado, que no aporta texto) más un
+      // espacio de separación. Guardamos dónde empieza (offsetInicioBloque) para poder
+      // traducir la posición de una selección de texto dentro de este bloque a la
+      // posición real que se guarda en el subrayado.
+      const contribucionBloque = bloque.tipo === 'lista'
+        ? bloque.items.join('. ').length
+        : bloque.tipo === 'destacado'
+        ? 0
+        : (bloque.texto?.length ?? 0);
+      const offsetInicioBloque = offsetAcumulado;
+      offsetAcumulado += contribucionBloque + 1;
+
       switch (bloque.tipo) {
         case 'titulo':
           return bloque.nivel === 1 ? (
@@ -522,39 +499,55 @@ const updateProgreso = () => {
 
         case 'parrafo':
           return (
-            <div key={bloque.id} style={{
+            <div key={bloque.id} data-bloque-offset={offsetInicioBloque} style={{
               fontSize: `${fontSize}px`, color: '#2d2d2d', lineHeight: 1.85,
               letterSpacing: '0.01em', marginBottom: '14px',
               wordBreak: 'break-word', overflowWrap: 'anywhere',
               ...(bloque.negrita ? { fontWeight: 700 } : {}),
             }}>
-              <TextoConReferencias
-              texto={bloque.texto}
-              mapaSiglas={mapaSiglas}
-              onAbrirArticulo={abrirArticulo}
-            />
+              <BloqueTexto
+                texto={bloque.texto}
+                offsetBase={offsetInicioBloque}
+                subrayados={subrayados}
+                mapaSiglas={mapaSiglas}
+                onAbrirArticulo={abrirArticulo}
+                subrayadoSeleccionado={subrayadoSeleccionado}
+                onToggleSubrayado={setSubrayadoSeleccionado}
+                onBorrarSubrayado={borrarSubrayado}
+              />
             </div>
           );
-        case 'lista':
+        case 'lista': {
+          let offsetItem = offsetInicioBloque;
           return (
             <ul key={bloque.id} style={{
               margin: '0 0 16px', paddingLeft: '20px',
               listStyleType: bloque.ordenada ? 'decimal' : 'disc',
             }}>
-              {bloque.items.map((item: string, i: number) => (
-                <li key={i} style={{
-                  fontSize: `${fontSize}px`, color: '#2d2d2d', lineHeight: 1.75,
-                  marginBottom: '6px', wordBreak: 'break-word', overflowWrap: 'anywhere',
-                }}>
-                  <TextoConReferencias
-                    texto={item}
-                    mapaSiglas={mapaSiglas}
-                    onAbrirArticulo={abrirArticulo}
-                  />
-                </li>
-              ))}
+              {bloque.items.map((item: string, i: number) => {
+                const offsetInicioItem = offsetItem;
+                offsetItem += item.length + 2; // el join de items es con ". "
+                return (
+                  <li key={i} data-bloque-offset={offsetInicioItem} style={{
+                    fontSize: `${fontSize}px`, color: '#2d2d2d', lineHeight: 1.75,
+                    marginBottom: '6px', wordBreak: 'break-word', overflowWrap: 'anywhere',
+                  }}>
+                    <BloqueTexto
+                      texto={item}
+                      offsetBase={offsetInicioItem}
+                      subrayados={subrayados}
+                      mapaSiglas={mapaSiglas}
+                      onAbrirArticulo={abrirArticulo}
+                      subrayadoSeleccionado={subrayadoSeleccionado}
+                      onToggleSubrayado={setSubrayadoSeleccionado}
+                      onBorrarSubrayado={borrarSubrayado}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           );
+        }
         case 'articulo_legal':
           return (
             <div key={bloque.id} style={{
@@ -564,8 +557,17 @@ const updateProgreso = () => {
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#1F7CFF', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Artículo {bloque.numero}
               </div>
-              <div style={{ fontSize: `${fontSize}px`, color: '#1e3a5f', lineHeight: 1.8, wordBreak: 'break-word' }}>
-                {bloque.texto}
+              <div data-bloque-offset={offsetInicioBloque} style={{ fontSize: `${fontSize}px`, color: '#1e3a5f', lineHeight: 1.8, wordBreak: 'break-word' }}>
+                <BloqueTexto
+                  texto={bloque.texto}
+                  offsetBase={offsetInicioBloque}
+                  subrayados={subrayados}
+                  mapaSiglas={mapaSiglas}
+                  onAbrirArticulo={abrirArticulo}
+                  subrayadoSeleccionado={subrayadoSeleccionado}
+                  onToggleSubrayado={setSubrayadoSeleccionado}
+                  onBorrarSubrayado={borrarSubrayado}
+                />
               </div>
             </div>
           );
@@ -701,17 +703,29 @@ const updateProgreso = () => {
   
 }
 
-function TextoConReferencias({
-  texto,
-  mapaSiglas,
-  onAbrirArticulo,
-}: {
-  texto: string;
-  mapaSiglas: Record<string, string>; // { "CE": "versionLeyId-xxx", "LOFCS": "versionLeyId-yyy" }
-  onAbrirArticulo: (numero: string, versionLeyId: string) => void;
-}) {
+// Recorre el contenedor dado (texto ya renderizado en el DOM) y calcula el
+// desplazamiento en caracteres del punto de inicio de `range` respecto al
+// principio de ese contenedor. Al basarse en el propio Range de la selección
+// (y no en buscar el texto seleccionado con indexOf sobre la cadena completa),
+// no falla cuando la frase seleccionada se repite en otra parte del apunte.
+function calcularOffsetEnContenedor(contenedor: Node, range: Range): number {
+  let offset = 0;
+  const walker = document.createTreeWalker(contenedor, NodeFilter.SHOW_TEXT);
+  let nodo: Node | null;
+  while ((nodo = walker.nextNode())) {
+    if (nodo === range.startContainer) {
+      return offset + range.startOffset;
+    }
+    offset += nodo.textContent?.length ?? 0;
+  }
+  return offset;
+}
+
+type ParteReferencia = string | { siglas: string; numero: string };
+
+function partesReferencias(texto: string): ParteReferencia[] {
   const regex = /\[([A-ZÁÉÍÓÚÑ]+)\s+art[ií]culo\s+([\d.]+)\]/gi;
-  const partes: (string | { siglas: string; numero: string })[] = [];
+  const partes: ParteReferencia[] = [];
   let ultimoIndex = 0;
   let match;
 
@@ -725,35 +739,108 @@ function TextoConReferencias({
   if (ultimoIndex < texto.length) {
     partes.push(texto.slice(ultimoIndex));
   }
+  return partes;
+}
+
+function renderReferencias(
+  texto: string,
+  mapaSiglas: Record<string, string>,
+  onAbrirArticulo: (numero: string, versionLeyId: string) => void,
+  keyPrefix: string,
+) {
+  return partesReferencias(texto).map((parte, j) => {
+    const key = `${keyPrefix}-${j}`;
+    if (typeof parte === 'string') {
+      return <span key={key}>{parte}</span>;
+    }
+    const versionLeyId = mapaSiglas[parte.siglas];
+    if (!versionLeyId) {
+      return <span key={key}>{parte.siglas} art. {parte.numero}</span>;
+    }
+    return (
+      <button
+        key={key}
+        title={`${parte.siglas} · art. ${parte.numero}`}
+        onClick={() => onAbrirArticulo(parte.numero, versionLeyId)}
+        style={{
+          display: 'inline', background: 'none', border: 'none', padding: 0,
+          color: '#1F7CFF', fontWeight: 600, cursor: 'pointer',
+          textDecoration: 'underline', textDecorationStyle: 'dotted',
+          fontSize: 'inherit', fontFamily: 'inherit',
+        }}
+      >
+        Artículo {parte.numero}
+      </button>
+    );
+  });
+}
+
+// Combina, sobre un mismo bloque de texto, el resaltado amarillo de los
+// subrayados guardados por el usuario con los enlaces "Artículo N" de las
+// referencias [SIGLA artículo N]. Antes esto eran dos funciones separadas
+// (renderTextoConSubrayados y TextoConReferencias) y solo la segunda se
+// llegaba a usar en el render de los apuntes: los subrayados se guardaban en
+// el servidor pero nunca se pintaban.
+function BloqueTexto({
+  texto,
+  offsetBase,
+  subrayados,
+  mapaSiglas,
+  onAbrirArticulo,
+  subrayadoSeleccionado,
+  onToggleSubrayado,
+  onBorrarSubrayado,
+}: {
+  texto: string;
+  offsetBase: number;
+  subrayados: any[];
+  mapaSiglas: Record<string, string>;
+  onAbrirArticulo: (numero: string, versionLeyId: string) => void;
+  subrayadoSeleccionado: string | null;
+  onToggleSubrayado: (id: string | null) => void;
+  onBorrarSubrayado: (id: string) => void;
+}) {
+  const subsLocal = subrayados
+    .map((s: any) => ({ ...s, ini: s.inicio - offsetBase, fin: s.fin - offsetBase }))
+    .filter((s: any) => s.fin > 0 && s.ini < texto.length)
+    .map((s: any) => ({ ...s, ini: Math.max(0, s.ini), fin: Math.min(texto.length, s.fin) }))
+    .sort((a: any, b: any) => a.ini - b.ini);
+
+  const segmentos: { texto: string; subrayado?: any }[] = [];
+  let pos = 0;
+  for (const s of subsLocal) {
+    if (s.ini > pos) segmentos.push({ texto: texto.slice(pos, s.ini) });
+    segmentos.push({ texto: texto.slice(s.ini, s.fin), subrayado: s });
+    pos = s.fin;
+  }
+  if (pos < texto.length) segmentos.push({ texto: texto.slice(pos) });
+
+  if (!subsLocal.length) {
+    // Sin subrayados en este bloque: solo hace falta resolver las referencias.
+    return <>{renderReferencias(texto, mapaSiglas, onAbrirArticulo, 'r')}</>;
+  }
 
   return (
     <>
-      {partes.map((parte, i) => {
-        if (typeof parte === 'string') {
-          return <span key={i}>{parte}</span>;
-        }
-        const versionLeyId = mapaSiglas[parte.siglas];
-        if (!versionLeyId) {
-          // Si no encontramos la ley por esas siglas, mostramos el texto tal cual sin enlace
-          // (con las siglas, para que se sepa a qué norma se refiere ya que no es clicable)
-          return <span key={i}>{parte.siglas} art. {parte.numero}</span>;
-        }
-        // ⭐ El texto visible es "Artículo N" (sin las siglas, que ya sabemos por dónde
-        // aparece); las siglas y qué ley abre al pinchar quedan en el title (tooltip).
+      {segmentos.map((seg, i) => {
+        const contenido = renderReferencias(seg.texto, mapaSiglas, onAbrirArticulo, `s${i}`);
+        if (!seg.subrayado) return <span key={i}>{contenido}</span>;
         return (
-          <button
+          <mark
             key={i}
-            title={`${parte.siglas} · art. ${parte.numero}`}
-            onClick={() => onAbrirArticulo(parte.numero, versionLeyId)}
-            style={{
-              display: 'inline', background: 'none', border: 'none', padding: 0,
-              color: '#1F7CFF', fontWeight: 600, cursor: 'pointer',
-              textDecoration: 'underline', textDecorationStyle: 'dotted',
-              fontSize: 'inherit', fontFamily: 'inherit',
-            }}
+            onClick={() => onToggleSubrayado(subrayadoSeleccionado === seg.subrayado.id ? null : seg.subrayado.id)}
+            style={{ background: '#fef08a', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
           >
-            Artículo {parte.numero}
-          </button>
+            {contenido}
+            {subrayadoSeleccionado === seg.subrayado.id && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onBorrarSubrayado(seg.subrayado.id); }}
+                style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: '#111827', color: 'white', border: 'none', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
+              >
+                🗑 Borrar
+              </button>
+            )}
+          </mark>
         );
       })}
     </>

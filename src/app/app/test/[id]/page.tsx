@@ -70,6 +70,13 @@ export default function TestPage({ params }: TestPageProps) {
   const { data: preguntas = [], isLoading } = useQuery<Pregunta[]>({
   queryKey: ['test', oposicionId, modo, numPreguntas, nivel, temasParam, versionLeyId],
   queryFn: async () => {
+    if (modo === 'repaso') {
+      const res = await api.post('/test/repaso-inteligente', {
+        oposicionId,
+        numPreguntas,
+      });
+      return res.data?.preguntas ?? [];
+    }
     const res = await api.post('/test/generar', {
       oposicionId,
       numPreguntas,
@@ -135,6 +142,7 @@ export default function TestPage({ params }: TestPageProps) {
   }
 };
   const dejarEnBlanco = (mostrarCorreccion = true) => {
+  if (bloqueadoRef.current) return;
   if (respondida) return;
 
   // ⭐ Verificar que no hay ya una respuesta para esta pregunta
@@ -142,6 +150,8 @@ export default function TestPage({ params }: TestPageProps) {
     (r) => r.preguntaId === pregunta?.id
   );
   if (yaRespondida) return;
+
+  bloqueadoRef.current = true;
 
   setRespuestas((prev) => [
     ...prev,
@@ -164,9 +174,12 @@ export default function TestPage({ params }: TestPageProps) {
   }
 };
 
+  const [errorGuardado, setErrorGuardado] = useState(false);
+
   const finalizar = async () => {
     const todasLasRespuestas = respuestasRef.current;
     setGuardando(true);
+    setErrorGuardado(false);
     try {
       const correctasTotal = todasLasRespuestas.filter((r) => r.correcta && !r.enBlanco).length;
       await api.post('/test/resultado', {
@@ -181,7 +194,10 @@ export default function TestPage({ params }: TestPageProps) {
       queryClient.invalidateQueries({ queryKey: ['limites', usuario?.id] });
 
       router.replace(`/app/test/${oposicionId}/resultado?modo=${modo}`); // ⭐ siempre resultado, sin condicional
-    } finally {
+    } catch (error) {
+      // ⭐ Si falla el guardado no dejamos al usuario atascado en la pantalla de carga
+      console.error('Error al guardar el resultado del test', error);
+      setErrorGuardado(true);
       setGuardando(false);
     }
   };
@@ -247,6 +263,21 @@ export default function TestPage({ params }: TestPageProps) {
 
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
+      {errorGuardado && (
+        <div style={{
+          background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b',
+          borderRadius: 12, padding: '12px 14px', marginBottom: 14,
+          fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+        }}>
+          <span>No se pudo guardar tu resultado. Comprueba tu conexión.</span>
+          <button
+            onClick={finalizar}
+            style={{ background: '#991b1b', color: 'white', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
       {guardando ? (
         <CargandoTest total={preguntas.length} />
       ) : (

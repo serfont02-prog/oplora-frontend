@@ -82,32 +82,35 @@ export default function ArticuloPage() {
     if (nota?.contenido) setNotaTexto(nota.contenido);
   }, [nota]);
 
-  const articuloRef = useRef<any>(null);
-  useEffect(() => {
-    articuloRef.current = articulo;
-  }, [articulo]);
-
   useEffect(() => {
     const handleMouseUp = () => {
       requestAnimationFrame(() => {
         const seleccion = window.getSelection();
         const texto = seleccion?.toString().trim() ?? '';
-        if (!texto || texto.length < 3) {
+        if (!texto || texto.length < 3 || !seleccion || seleccion.rangeCount === 0) {
           setMenuSubrayado(null);
           return;
         }
-        const contenido = articuloRef.current?.contenido ?? '';
-        const inicio = contenido.indexOf(texto);
-        if (inicio === -1) { setMenuSubrayado(null); return; }
-        const fin = inicio + texto.length;
 
         try {
-          const range = seleccion!.getRangeAt(0);
+          const range = seleccion.getRangeAt(0);
+          // La posición se calcula recorriendo el propio Range del navegador dentro
+          // del contenedor del artículo, no buscando el texto seleccionado con
+          // indexOf sobre todo el contenido: así no falla cuando la frase elegida
+          // se repite en otra parte del artículo (muy habitual en texto legal).
+          const contenedor = document.querySelector('[data-articulo-contenido]');
+          if (!contenedor || !contenedor.contains(range.startContainer)) {
+            setMenuSubrayado(null);
+            return;
+          }
+          const inicio = calcularOffsetEnContenedor(contenedor, range);
+          const fin = inicio + texto.length;
+
           const rect = range.getBoundingClientRect();
           if (rect.width === 0) return;
           setMenuSubrayado({
             x: rect.left + rect.width / 2,
-            y: rect.top + window.scrollY - 50,
+            y: rect.top - 50,
             inicio, fin, texto,
           });
         } catch {}
@@ -458,4 +461,21 @@ export default function ArticuloPage() {
       <FooterNavegacion usuario={usuario} oposicionId={oposicionId ?? undefined} activo="estudiar" />
     </div>
   );
+}
+// Recorre el contenedor dado (texto ya renderizado en el DOM) y calcula el
+// desplazamiento en caracteres del punto de inicio de `range` respecto al
+// principio de ese contenedor. Al basarse en el propio Range de la selección
+// (y no en buscar el texto seleccionado con indexOf sobre la cadena completa),
+// no falla cuando la frase seleccionada se repite en otra parte del artículo.
+function calcularOffsetEnContenedor(contenedor: Node, range: Range): number {
+  let offset = 0;
+  const walker = document.createTreeWalker(contenedor, NodeFilter.SHOW_TEXT);
+  let nodo: Node | null;
+  while ((nodo = walker.nextNode())) {
+    if (nodo === range.startContainer) {
+      return offset + range.startOffset;
+    }
+    offset += nodo.textContent?.length ?? 0;
+  }
+  return offset;
 }
