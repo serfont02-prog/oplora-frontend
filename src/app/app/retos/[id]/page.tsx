@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, CheckCircle, XCircle, ChevronRight, Trophy } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { DueloReto } from '@/app/app/retos/page';
 import { useEffect, useState, useRef } from 'react';
@@ -26,15 +26,12 @@ export default function RetoDetallePage() {
   const [preguntaActual, setPreguntaActual] = useState(0);
   const [seleccionada, setSeleccionada] = useState<number | null>(null);
   const [respondida, setRespondida] = useState(false);
-  const [respuestas, setRespuestas] = useState<{
-  enunciado: string;
-  opciones: string[];
-  correcta: number;
-  seleccionada: number;
-  esCorrecta: boolean;
-  explicacion?: string;
-  }[]>([]);
+  const [respuestas, setRespuestas] = useState<{ seleccionada: number }[]>([]);
   const [tiempoInicio, setTiempoInicio] = useState(0);
+  const [resultadoFinal, setResultadoFinal] = useState<{
+    porcentaje: number;
+    respuestas: { seleccionada: number; correcta: boolean }[];
+  } | null>(null);
 
   
   useEffect(() => {
@@ -79,12 +76,13 @@ export default function RetoDetallePage() {
     mutationFn: async () => {
       const tiempoTotal = Math.round((Date.now() - tiempoInicio) / 1000);
       const res = await api.post(`/retos/${id}/completar`, {
-        respuestas,
+        respuestas: respuestas.map((r) => r.seleccionada),
         tiempoSegundos: tiempoTotal,
       });
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setResultadoFinal(data);
       queryClient.invalidateQueries({ queryKey: ['mis-retos'] });
       queryClient.invalidateQueries({ queryKey: ['ranking-reto', id] });
       queryClient.invalidateQueries({ queryKey: ['reto', id] });
@@ -94,22 +92,20 @@ export default function RetoDetallePage() {
 
   const preguntas = reto?.preguntas ?? [];
   const pregunta = preguntas[preguntaActual];
-  const correctas = respuestas.filter((r) => r.esCorrecta).length;
-  const porcentaje = preguntas.length > 0 ? Math.round((correctas / preguntas.length) * 100) : 0;
   const yaCompleto = miParticipacion?.completado;
+  // El % y los aciertos mostrados siempre vienen del servidor (nunca de un cálculo local
+  // que pudiera manipularse), ya sea de la respuesta recién recibida o de la participación guardada.
+  const porcentajeMostrado = resultadoFinal?.porcentaje ?? miParticipacion?.porcentaje ?? 0;
+  const correctas = resultadoFinal
+    ? resultadoFinal.respuestas.filter((r) => r.correcta).length
+    : Math.round((porcentajeMostrado / 100) * preguntas.length);
+  const porcentaje = porcentajeMostrado;
 
     const yaEnviado = useRef(false);
 
     const seleccionarYSiguiente = (idx: number) => {
       setSeleccionada(idx);
-      setRespuestas((prev) => [...prev, {
-        enunciado: pregunta.enunciado,
-        opciones: pregunta.opciones,
-        correcta: pregunta.correcta,
-        seleccionada: idx,
-        esCorrecta: idx === pregunta.correcta,
-        explicacion: pregunta.explicacion,
-      }]);
+      setRespuestas((prev) => [...prev, { seleccionada: idx }]);
 
       if (preguntaActual + 1 >= preguntas.length) {
         if (yaEnviado.current) return; // ⭐ bloqueo inmediato
@@ -258,7 +254,7 @@ export default function RetoDetallePage() {
                 🏆 Resultado
               </div>
               <div style={{ fontSize: '44px', fontWeight: 800, color: TEXT_PRIMARY }}>
-                {yaCompleto ? miParticipacion?.porcentaje : porcentaje}%
+                {porcentaje}%
               </div>
             </div>
 
@@ -274,28 +270,31 @@ export default function RetoDetallePage() {
               <DueloReto reto={{ ...reto, participaciones: reto.participaciones }} usuarioActual={usuario} />
             </div>
 
-            {/* Desglose de preguntas */}
-            {respuestas.length > 0 && (
+            {/* Desglose de preguntas (solo disponible justo tras completar el reto en esta sesión) */}
+            {resultadoFinal?.respuestas?.length > 0 && (
               <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', overflow: 'hidden', marginBottom: '10px' }}>
                 <div style={{ padding: '14px 16px', borderBottom: '1px solid #F1F5F9' }}>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>Desglose de preguntas</div>
                 </div>
-                {respuestas.map((r, i) => (
-                  <div key={i} style={{ padding: '12px 16px', borderBottom: i < respuestas.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '12px' }}>{r.esCorrecta ? '✅' : '❌'}</span>
-                      <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{r.enunciado}</span>
-                    </div>
-                    {!r.esCorrecta && (
-                      <div style={{ fontSize: '11px', color: '#15803d', marginLeft: '20px', marginBottom: '2px' }}>
-                        Correcta: {r.opciones[r.correcta]}
+                {resultadoFinal.respuestas.map((r, i) => {
+                  const p = preguntas[i];
+                  return (
+                    <div key={i} style={{ padding: '12px 16px', borderBottom: i < resultadoFinal.respuestas.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '12px' }}>{r.correcta ? '✅' : '❌'}</span>
+                        <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{p?.enunciado}</span>
                       </div>
-                    )}
-                    {r.explicacion && (
-                      <div style={{ fontSize: '11px', color: TEXT_MUTED, marginLeft: '20px', lineHeight: 1.5 }}>{r.explicacion}</div>
-                    )}
-                  </div>
-                ))}
+                      {!r.correcta && p?.correcta !== undefined && p?.opciones?.[p.correcta] && (
+                        <div style={{ fontSize: '11px', color: '#15803d', marginLeft: '20px', marginBottom: '2px' }}>
+                          Correcta: {p.opciones[p.correcta]}
+                        </div>
+                      )}
+                      {p?.explicacion && (
+                        <div style={{ fontSize: '11px', color: TEXT_MUTED, marginLeft: '20px', lineHeight: 1.5 }}>{p.explicacion}</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 

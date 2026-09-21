@@ -231,10 +231,6 @@ const oposicionId = usuario?.oposicionActiva?.id;
     },
   });
 
-      const getOtroParticipante = (reto: any, usuarioId: string) => {
-        return reto.participaciones?.find((p: any) => p.usuario?.id !== usuarioId)?.usuario;
-      };
-
       const [confirmacion, setConfirmacion] = useState<{ reto: any; accion: 'cancelar' | 'rechazar' } | null>(null);
     const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
@@ -736,12 +732,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
       {retoPreview && retoDetalle && (() => {
         const miParticipacion = retoDetalle.participaciones?.find((p: any) => p.usuario?.id === (usuario as any)?.id);
         const otraParticipacion = retoDetalle.participaciones?.find((p: any) => p.usuario?.id !== (usuario as any)?.id);
+        // ⭐ El ganador/empate ya lo calcula y guarda el backend en `posicion`; no se recalcula
+        // aquí a partir de porcentaje/tiempo para evitar que ambas lógicas puedan divergir.
         const ambosCompletados = miParticipacion?.completado && otraParticipacion?.completado;
-        const yoGane = ambosCompletados && (
-          miParticipacion.porcentaje > otraParticipacion.porcentaje ||
-          (miParticipacion.porcentaje === otraParticipacion.porcentaje && miParticipacion.tiempoSegundos < otraParticipacion.tiempoSegundos)
-        );
-        const empate = ambosCompletados && miParticipacion.porcentaje === otraParticipacion.porcentaje && miParticipacion.tiempoSegundos === otraParticipacion.tiempoSegundos;
+        const empate = ambosCompletados && miParticipacion.posicion === otraParticipacion.posicion;
+        const yoGane = ambosCompletados && !empate && miParticipacion.posicion === 1;
 
         return (
           <div onClick={cerrarModalPreview} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
@@ -946,11 +941,11 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false }: a
   const yo = participaciones.find((p: any) => p.usuario?.id === usuarioActual?.id);
   const rival = participaciones.find((p: any) => p.usuario?.id !== usuarioActual?.id);
 
+  // ⭐ Usamos la posición ya calculada por el backend (`posicion`) en vez de recomparar
+  // porcentaje/tiempo aquí, para no duplicar (y poder desincronizar) la lógica de empate/victoria.
   const ambosCompletados = yo?.completado && rival?.completado;
-  const empate = ambosCompletados && yo.porcentaje === rival.porcentaje && yo.tiempoSegundos === rival.tiempoSegundos;
-  const yoGano = ambosCompletados && !empate && (
-    yo.porcentaje > rival.porcentaje || (yo.porcentaje === rival.porcentaje && yo.tiempoSegundos < rival.tiempoSegundos)
-  );
+  const empate = ambosCompletados && yo.posicion === rival.posicion;
+  const yoGano = ambosCompletados && !empate && yo.posicion === 1;
 
   const yoSoyCreador = reto.creador?.id === usuarioActual?.id;
   const yoCompletado = yo?.completado;
