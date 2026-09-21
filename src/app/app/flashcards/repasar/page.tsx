@@ -23,6 +23,8 @@ export default function RepasarPage() {
   const { usuario, cargando } = useAuth();
   const queryClient = useQueryClient();
   const temaId = searchParams.get('temaId');
+  const articuloId = searchParams.get('articuloId');
+  const leyIdArticulo = searchParams.get('leyId');
   const [indice, setIndice] = useState(0);
   const [estado, setEstado] = useState<EstadoRepaso>('pregunta');
   const [respuestaVF, setRespuestaVF] = useState<boolean | null>(null);
@@ -35,16 +37,20 @@ export default function RepasarPage() {
   }, [usuario, cargando, router]);
 
   const { data: flashcards = [], isLoading } = useQuery({
-    queryKey: ['fc-repaso', oposicionId, temaId, numFlashcards],
+    queryKey: ['fc-repaso', oposicionId, temaId, articuloId, numFlashcards],
     queryFn: async () => {
       if (temaId) {
         const res = await api.get(`/flashcards/tema/${temaId}`);
         return res.data;
       }
+      if (articuloId) {
+        const res = await api.get(`/flashcards/articulo/${articuloId}`);
+        return res.data;
+      }
       const res = await api.get(`/flashcards/pendientes/${oposicionId}?limite=${numFlashcards}`);
       return res.data;
     },
-    enabled: !!(oposicionId || temaId) && !!usuario,
+    enabled: !!(oposicionId || temaId || articuloId) && !!usuario,
   });
 
   const registrar = useMutation({
@@ -81,6 +87,8 @@ export default function RepasarPage() {
   const volver = () => {
     if (temaId && oposicionId && numeroTema) {
       router.push(`/app/tema/${oposicionId}/${numeroTema}`);
+    } else if (articuloId) {
+      router.push(`/app/articulo/${articuloId}?leyId=${leyIdArticulo ?? ''}&oposicionId=${oposicionId ?? ''}`);
     } else {
       router.push('/app/flashcards');
     }
@@ -106,21 +114,23 @@ export default function RepasarPage() {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_APP, padding: '1.5rem' }}>
         <div style={{ textAlign: 'center', background: 'white', borderRadius: 20, padding: '2.5rem 2rem', maxWidth: 360, width: '100%' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>
-            {temaId ? '📚' : '✅'}
+            {temaId ? '📚' : articuloId ? '📄' : '✅'}
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>
-            {temaId ? 'Sin flashcards' : '¡Todo al día!'}
+            {temaId || articuloId ? 'Sin flashcards' : '¡Todo al día!'}
           </div>
           <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 20 }}>
             {temaId
               ? 'Este tema no tiene flashcards disponibles todavía'
+              : articuloId
+              ? 'Este artículo no tiene flashcards disponibles todavía'
               : 'No tienes flashcards pendientes de repasar'}
           </div>
           <button
             onClick={volver}
             style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
           >
-            {temaId ? 'Volver al tema' : 'Volver'}
+            {temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver'}
           </button>
         </div>
       </div>
@@ -143,7 +153,7 @@ export default function RepasarPage() {
             style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
           >
             <ArrowLeft size={14} />
-            {temaId ? 'Tema' : 'Flashcards'}
+            {temaId ? 'Tema' : articuloId ? 'Artículo' : 'Flashcards'}
           </button>
           {estado !== 'fin' && (
             <span style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 600 }}>{indice + 1} / {flashcards.length}</span>
@@ -200,7 +210,7 @@ export default function RepasarPage() {
                 onClick={volver}
                 style={{ width: '100%', padding: 13, background: 'white', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
               >
-                {temaId ? 'Volver al tema' : 'Volver a flashcards'}
+                {temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver a flashcards'}
               </button>
             </div>
           </div>

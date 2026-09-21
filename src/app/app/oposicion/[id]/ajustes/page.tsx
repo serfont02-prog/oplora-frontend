@@ -94,7 +94,7 @@ export default function AjustesOposicionPage() {
         {/* Cambiar oposición / convocatoria */}
         <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
           <button
-            onClick={() => router.push('/app/onboarding/oposicion')}
+            onClick={() => router.push('/app/onboarding/oposicion?modo=cambiar')}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', borderBottom: '1px solid #F1F5F9', cursor: 'pointer', textAlign: 'left' }}
           >
             <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

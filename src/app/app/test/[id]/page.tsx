@@ -34,6 +34,7 @@ export default function TestPage({ params }: TestPageProps) {
   const { id: oposicionId } = use(params);
   const temasParam = searchParams.get('temas'); // "id1,id2,id3" o null
   const temasIds = temasParam ? temasParam.split(',') : [];
+  const versionLeyId = searchParams.get('versionLeyId') ?? undefined;
   const modo = searchParams.get('modo') ?? 'rapido';
   const mostrarExplicaciones = searchParams.get('explicaciones') !== 'false';
   const permitirBlancos = searchParams.get('blancos') !== 'false'; // ⭐ movido aquí arriba
@@ -67,7 +68,7 @@ export default function TestPage({ params }: TestPageProps) {
   const [guardando, setGuardando] = useState(false);
 
   const { data: preguntas = [], isLoading } = useQuery<Pregunta[]>({
-  queryKey: ['test', oposicionId, modo, numPreguntas, nivel, temasParam],
+  queryKey: ['test', oposicionId, modo, numPreguntas, nivel, temasParam, versionLeyId],
   queryFn: async () => {
     const res = await api.post('/test/generar', {
       oposicionId,
@@ -75,6 +76,7 @@ export default function TestPage({ params }: TestPageProps) {
       modo,
       nivel,
       temasIds: temasIds.length > 0 ? temasIds : undefined,
+      versionLeyId,
     });
     return res.data;
   },

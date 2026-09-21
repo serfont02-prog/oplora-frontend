@@ -206,13 +206,15 @@ export default function ArticuloPage() {
   const irAnterior = () => {
     if (!navArticulos?.anterior) return;
     pararAudio();
-    router.push(`/app/articulo/${navArticulos.anterior.id}?leyId=${leyId ?? ''}&oposicionId=${oposicionId ?? ''}`);
+    // ⭐ replace (no push): así "Volver" siempre regresa a la Ley/Tema de origen,
+    // sin importar por cuántos artículos se haya navegado con Anterior/Siguiente.
+    router.replace(`/app/articulo/${navArticulos.anterior.id}?leyId=${leyId ?? ''}&oposicionId=${oposicionId ?? ''}`);
   };
 
   const irSiguiente = () => {
     if (!navArticulos?.siguiente) return;
     pararAudio();
-    router.push(`/app/articulo/${navArticulos.siguiente.id}?leyId=${leyId ?? ''}&oposicionId=${oposicionId ?? ''}`);
+    router.replace(`/app/articulo/${navArticulos.siguiente.id}?leyId=${leyId ?? ''}&oposicionId=${oposicionId ?? ''}`);
   };
 
   // Swipe táctil izquierda/derecha para navegar entre artículos
@@ -314,13 +316,17 @@ export default function ArticuloPage() {
     ?? articulo.seccion?.capitulo?.tituloRef?.versionLey?.ley?.nombre
     ?? 'Normativa';
 
+  const versionLeyId = articulo.capitulo?.tituloRef?.versionLey?.id
+    ?? articulo.tituloRef?.versionLey?.id
+    ?? articulo.seccion?.capitulo?.tituloRef?.versionLey?.id;
+
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: '90px' }}>
 
       {/* Header — volver + ley */}
       <div style={{ background: 'white', borderBottom: '1px solid #F1F5F9', padding: '0 1.25rem', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
         <button
-          onClick={() => { pararAudio(); leyId ? router.push(`/app/ley/${leyId}?oposicionId=${oposicionId ?? ''}`) : router.back(); }}
+          onClick={() => { pararAudio(); router.back(); }}
           style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
         >
           <ArrowLeft size={14} />
@@ -365,16 +371,8 @@ export default function ArticuloPage() {
       >
         <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '16px', padding: '1.25rem', marginBottom: '12px' }}>
 
-          {/* Texto con subrayados */}
-          <div
-            data-articulo-contenido
-            style={{ fontSize: '14px', color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: '1rem', userSelect: 'text', position: 'relative' }}
-          >
-            {renderTextoConSubrayados(articulo.contenido ?? '')}
-          </div>
-
-          {/* Barra de audio */}
-          <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '12px', marginBottom: '1rem' }}>
+          {/* Barra de audio — arriba del texto para que siempre sea visible sin hacer scroll */}
+          <div style={{ paddingBottom: '12px', marginBottom: '1rem', borderBottom: '1px solid #F1F5F9' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
                 onClick={() => { if (reproduciendo && !modoContinuo) pararAudio(); else { setModoContinuo(false); iniciarAudio(false); } }}
@@ -398,6 +396,14 @@ export default function ArticuloPage() {
             </div>
           </div>
 
+          {/* Texto con subrayados */}
+          <div
+            data-articulo-contenido
+            style={{ fontSize: '14px', color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: '1rem', userSelect: 'text', position: 'relative' }}
+          >
+            {renderTextoConSubrayados(articulo.contenido ?? '')}
+          </div>
+
           {/* Notas personales */}
           <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -416,16 +422,20 @@ export default function ArticuloPage() {
             />
           </div>
 
-          {/* Test y Flashcard */}
+          {/* Test (de esta Ley) y Flashcard (de este artículo) */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
             <button
-              onClick={() => router.push('/app/entrenamiento')}
-              style={{ flex: 1, padding: '11px', background: '#F4F5F7', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+              onClick={() => {
+                if (!oposicionId || !versionLeyId) return;
+                router.push(`/app/test/${oposicionId}?versionLeyId=${versionLeyId}&n=15`);
+              }}
+              disabled={!oposicionId || !versionLeyId}
+              style={{ flex: 1, padding: '11px', background: '#F4F5F7', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: (!oposicionId || !versionLeyId) ? '#9CA3AF' : '#374151', cursor: (!oposicionId || !versionLeyId) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
             >
-              🎯 Test
+              🎯 Test de esta ley
             </button>
             <button
-              onClick={() => router.push('/app/flashcards')}
+              onClick={() => router.push(`/app/flashcards/repasar?articuloId=${articulo.id}&leyId=${leyId ?? ''}&oposicionId=${oposicionId ?? ''}`)}
               style={{ flex: 1, padding: '11px', background: '#F4F5F7', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
             >
               🃏 Flashcard

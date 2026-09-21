@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { ChevronRight, X, Check } from 'lucide-react';
+import { ChevronRight, X, Check, ArrowLeft } from 'lucide-react';
 
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
@@ -114,8 +114,12 @@ const MapaCCAA = ({ selected, onSelect }: { selected: string | null; onSelect: (
 
 /* ================= PAGE ================= */
 
-export default function OnboardingOposicionPage() {
+function OnboardingOposicionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // ⭐ Reutilizamos esta misma pantalla de selección desde Ajustes > Cambiar de oposición
+  // (modo=cambiar), pero sin arrastrar al usuario por el resto del embudo de onboarding.
+  const modoCambio = searchParams.get('modo') === 'cambiar';
   const { actualizarUsuario } = useAuth();
 
   const [oposiciones, setOposiciones] = useState<Oposicion[]>([]);
@@ -158,7 +162,9 @@ const seleccionar = async (idOpo: string) => {
   await api.post(`/usuarios/activar-oposicion/${idOpo}`);
   const me = await api.get('/usuarios/me');
   actualizarUsuario(me.data);
-  router.push('/app/onboarding/experiencia');
+  // Al cambiar de oposición desde Ajustes, el usuario ya pasó por onboarding — no tiene
+  // sentido volver a preguntarle experiencia/objetivo/compromiso, así que va directo al dashboard.
+  router.push(modoCambio ? '/app/dashboard' : '/app/onboarding/experiencia');
 };
 
   const seleccionarConAnimacion = (id: string, callback: () => void) => {
@@ -230,29 +236,55 @@ const seleccionar = async (idOpo: string) => {
   /* ================= RENDER ================= */
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0f172a', padding: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <main style={{ background: 'white', borderRadius: 20, padding: '2.25rem 2rem', width: '100%', maxWidth: 440 }}>
+    <div style={{
+      minHeight: '100vh',
+      background: modoCambio ? '#F4F5F7' : '#0f172a',
+      padding: '1.5rem',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: modoCambio ? 'flex-start' : 'center',
+    }}>
+      <main style={{
+        background: modoCambio ? 'transparent' : 'white',
+        borderRadius: 20,
+        padding: modoCambio ? 0 : '2.25rem 2rem',
+        width: '100%',
+        maxWidth: modoCambio ? 560 : 440,
+        marginTop: modoCambio ? '0.5rem' : 0,
+      }}>
 
-        <header style={{ marginBottom: 20, textAlign: 'center' }}>
-          <Image src="/prueba.svg" alt="Oplora" width={200} height={68} priority style={{ marginBottom: 2 }} />
+        <header style={{ marginBottom: 20, textAlign: modoCambio ? 'left' : 'center', position: 'relative' }}>
+          {modoCambio ? (
+            <button
+              onClick={() => router.back()}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: TEXT_SECONDARY, fontSize: 13, marginBottom: 16, padding: 0 }}
+            >
+              <ArrowLeft size={15} />
+              Atrás
+            </button>
+          ) : (
+            <>
+              <Image src="/prueba.svg" alt="Oplora" width={200} height={68} priority style={{ marginBottom: 2 }} />
 
-          <div style={{ marginTop: 12, marginBottom: 14 }}>
-            <div style={{ height: 4, width: '100%', background: '#E5E7EB', borderRadius: 999, overflow: 'hidden' }}>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: '40%' }}
-                transition={{ duration: 0.4 }}
-                style={{ height: '100%', background: '#1F7CFF', borderRadius: 999 }}
-              />
-            </div>
-            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 6 }}>Paso 2 de 5</div>
-          </div>
+              <div style={{ marginTop: 12, marginBottom: 14 }}>
+                <div style={{ height: 4, width: '100%', background: '#E5E7EB', borderRadius: 999, overflow: 'hidden' }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: '40%' }}
+                    transition={{ duration: 0.4 }}
+                    style={{ height: '100%', background: '#1F7CFF', borderRadius: 999 }}
+                  />
+                </div>
+                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 6 }}>Paso 2 de 5</div>
+              </div>
+            </>
+          )}
 
           <h1 style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, margin: '0 0 4px' }}>
-            Elige tu oposición
+            {modoCambio ? 'Cambiar de oposición' : 'Elige tu oposición'}
           </h1>
           <p style={{ fontSize: 13, color: TEXT_SECONDARY, margin: 0 }}>
-            Te ayudaremos a encontrar la adecuada
+            {modoCambio ? 'Selecciona tu nueva oposición' : 'Te ayudaremos a encontrar la adecuada'}
           </p>
         </header>
 
@@ -406,5 +438,13 @@ const seleccionar = async (idOpo: string) => {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function OnboardingOposicionPageWrapper() {
+  return (
+    <Suspense>
+      <OnboardingOposicionPage />
+    </Suspense>
   );
 }

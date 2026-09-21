@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { ArrowLeft, Download, Headphones } from 'lucide-react';
+import { ArrowLeft, Download, Play, Pause } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 
 export default function ApunteOploraPage() {
@@ -15,10 +15,11 @@ export default function ApunteOploraPage() {
   const { usuario, cargando } = useAuth();
 
   const [fontSize, setFontSize] = useState(13);
-  const [audioVisible, setAudioVisible] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const [velocidad, setVelocidad] = useState(1);
+  const [vozGenero, setVozGenero] = useState<'mujer' | 'hombre'>('mujer');
+  const [voces, setVoces] = useState<SpeechSynthesisVoice[]>([]);
   const [progreso, setProgreso] = useState(0);
   const [menuSubrayado, setMenuSubrayado] = useState<{ x: number; y: number; inicio: number; fin: number; texto: string } | null>(null);
   const [subrayadoSeleccionado, setSubrayadoSeleccionado] = useState<string | null>(null);
@@ -229,10 +230,24 @@ const mapaSiglas = useMemo(() => {
     );
   };
 
-  const toggleAudio = () => {
-    if (!audioVisible) { setAudioVisible(true); return; }
-    if (audioPlaying) { window.speechSynthesis.cancel(); setAudioPlaying(false); }
-    else reproducir();
+  useEffect(() => {
+    const cargarVoces = () => {
+      const v = window.speechSynthesis.getVoices();
+      setVoces(v.filter((voz) => voz.lang.startsWith('es')));
+    };
+    cargarVoces();
+    window.speechSynthesis.onvoiceschanged = cargarVoces;
+    return () => { window.speechSynthesis.cancel(); };
+  }, []);
+
+  const getVoz = (genero: 'mujer' | 'hombre') => {
+    if (voces.length === 0) return null;
+    const keysMujer = ['female', 'mujer', 'monica', 'paulina', 'lucia', 'woman', 'laura', 'maria', 'helena'];
+    const keysHombre = ['male', 'hombre', 'jorge', 'pablo', 'diego', 'carlos', 'juan'];
+    if (genero === 'mujer') {
+      return voces.find((v) => keysMujer.some((k) => v.name.toLowerCase().includes(k))) ?? voces[0];
+    }
+    return voces.find((v) => keysHombre.some((k) => v.name.toLowerCase().includes(k))) ?? voces[voces.length > 1 ? 1 : 0];
   };
 
   const reproducir = () => {
@@ -240,6 +255,8 @@ const mapaSiglas = useMemo(() => {
     const utterance = new SpeechSynthesisUtterance(textoCompleto);
     utterance.lang = 'es-ES';
     utterance.rate = velocidad;
+    const voz = getVoz(vozGenero);
+    if (voz) utterance.voice = voz;
     utterance.onboundary = (e) => {
       const pct = Math.round((e.charIndex / textoCompleto.length) * 100);
       setAudioProgress(pct);
@@ -249,12 +266,39 @@ const mapaSiglas = useMemo(() => {
     setAudioPlaying(true);
   };
 
+  const pararAudio = () => {
+    window.speechSynthesis.cancel();
+    setAudioPlaying(false);
+  };
+
   const cycleVelocidad = () => {
     const velocidades = [1, 1.25, 1.5, 2, 0.75];
     const i = velocidades.indexOf(velocidad);
     const nueva = velocidades[(i + 1) % velocidades.length];
     setVelocidad(nueva);
     if (audioPlaying) { window.speechSynthesis.cancel(); setTimeout(reproducir, 100); }
+  };
+
+  const cambiarVoz = () => {
+    const nuevo = vozGenero === 'mujer' ? 'hombre' : 'mujer';
+    setVozGenero(nuevo);
+    if (audioPlaying) {
+      window.speechSynthesis.cancel();
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(textoCompleto);
+        utterance.lang = 'es-ES';
+        utterance.rate = velocidad;
+        const voz = getVoz(nuevo);
+        if (voz) utterance.voice = voz;
+        utterance.onboundary = (e) => {
+          const pct = Math.round((e.charIndex / textoCompleto.length) * 100);
+          setAudioProgress(pct);
+        };
+        utterance.onend = () => { setAudioPlaying(false); setAudioProgress(0); };
+        window.speechSynthesis.speak(utterance);
+        setAudioPlaying(true);
+      }, 100);
+    }
   };
 
 const tiempoInicioLectura = useRef(Date.now());
@@ -319,7 +363,7 @@ const updateProgreso = () => {
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'white', borderBottom: '1px solid #f3f4f6' }}>
         <div style={{ padding: '0 1rem', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
-            onClick={() => router.back()}
+            onClick={() => { pararAudio(); router.back(); }}
             style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
           >
             <ArrowLeft size={13} />
@@ -329,12 +373,6 @@ const updateProgreso = () => {
             {apunte.titulo}
           </span>
           <div style={{ display: 'flex', gap: '6px' }}>
-            <button
-              onClick={toggleAudio}
-              style={{ background: audioVisible ? '#EFF6FF' : 'none', border: 'none', cursor: 'pointer', color: audioVisible ? '#1F7CFF' : '#6b7280', padding: '5px', borderRadius: '7px' }}
-            >
-              <Headphones size={16} />
-            </button>
             <a
               href={apunte.urlArchivo}
               target="_blank"
@@ -380,7 +418,7 @@ const updateProgreso = () => {
           padding: '1.5rem 1.25rem',
           maxWidth: '600px', margin: '0 auto', width: '100%',
           boxSizing: 'border-box',
-          paddingBottom: audioVisible ? '180px' : '90px',
+          paddingBottom: '90px',
           position: 'relative',
         }}
       >
@@ -388,9 +426,27 @@ const updateProgreso = () => {
           {apunte.titulo}
         </div>
         {apunte.descripcion && (
-          <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '24px' }}>{apunte.descripcion}</div>
+          <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '16px' }}>{apunte.descripcion}</div>
         )}
 
+        {/* Barra de audio — siempre visible arriba del contenido, igual que en Artículo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '14px', marginBottom: '18px', borderBottom: '1px solid #f3f4f6' }}>
+          <button
+            onClick={() => { if (audioPlaying) { window.speechSynthesis.cancel(); setAudioPlaying(false); } else reproducir(); }}
+            style={{ width: '36px', height: '36px', borderRadius: '50%', background: audioPlaying ? '#111827' : '#F4F5F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            {audioPlaying ? <Pause size={14} color="white" /> : <Play size={14} color="#374151" />}
+          </button>
+          <div style={{ flex: 1, height: '4px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
+            <div style={{ width: `${audioProgress}%`, height: '100%', background: '#1F7CFF', transition: 'width 0.5s' }} />
+          </div>
+          <button onClick={cambiarVoz} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', color: '#374151' }}>
+            {vozGenero === 'mujer' ? '👩' : '👨'}
+          </button>
+          <button onClick={cycleVelocidad} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', color: '#374151', fontWeight: 600 }}>
+            {velocidad}×
+          </button>
+        </div>
 
 
         {esFormatoNuevo ? (
@@ -577,37 +633,6 @@ const updateProgreso = () => {
           </div>
         )}
       </div>
-
-      {/* Reproductor audio */}
-      {audioVisible && (
-        <div style={{
-          position: 'fixed', bottom: '64px', left: 0, right: 0,
-          background: 'white', borderTop: '1px solid #f3f4f6',
-          padding: '10px 1rem',
-          boxShadow: '0 -4px 12px rgba(0,0,0,0.06)',
-          zIndex: 15,
-        }}>
-          <div style={{ maxWidth: '560px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <button
-                onClick={() => { if (audioPlaying) { window.speechSynthesis.cancel(); setAudioPlaying(false); } else reproducir(); }}
-                style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#0f172a', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '14px', flexShrink: 0 }}
-              >
-                {audioPlaying ? '⏸' : '▶'}
-              </button>
-              <div style={{ flex: 1, height: '4px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
-                <div style={{ width: `${audioProgress}%`, height: '100%', background: '#1F7CFF', transition: 'width 0.5s' }} />
-              </div>
-              <button
-                onClick={cycleVelocidad}
-                style={{ fontSize: '11px', padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#374151', fontWeight: 600, minWidth: '34px' }}
-              >
-                {velocidad}×
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <FooterNavegacion usuario={usuario} oposicionId={apunte.tema?.convocatoria?.oposicion?.id} />
       {articuloModal && (
