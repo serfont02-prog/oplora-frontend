@@ -526,6 +526,7 @@ const updateProgreso = () => {
               fontSize: `${fontSize}px`, color: '#2d2d2d', lineHeight: 1.85,
               letterSpacing: '0.01em', marginBottom: '14px',
               wordBreak: 'break-word', overflowWrap: 'anywhere',
+              ...(bloque.negrita ? { fontWeight: 700 } : {}),
             }}>
               <TextoConReferencias
               texto={bloque.texto}
