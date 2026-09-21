@@ -418,6 +418,20 @@ export default function ApuntesAdminPage() {
                                 >
                                   Ver
                                 </a>
+                                {/* ⭐ Botón provisional de depuración: abre el apunte tal cual lo
+                                    renderiza la app (mismo componente que usan los opositores), para
+                                    comparar de un vistazo contra el PDF original ("Ver") sin tener que
+                                    ir probando error tras error en producción. Quitar cuando ya no
+                                    haga falta comparar el parseo del PDF. */}
+                                <a
+                                  href={`/app/apuntes/${ap.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Ver exactamente como lo renderiza la app (para comparar con el PDF original)"
+                                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '6px', border: '1px solid #bfdbfe', background: '#F0F7FF', color: '#1F7CFF', textDecoration: 'none', fontWeight: 600 }}
+                                >
+                                  Ver en app 🧪
+                                </a>
                                 <button
                                   onClick={() => confirm('¿Eliminar este apunte?') && eliminar.mutate(ap.id)}
                                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: '4px' }}
