@@ -484,13 +484,18 @@ const updateProgreso = () => {
 
         
            case 'destacado': {
-              const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; emoji: string }> = {
-                EJEMPLO: { bg: '#FFFFFF', border: '#E5E7EB', color: '#374151', emoji: '📘' },
-                IDEA: { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡' },
-                ESQUEMA: { bg: '#F3FBF5', border: '#BBF0CB', color: '#15803d', emoji: '🗺️' },
-                'TRAMPA DE EXAMEN': { bg: '#FEF2F2', border: '#fca5a5', color: '#dc2626', emoji: '⚠️' },
-                'REGLA DE EXAMEN': { bg: '#F3E8FF', border: '#e9d5ff', color: '#7c3aed', emoji: '📏' },
-                'PREGUNTA FRECUENTE': { bg: '#FFF7ED', border: '#FED7AA', color: '#C2410C', emoji: '❓' },
+              // ⭐ "Idea" y "Regla de examen" se fusionan en una sola categoría visual
+              // ("Idea clave"): ambas cumplen la misma función (algo a recordar/aplicar) y
+              // tener dos colores distintos para lo mismo solo añadía ruido. "Trampa de examen"
+              // se mantiene aparte a propósito: es una alerta, no un tip, y ese contraste es lo
+              // que la hace útil de un vistazo.
+              const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; emoji: string; label: string }> = {
+                EJEMPLO: { bg: '#FFFFFF', border: '#E5E7EB', color: '#374151', emoji: '📘', label: 'EJEMPLO' },
+                IDEA: { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡', label: 'IDEA CLAVE' },
+                'REGLA DE EXAMEN': { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡', label: 'IDEA CLAVE' },
+                ESQUEMA: { bg: '#F3FBF5', border: '#BBF0CB', color: '#15803d', emoji: '🗺️', label: 'ESQUEMA' },
+                'TRAMPA DE EXAMEN': { bg: '#FEF2F2', border: '#fca5a5', color: '#dc2626', emoji: '⚠️', label: 'TRAMPA DE EXAMEN' },
+                'PREGUNTA FRECUENTE': { bg: '#FFF7ED', border: '#FED7AA', color: '#C2410C', emoji: '❓', label: 'PREGUNTA FRECUENTE' },
               };
             const cfg = DESTACADO_CONFIG[bloque.titulo] ?? DESTACADO_CONFIG.IDEA;
             return (
@@ -499,7 +504,7 @@ const updateProgreso = () => {
                 padding: '14px 16px', marginBottom: '16px', marginTop: '18px',
               }}>
                 <div style={{ fontSize: '11px', fontWeight: 700, color: cfg.color, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {cfg.emoji} {bloque.titulo}
+                  {cfg.emoji} {cfg.label}
                 </div>
                 {bloque.contenido.map((c: any, i: number) => {
                   if (c.tipo === 'parrafo') {
