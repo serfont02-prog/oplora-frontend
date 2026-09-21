@@ -271,15 +271,18 @@ export default function RetoDetallePage() {
             </div>
 
             {/* Desglose de preguntas (solo disponible justo tras completar el reto en esta sesión) */}
-            {resultadoFinal?.respuestas?.length > 0 && (
+            {(() => {
+              const desglose = resultadoFinal?.respuestas ?? [];
+              if (desglose.length === 0) return null;
+              return (
               <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', overflow: 'hidden', marginBottom: '10px' }}>
                 <div style={{ padding: '14px 16px', borderBottom: '1px solid #F1F5F9' }}>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>Desglose de preguntas</div>
                 </div>
-                {resultadoFinal.respuestas.map((r, i) => {
+                {desglose.map((r, i) => {
                   const p = preguntas[i];
                   return (
-                    <div key={i} style={{ padding: '12px 16px', borderBottom: i < resultadoFinal.respuestas.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                    <div key={i} style={{ padding: '12px 16px', borderBottom: i < desglose.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
                         <span style={{ fontSize: '12px' }}>{r.correcta ? '✅' : '❌'}</span>
                         <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{p?.enunciado}</span>
@@ -296,7 +299,8 @@ export default function RetoDetallePage() {
                   );
                 })}
               </div>
-            )}
+              );
+            })()}
 
             {/* Botones */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
