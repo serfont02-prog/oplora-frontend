@@ -734,11 +734,15 @@ function TextoConReferencias({
         const versionLeyId = mapaSiglas[parte.siglas];
         if (!versionLeyId) {
           // Si no encontramos la ley por esas siglas, mostramos el texto tal cual sin enlace
+          // (con las siglas, para que se sepa a qué norma se refiere ya que no es clicable)
           return <span key={i}>{parte.siglas} art. {parte.numero}</span>;
         }
+        // ⭐ El texto visible es "Artículo N" (sin las siglas, que ya sabemos por dónde
+        // aparece); las siglas y qué ley abre al pinchar quedan en el title (tooltip).
         return (
           <button
             key={i}
+            title={`${parte.siglas} · art. ${parte.numero}`}
             onClick={() => onAbrirArticulo(parte.numero, versionLeyId)}
             style={{
               display: 'inline', background: 'none', border: 'none', padding: 0,
@@ -747,7 +751,7 @@ function TextoConReferencias({
               fontSize: 'inherit', fontFamily: 'inherit',
             }}
           >
-            {parte.siglas} art. {parte.numero}
+            Artículo {parte.numero}
           </button>
         );
       })}
