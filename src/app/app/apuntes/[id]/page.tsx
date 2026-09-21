@@ -681,7 +681,7 @@ const updateProgreso = () => {
             }}
             style={{ marginTop: '16px', width: '100%', padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
           >
-            Ver artículo completo →
+            Ver artículo en la ley →
           </button>
         </>
       ) : (
