@@ -11,7 +11,7 @@ const NIVELES = ['basico', 'medio', 'alto'];
 export default function FlashcardsAdminPage() {
   const [tab, setTab] = useState<'importar' | 'manual'>('importar');
   const [jsonTexto, setJsonTexto] = useState('');
-  const [resultado, setResultado] = useState<{ importadas: number } | null>(null);
+  const [resultado, setResultado] = useState<{ importadas: number; errores?: string[]; sinVincular?: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
   const [vinculacion, setVinculacion] = useState<'ninguna' | 'tema' | 'articulo'>('ninguna');
@@ -97,11 +97,37 @@ const { data: temasList = [] } = useQuery({
     setResultado(null);
     setImportando(true);
     try {
-      const flashcards = JSON.parse(jsonTexto);
-      if (!Array.isArray(flashcards)) throw new Error('El JSON debe ser un array');
+      const flashcardsBrutas = JSON.parse(jsonTexto);
+      if (!Array.isArray(flashcardsBrutas)) throw new Error('El JSON debe ser un array');
+      // ⭐ Antes se enviaba el JSON tal cual se pegaba, y esta pestaña ("Importar JSON") no
+      // tenía ningún selector de tema/artículo ni lo mencionaba en el ejemplo — es la vía real
+      // por la que se suben lotes grandes de flashcards, así que si el JSON pegado no traía su
+      // propio "temaId"/"articuloId" (lo normal, porque nada de esta pantalla lo sugería), las
+      // flashcards se guardaban SIN vincular a ningún tema. El backend (POST /flashcards/importar
+      // -> FlashcardService.importar) sí soporta "temaId"/"articuloId"/"oposicionId" por
+      // flashcard, así que el problema era solo de esta pantalla. Ahora se usa el mismo selector
+      // "Vincular a" (Tema / Artículo) que ya existía para "Crear manual" como valor por defecto
+      // para todo el lote: cada flashcard se completa con la vinculación elegida arriba SOLO si
+      // ella misma no trae ya su propio temaId/articuloId/oposicionId (para no pisar un JSON que
+      // ya venga con vinculación por pregunta, p.ej. un lote con preguntas de varios temas).
+      const flashcards = flashcardsBrutas.map((fc: any) => ({
+        ...fc,
+        oposicionId: fc.oposicionId ?? form.oposicionId ?? undefined,
+        temaId: fc.temaId ?? (vinculacion === 'tema' ? temaSeleccionado?.id : undefined) ?? undefined,
+        articuloId: fc.articuloId ?? (vinculacion === 'articulo' ? articuloSeleccionado?.id : undefined) ?? undefined,
+      }));
+      // ⭐ El backend ahora valida fila a fila (tipo/nivel válidos, pregunta/respuesta no
+      // vacías, "true"/"false" para vf y trampa) y detecta duplicados dentro del lote y contra
+      // el banco existente, siguiendo con el resto de filas en vez de abortar todo el import
+      // por una sola fila mala — devuelve {importadas, errores, sinVincular}.
       const res = await api.post('/flashcards/importar', { flashcards });
       setResultado(res.data);
-      setJsonTexto('');
+      if (res.data?.sinVincular > 0) {
+        setError(
+          `Aviso: ${res.data.sinVincular} de ${res.data.importadas} flashcards importadas quedaron SIN vincular a ningún tema ni artículo. No aparecerán en el repaso por tema.`
+        );
+      }
+      if (!res.data?.errores?.length) setJsonTexto('');
     } catch (e: any) {
       setError(e.message ?? 'Error al importar');
     } finally {
@@ -150,6 +176,9 @@ const guardarManual = async () => {
       respuesta: 'true',
       explicacion: 'El artículo 14 CE establece que los españoles son iguales ante la ley',
       oposicionId: 'UUID-de-la-oposicion',
+      // ⭐ Opcional: si lo indicas aquí por pregunta, tiene prioridad sobre el selector
+      // "Vincular este lote a" de arriba. Si lo dejas fuera, se usa lo que hayas elegido allí.
+      temaId: 'UUID-del-tema (opcional, o usa el selector de arriba)',
     },
     {
       tipo: 'hueco',
@@ -213,11 +242,28 @@ const guardarManual = async () => {
 
           {/* Resultado */}
           {resultado && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '10px' }}>
-              <CheckCircle size={16} color="#15803d" />
-              <span style={{ fontSize: '13px', color: '#15803d', fontWeight: 500 }}>
-                {resultado.importadas} flashcards importadas correctamente
-              </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '10px' }}>
+                <CheckCircle size={16} color="#15803d" />
+                <span style={{ fontSize: '13px', color: '#15803d', fontWeight: 500 }}>
+                  {resultado.importadas} flashcards importadas correctamente
+                </span>
+              </div>
+              {!!resultado.errores?.length && (
+                <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <AlertCircle size={16} color="#dc2626" />
+                    <span style={{ fontSize: '13px', color: '#dc2626', fontWeight: 600 }}>
+                      {resultado.errores.length} fila(s) NO importadas
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '220px', overflowY: 'auto' }}>
+                    {resultado.errores.map((err, i) => (
+                      <div key={i} style={{ fontSize: '12px', color: '#991b1b' }}>{err}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -259,6 +305,10 @@ const guardarManual = async () => {
                       </div>
                     ))}
                   </div>
+                  <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '10px', lineHeight: 1.5 }}>
+                    Cada flashcard admite además <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>temaId</code> o <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>articuloId</code> propios.
+                    Si no los incluyes, se usará lo que elijas en "Vincular este lote a" más abajo — sin ninguno de los dos, la flashcard queda <strong>sin vincular a ningún tema</strong> y no aparecerá en el repaso por tema.
+                  </div>
                 </div>
               </div>
 
@@ -284,6 +334,189 @@ const guardarManual = async () => {
                   </div>
                 </div>
               )}
+
+              {/* ⭐ Vincular el LOTE a tema/artículo (ver comentario en importarJSON): antes esta
+                  pestaña no tenía forma de indicar a qué tema pertenecían las flashcards
+                  pegadas, así que se guardaban sin vincular salvo que el propio JSON ya trajera
+                  "temaId"/"articuloId" en cada objeto (raro, porque el ejemplo tampoco lo
+                  mostraba). Se reutiliza el mismo selector "Vincular a" de la pestaña "Crear
+                  manual": lo elegido aquí se aplica como valor por defecto a TODAS las
+                  flashcards del JSON que no traigan ya su propio temaId/articuloId. */}
+              <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', overflow: 'hidden' }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f3f4f6' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>Vincular este lote a (opcional)</span>
+                </div>
+                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Oposición</label>
+                    <select
+                      value={form.oposicionId}
+                      onChange={(e) => setForm(f => ({ ...f, oposicionId: e.target.value }))}
+                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', color: '#374151' }}
+                    >
+                      <option value="">Sin oposición</option>
+                      {oposiciones.map((op: any) => (
+                        <option key={op.id} value={op.id}>{op.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>
+                      Vincular a
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                      {[
+                        { key: 'ninguna', label: 'Sin vincular' },
+                        { key: 'tema', label: 'Tema' },
+                        { key: 'articulo', label: 'Artículo' },
+                      ].map(({ key, label }) => (
+                        <button
+                          key={key}
+                          onClick={() => {
+                            setVinculacion(key as any);
+                            setTemaSeleccionado(null);
+                            setArticuloSeleccionado(null);
+                            setBusquedaArticulo('');
+                          }}
+                          style={{
+                            padding: '6px 14px', borderRadius: '999px', fontSize: '12px', cursor: 'pointer',
+                            border: vinculacion === key ? 'none' : '1px solid #e5e7eb',
+                            background: vinculacion === key ? '#0f172a' : 'white',
+                            color: vinculacion === key ? 'white' : '#374151',
+                            fontWeight: vinculacion === key ? 600 : 400,
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {vinculacion === 'tema' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: '#f9fafb', borderRadius: '10px' }}>
+                        {form.oposicionId ? (
+                          <div style={{ fontSize: '12px', color: '#6b7280', padding: '6px 8px', background: '#EFF6FF', borderRadius: '8px' }}>
+                            Usando oposición seleccionada arriba
+                          </div>
+                        ) : (
+                          <select
+                            value={temaOposicionId}
+                            onChange={(e) => {
+                              setTemaOposicionId(e.target.value);
+                              setTemaConvocatoriaId('');
+                              setTemaSeleccionado(null);
+                            }}
+                            style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', color: '#374151' }}
+                          >
+                            <option value="">Selecciona oposición</option>
+                            {oposiciones.map((op: any) => (
+                              <option key={op.id} value={op.id}>{op.nombre}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        {convocatoriaTema && !temaConvocatoriaId && (
+                          <button
+                            onClick={() => setTemaConvocatoriaId(convocatoriaTema.id)}
+                            style={{ padding: '8px', background: '#EFF6FF', border: '1px solid #bfdbfe', borderRadius: '8px', fontSize: '12px', color: '#185FA5', cursor: 'pointer' }}
+                          >
+                            Cargar temas de convocatoria {convocatoriaTema.anyo}
+                          </button>
+                        )}
+
+                        {temasList.length > 0 && (
+                          <select
+                            value={temaSeleccionado?.id ?? ''}
+                            onChange={(e) => {
+                              const tema = temasList.find((t: any) => t.id === e.target.value);
+                              setTemaSeleccionado(tema ?? null);
+                            }}
+                            style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', color: '#374151' }}
+                          >
+                            <option value="">Selecciona tema</option>
+                            {temasList.map((t: any) => (
+                              <option key={t.id} value={t.id}>T{t.numero} — {t.titulo}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        {temaSeleccionado && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '12px', color: '#15803d', fontWeight: 500 }}>
+                              ✓ T{temaSeleccionado.numero} — {temaSeleccionado.titulo} · se aplicará a todas las preguntas del JSON que no traigan su propio temaId
+                            </span>
+                            <button onClick={() => setTemaSeleccionado(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: '14px' }}>×</button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {vinculacion === 'articulo' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: '#f9fafb', borderRadius: '10px' }}>
+                        <select
+                          value={leyId}
+                          onChange={(e) => { setLeyId(e.target.value); setVersionLeyId(''); setArticuloSeleccionado(null); }}
+                          style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', color: '#374151' }}
+                        >
+                          <option value="">Selecciona ley</option>
+                          {leyes.map((l: any) => (
+                            <option key={l.id} value={l.id}>{l.nombre}</option>
+                          ))}
+                        </select>
+
+                        {versiones.length > 0 && (
+                          <select
+                            value={versionLeyId}
+                            onChange={(e) => { setVersionLeyId(e.target.value); setArticuloSeleccionado(null); }}
+                            style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', color: '#374151' }}
+                          >
+                            <option value="">Selecciona versión</option>
+                            {versiones.map((v: any) => (
+                              <option key={v.id} value={v.id}>{v.nombre ?? `Versión ${v.anyo}`}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        {versionLeyId && (
+                          <input
+                            type="text"
+                            placeholder="Buscar artículo (número o título)..."
+                            value={busquedaArticulo}
+                            onChange={(e) => { setBusquedaArticulo(e.target.value); setArticuloSeleccionado(null); }}
+                            style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', color: '#374151', boxSizing: 'border-box' }}
+                          />
+                        )}
+
+                        {articulosBusqueda.length > 0 && !articuloSeleccionado && (
+                          <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '200px', overflowY: 'auto' }}>
+                            {articulosBusqueda.map((art: any) => (
+                              <div
+                                key={art.id}
+                                onClick={() => { setArticuloSeleccionado(art); setBusquedaArticulo(''); }}
+                                style={{ padding: '8px 12px', fontSize: '12px', color: '#374151', cursor: 'pointer', borderBottom: '1px solid #f3f4f6', background: 'white' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; }}
+                              >
+                                <span style={{ fontWeight: 600 }}>Art. {art.numero}</span>
+                                {art.titulo && <span style={{ color: '#9ca3af' }}> — {art.titulo}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {articuloSeleccionado && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '12px', color: '#15803d', fontWeight: 500 }}>
+                              ✓ Art. {articuloSeleccionado.numero}{articuloSeleccionado.titulo ? ` — ${articuloSeleccionado.titulo}` : ''} · se aplicará a todas las preguntas del JSON que no traigan su propio articuloId
+                            </span>
+                            <button onClick={() => setArticuloSeleccionado(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: '14px' }}>×</button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* Editor JSON */}
               <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', overflow: 'hidden' }}>

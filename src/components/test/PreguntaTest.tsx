@@ -109,7 +109,17 @@ useEffect(() => {
     : '#1F7CFF';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 52px)', paddingBottom: '120px' }}>
+    // ⭐ El CTA de abajo es "position: fixed" y puede llegar a medir ~160-190px de alto (dos
+    // botones + su padding), pero este contenedor solo reservaba 120px de paddingBottom. La
+    // diferencia (40-70px) quedaba tapada por el CTA fijo: la última opción (o la explicación,
+    // tras responder) se escondía detrás del overlay, dando la sensación de que "no se ven las
+    // preguntas" mientras lo único claramente visible era el botón grande del CTA. Se sube el
+    // margen a un valor con colchón de sobra (y se añade el inset de la barra inferior del
+    // móvil, "notch"/gesture bar en iOS, que tampoco se tenía en cuenta).
+    <div style={{
+      display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 52px)',
+      paddingBottom: 'calc(200px + env(safe-area-inset-bottom))',
+    }}>
 
       {/* Header con progreso y cancelar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
@@ -167,7 +177,16 @@ useEffect(() => {
 
 
       {/* Pregunta */}
-      <div style={{ fontSize: '24px', lineHeight: 1.3, fontWeight: 700, color: '#111827', marginBottom: '28px' }}>
+      {/* ⭐ fontSize fijo en 24px se veía desproporcionado en pantallas de móvil estrechas
+          (donde 24px en negrita ocupa mucho más ancho relativo que en un monitor de escritorio,
+          dando la sensación de "letras enormes"). Con clamp() escala entre 18px (móviles
+          pequeños, <360px) y 22px (pantallas más anchas), sin depender de media queries.
+          overflowWrap evita que una palabra larga (términos legales, "inconstitucionalidad")
+          desborde el contenedor y fuerce un scroll horizontal que agranda visualmente el texto. */}
+      <div style={{
+        fontSize: 'clamp(18px, 5vw, 22px)', lineHeight: 1.35, fontWeight: 700, color: '#111827',
+        marginBottom: '28px', overflowWrap: 'break-word', wordBreak: 'break-word',
+      }}>
         {pregunta.enunciado}
       </div>
 
@@ -196,7 +215,11 @@ useEffect(() => {
                 }}>
                   {['A', 'B', 'C', 'D'][idx]}
                 </div>
-                <div style={{ flex: 1, fontSize: '15px', lineHeight: 1.5, fontWeight: 500 }}>
+                {/* ⭐ minWidth: 0 es necesario en un hijo flex con texto largo: por defecto un
+                    flex item tiene min-width:auto, así que un texto sin espacios de sobra
+                    (un enlace, un número de artículo largo) puede forzar al item a crecer
+                    más allá del ancho del botón y desbordar la fila en vez de hacer wrap. */}
+                <div style={{ flex: 1, minWidth: 0, fontSize: '15px', lineHeight: 1.5, fontWeight: 500, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                   {opcion}
                 </div>
                 {respondida && idx === pregunta.correcta && <CheckCircle size={20} color="#16a34a" />}
@@ -220,9 +243,15 @@ useEffect(() => {
       )}
 
     {/* CTA fijo */}
+    {/* ⭐ Antes "bottom: 76px" — esa pantalla no tiene barra de navegación inferior (se
+        comprobó en app/app/layout.tsx), así que ese hueco no dejaba sitio para nada real:
+        solo empujaba el CTA 76px por encima del borde inferior real de la pantalla, dejando
+        una franja vacía y reduciendo aún más la parte visible del cuestionario en pantallas
+        bajas. Se ancla a bottom: 0 con el inset de zona segura del móvil (barra de gestos/
+        notch de iOS) en vez de un número fijo inventado. */}
 <div style={{
-  position: 'fixed', bottom: '76px', left: 0, right: 0,
-  padding: '16px',
+  position: 'fixed', bottom: 0, left: 0, right: 0,
+  padding: '16px', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
   background: 'linear-gradient(to top, #fff 70%, transparent)',
 }}>
   <div style={{ maxWidth: '560px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
