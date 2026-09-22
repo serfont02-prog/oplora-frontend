@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, Upload, CheckCircle, AlertCircle, Plus, FileText, Trash2 } from 'lucide-react';
+import { ArrowLeft, Upload, CheckCircle, AlertCircle, Plus, FileText, Trash2, Pencil, X, EyeOff, Eye } from 'lucide-react';
 
 const TIPO_LABEL: Record<string, string> = {
   test: 'Test',
@@ -16,7 +16,7 @@ const TIPO_LABEL: Record<string, string> = {
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-type TabKey = 'oficial' | 'tema' | 'ley';
+type TabKey = 'oficial' | 'tema' | 'ley' | 'gestionar';
 
 export default function BancoPreguntasPage() {
   const params = useParams();
@@ -40,6 +40,7 @@ export default function BancoPreguntasPage() {
     { key: 'oficial', label: 'Examen oficial' },
     { key: 'tema', label: 'Banco por tema' },
     { key: 'ley', label: 'Banco por ley' },
+    { key: 'gestionar', label: 'Gestionar preguntas' },
   ];
 
   return (
@@ -92,7 +93,7 @@ export default function BancoPreguntasPage() {
 
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: '#f9fafb' }}>
-        <div style={{ maxWidth: '580px' }}>
+        <div style={{ maxWidth: tab === 'gestionar' ? '900px' : '580px' }}>
           {tab === 'oficial' && (
             <TabExamenOficial oposicionId={oposicionId} convocatoriaId={convocatoriaId} convocatoria={convocatoria} />
           )}
@@ -101,6 +102,9 @@ export default function BancoPreguntasPage() {
           )}
           {tab === 'ley' && (
             <TabBancoPorLey oposicionId={oposicionId} />
+          )}
+          {tab === 'gestionar' && (
+            <TabGestionarPreguntas convocatoriaId={convocatoriaId} />
           )}
         </div>
       </div>
@@ -442,7 +446,9 @@ function ImportarPreguntasJson({
   titulo: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [modoEntrada, setModoEntrada] = useState<'archivo' | 'texto'>('archivo');
   const [archivo, setArchivo] = useState<File | null>(null);
+  const [jsonTexto, setJsonTexto] = useState('');
   const [preview, setPreview] = useState<any[]>([]);
   const [resultado, setResultado] = useState<any>(null);
   const [importando, setImportando] = useState(false);
@@ -488,54 +494,69 @@ function ImportarPreguntasJson({
     return errores;
   };
 
-  const handleArchivo = (file: File) => {
-    setArchivo(file);
+  // ⭐ Procesa un texto JSON venga de un archivo o de pegarlo directamente
+  const procesarJson = (texto: string) => {
     setResultado(null);
     setError(null);
     setErroresValidacion([]);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const json = JSON.parse(e.target?.result as string);
-        if (!Array.isArray(json)) {
-          setError('El JSON debe ser un array de preguntas');
-          setPreview([]);
-          return;
-        }
-        const errores = validarLote(json);
-        setErroresValidacion(errores);
-        setPreview(json.slice(0, 3));
-      } catch {
-        setError('El archivo no es un JSON válido');
+    try {
+      const json = JSON.parse(texto);
+      if (!Array.isArray(json)) {
+        setError('El JSON debe ser un array de preguntas');
         setPreview([]);
+        return;
       }
-    };
+      const errores = validarLote(json);
+      setErroresValidacion(errores);
+      setPreview(json.slice(0, 3));
+    } catch {
+      setError('El texto no es un JSON válido');
+      setPreview([]);
+    }
+  };
+
+  const handleArchivo = (file: File) => {
+    setArchivo(file);
+    const reader = new FileReader();
+    reader.onload = (e) => procesarJson(e.target?.result as string);
     reader.readAsText(file);
   };
 
+  const handleTextoPegado = (texto: string) => {
+    setJsonTexto(texto);
+    if (!texto.trim()) {
+      setPreview([]);
+      setErroresValidacion([]);
+      setError(null);
+      return;
+    }
+    procesarJson(texto);
+  };
+
   const importar = async () => {
-    if (!archivo) return;
     setImportando(true);
     setError(null);
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const preguntas = JSON.parse(e.target?.result as string);
-          const res = await api.post(endpoint, { preguntas, ...extraBody });
-          setResultado(res.data);
-          setArchivo(null);
-          setPreview([]);
-          setErroresValidacion([]);
-        } catch {
-          setError('Error al importar. Revisa el formato del JSON.');
-        } finally {
-          setImportando(false);
-        }
-      };
-      reader.readAsText(archivo);
+      const textoAImportar = modoEntrada === 'texto'
+        ? jsonTexto
+        : await new Promise<string>((resolve, reject) => {
+            if (!archivo) { reject(new Error('sin archivo')); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.onerror = reject;
+            reader.readAsText(archivo);
+          });
+
+      const preguntas = JSON.parse(textoAImportar);
+      const res = await api.post(endpoint, { preguntas, ...extraBody });
+      setResultado(res.data);
+      setArchivo(null);
+      setJsonTexto('');
+      setPreview([]);
+      setErroresValidacion([]);
     } catch {
-      setError('Error al leer el archivo');
+      setError('Error al importar. Revisa el formato del JSON.');
+    } finally {
       setImportando(false);
     }
   };
@@ -552,34 +573,71 @@ function ImportarPreguntasJson({
         </pre>
       </div>
 
-      {/* Upload */}
+      {/* Selector Archivo / Pegar texto */}
       <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '10px' }}>Subir archivo</div>
-        <div
-          onClick={() => fileRef.current?.click()}
-          style={{ border: '2px dashed #e5e7eb', borderRadius: '10px', padding: '24px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.15s' }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#9ca3af')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e5e7eb')}
-        >
-          {archivo ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <FileText size={16} color="#6b7280" />
-              <span style={{ fontSize: '13px', color: '#374151' }}>{archivo.name}</span>
-            </div>
-          ) : (
-            <>
-              <Upload size={20} color="#9ca3af" style={{ margin: '0 auto 6px' }} />
-              <div style={{ fontSize: '13px', color: '#9ca3af' }}>Haz clic para subir un JSON</div>
-            </>
-          )}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+          {(['archivo', 'texto'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                setModoEntrada(m);
+                setArchivo(null);
+                setJsonTexto('');
+                setPreview([]);
+                setErroresValidacion([]);
+                setError(null);
+                setResultado(null);
+              }}
+              style={{
+                padding: '7px 14px', fontSize: '12px', fontWeight: 500, borderRadius: '999px',
+                border: modoEntrada === m ? 'none' : '1px solid #e5e7eb',
+                background: modoEntrada === m ? '#111827' : 'white',
+                color: modoEntrada === m ? 'white' : '#6b7280',
+                cursor: 'pointer',
+              }}
+            >
+              {m === 'archivo' ? 'Subir archivo' : 'Pegar texto'}
+            </button>
+          ))}
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".json"
-          onChange={(e) => e.target.files?.[0] && handleArchivo(e.target.files[0])}
-          style={{ display: 'none' }}
-        />
+
+        {modoEntrada === 'archivo' ? (
+          <>
+            <div
+              onClick={() => fileRef.current?.click()}
+              style={{ border: '2px dashed #e5e7eb', borderRadius: '10px', padding: '24px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.15s' }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#9ca3af')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e5e7eb')}
+            >
+              {archivo ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <FileText size={16} color="#6b7280" />
+                  <span style={{ fontSize: '13px', color: '#374151' }}>{archivo.name}</span>
+                </div>
+              ) : (
+                <>
+                  <Upload size={20} color="#9ca3af" style={{ margin: '0 auto 6px' }} />
+                  <div style={{ fontSize: '13px', color: '#9ca3af' }}>Haz clic para subir un JSON</div>
+                </>
+              )}
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".json"
+              onChange={(e) => e.target.files?.[0] && handleArchivo(e.target.files[0])}
+              style={{ display: 'none' }}
+            />
+          </>
+        ) : (
+          <textarea
+            value={jsonTexto}
+            onChange={(e) => handleTextoPegado(e.target.value)}
+            rows={12}
+            placeholder='[ { "temaNumero": 1, "enunciado": "...", "opciones": ["a) ...", "b) ...", "c) ..."], "correcta": 0 } ]'
+            style={{ width: '100%', padding: '10px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+          />
+        )}
       </div>
 
       {/* Error */}
@@ -668,6 +726,280 @@ function ImportarPreguntasJson({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// TAB 4 — Gestionar preguntas (listar, editar, activar/desactivar, eliminar)
+// Pensado para cuando una convocatoria nueva cambia el contenido de
+// un tema y no hace falta borrar todo el banco, solo lo afectado.
+// ════════════════════════════════════════════════════════════
+function TabGestionarPreguntas({ convocatoriaId }: { convocatoriaId: string }) {
+  const queryClient = useQueryClient();
+  const [temaFiltro, setTemaFiltro] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [preguntaEditando, setPreguntaEditando] = useState<any>(null);
+  const porPagina = 20;
+
+  const { data: temas = [] } = useQuery({
+    queryKey: ['temas-convocatoria', convocatoriaId],
+    queryFn: async () => {
+      const res = await api.get(`/temas/convocatoria/${convocatoriaId}`);
+      return res.data;
+    },
+  });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['banco-preguntas', convocatoriaId, temaFiltro, pagina],
+    queryFn: async () => {
+      const res = await api.get(`/test/banco/${convocatoriaId}`, {
+        params: { temaId: temaFiltro || undefined, pagina, porPagina },
+      });
+      return res.data;
+    },
+  });
+
+  const eliminar = useMutation({
+    mutationFn: async (preguntaId: string) => {
+      await api.delete(`/test/banco/${preguntaId}`);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['banco-preguntas', convocatoriaId] }),
+  });
+
+  const toggleActiva = useMutation({
+    mutationFn: async ({ id, activa }: { id: string; activa: boolean }) => {
+      await api.patch(`/test/banco/${id}`, { activa });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['banco-preguntas', convocatoriaId] }),
+  });
+
+  const preguntas = data?.preguntas ?? [];
+  const totalPaginas = data?.totalPaginas ?? 1;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <select
+          value={temaFiltro}
+          onChange={(e) => { setTemaFiltro(e.target.value); setPagina(1); }}
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+        >
+          <option value="">Todos los temas</option>
+          {temas.map((t: any) => (
+            <option key={t.id} value={t.id}>Tema {t.numero} — {t.titulo ?? t.nombre}</option>
+          ))}
+        </select>
+        <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+          {data ? `${data.total} pregunta${data.total === 1 ? '' : 's'}` : ''}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', padding: '2rem' }}>Cargando...</div>
+      ) : preguntas.length === 0 ? (
+        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+          No hay preguntas para este filtro.
+        </div>
+      ) : (
+        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+          {preguntas.map((p: any, i: number) => (
+            <div
+              key={p.id}
+              style={{
+                display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px',
+                borderBottom: i < preguntas.length - 1 ? '1px solid #f3f4f6' : 'none',
+                opacity: p.activa === false ? 0.5 : 1,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                  {(p.temas ?? []).map((t: any) => (
+                    <span key={t.id} style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#eff6ff', color: '#1F7CFF', fontWeight: 500 }}>
+                      Tema {t.numero}
+                    </span>
+                  ))}
+                  {(p.articulos ?? []).map((a: any) => (
+                    <span key={a.id} style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#f0fdf4', color: '#15803d', fontWeight: 500 }}>
+                      Art. {a.numero}
+                    </span>
+                  ))}
+                  {p.activa === false && (
+                    <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#f3f4f6', color: '#6b7280', fontWeight: 500 }}>
+                      Desactivada
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '13px', color: '#111827' }}>{p.enunciado}</div>
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '3px' }}>
+                  {p.opciones?.length} opciones · correcta: {p.opciones?.[p.correcta]?.slice(0, 40)}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                <button
+                  onClick={() => setPreguntaEditando(p)}
+                  title="Editar"
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#374151' }}
+                >
+                  <Pencil size={13} />
+                </button>
+                <button
+                  onClick={() => toggleActiva.mutate({ id: p.id, activa: p.activa === false })}
+                  title={p.activa === false ? 'Activar' : 'Desactivar'}
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#374151' }}
+                >
+                  {p.activa === false ? <Eye size={13} /> : <EyeOff size={13} />}
+                </button>
+                <button
+                  onClick={() => { if (confirm('¿Eliminar esta pregunta definitivamente?')) eliminar.mutate(p.id); }}
+                  title="Eliminar"
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fee2e2', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#dc2626' }}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPaginas > 1 && (
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+          <button
+            onClick={() => setPagina((p) => Math.max(1, p - 1))}
+            disabled={pagina <= 1}
+            style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white', cursor: pagina <= 1 ? 'not-allowed' : 'pointer', opacity: pagina <= 1 ? 0.4 : 1 }}
+          >
+            Anterior
+          </button>
+          <span style={{ fontSize: '12px', color: '#6b7280' }}>{pagina} / {totalPaginas}</span>
+          <button
+            onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+            disabled={pagina >= totalPaginas}
+            style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white', cursor: pagina >= totalPaginas ? 'not-allowed' : 'pointer', opacity: pagina >= totalPaginas ? 0.4 : 1 }}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+
+      {preguntaEditando && (
+        <ModalEditarPregunta
+          pregunta={preguntaEditando}
+          onClose={() => setPreguntaEditando(null)}
+          onGuardado={() => {
+            setPreguntaEditando(null);
+            queryClient.invalidateQueries({ queryKey: ['banco-preguntas', convocatoriaId] });
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ModalEditarPregunta({ pregunta, onClose, onGuardado }: { pregunta: any; onClose: () => void; onGuardado: () => void }) {
+  const [enunciado, setEnunciado] = useState(pregunta.enunciado);
+  const [opciones, setOpciones] = useState<string[]>([...pregunta.opciones]);
+  const [correcta, setCorrecta] = useState<number>(pregunta.correcta);
+  const [explicacion, setExplicacion] = useState(pregunta.explicacion ?? '');
+  const [error, setError] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
+
+  const guardar = async () => {
+    if (!enunciado.trim()) { setError('El enunciado no puede estar vacío'); return; }
+    if (opciones.some((o) => !o.trim())) { setError('Ninguna opción puede estar vacía'); return; }
+    setGuardando(true);
+    setError(null);
+    try {
+      await api.patch(`/test/banco/${pregunta.id}`, {
+        enunciado: enunciado.trim(),
+        opciones,
+        correcta,
+        explicacion,
+      });
+      onGuardado();
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Error al guardar los cambios');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+      <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '520px', maxHeight: '85vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 600 }}>Editar pregunta</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
+            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Enunciado</label>
+            <textarea
+              value={enunciado}
+              onChange={(e) => setEnunciado(e.target.value)}
+              rows={3}
+              style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+              Opciones (marca la correcta)
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {opciones.map((o, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="radio"
+                    checked={correcta === idx}
+                    onChange={() => setCorrecta(idx)}
+                  />
+                  <input
+                    type="text"
+                    value={o}
+                    onChange={(e) => setOpciones(opciones.map((op, i2) => i2 === idx ? e.target.value : op))}
+                    style={{ flex: 1, padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Explicación</label>
+            <textarea
+              value={explicacion}
+              onChange={(e) => setExplicacion(e.target.value)}
+              rows={3}
+              style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+            />
+          </div>
+
+          {error && (
+            <div style={{ fontSize: '12px', color: '#dc2626' }}>{error}</div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+          <button
+            onClick={guardar}
+            disabled={guardando}
+            style={{ flex: 2, padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: guardando ? 'not-allowed' : 'pointer', opacity: guardando ? 0.6 : 1 }}
+          >
+            {guardando ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
