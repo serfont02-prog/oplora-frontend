@@ -261,7 +261,7 @@ function TabExamenOficial({ oposicionId, convocatoriaId, convocatoria }: { oposi
           extraBody={{ examenAnteriorId: examenSeleccionadoId }}
           campoIdentificador="temaNumero"
           etiquetaCampo="Tema"
-          formatoEjemplo={{ temaNumero: 1, enunciado: '¿Qué regula...?', opciones: ['A', 'B', 'C', 'D'], correcta: 0, explicacion: 'Porque...', dificultad: 1, origen: 'convocatoria', anyo: 2023 }}
+          formatoEjemplo={{ temaNumero: 1, enunciado: '¿Qué regula...?', opciones: ['a) Opción A', 'b) Opción B', 'c) Opción C'], correcta: 0, explicacion: 'Porque...', dificultad: 1, origen: 'convocatoria', anyo: 2023 }}
           titulo={`Preguntas del examen seleccionado`}
         />
       )}
@@ -362,7 +362,7 @@ function TabBancoPorTema({ convocatoriaId }: { convocatoriaId: string }) {
       extraBody={{}}
       campoIdentificador="temaNumero"
       etiquetaCampo="Tema"
-      formatoEjemplo={{ temaNumero: 1, enunciado: '¿Qué regula...?', opciones: ['A', 'B', 'C', 'D'], correcta: 0, explicacion: 'Porque...', dificultad: 1, origen: 'convocatoria', anyo: 2023 }}
+      formatoEjemplo={{ temaNumero: 1, enunciado: '¿Qué regula...?', opciones: ['a) Opción A', 'b) Opción B', 'c) Opción C'], correcta: 0, explicacion: 'Porque...', dificultad: 1, origen: 'convocatoria', anyo: 2023 }}
       titulo="Importar al banco general por tema"
     />
   );
@@ -415,7 +415,7 @@ function TabBancoPorLey({ oposicionId }: { oposicionId: string }) {
           extraBody={{}}
           campoIdentificador="articuloNumero"
           etiquetaCampo="Art."
-          formatoEjemplo={{ articuloNumero: '1', enunciado: '¿Qué establece el artículo 1?', opciones: ['A', 'B', 'C', 'D'], correcta: 0, explicacion: 'Porque...', dificultad: 1, origen: 'convocatoria', anyo: 2023 }}
+          formatoEjemplo={{ articuloNumero: '1', enunciado: '¿Qué establece el artículo 1?', opciones: ['a) Opción A', 'b) Opción B', 'c) Opción C'], correcta: 0, explicacion: 'Porque...', dificultad: 1, origen: 'convocatoria', anyo: 2023 }}
           titulo="Importar preguntas por artículo"
         />
       )}
@@ -447,11 +447,52 @@ function ImportarPreguntasJson({
   const [resultado, setResultado] = useState<any>(null);
   const [importando, setImportando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [erroresValidacion, setErroresValidacion] = useState<string[]>([]);
+
+  // ⭐ Validación local antes de subir nada al servidor: detecta JSON mal
+  // formado (opciones distintas de 3/4, índice "correcta" fuera de rango,
+  // enunciados vacíos, duplicados dentro del propio archivo...) para que
+  // el usuario pueda corregirlo antes de importar cientos de preguntas.
+  const validarLote = (json: any[]): string[] => {
+    const errores: string[] = [];
+    const vistos = new Set<string>();
+    json.forEach((p, i) => {
+      const etiqueta = `Fila ${i + 1}${p?.[campoIdentificador] !== undefined ? ` (${etiquetaCampo} ${p[campoIdentificador]})` : ''}`;
+      if (!p || typeof p !== 'object') { errores.push(`${etiqueta}: no es un objeto válido`); return; }
+      if (p[campoIdentificador] === undefined || p[campoIdentificador] === null || p[campoIdentificador] === '') {
+        errores.push(`${etiqueta}: falta el campo "${campoIdentificador}"`);
+      }
+      if (typeof p.enunciado !== 'string' || !p.enunciado.trim()) {
+        errores.push(`${etiqueta}: falta el enunciado`);
+      }
+      if (!Array.isArray(p.opciones) || (p.opciones.length !== 3 && p.opciones.length !== 4)) {
+        errores.push(`${etiqueta}: debe tener 3 o 4 opciones (tiene ${Array.isArray(p.opciones) ? p.opciones.length : 'ninguna'})`);
+      } else if (p.opciones.some((o: any) => typeof o !== 'string' || !o.trim())) {
+        errores.push(`${etiqueta}: hay una opción vacía`);
+      }
+      if (
+        typeof p.correcta !== 'number' ||
+        !Number.isInteger(p.correcta) ||
+        !Array.isArray(p.opciones) ||
+        p.correcta < 0 ||
+        p.correcta >= p.opciones.length
+      ) {
+        errores.push(`${etiqueta}: el índice "correcta" (${p.correcta}) no es válido para ${Array.isArray(p.opciones) ? p.opciones.length : '?'} opciones`);
+      }
+      if (typeof p.enunciado === 'string' && p.enunciado.trim()) {
+        const key = p.enunciado.trim().toLowerCase();
+        if (vistos.has(key)) errores.push(`${etiqueta}: enunciado duplicado dentro del propio archivo`);
+        vistos.add(key);
+      }
+    });
+    return errores;
+  };
 
   const handleArchivo = (file: File) => {
     setArchivo(file);
     setResultado(null);
     setError(null);
+    setErroresValidacion([]);
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -461,6 +502,8 @@ function ImportarPreguntasJson({
           setPreview([]);
           return;
         }
+        const errores = validarLote(json);
+        setErroresValidacion(errores);
         setPreview(json.slice(0, 3));
       } catch {
         setError('El archivo no es un JSON válido');
@@ -483,6 +526,7 @@ function ImportarPreguntasJson({
           setResultado(res.data);
           setArchivo(null);
           setPreview([]);
+          setErroresValidacion([]);
         } catch {
           setError('Error al importar. Revisa el formato del JSON.');
         } finally {
@@ -546,6 +590,29 @@ function ImportarPreguntasJson({
         </div>
       )}
 
+      {/* Errores de validación local (antes de tocar el servidor) */}
+      {erroresValidacion.length > 0 && !resultado && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '12px', padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <AlertCircle size={14} color="#dc2626" />
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#dc2626' }}>
+              {erroresValidacion.length} problema{erroresValidacion.length === 1 ? '' : 's'} detectado{erroresValidacion.length === 1 ? '' : 's'} en el archivo
+            </span>
+          </div>
+          <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {erroresValidacion.slice(0, 50).map((e, i) => (
+              <div key={i} style={{ fontSize: '11px', color: '#991b1b' }}>• {e}</div>
+            ))}
+            {erroresValidacion.length > 50 && (
+              <div style={{ fontSize: '11px', color: '#991b1b', fontStyle: 'italic' }}>... y {erroresValidacion.length - 50} más</div>
+            )}
+          </div>
+          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '10px' }}>
+            Corrige el JSON y vuelve a subirlo. No se puede importar mientras haya errores.
+          </div>
+        </div>
+      )}
+
       {/* Preview */}
       {preview.length > 0 && !resultado && (
         <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
@@ -560,10 +627,10 @@ function ImportarPreguntasJson({
           </div>
           <button
             onClick={importar}
-            disabled={importando}
-            style={{ marginTop: '14px', width: '100%', padding: '11px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: importando ? 'not-allowed' : 'pointer', opacity: importando ? 0.6 : 1 }}
+            disabled={importando || erroresValidacion.length > 0}
+            style={{ marginTop: '14px', width: '100%', padding: '11px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: 500, cursor: (importando || erroresValidacion.length > 0) ? 'not-allowed' : 'pointer', opacity: (importando || erroresValidacion.length > 0) ? 0.4 : 1 }}
           >
-            {importando ? 'Importando...' : 'Importar preguntas'}
+            {importando ? 'Importando...' : erroresValidacion.length > 0 ? 'Corrige los errores para importar' : 'Importar preguntas'}
           </button>
         </div>
       )}
