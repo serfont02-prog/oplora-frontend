@@ -238,7 +238,7 @@ export default function RetoDetallePage() {
                 }}
               >
                 <span style={{ fontWeight: 700, minWidth: '20px' }}>{['A', 'B', 'C', 'D'][idx]}</span>
-                <span style={{ flex: 1 }}>{opcion}</span>
+                <span style={{ flex: 1 }}>{opcion.replace(/^[a-dA-D]\)\s*/, '')}</span>
               </button>
             ))}
           </div>
@@ -289,7 +289,7 @@ export default function RetoDetallePage() {
                       </div>
                       {!r.correcta && p?.correcta !== undefined && p?.opciones?.[p.correcta] && (
                         <div style={{ fontSize: '11px', color: '#15803d', marginLeft: '20px', marginBottom: '2px' }}>
-                          Correcta: {p.opciones[p.correcta]}
+                          Correcta: {p.opciones[p.correcta]?.replace(/^[a-dA-D]\)\s*/, '')}
                         </div>
                       )}
                       {p?.explicacion && (

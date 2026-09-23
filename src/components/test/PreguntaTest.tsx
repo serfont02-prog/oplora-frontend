@@ -220,7 +220,11 @@ useEffect(() => {
                     (un enlace, un número de artículo largo) puede forzar al item a crecer
                     más allá del ancho del botón y desbordar la fila en vez de hacer wrap. */}
                 <div style={{ flex: 1, minWidth: 0, fontSize: '15px', lineHeight: 1.5, fontWeight: 500, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                  {opcion}
+                  {/* ⭐ Algunas preguntas importadas llevan el prefijo "a) "/"b) "... ya escrito
+                      dentro del propio texto, y el badge de arriba (A/B/C/D) ya lo representa
+                      visualmente, así que salía duplicado ("A" + "a) ..."). Lo quitamos aquí
+                      en el render, sin tocar los datos guardados. */}
+                  {opcion.replace(/^[a-dA-D]\)\s*/, '')}
                 </div>
                 {respondida && idx === pregunta.correcta && <CheckCircle size={20} color="#16a34a" />}
                 {respondida && idx === seleccionada && idx !== pregunta.correcta && <XCircle size={20} color="#dc2626" />}

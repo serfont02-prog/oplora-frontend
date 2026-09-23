@@ -260,11 +260,11 @@ export default function ResultadoTestPage() {
                             Respuesta correcta
                           </div>
                           <div style={{ fontSize: '12px', color: '#15803d', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '8px 10px', fontWeight: 500 }}>
-                            {detalle.opciones[detalle.indiceCorrecta]}
+                            {detalle.opciones[detalle.indiceCorrecta]?.replace(/^[a-dA-D]\)\s*/, '')}
                           </div>
                           {!detalle.correcta && !detalle.enBlanco && detalle.indiceSeleccionada !== undefined && detalle.indiceSeleccionada !== null && (
                             <div style={{ fontSize: '12px', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 10px', fontWeight: 500, marginTop: '4px' }}>
-                              Tu respuesta: {detalle.opciones[detalle.indiceSeleccionada]}
+                              Tu respuesta: {detalle.opciones[detalle.indiceSeleccionada]?.replace(/^[a-dA-D]\)\s*/, '')}
                             </div>
                           )}
                         </div>
