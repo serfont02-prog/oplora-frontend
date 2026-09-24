@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { RotateCcw, Share2, ChevronDown, ChevronUp, ChevronRight, X } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { PuntosGanadosCard } from '@/components/gamificacion/PuntosGanadosCard';
 
 export default function ResultadoTestPage() {
   const router = useRouter();
@@ -116,6 +117,9 @@ export default function ResultadoTestPage() {
       </div>
 
       <div style={{ maxWidth: '480px', margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+        {/* Feedback de puntos ganados — OPLO reacciona al resultado */}
+        <PuntosGanadosCard gamificacion={resultado.gamificacion} porcentaje={resultado.porcentaje} />
 
         {/* CTA para continuar el Repaso inteligente con flashcards pendientes */}
         {modo === 'repaso' && fcPendientes.length > 0 && (

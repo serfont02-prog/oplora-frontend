@@ -377,6 +377,7 @@ function TabBancoPorTema({ convocatoriaId }: { convocatoriaId: string }) {
 // ════════════════════════════════════════════════════════════
 function TabBancoPorLey({ oposicionId }: { oposicionId: string }) {
   const [versionSeleccionada, setVersionSeleccionada] = useState('');
+  const [subTab, setSubTab] = useState<'importar' | 'gestionar'>('importar');
 
   const { data: vinculos = [], isLoading } = useQuery({
     queryKey: ['leyes-oposicion', oposicionId],
@@ -413,14 +414,199 @@ function TabBancoPorLey({ oposicionId }: { oposicionId: string }) {
       </div>
 
       {versionSeleccionada && (
-        <ImportarPreguntasJson
-          key={versionSeleccionada}
-          endpoint={`/test/importar/version-ley/${versionSeleccionada}`}
-          extraBody={{}}
-          campoIdentificador="articuloNumero"
-          etiquetaCampo="Art."
-          formatoEjemplo={{ articuloNumero: '1', enunciado: '¿Qué establece el artículo 1?', opciones: ['a) Opción A', 'b) Opción B', 'c) Opción C'], correcta: 0, explicacion: 'Porque...', dificultad: 1, origen: 'convocatoria', anyo: 2023 }}
-          titulo="Importar preguntas por artículo"
+        <>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {(['importar', 'gestionar'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSubTab(s)}
+                style={{
+                  padding: '7px 14px', fontSize: '12px', fontWeight: 500, borderRadius: '999px',
+                  border: subTab === s ? 'none' : '1px solid #e5e7eb',
+                  background: subTab === s ? '#111827' : 'white',
+                  color: subTab === s ? 'white' : '#6b7280',
+                  cursor: 'pointer',
+                }}
+              >
+                {s === 'importar' ? 'Importar preguntas' : 'Consultar / editar'}
+              </button>
+            ))}
+          </div>
+
+          {subTab === 'importar' ? (
+            <ImportarPreguntasJson
+              key={versionSeleccionada}
+              endpoint={`/test/importar/version-ley/${versionSeleccionada}`}
+              extraBody={{}}
+              campoIdentificador="articuloNumero"
+              etiquetaCampo="Art."
+              formatoEjemplo={{ articuloNumero: '1', enunciado: '¿Qué establece el artículo 1?', opciones: ['a) Opción A', 'b) Opción B', 'c) Opción C'], correcta: 0, explicacion: 'Porque...', dificultad: 1, origen: 'convocatoria', anyo: 2023 }}
+              titulo="Importar preguntas por artículo"
+            />
+          ) : (
+            <TabGestionarPreguntasLey key={versionSeleccionada} versionLeyId={versionSeleccionada} />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// TAB 3b — Gestionar preguntas por Ley (listar, editar, activar/
+// desactivar, eliminar), equivalente a TabGestionarPreguntas pero
+// filtrando por versión de ley + artículo en vez de convocatoria/tema.
+// ════════════════════════════════════════════════════════════
+function TabGestionarPreguntasLey({ versionLeyId }: { versionLeyId: string }) {
+  const queryClient = useQueryClient();
+  const [articuloFiltro, setArticuloFiltro] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [preguntaEditando, setPreguntaEditando] = useState<any>(null);
+  const porPagina = 20;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['banco-preguntas-ley', versionLeyId, articuloFiltro, pagina],
+    queryFn: async () => {
+      const res = await api.get(`/test/banco-ley/${versionLeyId}`, {
+        params: { articuloId: articuloFiltro || undefined, pagina, porPagina },
+      });
+      return res.data;
+    },
+  });
+
+  const eliminar = useMutation({
+    mutationFn: async (preguntaId: string) => {
+      await api.delete(`/test/banco/${preguntaId}`);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['banco-preguntas-ley', versionLeyId] }),
+  });
+
+  const toggleActiva = useMutation({
+    mutationFn: async ({ id, activa }: { id: string; activa: boolean }) => {
+      await api.patch(`/test/banco/${id}`, { activa });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['banco-preguntas-ley', versionLeyId] }),
+  });
+
+  const preguntas = data?.preguntas ?? [];
+  const totalPaginas = data?.totalPaginas ?? 1;
+
+  // Lista de artículos presentes en el resultado actual, para poblar el filtro
+  const articulosDisponibles = Array.from(
+    new Map(
+      preguntas.flatMap((p: any) => (p.articulos ?? []).map((a: any) => [a.id, a]))
+    ).values()
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <select
+          value={articuloFiltro}
+          onChange={(e) => { setArticuloFiltro(e.target.value); setPagina(1); }}
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+        >
+          <option value="">Todos los artículos</option>
+          {articulosDisponibles.map((a: any) => (
+            <option key={a.id} value={a.id}>Art. {a.numero}</option>
+          ))}
+        </select>
+        <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+          {data ? `${data.total} pregunta${data.total === 1 ? '' : 's'}` : ''}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', padding: '2rem' }}>Cargando...</div>
+      ) : preguntas.length === 0 ? (
+        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+          No hay preguntas para este filtro.
+        </div>
+      ) : (
+        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+          {preguntas.map((p: any, i: number) => (
+            <div
+              key={p.id}
+              style={{
+                display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px',
+                borderBottom: i < preguntas.length - 1 ? '1px solid #f3f4f6' : 'none',
+                opacity: p.activa === false ? 0.5 : 1,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                  {(p.articulos ?? []).map((a: any) => (
+                    <span key={a.id} style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#f0fdf4', color: '#15803d', fontWeight: 500 }}>
+                      Art. {a.numero}
+                    </span>
+                  ))}
+                  {p.activa === false && (
+                    <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#f3f4f6', color: '#6b7280', fontWeight: 500 }}>
+                      Desactivada
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '13px', color: '#111827' }}>{p.enunciado}</div>
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '3px' }}>
+                  {p.opciones?.length} opciones · correcta: {p.opciones?.[p.correcta]?.slice(0, 40)}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                <button
+                  onClick={() => setPreguntaEditando(p)}
+                  title="Editar"
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#374151' }}
+                >
+                  <Pencil size={13} />
+                </button>
+                <button
+                  onClick={() => toggleActiva.mutate({ id: p.id, activa: p.activa === false })}
+                  title={p.activa === false ? 'Activar' : 'Desactivar'}
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#374151' }}
+                >
+                  {p.activa === false ? <Eye size={13} /> : <EyeOff size={13} />}
+                </button>
+                <button
+                  onClick={() => { if (confirm('¿Eliminar esta pregunta definitivamente?')) eliminar.mutate(p.id); }}
+                  title="Eliminar"
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fee2e2', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#dc2626' }}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPaginas > 1 && (
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+          <button
+            onClick={() => setPagina((p) => Math.max(1, p - 1))}
+            disabled={pagina <= 1}
+            style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white', cursor: pagina <= 1 ? 'not-allowed' : 'pointer', opacity: pagina <= 1 ? 0.4 : 1 }}
+          >
+            Anterior
+          </button>
+          <span style={{ fontSize: '12px', color: '#6b7280' }}>{pagina} / {totalPaginas}</span>
+          <button
+            onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+            disabled={pagina >= totalPaginas}
+            style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white', cursor: pagina >= totalPaginas ? 'not-allowed' : 'pointer', opacity: pagina >= totalPaginas ? 0.4 : 1 }}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+
+      {preguntaEditando && (
+        <ModalEditarPregunta
+          pregunta={preguntaEditando}
+          onClose={() => setPreguntaEditando(null)}
+          onGuardado={() => {
+            setPreguntaEditando(null);
+            queryClient.invalidateQueries({ queryKey: ['banco-preguntas-ley', versionLeyId] });
+          }}
         />
       )}
     </div>

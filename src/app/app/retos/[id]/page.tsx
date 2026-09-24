@@ -8,6 +8,7 @@ import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { DueloReto } from '@/app/app/retos/page';
 import { useEffect, useState, useRef } from 'react';
+import { PuntosGanadosCard, GamificacionInfo } from '@/components/gamificacion/PuntosGanadosCard';
 
 const BG_APP = '#FCEEE8';
 const TEXT_PRIMARY = '#111827';
@@ -31,6 +32,7 @@ export default function RetoDetallePage() {
   const [resultadoFinal, setResultadoFinal] = useState<{
     porcentaje: number;
     respuestas: { seleccionada: number; correcta: boolean }[];
+    gamificacion?: GamificacionInfo | null;
   } | null>(null);
 
   
@@ -264,6 +266,13 @@ export default function RetoDetallePage() {
               <span style={{ fontSize: '13px', color: '#dc2626' }}>❌ {preguntas.length - correctas} errores</span>
               <span style={{ fontSize: '13px', color: TEXT_MUTED }}>⏱️ {Math.round((Date.now() - tiempoInicio) / 1000)}s</span>
             </div>
+
+            {/* Feedback de puntos ganados — OPLO reacciona al resultado (solo disponible justo tras completar) */}
+            {resultadoFinal?.gamificacion && (
+              <div style={{ marginBottom: '10px' }}>
+                <PuntosGanadosCard gamificacion={resultadoFinal.gamificacion} porcentaje={porcentaje} />
+              </div>
+            )}
 
             {/* Duelo */}
             <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '16px', marginBottom: '10px' }}>
