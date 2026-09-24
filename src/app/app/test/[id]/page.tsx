@@ -33,7 +33,10 @@ export default function TestPage({ params }: TestPageProps) {
   const searchParams = useSearchParams();
   const { id: oposicionId } = use(params);
   const temasParam = searchParams.get('temas'); // "id1,id2,id3" o null
-  const temasIds = temasParam ? temasParam.split(',') : [];
+  const temaIdParam = searchParams.get('temaId'); // "id" único, usado desde la página de tema
+  const temasIds = temasParam
+    ? temasParam.split(',')
+    : (temaIdParam ? [temaIdParam] : []);
   const versionLeyId = searchParams.get('versionLeyId') ?? undefined;
   const modo = searchParams.get('modo') ?? 'rapido';
   const mostrarExplicaciones = searchParams.get('explicaciones') !== 'false';
@@ -68,7 +71,7 @@ export default function TestPage({ params }: TestPageProps) {
   const [guardando, setGuardando] = useState(false);
 
   const { data: preguntas = [], isLoading } = useQuery<Pregunta[]>({
-  queryKey: ['test', oposicionId, modo, numPreguntas, nivel, temasParam, versionLeyId],
+  queryKey: ['test', oposicionId, modo, numPreguntas, nivel, temasParam, temaIdParam, versionLeyId],
   queryFn: async () => {
     if (modo === 'repaso') {
       const res = await api.post('/test/repaso-inteligente', {

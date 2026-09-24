@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { RotateCcw, Share2, ChevronDown, ChevronUp, ChevronRight, X } from 'lucide-react';
+import { Share2, ChevronDown, ChevronUp, ChevronRight, X } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { PuntosGanadosCard } from '@/components/gamificacion/PuntosGanadosCard';
 
@@ -303,14 +303,6 @@ export default function ResultadoTestPage() {
         ) : (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              onClick={() => router.push(`/app/test/${oposicionId}?modo=${modo ?? 'rapido'}`)}
-              style={{ flex: 1, padding: '13px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-            >
-              <RotateCcw size={15} />
-              Repetir
-            </button>
-
-            <button
               onClick={compartir}
               style={{ flex: 1, padding: '13px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#374151' }}
             >
@@ -331,7 +323,7 @@ export default function ResultadoTestPage() {
 
       </div>
 
-      <FooterNavegacion usuario={usuario} oposicionId={oposicionId} />
+      <FooterNavegacion usuario={usuario} oposicionId={oposicionId} activo="practicar" />
     </div>
   );
 }
