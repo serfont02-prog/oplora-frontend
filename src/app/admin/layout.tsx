@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FileText, Users, BarChart2, BookOpen, Home, ChevronRight, LogOut, Newspaper, Settings,Layers, BookMarked, LifeBuoy  } from 'lucide-react';
+import { FileText, Users, BarChart2, BookOpen, Home, ChevronRight, LogOut, Newspaper, Settings,Layers, BookMarked, LifeBuoy, Brain  } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', label: 'Inicio', icon: Home, exact: true },
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/admin/estadisticas', label: 'Estadísticas', icon: BarChart2 },
   { href: '/admin/boe', label: 'BOE', icon: Newspaper },
   { href: '/admin/flashcards', label: 'Flashcards', icon: Layers },
+  { href: '/admin/psicotecnicos', label: 'Psicotécnicos', icon: Brain },
   { href: '/admin/apuntes', label: 'Apuntes OPLORA', icon: BookMarked },
   { href: '/admin/configuracion', label: 'Configuración', icon: Settings },
 ];

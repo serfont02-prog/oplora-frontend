@@ -194,7 +194,7 @@ if (estado === 'activo') {
     { title: 'Hacer test', modo: 'test' },
     { title: 'Flashcards del día', modo: 'flashcards' },
   );
-  if (nivel >= 2) acciones.push({ title: 'Repaso inteligente', modo: 'repaso' });
+  acciones.push({ title: 'Repaso inteligente', modo: 'repaso' });
   acciones.push({ title: 'Simulacro real', modo: 'simulacro' });
 }
 
@@ -259,6 +259,7 @@ const handleClick = (modo: string) => {
             const colorAct = COLOR_ACTIVIDAD[a.modo] ?? COLOR_ACTIVIDAD.rapido;
             const Icono = cfg.icon;
             const bloqueado = (a.modo === 'simulacro' && !limites?.limites?.simulacros) ||
+              (a.modo === 'repaso' && nivel < 2) ||
               (limitadoPorDia && a.modo !== 'flashcards' && a.modo !== 'primer_reto');
 
             return (
@@ -303,6 +304,7 @@ const handleClick = (modo: string) => {
                   </div>
                   <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '1px' }}>
                     {bloqueado && a.modo === 'simulacro' ? 'Requiere suscripción' :
+                     bloqueado && a.modo === 'repaso' ? 'Desbloquéalo al alcanzar el Nivel 2' :
                      bloqueado ? 'Límite diario alcanzado' :
                      cfg.descripcion}
                   </div>

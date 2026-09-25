@@ -43,6 +43,7 @@ export default function PreguntaTest({
   dejarEnBlanco,
 }: Props) {
   const pregunta = preguntas[preguntaActual];
+  const [mostrarConfirmSalir, setMostrarConfirmSalir] = useState(false);
 
 const tiempoTotal = tiempoPorPregunta === '30s' ? 30 : tiempoPorPregunta === '60s' ? 60 : null;
 const [tiempoRestante, setTiempoRestante] = useState<number | null>(tiempoTotal);
@@ -143,16 +144,49 @@ useEffect(() => {
           </div>
         </div>
         <button
-          onClick={() => {
-            if (confirm('¿Seguro que quieres salir? Perderás el progreso del test.')) {
-              window.history.back();
-            }
-          }}
+          onClick={() => setMostrarConfirmSalir(true)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', flexShrink: 0 }}
         >
           <X size={18} />
         </button>
       </div>
+
+      {/* Modal de confirmación al salir del test */}
+      {mostrarConfirmSalir && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
+          <div style={{ background: '#fff', borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '400px', boxShadow: '0 -4px 20px rgba(0,0,0,0.15)' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>
+              ¿Seguro que quieres salir?
+            </div>
+            <div style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.5, marginBottom: '20px' }}>
+              Perderás el progreso del test.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                onClick={() => setMostrarConfirmSalir(false)}
+                style={{
+                  width: '100%', height: '48px', borderRadius: '14px', border: 'none',
+                  background: '#111827', color: 'white', fontSize: '14px', fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Seguir con el test
+              </button>
+              <button
+                onClick={() => window.history.back()}
+                style={{
+                  width: '100%', height: '48px', borderRadius: '14px',
+                  border: '1px solid #e5e7eb', background: 'white',
+                  color: '#6b7280', fontSize: '14px', fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Salir del test
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Temporizador */}
       {tiempoTotal && tiempoRestante !== null && (
