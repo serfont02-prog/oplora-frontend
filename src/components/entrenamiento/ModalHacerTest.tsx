@@ -3,7 +3,7 @@
 import { useState  } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { X, ChevronLeft, Lock } from 'lucide-react';
+import { X, ChevronLeft, Lock, AlertTriangle } from 'lucide-react';
 
 const BG_MODAL_TEST = '#F3FAE9';
 const BORDER = '#E9EAEC';
@@ -74,6 +74,41 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
     enabled: !!oposicion?.id && tipoTest === 'ley',
   });
 
+  // ⭐ Combinación de filtros ya lista para comprobar disponibilidad real de
+  // preguntas (tema(s) elegidos, ley elegida, o test general que no necesita
+  // selección previa). Se comprueba ANTES de dejar avanzar al usuario, para
+  // no permitir configurar/lanzar un test que luego sale vacío.
+  const filtroListoParaComprobar =
+    tipoTest === 'general' ||
+    (tipoTest === 'tema' && temasSeleccionados.length > 0) ||
+    (tipoTest === 'ley' && !!leySeleccionada);
+
+  const { data: disponibilidad, isFetching: comprobandoDisponibilidad } = useQuery({
+    queryKey: [
+      'test-disponibles',
+      oposicion?.id,
+      tipoTest,
+      temasSeleccionados.slice().sort().join(','),
+      leySeleccionada,
+    ],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (tipoTest === 'tema' && temasSeleccionados.length > 0) {
+        params.set('temasIds', temasSeleccionados.join(','));
+      }
+      if (tipoTest === 'ley' && leySeleccionada) {
+        params.set('versionLeyId', leySeleccionada);
+      }
+      const res = await api.get(`/test/disponibles/${oposicion.id}?${params.toString()}`);
+      return res.data as { total: number };
+    },
+    enabled: !!oposicion?.id && filtroListoParaComprobar && (paso === 'seleccion' || paso === 'ajustes'),
+    staleTime: 15000,
+  });
+
+  const sinPreguntasDisponibles =
+    filtroListoParaComprobar && !comprobandoDisponibilidad && !!disponibilidad && disponibilidad.total === 0;
+
   const elegirTipo = (tipo: TipoTest) => {
     setTipoTest(tipo);
     if (tipo === 'general') {
@@ -86,6 +121,9 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
   const continuarASeleccion = () => {
     if (tipoTest === 'tema' && temasSeleccionados.length === 0) return;
     if (tipoTest === 'ley' && !leySeleccionada) return;
+    // ⭐ No dejar pasar de la pantalla de selección si ya sabemos que esa
+    // combinación no tiene ninguna pregunta disponible.
+    if (sinPreguntasDisponibles) return;
     setPaso('ajustes');
   };
 
@@ -233,10 +271,13 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                 );
               })}
             </div>
+            {temasSeleccionados.length > 0 && (
+              <AvisoSinPreguntas comprobando={comprobandoDisponibilidad} sinPreguntas={sinPreguntasDisponibles} />
+            )}
             <button
               onClick={continuarASeleccion}
-              disabled={temasSeleccionados.length === 0}
-              style={{ width: '100%', padding: '13px', background: temasSeleccionados.length > 0 ? '#0f172a' : '#e5e7eb', color: temasSeleccionados.length > 0 ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: temasSeleccionados.length > 0 ? 'pointer' : 'not-allowed' }}
+              disabled={temasSeleccionados.length === 0 || sinPreguntasDisponibles}
+              style={{ width: '100%', padding: '13px', background: temasSeleccionados.length > 0 && !sinPreguntasDisponibles ? '#0f172a' : '#e5e7eb', color: temasSeleccionados.length > 0 && !sinPreguntasDisponibles ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: temasSeleccionados.length > 0 && !sinPreguntasDisponibles ? 'pointer' : 'not-allowed' }}
             >
               Continuar ({temasSeleccionados.length} seleccionados)
             </button>
@@ -309,10 +350,13 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                 );
               })}
             </div>
+            {!!leySeleccionada && (
+              <AvisoSinPreguntas comprobando={comprobandoDisponibilidad} sinPreguntas={sinPreguntasDisponibles} />
+            )}
             <button
               onClick={continuarASeleccion}
-              disabled={!leySeleccionada}
-              style={{ width: '100%', padding: '13px', background: leySeleccionada ? '#0f172a' : '#e5e7eb', color: leySeleccionada ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: leySeleccionada ? 'pointer' : 'not-allowed' }}
+              disabled={!leySeleccionada || sinPreguntasDisponibles}
+              style={{ width: '100%', padding: '13px', background: leySeleccionada && !sinPreguntasDisponibles ? '#0f172a' : '#e5e7eb', color: leySeleccionada && !sinPreguntasDisponibles ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: leySeleccionada && !sinPreguntasDisponibles ? 'pointer' : 'not-allowed' }}
             >
               Continuar
             </button>
@@ -322,6 +366,8 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
         {/* PASO 3 — Ajustes generales (común a los 3 tipos) */}
         {paso === 'ajustes' && (
           <>
+
+<AvisoSinPreguntas comprobando={comprobandoDisponibilidad} sinPreguntas={sinPreguntasDisponibles} />
 
 {tipoTest === 'tema' && temasSeleccionados.length > 1 && (
   <div style={{ marginBottom: '12px', padding: '10px 12px', background: 'white', borderRadius: '10px', fontSize: '11px', color: TEXT_MUTED }}>
@@ -482,13 +528,13 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
 
             <button
             onClick={empezarTest}
-            disabled={numeroInvalido || numPreguntas < 1}
+            disabled={numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles}
             style={{
                 width: '100%', padding: '13px',
-                background: (numeroInvalido || numPreguntas < 1) ? '#e5e7eb' : '#0f172a',
-                color: (numeroInvalido || numPreguntas < 1) ? '#9ca3af' : 'white',
+                background: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles) ? '#e5e7eb' : '#0f172a',
+                color: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles) ? '#9ca3af' : 'white',
                 border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                cursor: (numeroInvalido || numPreguntas < 1) ? 'not-allowed' : 'pointer',
+                cursor: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles) ? 'not-allowed' : 'pointer',
             }}
             >
             Empezar test ({numPreguntas} preguntas)
@@ -496,6 +542,35 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
           </>
         )}
 
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ⭐ Aviso "informativo" (estilo Oplora, no un alert() del navegador) que se
+ * muestra cuando la combinación elegida (tema/ley/bloque/general) no tiene
+ * ninguna pregunta cargada todavía. Impide avanzar en vez de dejar que el
+ * usuario configure y lance un test que luego sale vacío.
+ */
+function AvisoSinPreguntas({ comprobando, sinPreguntas }: { comprobando: boolean; sinPreguntas: boolean }) {
+  if (comprobando || !sinPreguntas) return null;
+  return (
+    <div
+      style={{
+        display: 'flex', alignItems: 'flex-start', gap: '10px',
+        padding: '12px 14px', borderRadius: '12px', marginBottom: '14px',
+        background: '#FFF7ED', border: '1px solid #FDBA74',
+      }}
+    >
+      <AlertTriangle size={18} color="#C2410C" style={{ flexShrink: 0, marginTop: '1px' }} />
+      <div>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: '#9A3412' }}>
+          Aún no hay preguntas para esta selección
+        </div>
+        <div style={{ fontSize: '12px', color: '#C2410C', marginTop: '2px', lineHeight: 1.4 }}>
+          OPLORA todavía no tiene preguntas cargadas para lo que has elegido. Prueba con otro tema, ley o bloque.
+        </div>
       </div>
     </div>
   );

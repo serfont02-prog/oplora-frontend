@@ -236,30 +236,59 @@ export default function TestPage({ params }: TestPageProps) {
   if (isLoading || !usuario) return <CargandoTest total={numPreguntas} />;
 
   if (preguntas.length === 0) {
+    // ⭐ Distinguimos dos casos: (1) esta selección concreta (tema/ley/
+    // varios temas) no tiene preguntas, aunque el resto del banco sí las
+    // tenga — mensaje corto, sin dar a entender que falta TODO el banco; y
+    // (2) el banco global está vacío (test general sin nada cargado) —
+    // mensaje con los pasos para cargarlo. La pantalla de selección de test
+    // ya avisa antes de llegar aquí, así que este es solo un respaldo si se
+    // entra directamente por URL o desde un enlace desactualizado.
+    const esSeleccionConcreta = temasIds.length > 0 || !!versionLeyId;
+
     return (
       <main className="op-app-surface" style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center' }}>
-        <EmptyState
-          icon={<Database size={28} />}
-          eyebrow="Practicar"
-          title="Aun no hay preguntas para entrenar"
-          description="OPLORA necesita un banco de preguntas para preparar tu primer reto. Cuando esten cargadas, este entrenamiento empezara directamente."
-          details={[
-            <EmptyStep key="admin" icon={<ClipboardList size={20} />} text="Carga preguntas desde el panel de administracion." />,
-            <EmptyStep key="temas" icon={<BookOpen size={20} />} text="Vinculalas a temas o articulos de la oposicion." />,
-            <EmptyStep key="test" icon={<Sparkles size={20} />} text="Vuelve aqui y OPLORA creara el test automaticamente." />,
-          ]}
-          actions={
-            <Button
-              variant="primary"
-              size="lg"
-              iconBefore={<Home size={18} />}
-              style={{ width: '100%' }}
-              onClick={() => router.push('/app/dashboard')}
-            >
-              Volver al inicio
-            </Button>
-          }
-        />
+        {esSeleccionConcreta ? (
+          <EmptyState
+            icon={<Database size={28} />}
+            eyebrow="Practicar"
+            title="Sin preguntas para esta selección"
+            description="Todavía no hay preguntas cargadas para el tema o la ley que has elegido. Prueba con otra selección mientras se completa el banco."
+            actions={
+              <Button
+                variant="primary"
+                size="lg"
+                iconBefore={<Home size={18} />}
+                style={{ width: '100%' }}
+                onClick={() => router.back()}
+              >
+                Elegir otra opción
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={<Database size={28} />}
+            eyebrow="Practicar"
+            title="Aun no hay preguntas para entrenar"
+            description="OPLORA necesita un banco de preguntas para preparar tu primer reto. Cuando esten cargadas, este entrenamiento empezara directamente."
+            details={[
+              <EmptyStep key="admin" icon={<ClipboardList size={20} />} text="Carga preguntas desde el panel de administracion." />,
+              <EmptyStep key="temas" icon={<BookOpen size={20} />} text="Vinculalas a temas o articulos de la oposicion." />,
+              <EmptyStep key="test" icon={<Sparkles size={20} />} text="Vuelve aqui y OPLORA creara el test automaticamente." />,
+            ]}
+            actions={
+              <Button
+                variant="primary"
+                size="lg"
+                iconBefore={<Home size={18} />}
+                style={{ width: '100%' }}
+                onClick={() => router.push('/app/dashboard')}
+              >
+                Volver al inicio
+              </Button>
+            }
+          />
+        )}
       </main>
     );
   }
