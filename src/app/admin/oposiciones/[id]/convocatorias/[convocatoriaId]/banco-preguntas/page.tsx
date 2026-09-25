@@ -104,7 +104,7 @@ export default function BancoPreguntasPage() {
             <TabBancoPorLey oposicionId={oposicionId} />
           )}
           {tab === 'gestionar' && (
-            <TabGestionarPreguntas convocatoriaId={convocatoriaId} />
+            <TabGestionarPreguntas convocatoriaId={convocatoriaId} oposicionId={oposicionId} />
           )}
         </div>
       </div>
@@ -632,7 +632,7 @@ function ImportarPreguntasJson({
   titulo: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [modoEntrada, setModoEntrada] = useState<'archivo' | 'texto'>('archivo');
+  const [modoEntrada, setModoEntrada] = useState<'archivo' | 'texto' | 'manual'>('archivo');
   const [archivo, setArchivo] = useState<File | null>(null);
   const [jsonTexto, setJsonTexto] = useState('');
   const [preview, setPreview] = useState<any[]>([]);
@@ -640,6 +640,54 @@ function ImportarPreguntasJson({
   const [importando, setImportando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [erroresValidacion, setErroresValidacion] = useState<string[]>([]);
+
+  // ⭐ Modo manual: añadir preguntas una a una desde un formulario, sin
+  // tener que preparar un JSON. Útil sobre todo para preguntas de examen,
+  // que no siempre llegan ya formateadas.
+  const valorInicialManual = {
+    campo: '',
+    enunciado: '',
+    opciones: ['', '', '', ''],
+    correcta: 0,
+    explicacion: '',
+    dificultad: 1,
+  };
+  const [manual, setManual] = useState(valorInicialManual);
+  const [manualAgregadas, setManualAgregadas] = useState(0);
+  const [errorManual, setErrorManual] = useState<string | null>(null);
+
+  const agregarManual = async () => {
+    setErrorManual(null);
+    const opcionesLimpias = manual.opciones.map((o) => o.trim()).filter((o) => o.length > 0);
+    const item = {
+      [campoIdentificador]: /^\d+$/.test(manual.campo.trim()) ? Number(manual.campo.trim()) : manual.campo.trim(),
+      enunciado: manual.enunciado.trim(),
+      opciones: opcionesLimpias,
+      correcta: manual.correcta,
+      explicacion: manual.explicacion.trim() || undefined,
+      dificultad: manual.dificultad,
+      origen: 'convocatoria',
+    };
+    const errores = validarLote([item]);
+    if (errores.length > 0) {
+      setErrorManual(errores[0]);
+      return;
+    }
+    setImportando(true);
+    try {
+      const res = await api.post(endpoint, { preguntas: [item], ...extraBody });
+      if (res.data?.errores?.length > 0) {
+        setErrorManual(res.data.errores[0]);
+      } else {
+        setManualAgregadas((n) => n + 1);
+        setManual({ ...valorInicialManual, campo: manual.campo }); // conserva el tema/artículo para añadir varias seguidas
+      }
+    } catch {
+      setErrorManual('Error al guardar la pregunta. Inténtalo de nuevo.');
+    } finally {
+      setImportando(false);
+    }
+  };
 
   // ⭐ Validación local antes de subir nada al servidor: detecta JSON mal
   // formado (opciones distintas de 3/4, índice "correcta" fuera de rango,
@@ -762,7 +810,7 @@ function ImportarPreguntasJson({
       {/* Selector Archivo / Pegar texto */}
       <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1.25rem' }}>
         <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
-          {(['archivo', 'texto'] as const).map((m) => (
+          {(['archivo', 'texto', 'manual'] as const).map((m) => (
             <button
               key={m}
               onClick={() => {
@@ -772,6 +820,7 @@ function ImportarPreguntasJson({
                 setPreview([]);
                 setErroresValidacion([]);
                 setError(null);
+                setErrorManual(null);
                 setResultado(null);
               }}
               style={{
@@ -782,12 +831,105 @@ function ImportarPreguntasJson({
                 cursor: 'pointer',
               }}
             >
-              {m === 'archivo' ? 'Subir archivo' : 'Pegar texto'}
+              {m === 'archivo' ? 'Subir archivo' : m === 'texto' ? 'Pegar texto' : 'Añadir manualmente'}
             </button>
           ))}
         </div>
 
-        {modoEntrada === 'archivo' ? (
+        {modoEntrada === 'manual' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                {etiquetaCampo} *
+              </label>
+              <input
+                type="text"
+                value={manual.campo}
+                onChange={(e) => setManual({ ...manual, campo: e.target.value })}
+                placeholder={String(formatoEjemplo[campoIdentificador] ?? '')}
+                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Enunciado *</label>
+              <textarea
+                value={manual.enunciado}
+                onChange={(e) => setManual({ ...manual, enunciado: e.target.value })}
+                rows={3}
+                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                Opciones * <span style={{ fontWeight: 400, color: '#9ca3af' }}>(deja vacía la 4ª si solo hay 3)</span>
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {manual.opciones.map((op, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="radio"
+                      name="correcta-manual"
+                      checked={manual.correcta === i}
+                      onChange={() => setManual({ ...manual, correcta: i })}
+                      title="Marcar como correcta"
+                    />
+                    <input
+                      type="text"
+                      value={op}
+                      onChange={(e) => {
+                        const nuevas = [...manual.opciones];
+                        nuevas[i] = e.target.value;
+                        setManual({ ...manual, opciones: nuevas });
+                      }}
+                      placeholder={`Opción ${String.fromCharCode(97 + i)})`}
+                      style={{ flex: 1, padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+                Explicación <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opcional)</span>
+              </label>
+              <textarea
+                value={manual.explicacion}
+                onChange={(e) => setManual({ ...manual, explicacion: e.target.value })}
+                rows={2}
+                style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+              />
+            </div>
+
+            {errorManual && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px' }}>
+                <AlertCircle size={14} color="#dc2626" />
+                <span style={{ fontSize: '12px', color: '#dc2626' }}>{errorManual}</span>
+              </div>
+            )}
+
+            {manualAgregadas > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
+                <CheckCircle size={14} color="#15803d" />
+                <span style={{ fontSize: '12px', color: '#15803d' }}>
+                  {manualAgregadas} pregunta{manualAgregadas === 1 ? '' : 's'} añadida{manualAgregadas === 1 ? '' : 's'} en esta sesión
+                </span>
+              </div>
+            )}
+
+            <button
+              onClick={agregarManual}
+              disabled={importando || !manual.campo.trim() || !manual.enunciado.trim()}
+              style={{
+                padding: '11px', background: '#111827', color: 'white', border: 'none', borderRadius: '9px',
+                fontSize: '13px', fontWeight: 500,
+                cursor: (importando || !manual.campo.trim() || !manual.enunciado.trim()) ? 'not-allowed' : 'pointer',
+                opacity: (importando || !manual.campo.trim() || !manual.enunciado.trim()) ? 0.4 : 1,
+              }}
+            >
+              {importando ? 'Guardando...' : '+ Añadir pregunta'}
+            </button>
+          </div>
+        ) : modoEntrada === 'archivo' ? (
           <>
             <div
               onClick={() => fileRef.current?.click()}
@@ -921,7 +1063,44 @@ function ImportarPreguntasJson({
 // Pensado para cuando una convocatoria nueva cambia el contenido de
 // un tema y no hace falta borrar todo el banco, solo lo afectado.
 // ════════════════════════════════════════════════════════════
-function TabGestionarPreguntas({ convocatoriaId }: { convocatoriaId: string }) {
+function TabGestionarPreguntas({ convocatoriaId, oposicionId }: { convocatoriaId: string; oposicionId: string }) {
+  const [modo, setModo] = useState<'tema' | 'ley' | 'examen'>('tema');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        {([
+          { key: 'tema', label: 'Por tema' },
+          { key: 'ley', label: 'Por ley' },
+          { key: 'examen', label: 'Por examen' },
+        ] as const).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setModo(key)}
+            style={{
+              padding: '7px 14px', fontSize: '12px', fontWeight: 500, borderRadius: '999px',
+              border: modo === key ? 'none' : '1px solid #e5e7eb',
+              background: modo === key ? '#111827' : 'white',
+              color: modo === key ? 'white' : '#6b7280',
+              cursor: 'pointer',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {modo === 'tema' && <TabGestionarPorTema convocatoriaId={convocatoriaId} />}
+      {modo === 'ley' && <TabGestionarPorLeySelector oposicionId={oposicionId} />}
+      {modo === 'examen' && <TabGestionarPorExamen convocatoriaId={convocatoriaId} />}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// Gestionar preguntas — por Tema
+// ════════════════════════════════════════════════════════════
+function TabGestionarPorTema({ convocatoriaId }: { convocatoriaId: string }) {
   const queryClient = useQueryClient();
   const [temaFiltro, setTemaFiltro] = useState('');
   const [pagina, setPagina] = useState(1);
@@ -1076,6 +1255,224 @@ function TabGestionarPreguntas({ convocatoriaId }: { convocatoriaId: string }) {
           onGuardado={() => {
             setPreguntaEditando(null);
             queryClient.invalidateQueries({ queryKey: ['banco-preguntas', convocatoriaId] });
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// Gestionar preguntas — por Ley (selector de ley + reutiliza
+// TabGestionarPreguntasLey, ya existente para el banco por artículo)
+// ════════════════════════════════════════════════════════════
+function TabGestionarPorLeySelector({ oposicionId }: { oposicionId: string }) {
+  const [versionSeleccionada, setVersionSeleccionada] = useState('');
+
+  const { data: vinculos = [], isLoading } = useQuery({
+    queryKey: ['leyes-oposicion', oposicionId],
+    queryFn: async () => {
+      const res = await api.get(`/leyes/oposicion/${oposicionId}`);
+      return res.data;
+    },
+  });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {isLoading ? (
+        <div style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando leyes vinculadas...</div>
+      ) : vinculos.length === 0 ? (
+        <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+          Esta oposición no tiene leyes vinculadas todavía. Vincúlalas desde el admin de Leyes.
+        </div>
+      ) : (
+        <select
+          value={versionSeleccionada}
+          onChange={(e) => setVersionSeleccionada(e.target.value)}
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+        >
+          <option value="">Selecciona una ley...</option>
+          {vinculos.map((v: any) => (
+            <option key={v.id} value={v.versionLey?.id}>
+              {v.ley?.nombre} — v{v.versionLey?.version}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {versionSeleccionada && (
+        <TabGestionarPreguntasLey key={versionSeleccionada} versionLeyId={versionSeleccionada} />
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// Gestionar preguntas — por Examen (selector de examen + lista
+// filtrada por examenAnteriorId)
+// ════════════════════════════════════════════════════════════
+function TabGestionarPorExamen({ convocatoriaId }: { convocatoriaId: string }) {
+  const queryClient = useQueryClient();
+  const [examenFiltro, setExamenFiltro] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [preguntaEditando, setPreguntaEditando] = useState<any>(null);
+  const porPagina = 20;
+
+  const { data: examenes = [] } = useQuery({
+    queryKey: ['examenes-admin', convocatoriaId],
+    queryFn: async () => {
+      const res = await api.get(`/temas/examenes/convocatoria/${convocatoriaId}`);
+      return res.data;
+    },
+  });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['banco-preguntas-examen', convocatoriaId, examenFiltro, pagina],
+    queryFn: async () => {
+      const res = await api.get(`/test/banco/${convocatoriaId}`, {
+        params: { examenAnteriorId: examenFiltro || undefined, pagina, porPagina },
+      });
+      return res.data;
+    },
+    enabled: !!examenFiltro,
+  });
+
+  const eliminar = useMutation({
+    mutationFn: async (preguntaId: string) => {
+      await api.delete(`/test/banco/${preguntaId}`);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['banco-preguntas-examen', convocatoriaId] }),
+  });
+
+  const toggleActiva = useMutation({
+    mutationFn: async ({ id, activa }: { id: string; activa: boolean }) => {
+      await api.patch(`/test/banco/${id}`, { activa });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['banco-preguntas-examen', convocatoriaId] }),
+  });
+
+  const preguntas = data?.preguntas ?? [];
+  const totalPaginas = data?.totalPaginas ?? 1;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <select
+          value={examenFiltro}
+          onChange={(e) => { setExamenFiltro(e.target.value); setPagina(1); }}
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+        >
+          <option value="">Selecciona un examen...</option>
+          {examenes.map((ex: any) => (
+            <option key={ex.id} value={ex.id}>{ex.nombre ?? `Examen ${ex.anyo}`}</option>
+          ))}
+        </select>
+        {examenFiltro && (
+          <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+            {data ? `${data.total} pregunta${data.total === 1 ? '' : 's'}` : ''}
+          </div>
+        )}
+      </div>
+
+      {!examenFiltro ? (
+        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+          Selecciona un examen para ver sus preguntas.
+        </div>
+      ) : isLoading ? (
+        <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', padding: '2rem' }}>Cargando...</div>
+      ) : preguntas.length === 0 ? (
+        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+          No hay preguntas para este examen.
+        </div>
+      ) : (
+        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+          {preguntas.map((p: any, i: number) => (
+            <div
+              key={p.id}
+              style={{
+                display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px',
+                borderBottom: i < preguntas.length - 1 ? '1px solid #f3f4f6' : 'none',
+                opacity: p.activa === false ? 0.5 : 1,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                  {(p.temas ?? []).map((t: any) => (
+                    <span key={t.id} style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#eff6ff', color: '#1F7CFF', fontWeight: 500 }}>
+                      Tema {t.numero}
+                    </span>
+                  ))}
+                  {(p.articulos ?? []).map((a: any) => (
+                    <span key={a.id} style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#f0fdf4', color: '#15803d', fontWeight: 500 }}>
+                      Art. {a.numero}
+                    </span>
+                  ))}
+                  {p.activa === false && (
+                    <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#f3f4f6', color: '#6b7280', fontWeight: 500 }}>
+                      Desactivada
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '13px', color: '#111827' }}>{p.enunciado}</div>
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '3px' }}>
+                  {p.opciones?.length} opciones · correcta: {p.opciones?.[p.correcta]?.slice(0, 40)}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                <button
+                  onClick={() => setPreguntaEditando(p)}
+                  title="Editar"
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#374151' }}
+                >
+                  <Pencil size={13} />
+                </button>
+                <button
+                  onClick={() => toggleActiva.mutate({ id: p.id, activa: p.activa === false })}
+                  title={p.activa === false ? 'Activar' : 'Desactivar'}
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#374151' }}
+                >
+                  {p.activa === false ? <Eye size={13} /> : <EyeOff size={13} />}
+                </button>
+                <button
+                  onClick={() => { if (confirm('¿Eliminar esta pregunta definitivamente?')) eliminar.mutate(p.id); }}
+                  title="Eliminar"
+                  style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fee2e2', borderRadius: '7px', background: 'white', cursor: 'pointer', color: '#dc2626' }}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPaginas > 1 && (
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+          <button
+            onClick={() => setPagina((p) => Math.max(1, p - 1))}
+            disabled={pagina <= 1}
+            style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white', cursor: pagina <= 1 ? 'not-allowed' : 'pointer', opacity: pagina <= 1 ? 0.4 : 1 }}
+          >
+            Anterior
+          </button>
+          <span style={{ fontSize: '12px', color: '#6b7280' }}>{pagina} / {totalPaginas}</span>
+          <button
+            onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+            disabled={pagina >= totalPaginas}
+            style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white', cursor: pagina >= totalPaginas ? 'not-allowed' : 'pointer', opacity: pagina >= totalPaginas ? 0.4 : 1 }}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+
+      {preguntaEditando && (
+        <ModalEditarPregunta
+          pregunta={preguntaEditando}
+          onClose={() => setPreguntaEditando(null)}
+          onGuardado={() => {
+            setPreguntaEditando(null);
+            queryClient.invalidateQueries({ queryKey: ['banco-preguntas-examen', convocatoriaId] });
           }}
         />
       )}
