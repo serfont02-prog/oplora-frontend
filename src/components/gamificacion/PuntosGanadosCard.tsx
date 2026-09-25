@@ -17,19 +17,19 @@ function fraseOplo(g: GamificacionInfo, porcentaje?: number): string {
   if (g.subioNivel) {
     return `¡Has subido a ${g.badgeNivel ? g.badgeNivel + ' ' : ''}${g.nombreNivel}! Sigue así, vas a por la plaza.`;
   }
-  if (porcentaje === undefined) return 'Puntos sumados a tu progreso. Cada test cuenta.';
-  if (porcentaje >= 80) return '¡Menuda puntería! Así se prepara una plaza.';
-  if (porcentaje >= 60) return 'Buen ritmo. Sigue sumando puntos cada día.';
-  return 'Puntos en el bolsillo. Repasa lo fallado y a por el siguiente.';
+  if (porcentaje === undefined) return 'Puntos sumados a tu progreso.';
+  if (porcentaje >= 80) return '¡Menuda puntería!';
+  if (porcentaje >= 60) return 'Buen ritmo, sigue así.';
+  return 'Repasa lo fallado y a por el siguiente.';
 }
 
-const DURACION_VISIBLE_MS = 3600;
-const DURACION_FADE_MS = 420;
+const DURACION_VISIBLE_MS = 3200;
+const DURACION_FADE_MS = 400;
 
 /**
- * Notificación flotante (emergente) que se superpone a la pantalla, no forma
- * parte del flujo del contenido. Aparece arriba, se mantiene unos segundos
- * y se difumina sola. No requiere ninguna interacción del usuario.
+ * Notificación flotante (emergente) que aparece centrada en la pantalla,
+ * como una píldora/botón compacto — no ocupa el ancho completo ni forma
+ * parte del flujo del contenido. Se muestra unos segundos y se difumina sola.
  */
 export function PuntosGanadosCard({
   gamificacion,
@@ -47,7 +47,7 @@ export function PuntosGanadosCard({
     if (!tienePuntos) return;
     setFase('entrando');
     const total = gamificacion!.puntosGanados;
-    const duracionContador = 550;
+    const duracionContador = 500;
     const inicio = performance.now();
     let raf = 0;
     const tick = (ahora: number) => {
@@ -77,129 +77,123 @@ export function PuntosGanadosCard({
 
   return (
     <div className={`puntos-overlay puntos-overlay--${fase}`}>
-      <div className={`puntos-toast ${conNivel ? 'puntos-toast--nivel' : ''}`} role="status" aria-live="polite">
-        <div className="puntos-toast__oplo-wrap">
+      <div className={`puntos-pill ${conNivel ? 'puntos-pill--nivel' : ''}`} role="status" aria-live="polite">
+        <div className="puntos-pill__oplo-wrap">
           <img
             src={getOploUrl(gamificacion!.nivelNuevo)}
             alt="OPLO"
-            className="puntos-toast__oplo-img"
+            className="puntos-pill__oplo-img"
           />
         </div>
 
-        <div className="puntos-toast__contenido">
-          <div className="puntos-toast__linea-puntos">
-            <span className="puntos-toast__mas">+</span>
-            <span className="puntos-toast__num">{contador}</span>
-            <span className="puntos-toast__label">puntos</span>
-            {conNivel && (
-              <span className="puntos-toast__nivel-badge">
-                {gamificacion!.badgeNivel} {gamificacion!.nombreNivel}
-              </span>
-            )}
+        <div className="puntos-pill__contenido">
+          <div className="puntos-pill__linea-puntos">
+            <span className="puntos-pill__mas">+</span>
+            <span className="puntos-pill__num">{contador}</span>
           </div>
-          <div className="puntos-toast__frase">{frase}</div>
+          {conNivel ? (
+            <div className="puntos-pill__nivel-badge">
+              {gamificacion!.badgeNivel} {gamificacion!.nombreNivel}
+            </div>
+          ) : (
+            <div className="puntos-pill__frase">{frase}</div>
+          )}
         </div>
       </div>
 
       <style jsx>{`
         .puntos-overlay {
           position: fixed;
-          top: max(14px, env(safe-area-inset-top));
-          left: 0;
-          right: 0;
-          display: flex;
-          justify-content: center;
-          padding: 0 16px;
-          z-index: 200;
-          pointer-events: none;
-        }
-
-        .puntos-toast {
-          pointer-events: none;
+          inset: 0;
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 12px 16px;
-          border-radius: 14px;
-          background: rgba(15, 23, 42, 0.92);
-          backdrop-filter: blur(8px);
-          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
-          max-width: 420px;
-          width: 100%;
-          opacity: 0;
-          transform: translateY(-14px);
-          transition: opacity ${DURACION_FADE_MS}ms ease, transform ${DURACION_FADE_MS}ms ease;
-        }
-        .puntos-toast--nivel {
-          background: rgba(120, 53, 15, 0.94);
-        }
-        .puntos-overlay--visible .puntos-toast {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        .puntos-overlay--saliendo .puntos-toast {
-          opacity: 0;
-          transform: translateY(-10px);
+          justify-content: center;
+          z-index: 200;
+          pointer-events: none;
+          padding: 0 24px;
         }
 
-        .puntos-toast__oplo-wrap {
+        .puntos-pill {
+          pointer-events: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 18px 10px 10px;
+          border-radius: 999px;
+          background: rgba(15, 23, 42, 0.94);
+          backdrop-filter: blur(8px);
+          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.3);
+          max-width: 280px;
+          opacity: 0;
+          transform: scale(0.85);
+          transition: opacity ${DURACION_FADE_MS}ms ease, transform ${DURACION_FADE_MS}ms ease;
+        }
+        .puntos-pill--nivel {
+          background: rgba(120, 53, 15, 0.95);
+        }
+        .puntos-overlay--visible .puntos-pill {
+          opacity: 1;
+          transform: scale(1);
+        }
+        .puntos-overlay--saliendo .puntos-pill {
+          opacity: 0;
+          transform: scale(0.92);
+        }
+
+        .puntos-pill__oplo-wrap {
           flex-shrink: 0;
-          width: 38px;
-          height: 38px;
+          width: 34px;
+          height: 34px;
           border-radius: 50%;
           overflow: hidden;
           background: white;
           border: 2px solid white;
         }
-        .puntos-toast__oplo-img {
+        .puntos-pill__oplo-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
         }
 
-        .puntos-toast__contenido {
-          flex: 1;
+        .puntos-pill__contenido {
           min-width: 0;
         }
-        .puntos-toast__linea-puntos {
+        .puntos-pill__linea-puntos {
           display: flex;
           align-items: baseline;
-          gap: 3px;
-          flex-wrap: wrap;
+          gap: 2px;
+          line-height: 1;
         }
-        .puntos-toast__mas {
+        .puntos-pill__mas {
           font-size: 13px;
           font-weight: 800;
           color: #7dd3fc;
         }
-        .puntos-toast__num {
-          font-size: 16px;
+        .puntos-pill__num {
+          font-size: 17px;
           font-weight: 800;
           color: white;
         }
-        .puntos-toast__label {
-          font-size: 11px;
-          font-weight: 600;
-          color: #cbd5e1;
-          margin-right: 6px;
-        }
-        .puntos-toast--nivel .puntos-toast__mas {
+        .puntos-pill--nivel .puntos-pill__mas {
           color: #fde68a;
         }
-        .puntos-toast__nivel-badge {
+        .puntos-pill__nivel-badge {
+          margin-top: 2px;
           font-size: 10.5px;
           font-weight: 700;
-          color: #78350f;
-          background: #fde68a;
-          padding: 2px 8px;
-          border-radius: 999px;
+          color: #fde68a;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
-        .puntos-toast__frase {
-          margin-top: 2px;
-          font-size: 12px;
-          color: #e2e8f0;
-          line-height: 1.4;
+        .puntos-pill__frase {
+          margin-top: 1px;
+          font-size: 10.5px;
+          color: #cbd5e1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       `}</style>
     </div>
