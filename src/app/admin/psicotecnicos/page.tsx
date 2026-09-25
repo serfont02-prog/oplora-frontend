@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, X, CheckCircle, AlertCircle, FileText, Upload } from 'lucide-react';
 
 const DIFICULTADES = ['facil', 'medio', 'dificil', 'experto'];
 
@@ -73,6 +73,7 @@ function BancoPreguntas({ tipo, subtiposSugeridos }: { tipo: string; subtiposSug
   const [dificultadFiltro, setDificultadFiltro] = useState('');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [preguntaEditando, setPreguntaEditando] = useState<any | null>(null);
+  const [modoAlta, setModoAlta] = useState<'manual' | 'importar'>('manual');
   const limit = 10;
 
   const queryKey = ['psicotecnicos-admin-preguntas', tipo, subtipoFiltro, dificultadFiltro, page];
@@ -134,14 +135,42 @@ function BancoPreguntas({ tipo, subtiposSugeridos }: { tipo: string; subtiposSug
 
         <div style={{ fontSize: '11px', color: '#9ca3af' }}>{total} pregunta{total !== 1 ? 's' : ''}</div>
 
-        <button
-          onClick={() => { setPreguntaEditando(null); setModalAbierto(true); }}
-          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: 'none', background: '#111827', color: 'white' }}
-        >
-          <Plus size={13} />
-          Añadir pregunta
-        </button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', background: '#f3f4f6', borderRadius: '8px', padding: '3px' }}>
+          <button
+            onClick={() => setModoAlta('manual')}
+            style={{ padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, cursor: 'pointer', border: 'none', background: modoAlta === 'manual' ? 'white' : 'transparent', color: modoAlta === 'manual' ? '#111827' : '#6b7280' }}
+          >
+            Manual
+          </button>
+          <button
+            onClick={() => setModoAlta('importar')}
+            style={{ padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, cursor: 'pointer', border: 'none', background: modoAlta === 'importar' ? 'white' : 'transparent', color: modoAlta === 'importar' ? '#111827' : '#6b7280' }}
+          >
+            Importar JSON
+          </button>
+        </div>
+
+        {modoAlta === 'manual' && (
+          <button
+            onClick={() => { setPreguntaEditando(null); setModalAbierto(true); }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: 'none', background: '#111827', color: 'white' }}
+          >
+            <Plus size={13} />
+            Añadir pregunta
+          </button>
+        )}
       </div>
+
+      {modoAlta === 'importar' && (
+        <ImportarJson
+          tipo={tipo}
+          subtiposSugeridos={subtiposSugeridos}
+          onImportado={() => {
+            queryClient.invalidateQueries({ queryKey: ['psicotecnicos-admin-preguntas'] });
+            queryClient.invalidateQueries({ queryKey: ['psicotecnicos-admin-subtipos', tipo] });
+          }}
+        />
+      )}
 
       {isLoading ? (
         <div style={{ fontSize: '12px', color: '#9ca3af' }}>Cargando...</div>
@@ -194,6 +223,197 @@ function BancoPreguntas({ tipo, subtiposSugeridos }: { tipo: string; subtiposSug
             queryClient.invalidateQueries({ queryKey: ['psicotecnicos-admin-subtipos', tipo] });
           }}
         />
+      )}
+    </div>
+  );
+}
+
+function ImportarJson({
+  tipo,
+  subtiposSugeridos,
+  onImportado,
+}: {
+  tipo: string;
+  subtiposSugeridos: string[];
+  onImportado: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [textoJson, setTextoJson] = useState('');
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [preview, setPreview] = useState<any[]>([]);
+  const [resultado, setResultado] = useState<any>(null);
+  const [importando, setImportando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [oposicionId, setOposicionId] = useState('');
+  const [convocatoriaId, setConvocatoriaId] = useState('');
+
+  const { data: oposiciones = [] } = useQuery({
+    queryKey: ['oposiciones-admin'],
+    queryFn: async () => (await api.get('/oposiciones')).data,
+  });
+
+  const { data: convocatorias = [] } = useQuery({
+    queryKey: ['convocatorias-oposicion', oposicionId],
+    queryFn: async () => (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data,
+    enabled: !!oposicionId,
+  });
+
+  const parsearTexto = (texto: string) => {
+    setResultado(null);
+    setError(null);
+    if (!texto.trim()) {
+      setPreview([]);
+      return;
+    }
+    try {
+      const json = JSON.parse(texto);
+      if (!Array.isArray(json)) {
+        setError('El JSON debe ser un array de preguntas');
+        setPreview([]);
+        return;
+      }
+      setPreview(json.slice(0, 3));
+    } catch {
+      setError('El JSON no es válido');
+      setPreview([]);
+    }
+  };
+
+  const handleArchivo = (file: File) => {
+    setArchivo(file);
+    setResultado(null);
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const texto = e.target?.result as string;
+      setTextoJson(texto);
+      parsearTexto(texto);
+    };
+    reader.readAsText(file);
+  };
+
+  const importar = async () => {
+    setImportando(true);
+    setError(null);
+    try {
+      const json = JSON.parse(textoJson);
+      const preguntas = json.map((p: any) => ({ tipo, ...p }));
+      const res = await api.post('/psicotecnicos/admin/preguntas/importar', {
+        oposicionId: oposicionId || undefined,
+        convocatoriaId: convocatoriaId || undefined,
+        preguntas,
+      });
+      setResultado(res.data);
+      setTextoJson('');
+      setArchivo(null);
+      setPreview([]);
+      onImportado();
+    } catch {
+      setError('Error al importar. Revisa el formato del JSON.');
+    } finally {
+      setImportando(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '14px' }}>
+      <div style={{ background: '#f9fafb', borderRadius: '8px', padding: '10px 12px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 600, color: '#111827', marginBottom: '4px' }}>Formato del JSON</div>
+        <pre style={{ fontSize: '10px', color: '#6b7280', margin: 0, overflow: 'auto' }}>
+{JSON.stringify([{ subtipo: subtiposSugeridos?.[0] ?? 'general', dificultad: 'medio', enunciado: '...', imagenUrl: null, opciones: ['A', 'B', 'C', 'D'], correcta: 0, explicacion: '...', tiempoRecomendadoSegundos: 60 }], null, 2)}
+        </pre>
+        {subtiposSugeridos?.length > 0 && (
+          <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '6px' }}>
+            Subtipos sugeridos: {subtiposSugeridos.join(', ')}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '180px' }}>
+          <label style={{ fontSize: '11px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+            Restringir a oposición (opcional, vacío = banco global)
+          </label>
+          <select
+            value={oposicionId}
+            onChange={(e) => { setOposicionId(e.target.value); setConvocatoriaId(''); }}
+            style={{ width: '100%', padding: '7px 10px', borderRadius: '7px', border: '1px solid #e5e7eb', fontSize: '12px', boxSizing: 'border-box' }}
+          >
+            <option value="">Global (todas las oposiciones)</option>
+            {oposiciones.map((op: any) => (
+              <option key={op.id} value={op.id}>{op.nombre}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ flex: 1, minWidth: '180px' }}>
+          <label style={{ fontSize: '11px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+            Restringir a convocatoria (opcional)
+          </label>
+          <select
+            value={convocatoriaId}
+            onChange={(e) => setConvocatoriaId(e.target.value)}
+            disabled={!oposicionId}
+            style={{ width: '100%', padding: '7px 10px', borderRadius: '7px', border: '1px solid #e5e7eb', fontSize: '12px', boxSizing: 'border-box' }}
+          >
+            <option value="">Todas las convocatorias de la oposición</option>
+            {convocatorias.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.anyo ?? c.id}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <textarea
+        value={textoJson}
+        onChange={(e) => { setTextoJson(e.target.value); parsearTexto(e.target.value); }}
+        placeholder={`Pega aquí el JSON de preguntas de ${tipo}, o sube un archivo`}
+        rows={6}
+        style={{ width: '100%', padding: '8px 10px', borderRadius: '7px', border: '1px solid #e5e7eb', fontSize: '11px', fontFamily: 'monospace', boxSizing: 'border-box', resize: 'vertical' }}
+      />
+
+      <div
+        onClick={() => fileRef.current?.click()}
+        style={{ border: '2px dashed #e5e7eb', borderRadius: '10px', padding: '14px', textAlign: 'center', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+      >
+        {archivo ? (
+          <>
+            <FileText size={14} color="#6b7280" />
+            <span style={{ fontSize: '12px', color: '#374151' }}>{archivo.name}</span>
+          </>
+        ) : (
+          <>
+            <Upload size={14} color="#9ca3af" />
+            <span style={{ fontSize: '12px', color: '#9ca3af' }}>O haz clic para subir un archivo .json</span>
+          </>
+        )}
+      </div>
+      <input ref={fileRef} type="file" accept=".json" onChange={(e) => e.target.files?.[0] && handleArchivo(e.target.files[0])} style={{ display: 'none' }} />
+
+      {error && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px' }}>
+          <AlertCircle size={13} color="#dc2626" />
+          <span style={{ fontSize: '12px', color: '#dc2626' }}>{error}</span>
+        </div>
+      )}
+
+      {preview.length > 0 && !resultado && (
+        <button
+          onClick={importar}
+          disabled={importando}
+          style={{ padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
+        >
+          {importando ? 'Importando...' : `Importar ${preview.length >= 3 ? 'preguntas' : preview.length}`}
+        </button>
+      )}
+
+      {resultado && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
+          <CheckCircle size={14} color="#15803d" />
+          <span style={{ fontSize: '12px', color: '#15803d' }}>
+            {resultado.importadas} importadas{resultado.errores?.length > 0 ? `, ${resultado.errores.length} errores` : ''}
+          </span>
+        </div>
       )}
     </div>
   );

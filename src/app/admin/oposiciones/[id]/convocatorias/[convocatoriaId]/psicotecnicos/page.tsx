@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, Upload, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AdminPsicotecnicosConvocatoriaPage() {
   const params = useParams();
@@ -12,8 +12,6 @@ export default function AdminPsicotecnicosConvocatoriaPage() {
   const queryClient = useQueryClient();
   const oposicionId = params.id as string;
   const convocatoriaId = params.convocatoriaId as string;
-
-  const [tipoSeleccionado, setTipoSeleccionado] = useState<string | null>(null);
 
   const { data: catalogo = [] } = useQuery({
     queryKey: ['psicotecnicos-catalogo'],
@@ -97,168 +95,13 @@ export default function AdminPsicotecnicosConvocatoriaPage() {
                     >
                       {habilitado ? 'Activado' : 'Activar'}
                     </button>
-
-                    {habilitado && (
-                      <button
-                        onClick={() => setTipoSeleccionado(tipoSeleccionado === t.tipo ? null : t.tipo)}
-                        style={{ flexShrink: 0, padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: '1px solid #e5e7eb', background: 'white', color: '#374151' }}
-                      >
-                        {tipoSeleccionado === t.tipo ? 'Cerrar' : 'Preguntas'}
-                      </button>
-                    )}
                   </div>
-
-                  {tipoSeleccionado === t.tipo && (
-                    <div style={{ marginTop: '14px', borderTop: '1px solid #f3f4f6', paddingTop: '14px' }}>
-                      <ImportarPreguntasPsicotecnicas
-                        oposicionId={oposicionId}
-                        convocatoriaId={convocatoriaId}
-                        tipo={t.tipo}
-                        subtiposSugeridos={t.subtiposSugeridos}
-                      />
-                    </div>
-                  )}
                 </div>
               );
             })
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function ImportarPreguntasPsicotecnicas({
-  oposicionId,
-  convocatoriaId,
-  tipo,
-  subtiposSugeridos,
-}: {
-  oposicionId: string;
-  convocatoriaId: string;
-  tipo: string;
-  subtiposSugeridos: string[];
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [archivo, setArchivo] = useState<File | null>(null);
-  const [preview, setPreview] = useState<any[]>([]);
-  const [resultado, setResultado] = useState<any>(null);
-  const [importando, setImportando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [soloEstaConvocatoria, setSoloEstaConvocatoria] = useState(false);
-
-  const handleArchivo = (file: File) => {
-    setArchivo(file);
-    setResultado(null);
-    setError(null);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const json = JSON.parse(e.target?.result as string);
-        if (!Array.isArray(json)) {
-          setError('El JSON debe ser un array de preguntas');
-          setPreview([]);
-          return;
-        }
-        setPreview(json.slice(0, 3));
-      } catch {
-        setError('El archivo no es un JSON válido');
-        setPreview([]);
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const importar = async () => {
-    if (!archivo) return;
-    setImportando(true);
-    setError(null);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const json = JSON.parse(e.target?.result as string);
-          const preguntas = json.map((p: any) => ({ tipo, ...p }));
-          const res = await api.post('/psicotecnicos/admin/preguntas/importar', {
-            oposicionId,
-            convocatoriaId: soloEstaConvocatoria ? convocatoriaId : undefined,
-            preguntas,
-          });
-          setResultado(res.data);
-          setArchivo(null);
-          setPreview([]);
-        } catch {
-          setError('Error al importar. Revisa el formato del JSON.');
-        } finally {
-          setImportando(false);
-        }
-      };
-      reader.readAsText(archivo);
-    } catch {
-      setError('Error al leer el archivo');
-      setImportando(false);
-    }
-  };
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <div style={{ background: '#f9fafb', borderRadius: '8px', padding: '10px 12px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#111827', marginBottom: '4px' }}>Formato del JSON</div>
-        <pre style={{ fontSize: '10px', color: '#6b7280', margin: 0, overflow: 'auto' }}>
-{JSON.stringify([{ subtipo: subtiposSugeridos?.[0] ?? 'general', dificultad: 'medio', enunciado: '...', imagenUrl: null, opciones: ['A', 'B', 'C', 'D'], correcta: 0, explicacion: '...', tiempoRecomendadoSegundos: 60 }], null, 2)}
-        </pre>
-        {subtiposSugeridos?.length > 0 && (
-          <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '6px' }}>
-            Subtipos sugeridos: {subtiposSugeridos.join(', ')}
-          </div>
-        )}
-      </div>
-
-      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#6b7280', cursor: 'pointer' }}>
-        <input type="checkbox" checked={soloEstaConvocatoria} onChange={(e) => setSoloEstaConvocatoria(e.target.checked)} />
-        Solo para esta convocatoria (si no, quedan disponibles para toda la oposición)
-      </label>
-
-      <div
-        onClick={() => fileRef.current?.click()}
-        style={{ border: '2px dashed #e5e7eb', borderRadius: '10px', padding: '18px', textAlign: 'center', cursor: 'pointer' }}
-      >
-        {archivo ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <FileText size={14} color="#6b7280" />
-            <span style={{ fontSize: '12px', color: '#374151' }}>{archivo.name}</span>
-          </div>
-        ) : (
-          <div style={{ fontSize: '12px', color: '#9ca3af' }}>Haz clic para subir un JSON de preguntas de {tipo}</div>
-        )}
-      </div>
-      <input ref={fileRef} type="file" accept=".json" onChange={(e) => e.target.files?.[0] && handleArchivo(e.target.files[0])} style={{ display: 'none' }} />
-
-      {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px' }}>
-          <AlertCircle size={13} color="#dc2626" />
-          <span style={{ fontSize: '12px', color: '#dc2626' }}>{error}</span>
-        </div>
-      )}
-
-      {preview.length > 0 && !resultado && (
-        <button
-          onClick={importar}
-          disabled={importando}
-          style={{ padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
-        >
-          {importando ? 'Importando...' : `Importar ${preview.length >= 3 ? 'preguntas' : preview.length}`}
-        </button>
-      )}
-
-      {resultado && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
-          <CheckCircle size={14} color="#15803d" />
-          <span style={{ fontSize: '12px', color: '#15803d' }}>
-            {resultado.importadas} importadas{resultado.errores?.length > 0 ? `, ${resultado.errores.length} errores` : ''}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
