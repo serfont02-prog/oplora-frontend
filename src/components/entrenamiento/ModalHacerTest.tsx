@@ -74,28 +74,15 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
     enabled: !!oposicion?.id && tipoTest === 'ley',
   });
 
-  // ⭐ Combinación de filtros ya lista para comprobar disponibilidad real de
-  // preguntas (tema(s) elegidos, ley elegida, o test general que no necesita
-  // selección previa). Se comprueba ANTES de dejar avanzar al usuario, para
-  // no permitir configurar/lanzar un test que luego sale vacío.
+  // ⭐ Para "ley" y "general" basta con el total combinado (una sola ley
+  // seleccionable a la vez, o ninguna selección previa en el caso general).
   const filtroListoParaComprobar =
-    tipoTest === 'general' ||
-    (tipoTest === 'tema' && temasSeleccionados.length > 0) ||
-    (tipoTest === 'ley' && !!leySeleccionada);
+    tipoTest === 'general' || (tipoTest === 'ley' && !!leySeleccionada);
 
   const { data: disponibilidad, isFetching: comprobandoDisponibilidad } = useQuery({
-    queryKey: [
-      'test-disponibles',
-      oposicion?.id,
-      tipoTest,
-      temasSeleccionados.slice().sort().join(','),
-      leySeleccionada,
-    ],
+    queryKey: ['test-disponibles', oposicion?.id, tipoTest, leySeleccionada],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (tipoTest === 'tema' && temasSeleccionados.length > 0) {
-        params.set('temasIds', temasSeleccionados.join(','));
-      }
       if (tipoTest === 'ley' && leySeleccionada) {
         params.set('versionLeyId', leySeleccionada);
       }
@@ -109,6 +96,32 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
   const sinPreguntasDisponibles =
     filtroListoParaComprobar && !comprobandoDisponibilidad && !!disponibilidad && disponibilidad.total === 0;
 
+  // ⭐ Para "tema" y "bloque" (que reutiliza la lógica de tema) necesitamos
+  // saber CUÁL de los temas elegidos no tiene preguntas, para avisar sin
+  // bloquear el avance si al menos uno de los elegidos sí tiene. Aparece
+  // en la misma pantalla de selección, sin pasar a la siguiente.
+  const temasParaComprobar = tipoTest === 'tema' ? temasSeleccionados : [];
+  const { data: desgloseTemas, isFetching: comprobandoDesglose } = useQuery({
+    queryKey: ['test-disponibles-por-tema', oposicion?.id, temasParaComprobar.slice().sort().join(',')],
+    queryFn: async () => {
+      const res = await api.get(
+        `/test/disponibles-por-tema/${oposicion.id}?temasIds=${temasParaComprobar.join(',')}`,
+      );
+      return res.data as { porTema: Record<string, number>; total: number };
+    },
+    enabled: !!oposicion?.id && temasParaComprobar.length > 0 && (paso === 'seleccion' || paso === 'ajustes'),
+    staleTime: 15000,
+  });
+
+  const temasSinPreguntas = temasSeleccionados.filter(
+    (id) => desgloseTemas?.porTema && desgloseTemas.porTema[id] === 0,
+  );
+  const ningunTemaConPreguntas =
+    temasSeleccionados.length > 0 &&
+    !comprobandoDesglose &&
+    !!desgloseTemas &&
+    temasSinPreguntas.length === temasSeleccionados.length;
+
   const elegirTipo = (tipo: TipoTest) => {
     setTipoTest(tipo);
     if (tipo === 'general') {
@@ -121,9 +134,11 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
   const continuarASeleccion = () => {
     if (tipoTest === 'tema' && temasSeleccionados.length === 0) return;
     if (tipoTest === 'ley' && !leySeleccionada) return;
-    // ⭐ No dejar pasar de la pantalla de selección si ya sabemos que esa
-    // combinación no tiene ninguna pregunta disponible.
-    if (sinPreguntasDisponibles) return;
+    // ⭐ No dejar pasar de la pantalla de selección solo si NINGUNO de los
+    // elegidos tiene preguntas. Si al menos uno sí las tiene, se deja
+    // continuar (el aviso ya avisó de cuáles no).
+    if (tipoTest === 'tema' && ningunTemaConPreguntas) return;
+    if (tipoTest === 'ley' && sinPreguntasDisponibles) return;
     setPaso('ajustes');
   };
 
@@ -235,11 +250,12 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
 
         {/* PASO 2 — Selección de tema(s) */}
 
-        {paso === 'seleccion' && tipoTest === 'tema' && !esBloque && ( 
+        {paso === 'seleccion' && tipoTest === 'tema' && !esBloque && (
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.25rem', maxHeight: '340px', overflowY: 'auto' }}>
               {temas.map((t: any) => {
                 const seleccionado = temasSeleccionados.includes(t.id);
+                const sinPreguntas = seleccionado && temasSinPreguntas.includes(t.id);
                 return (
                   <button
                     key={t.id}
@@ -264,20 +280,32 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                     }}>
                       {seleccionado && <span style={{ color: 'white', fontSize: '11px' }}>✓</span>}
                     </div>
-                    <span style={{ fontSize: '13px', color: TEXT_PRIMARY, fontWeight: 500 }}>
+                    <span style={{ fontSize: '13px', color: TEXT_PRIMARY, fontWeight: 500, flex: 1 }}>
                       T{t.numero} — {t.titulo}
                     </span>
+                    {sinPreguntas && (
+                      <span style={{
+                        fontSize: '10px', fontWeight: 700, color: '#C2410C',
+                        background: '#FFF7ED', border: '1px solid #FDBA74',
+                        borderRadius: '999px', padding: '2px 8px', flexShrink: 0,
+                      }}>
+                        Sin preguntas
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
-            {temasSeleccionados.length > 0 && (
-              <AvisoSinPreguntas comprobando={comprobandoDisponibilidad} sinPreguntas={sinPreguntasDisponibles} />
-            )}
+            <AvisoTemasSinPreguntas
+              temas={temas}
+              temasSeleccionados={temasSeleccionados}
+              temasSinPreguntas={temasSinPreguntas}
+              todosSinPreguntas={ningunTemaConPreguntas}
+            />
             <button
               onClick={continuarASeleccion}
-              disabled={temasSeleccionados.length === 0 || sinPreguntasDisponibles}
-              style={{ width: '100%', padding: '13px', background: temasSeleccionados.length > 0 && !sinPreguntasDisponibles ? '#0f172a' : '#e5e7eb', color: temasSeleccionados.length > 0 && !sinPreguntasDisponibles ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: temasSeleccionados.length > 0 && !sinPreguntasDisponibles ? 'pointer' : 'not-allowed' }}
+              disabled={temasSeleccionados.length === 0 || ningunTemaConPreguntas}
+              style={{ width: '100%', padding: '13px', background: temasSeleccionados.length > 0 && !ningunTemaConPreguntas ? '#0f172a' : '#e5e7eb', color: temasSeleccionados.length > 0 && !ningunTemaConPreguntas ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: temasSeleccionados.length > 0 && !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
             >
               Continuar ({temasSeleccionados.length} seleccionados)
             </button>
@@ -299,7 +327,9 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                         const idsDelBloque = temas.filter((t: any) => t.bloque === b.nombre).map((t: any) => t.id);
                         setTemasSeleccionados(idsDelBloque);
                         setTipoTest('tema'); // ⭐ reutiliza toda la lógica de "tema" a partir de aquí
-                        setPaso('ajustes');
+                        // ⭐ Ya NO saltamos directamente a "ajustes": nos quedamos en
+                        // esta misma pantalla para mostrar el desglose por tema y
+                        // dejar que el usuario confirme con "Continuar".
                       }}
                       style={{
                         display: 'flex', flexDirection: 'column', gap: '2px',
@@ -314,6 +344,26 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                   );
                 })}
               </div>
+              {bloqueSeleccionado && (
+                <>
+                  <AvisoTemasSinPreguntas
+                    temas={temas}
+                    temasSeleccionados={temasSeleccionados}
+                    temasSinPreguntas={temasSinPreguntas}
+                    todosSinPreguntas={ningunTemaConPreguntas}
+                  />
+                  <button
+                    onClick={() => {
+                      if (ningunTemaConPreguntas) return;
+                      setPaso('ajustes');
+                    }}
+                    disabled={ningunTemaConPreguntas}
+                    style={{ width: '100%', padding: '13px', background: !ningunTemaConPreguntas ? '#0f172a' : '#e5e7eb', color: !ningunTemaConPreguntas ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
+                  >
+                    Continuar
+                  </button>
+                </>
+              )}
             </>
           )}
 
@@ -351,7 +401,11 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
               })}
             </div>
             {!!leySeleccionada && (
-              <AvisoSinPreguntas comprobando={comprobandoDisponibilidad} sinPreguntas={sinPreguntasDisponibles} />
+              <AvisoSinPreguntas
+                comprobando={comprobandoDisponibilidad}
+                sinPreguntas={sinPreguntasDisponibles}
+                mensaje={`La ley "${leyes.find((ol: any) => ol.versionLey?.id === leySeleccionada)?.ley?.nombre ?? ''}" que has seleccionado no tiene preguntas todavía. Elige otra ley.`}
+              />
             )}
             <button
               onClick={continuarASeleccion}
@@ -367,7 +421,17 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
         {paso === 'ajustes' && (
           <>
 
-<AvisoSinPreguntas comprobando={comprobandoDisponibilidad} sinPreguntas={sinPreguntasDisponibles} />
+{tipoTest === 'general' && (
+  <AvisoSinPreguntas comprobando={comprobandoDisponibilidad} sinPreguntas={sinPreguntasDisponibles} mensaje="OPLORA todavía no tiene preguntas cargadas para el test general. Prueba por tema o por ley mientras se completa el banco." />
+)}
+{tipoTest === 'tema' && (
+  <AvisoTemasSinPreguntas
+    temas={temas}
+    temasSeleccionados={temasSeleccionados}
+    temasSinPreguntas={temasSinPreguntas}
+    todosSinPreguntas={ningunTemaConPreguntas}
+  />
+)}
 
 {tipoTest === 'tema' && temasSeleccionados.length > 1 && (
   <div style={{ marginBottom: '12px', padding: '10px 12px', background: 'white', borderRadius: '10px', fontSize: '11px', color: TEXT_MUTED }}>
@@ -528,13 +592,13 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
 
             <button
             onClick={empezarTest}
-            disabled={numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles}
+            disabled={numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas}
             style={{
                 width: '100%', padding: '13px',
-                background: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles) ? '#e5e7eb' : '#0f172a',
-                color: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles) ? '#9ca3af' : 'white',
+                background: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas) ? '#e5e7eb' : '#0f172a',
+                color: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas) ? '#9ca3af' : 'white',
                 border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                cursor: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles) ? 'not-allowed' : 'pointer',
+                cursor: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas) ? 'not-allowed' : 'pointer',
             }}
             >
             Empezar test ({numPreguntas} preguntas)
@@ -548,12 +612,20 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
 }
 
 /**
- * ⭐ Aviso "informativo" (estilo Oplora, no un alert() del navegador) que se
- * muestra cuando la combinación elegida (tema/ley/bloque/general) no tiene
- * ninguna pregunta cargada todavía. Impide avanzar en vez de dejar que el
- * usuario configure y lance un test que luego sale vacío.
+ * ⭐ Aviso "informativo" (estilo Oplora, no un alert() del navegador) para
+ * combinaciones de selección única (ley, general) que no tienen ninguna
+ * pregunta cargada todavía. En estos casos sí bloquea el avance porque no
+ * hay "otra parte de la selección" con la que seguir.
  */
-function AvisoSinPreguntas({ comprobando, sinPreguntas }: { comprobando: boolean; sinPreguntas: boolean }) {
+function AvisoSinPreguntas({
+  comprobando,
+  sinPreguntas,
+  mensaje,
+}: {
+  comprobando: boolean;
+  sinPreguntas: boolean;
+  mensaje?: string;
+}) {
   if (comprobando || !sinPreguntas) return null;
   return (
     <div
@@ -569,7 +641,64 @@ function AvisoSinPreguntas({ comprobando, sinPreguntas }: { comprobando: boolean
           Aún no hay preguntas para esta selección
         </div>
         <div style={{ fontSize: '12px', color: '#C2410C', marginTop: '2px', lineHeight: 1.4 }}>
-          OPLORA todavía no tiene preguntas cargadas para lo que has elegido. Prueba con otro tema, ley o bloque.
+          {mensaje ?? 'OPLORA todavía no tiene preguntas cargadas para lo que has elegido. Prueba con otra opción.'}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ⭐ Aviso por tema (usado tanto por "Test por temas" como por "Test por
+ * bloque", que internamente es un conjunto de temas): dice explícitamente
+ * qué tema(s) seleccionados no tienen preguntas, PERO deja continuar si al
+ * menos uno de los elegidos sí las tiene — solo bloquea si TODOS están
+ * vacíos. Aparece en la misma pantalla de selección, sin pasar a la
+ * siguiente, en cuanto se marca un tema sin preguntas.
+ */
+function AvisoTemasSinPreguntas({
+  temas,
+  temasSeleccionados,
+  temasSinPreguntas,
+  todosSinPreguntas,
+}: {
+  temas: any[];
+  temasSeleccionados: string[];
+  temasSinPreguntas: string[];
+  todosSinPreguntas: boolean;
+}) {
+  if (temasSeleccionados.length === 0 || temasSinPreguntas.length === 0) return null;
+
+  const numeros = temas
+    .filter((t: any) => temasSinPreguntas.includes(t.id))
+    .map((t: any) => t.numero)
+    .sort((a: number, b: number) => a - b);
+
+  const listaTemas = numeros.length === 1
+    ? `El tema ${numeros[0]}`
+    : numeros.length === 2
+      ? `Los temas ${numeros[0]} y ${numeros[1]}`
+      : `Los temas ${numeros.slice(0, -1).join(', ')} y ${numeros[numeros.length - 1]}`;
+
+  const verbo = numeros.length === 1 ? 'no tiene' : 'no tienen';
+
+  return (
+    <div
+      style={{
+        display: 'flex', alignItems: 'flex-start', gap: '10px',
+        padding: '12px 14px', borderRadius: '12px', marginBottom: '14px',
+        background: '#FFF7ED', border: '1px solid #FDBA74',
+      }}
+    >
+      <AlertTriangle size={18} color="#C2410C" style={{ flexShrink: 0, marginTop: '1px' }} />
+      <div>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: '#9A3412' }}>
+          {todosSinPreguntas ? 'Ninguno de los temas elegidos tiene preguntas' : `${listaTemas} que has seleccionado ${verbo} preguntas todavía`}
+        </div>
+        <div style={{ fontSize: '12px', color: '#C2410C', marginTop: '2px', lineHeight: 1.4 }}>
+          {todosSinPreguntas
+            ? 'Elige otro tema para poder continuar.'
+            : 'Puedes continuar: el test se generará solo con los temas que sí tienen preguntas.'}
         </div>
       </div>
     </div>

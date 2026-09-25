@@ -23,7 +23,7 @@ function fraseOplo(g: GamificacionInfo, porcentaje?: number): string {
   return 'Repasa lo fallado y a por el siguiente.';
 }
 
-const DURACION_VISIBLE_MS = 3200;
+const DURACION_VISIBLE_MS = 6200; // ⭐ 3200 + 3000ms más, a petición
 const DURACION_FADE_MS = 400;
 
 /**
@@ -117,13 +117,13 @@ export function PuntosGanadosCard({
           pointer-events: none;
           display: inline-flex;
           align-items: center;
-          gap: 10px;
-          padding: 10px 18px 10px 10px;
+          gap: 14px;
+          padding: 14px 24px 14px 14px;
           border-radius: 999px;
           background: rgba(15, 23, 42, 0.94);
           backdrop-filter: blur(8px);
-          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.3);
-          max-width: 280px;
+          box-shadow: 0 14px 38px rgba(15, 23, 42, 0.32);
+          max-width: 360px;
           opacity: 0;
           transform: scale(0.85);
           transition: opacity ${DURACION_FADE_MS}ms ease, transform ${DURACION_FADE_MS}ms ease;
@@ -142,12 +142,12 @@ export function PuntosGanadosCard({
 
         .puntos-pill__oplo-wrap {
           flex-shrink: 0;
-          width: 34px;
-          height: 34px;
+          width: 46px;
+          height: 46px;
           border-radius: 50%;
           overflow: hidden;
           background: white;
-          border: 2px solid white;
+          border: 3px solid white;
         }
         .puntos-pill__oplo-img {
           width: 100%;
@@ -166,12 +166,12 @@ export function PuntosGanadosCard({
           line-height: 1;
         }
         .puntos-pill__mas {
-          font-size: 13px;
+          font-size: 17px;
           font-weight: 800;
           color: #7dd3fc;
         }
         .puntos-pill__num {
-          font-size: 17px;
+          font-size: 23px;
           font-weight: 800;
           color: white;
         }
@@ -179,8 +179,8 @@ export function PuntosGanadosCard({
           color: #fde68a;
         }
         .puntos-pill__nivel-badge {
-          margin-top: 2px;
-          font-size: 10.5px;
+          margin-top: 3px;
+          font-size: 13px;
           font-weight: 700;
           color: #fde68a;
           white-space: nowrap;
@@ -188,8 +188,8 @@ export function PuntosGanadosCard({
           text-overflow: ellipsis;
         }
         .puntos-pill__frase {
-          margin-top: 1px;
-          font-size: 10.5px;
+          margin-top: 2px;
+          font-size: 13px;
           color: #cbd5e1;
           white-space: nowrap;
           overflow: hidden;
