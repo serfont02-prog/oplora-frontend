@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Layers } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
+import { PuntosGanadosCard, GamificacionInfo } from '@/components/gamificacion/PuntosGanadosCard';
 
 type EstadoRepaso = 'pregunta' | 'respuesta' | 'fin';
 
@@ -30,11 +32,24 @@ export default function RepasarPage() {
   const [respuestaVF, setRespuestaVF] = useState<boolean | null>(null);
   const [tiempoInicio, setTiempoInicio] = useState(Date.now());
   const [resultados, setResultados] = useState<{ id: string; calificacion: number }[]>([]);
+  const [errorRegistro, setErrorRegistro] = useState('');
+  const [gamificacionInfo, setGamificacionInfo] = useState<GamificacionInfo | null>(null);
   const numeroTema = searchParams.get('numeroTema');
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
+
+  // ⭐ Invalidar el estado de FC (pendientes/stats) también al salir de la pantalla de repaso,
+  // no solo al pulsar "Repasar de nuevo" — así el hub de flashcards y el resto de widgets
+  // reflejan los repasos hechos en esta sesión aunque el usuario navegue fuera sin pulsar nada.
+  useEffect(() => {
+    return () => {
+      queryClient.invalidateQueries({ queryKey: ['pendientes-fc'] });
+      queryClient.invalidateQueries({ queryKey: ['stats-fc'] });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data: flashcards = [], isLoading } = useQuery({
     queryKey: ['fc-repaso', oposicionId, temaId, articuloId, numFlashcards],
@@ -55,7 +70,8 @@ export default function RepasarPage() {
 
   const registrar = useMutation({
     mutationFn: async ({ flashcardId, calificacion, tiempoMs }: any) => {
-      await api.post('/flashcards/respuesta', { flashcardId, calificacion, tiempoMs });
+      const res = await api.post('/flashcards/respuesta', { flashcardId, calificacion, tiempoMs });
+      return res.data;
     },
   });
 
@@ -71,11 +87,20 @@ export default function RepasarPage() {
 
   const handleResultado = async (calificacion: number) => {
     const tiempoMs = tiempoTranscurrido();
-    await registrar.mutateAsync({ flashcardId: fc.id, calificacion, tiempoMs });
+    setErrorRegistro('');
+    try {
+      const res = await registrar.mutateAsync({ flashcardId: fc.id, calificacion, tiempoMs });
+      if (res?.gamificacion) setGamificacionInfo(res.gamificacion);
+    } catch (e: any) {
+      setErrorRegistro(e?.response?.data?.message ?? 'No se pudo registrar la respuesta. Inténtalo de nuevo.');
+      return;
+    }
     setResultados(prev => [...prev, { id: fc.id, calificacion }]);
 
     if (indice + 1 >= flashcards.length) {
       setEstado('fin');
+      queryClient.invalidateQueries({ queryKey: ['pendientes-fc'] });
+      queryClient.invalidateQueries({ queryKey: ['stats-fc'] });
     } else {
       setIndice(i => i + 1);
       setEstado('pregunta');
@@ -111,28 +136,27 @@ export default function RepasarPage() {
 
   if (flashcards.length === 0) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_APP, padding: '1.5rem' }}>
-        <div style={{ textAlign: 'center', background: 'white', borderRadius: 20, padding: '2.5rem 2rem', maxWidth: 360, width: '100%' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>
-            {temaId ? '📚' : articuloId ? '📄' : '✅'}
-          </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>
-            {temaId || articuloId ? 'Sin flashcards' : '¡Todo al día!'}
-          </div>
-          <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 20 }}>
-            {temaId
-              ? 'Este tema no tiene flashcards disponibles todavía'
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_APP, padding: '1.5rem 1.25rem' }}>
+        <EmptyState
+          icon={<Layers size={28} />}
+          eyebrow="Flashcards"
+          title={temaId || articuloId ? 'Sin flashcards' : '¡Todo al día!'}
+          description={
+            temaId
+              ? 'Este tema no tiene flashcards disponibles todavía.'
               : articuloId
-              ? 'Este artículo no tiene flashcards disponibles todavía'
-              : 'No tienes flashcards pendientes de repasar'}
-          </div>
-          <button
-            onClick={volver}
-            style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-          >
-            {temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver'}
-          </button>
-        </div>
+              ? 'Este artículo no tiene flashcards disponibles todavía.'
+              : 'No tienes flashcards pendientes de repasar.'
+          }
+          actions={
+            <button
+              onClick={volver}
+              style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+            >
+              {temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver'}
+            </button>
+          }
+        />
       </div>
     );
   }
@@ -169,6 +193,10 @@ export default function RepasarPage() {
               {resultados.length} flashcards repasadas
             </div>
 
+            {gamificacionInfo && (
+              <PuntosGanadosCard gamificacion={gamificacionInfo} />
+            )}
+
             <div style={{ background: 'white', borderRadius: 16, padding: '1.25rem', marginBottom: 16, textAlign: 'left' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
                 Resumen
@@ -198,6 +226,8 @@ export default function RepasarPage() {
                   setIndice(0);
                   setEstado('pregunta');
                   setResultados([]);
+                  setGamificacionInfo(null);
+                  setErrorRegistro('');
                   setTiempoInicio(Date.now());
                   queryClient.invalidateQueries({ queryKey: ['pendientes-fc'] });
                   queryClient.invalidateQueries({ queryKey: ['stats-fc'] });
@@ -322,11 +352,17 @@ export default function RepasarPage() {
                     {respuestaVF === (fc.respuesta === 'true') ? '¡Correcto!' : 'Incorrecto'}
                   </span>
                 </div>
+                {errorRegistro && (
+                  <div style={{ fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '8px 12px', marginBottom: 10 }}>
+                    {errorRegistro}
+                  </div>
+                )}
                 <button
                   onClick={() => handleResultado(respuestaVF === (fc.respuesta === 'true') ? 4 : 1)}
-                  style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                  disabled={registrar.isPending}
+                  style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: registrar.isPending ? 'not-allowed' : 'pointer', opacity: registrar.isPending ? 0.6 : 1 }}
                 >
-                  Siguiente →
+                  {registrar.isPending ? 'Guardando...' : 'Siguiente →'}
                 </button>
               </div>
             )}
@@ -337,6 +373,11 @@ export default function RepasarPage() {
                 <div style={{ fontSize: 12, fontWeight: 500, color: TEXT_SECONDARY, marginBottom: 10, textAlign: 'center' }}>
                   ¿Cómo te ha ido?
                 </div>
+                {errorRegistro && (
+                  <div style={{ fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '8px 12px', marginBottom: 10 }}>
+                    {errorRegistro}
+                  </div>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                   {[
                     { cal: 0, label: 'Nada', sub: 'Hoy', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
@@ -347,13 +388,14 @@ export default function RepasarPage() {
                     <button
                       key={cal}
                       onClick={() => handleResultado(cal)}
+                      disabled={registrar.isPending}
                       style={{
                         padding: '12px 4px', borderRadius: 14,
                         background: bg, border: `1.5px solid ${border}`,
-                        cursor: 'pointer', textAlign: 'center',
-                        transition: 'transform 0.1s',
+                        cursor: registrar.isPending ? 'not-allowed' : 'pointer', textAlign: 'center',
+                        transition: 'transform 0.1s', opacity: registrar.isPending ? 0.6 : 1,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.03)'; }}
+                      onMouseEnter={(e) => { if (!registrar.isPending) e.currentTarget.style.transform = 'scale(1.03)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                     >
                       <div style={{ fontSize: 12, fontWeight: 700, color }}>{label}</div>

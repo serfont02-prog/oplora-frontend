@@ -13,13 +13,63 @@ import { getOploUrl } from '@/lib/oplo';
 
 
 type TipoRetoUsuario = 'oposicion' | 'normativa' | 'tema';
+type CategoriaReto = 'test' | 'fc';
 
 const BG_APP = '#FCEEE8';
 const COLOR_RETOS = '#C2410C';
 const COLOR_RETOS_BG = '#FACCC0';
+const COLOR_FC = '#9333EA';
+const COLOR_FC_BG = '#F3E8FF';
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';
+
+// ⭐ Normaliza un RetoFC (duelo de flashcards, estructura propia con retador/retado/resultados)
+// a la misma forma "participación" que ya usan las derivaciones y los widgets de retos de Test
+// (reto.participaciones / reto.creador / p.completado / p.posicion / p.porcentaje), para poder
+// mezclarlos, ordenarlos y renderizarlos con los mismos componentes (DueloReto, WidgetHistorialRetos).
+function normalizarRetoFC(r: any, usuarioActualId: string | undefined) {
+  const personas = [r.retador, r.retado].filter(Boolean);
+  const totalFC = Array.isArray(r.flashcards) ? r.flashcards.length : 0;
+
+  const participaciones = personas.map((u: any) => {
+    const res = (r.resultados ?? []).find((x: any) => x.usuario?.id === u.id);
+    const total = res ? res.aciertos + res.fallos : 0;
+    const porcentaje = res && total > 0 ? Math.round((res.aciertos / total) * 100) : (res?.completado ? 0 : null);
+    return {
+      id: `${r.id}-${u.id}`,
+      usuario: u,
+      completado: !!res?.completado,
+      posicion: res?.posicion ?? null,
+      porcentaje,
+    };
+  });
+
+  const retoNormalizado = {
+    id: r.id,
+    tipo: 'usuario',
+    estado: r.estado,
+    fechaFin: r.fechaFin,
+    creadoEn: r.creadoEn,
+    creador: r.retador,
+    tema: r.tema,
+    oposicion: r.oposicion,
+    participaciones,
+    flashcards: r.flashcards,
+    totalFC,
+    _esFC: true,
+  };
+
+  const miParticipacion = participaciones.find((p: any) => p.usuario?.id === usuarioActualId);
+
+  return {
+    id: `${r.id}-p`,
+    reto: retoNormalizado,
+    completado: !!miParticipacion?.completado,
+    posicion: miParticipacion?.posicion ?? null,
+    porcentaje: miParticipacion?.porcentaje ?? null,
+  };
+}
 
 
 function tiempoRestante(fechaFin: string): string {
@@ -41,7 +91,9 @@ export default function RetosPage() {
   const [mensajeRevancha, setMensajeRevancha] = useState('');
   const [form, setForm] = useState({
     retadoNickOEmail: '',
+    categoria: 'test' as CategoriaReto,
     numPreguntas: 10,
+    numFC: 10,
     tipoReto: 'oposicion' as TipoRetoUsuario,
     temaId: '',
     versionLeyId: '',
@@ -124,6 +176,15 @@ const oposicionId = usuario?.oposicionActiva?.id;
     enabled: !!usuario,
   });
 
+  const { data: misRetosFC = [] } = useQuery({
+    queryKey: ['mis-retos-fc'],
+    queryFn: async () => {
+      const res = await api.get('/flashcards/mis-retos');
+      return res.data;
+    },
+    enabled: !!usuario,
+  });
+
   const { data: contactosRecientes = [] } = useQuery({
     queryKey: ['contactos-recientes'],
     queryFn: async () => {
@@ -173,8 +234,31 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
   const [retoRecienCreado, setRetoRecienCreado] = useState<string | null>(null);
 
+  const formInicial = {
+    retadoNickOEmail: '',
+    categoria: 'test' as CategoriaReto,
+    numPreguntas: 10,
+    numFC: 10,
+    tipoReto: 'oposicion' as TipoRetoUsuario,
+    temaId: '',
+    versionLeyId: '',
+    mensaje: '',
+    horasPlazo: 48,
+  };
+
   const crearReto = useMutation({
     mutationFn: async () => {
+      if (form.categoria === 'fc') {
+        const body: any = {
+          retadoNickOEmail: form.retadoNickOEmail,
+          oposicionId,
+          numFC: form.numFC,
+        };
+        if (form.tipoReto === 'tema' && form.temaId) body.temaId = form.temaId;
+        if (form.tipoReto === 'normativa' && form.versionLeyId) body.versionLeyId = form.versionLeyId;
+        const res = await api.post('/flashcards/duelo', body);
+        return { ...res.data, _esFC: true };
+      }
       const body: any = {
         retadoNickOEmail: form.retadoNickOEmail,
         oposicionId,
@@ -189,11 +273,12 @@ const oposicionId = usuario?.oposicionActiva?.id;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mis-retos'] });
+      queryClient.invalidateQueries({ queryKey: ['mis-retos-fc'] });
       queryClient.invalidateQueries({ queryKey: ['contactos-recientes'] });
       setModalAbierto(false);
-      setForm({ retadoNickOEmail: '', numPreguntas: 10, tipoReto: 'oposicion', temaId: '', versionLeyId: '', mensaje: '', horasPlazo: 48 });
+      setForm(formInicial);
       setError('');
-      setRetoRecienCreado(data.id);
+      setRetoRecienCreado(data._esFC ? `fc:${data.id}` : data.id);
     },
     onError: (e: any) => {
       setError(e?.response?.data?.message ?? 'Error creando el reto');
@@ -251,12 +336,15 @@ const oposicionId = usuario?.oposicionActiva?.id;
       });
     };
 
- const retosUsuarioPendientes = misRetos.filter(
+ const misRetosFCNormalizados = misRetosFC.map((r: any) => normalizarRetoFC(r, (usuario as any)?.id));
+ const misRetosTodos = [...misRetos, ...misRetosFCNormalizados];
+
+ const retosUsuarioPendientes = misRetosTodos.filter(
   (p: any) => p.reto?.tipo === 'usuario'
     && p.reto?.estado !== 'expirado'
     && (!p.completado || p.posicion === null)
   );
-  const retosUsuarioCompletados = misRetos.filter(
+  const retosUsuarioCompletados = misRetosTodos.filter(
     (p: any) => p.reto?.tipo === 'usuario' && p.completado && p.posicion !== null
   );
 
@@ -291,7 +379,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
       enabled: !!usuario,
     });
 
-    const retosExpirados = misRetos.filter(
+    const retosExpirados = misRetosTodos.filter(
       (p: any) => p.reto?.tipo === 'usuario' && p.reto?.estado === 'expirado'
     );
 
@@ -420,21 +508,27 @@ const oposicionId = usuario?.oposicionActiva?.id;
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         {retosEnCurso.map((p: any) => {
           const esCreador = p.reto.creador?.id === (usuario as any)?.id;
+          const esFC = !!p.reto._esFC;
           return (
             <div key={p.id} style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '14px 16px', boxSizing: 'border-box' }}>
-              <div onClick={() => setRetoPreview(p.reto.id)} style={{ cursor: 'pointer' }}>
-                <DueloReto reto={p.reto} usuarioActual={usuario} mostrarBarraTiempo />
+              <div
+                onClick={() => esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : setRetoPreview(p.reto.id)}
+                style={{ cursor: 'pointer' }}
+              >
+                <DueloReto reto={p.reto} usuarioActual={usuario} mostrarBarraTiempo tipo={esFC ? 'fc' : 'test'} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #F1F5F9' }}>
                 <span style={{ fontSize: '11px', color: TEXT_MUTED }}>
-                  {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {p.reto.tema?.titulo ? `Tema ${p.reto.tema.numero}` : 'Oposición'}
+                  {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {esFC ? `${p.reto.totalFC ?? '—'} flashcards` : (p.reto.tema?.titulo ? `Tema ${p.reto.tema.numero}` : 'Oposición')}
                 </span>
-                <button
-                onClick={(e) => { e.stopPropagation(); confirmarAccion(p.reto, esCreador ? 'cancelar' : 'rechazar'); }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT_MUTED, fontSize: '11px', fontWeight: 600, flexShrink: 0 }}
-              >
-                {esCreador ? 'Cancelar' : 'Rechazar'}
-              </button>
+                {!esFC && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); confirmarAccion(p.reto, esCreador ? 'cancelar' : 'rechazar'); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT_MUTED, fontSize: '11px', fontWeight: 600, flexShrink: 0 }}
+                  >
+                    {esCreador ? 'Cancelar' : 'Rechazar'}
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -460,7 +554,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               (a, b) => new Date(b.reto.creadoEn).getTime() - new Date(a.reto.creadoEn).getTime()
             )}
             usuario={usuario}
-            onVer={(id: string) => setRetoPreview(id)}
+            onVer={(p: any) => p.reto?._esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : setRetoPreview(p.reto.id)}
           />
         )}
 
@@ -543,6 +637,29 @@ const oposicionId = usuario?.oposicionActiva?.id;
               </div>
 
               <div>
+                <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Tipo de reto</div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {[
+                    { key: 'test', icon: '📝', label: 'Test' },
+                    { key: 'fc', icon: '🃏', label: 'Flashcards' },
+                  ].map(({ key, icon, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setForm({ ...form, categoria: key as CategoriaReto })}
+                      style={{
+                        flex: 1, padding: '10px 6px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
+                        border: form.categoria === key ? `2px solid ${key === 'fc' ? COLOR_FC : '#111827'}` : 'none',
+                        background: 'white',
+                      }}
+                    >
+                      <div style={{ fontSize: '16px', marginBottom: '3px' }}>{icon}</div>
+                      <div style={{ fontSize: '11px', fontWeight: 500, color: TEXT_PRIMARY }}>{label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Sobre qué va el reto</div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {[
@@ -588,52 +705,73 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 </select>
               )}
 
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Número de preguntas</div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {[5, 10, 20].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setForm({ ...form, numPreguntas: n })}
-                      style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numPreguntas === n ? '#111827' : 'white', color: form.numPreguntas === n ? 'white' : '#6b7280' }}
-                    >
-                      {n}
-                    </button>
-                  ))}
+              {form.categoria === 'fc' ? (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Número de flashcards</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[5, 10, 20].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setForm({ ...form, numFC: n })}
+                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numFC === n ? COLOR_FC : 'white', color: form.numFC === n ? 'white' : '#6b7280' }}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Plazo para completarlo</div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {[
-                    { label: '24h', horas: 24 },
-                    { label: '48h', horas: 48 },
-                    { label: '1 semana', horas: 168 },
-                  ].map(({ label, horas }) => (
-                    <button
-                      key={horas}
-                      onClick={() => setForm({ ...form, horasPlazo: horas })}
-                      style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.horasPlazo === horas ? '#111827' : 'white', color: form.horasPlazo === horas ? 'white' : '#6b7280' }}
-                    >
-                      {label}
-                    </button>
-                  ))}
+              ) : (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Número de preguntas</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[5, 10, 20].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setForm({ ...form, numPreguntas: n })}
+                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numPreguntas === n ? '#111827' : 'white', color: form.numPreguntas === n ? 'white' : '#6b7280' }}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, display: 'block', marginBottom: '4px' }}>
-                  Mensaje <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>(opcional)</span>
-                </label>
-                <textarea
-                  value={form.mensaje}
-                  onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
-                  placeholder="Escribe algo motivador para tu rival..."
-                  maxLength={140}
-                  style={{ width: '100%', minHeight: '60px', padding: '10px 12px', fontSize: '13px', border: 'none', borderRadius: '10px', outline: 'none', boxSizing: 'border-box', background: 'white', resize: 'vertical', fontFamily: 'inherit' }}
-                />
-              </div>
+              {form.categoria === 'test' && (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Plazo para completarlo</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[
+                      { label: '24h', horas: 24 },
+                      { label: '48h', horas: 48 },
+                      { label: '1 semana', horas: 168 },
+                    ].map(({ label, horas }) => (
+                      <button
+                        key={horas}
+                        onClick={() => setForm({ ...form, horasPlazo: horas })}
+                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.horasPlazo === horas ? '#111827' : 'white', color: form.horasPlazo === horas ? 'white' : '#6b7280' }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {form.categoria === 'test' && (
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, display: 'block', marginBottom: '4px' }}>
+                    Mensaje <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>(opcional)</span>
+                  </label>
+                  <textarea
+                    value={form.mensaje}
+                    onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
+                    placeholder="Escribe algo motivador para tu rival..."
+                    maxLength={140}
+                    style={{ width: '100%', minHeight: '60px', padding: '10px 12px', fontSize: '13px', border: 'none', borderRadius: '10px', outline: 'none', boxSizing: 'border-box', background: 'white', resize: 'vertical', fontFamily: 'inherit' }}
+                  />
+                </div>
+              )}
 
               {error && (
                 <div style={{ fontSize: '12px', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '8px 12px' }}>
@@ -642,7 +780,9 @@ const oposicionId = usuario?.oposicionActiva?.id;
               )}
 
               <div style={{ background: 'white', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: TEXT_SECONDARY }}>
-                ⏱ El retado tiene {form.horasPlazo}h para completar el mismo test
+                {form.categoria === 'fc'
+                  ? `🃏 El retado jugará el mismo duelo de ${form.numFC} flashcards`
+                  : `⏱ El retado tiene ${form.horasPlazo}h para completar el mismo test`}
               </div>
 
               <button
@@ -670,10 +810,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
           >
             <div style={{
               width: '56px', height: '56px', borderRadius: '50%',
-              background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: retoRecienCreado.startsWith('fc:') ? COLOR_FC_BG : COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 14px',
             }}>
-              <FireIcon style={{ width: 26, height: 26, color: COLOR_RETOS }} />
+              <FireIcon style={{ width: 26, height: 26, color: retoRecienCreado.startsWith('fc:') ? COLOR_FC : COLOR_RETOS }} />
             </div>
             <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT_PRIMARY, marginBottom: '6px' }}>
               ¡Reto enviado!
@@ -684,7 +824,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
-                onClick={() => router.push(`/app/retos/${retoRecienCreado}?directo=true`)}
+                onClick={() => {
+                  const esFC = retoRecienCreado.startsWith('fc:');
+                  const idReal = esFC ? retoRecienCreado.slice(3) : retoRecienCreado;
+                  router.push(esFC ? `/app/retos/fc/${idReal}?directo=true` : `/app/retos/${idReal}?directo=true`);
+                }}
                 style={{ width: '100%', padding: '13px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
               >
                 Hacer reto ahora
@@ -936,7 +1080,9 @@ function colorPorTiempoRestante(fechaFin: string, fechaInicio: string): string {
   return '#DC2626'; // rojo — poco tiempo
 }
 
-export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false }: any) {
+export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tipo = 'test' }: any) {
+  const esFC = tipo === 'fc';
+  const colorGanador = esFC ? COLOR_FC : '#D97706';
   const participaciones = reto.participaciones ?? [];
   const yo = participaciones.find((p: any) => p.usuario?.id === usuarioActual?.id);
   const rival = participaciones.find((p: any) => p.usuario?.id !== usuarioActual?.id);
@@ -958,7 +1104,7 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false }: a
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: 1 }}>
           <div style={{
             position: 'relative', width: '64px', height: '64px', borderRadius: '50%',
-            border: (ambosCompletados && yoGano) ? '3px solid #D97706' : '3px solid transparent',
+            border: (ambosCompletados && yoGano) ? `3px solid ${colorGanador}` : '3px solid transparent',
             boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <AvatarUsuario persona={yo?.usuario} size={56} />
@@ -969,13 +1115,13 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false }: a
               <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', fontSize: '18px' }}>🤝</div>
             )}
             {!yoSoyCreador && !ambosCompletados && (
-              <div style={{ position: 'absolute', top: '-4px', left: '-4px', fontSize: '14px' }}>🎯</div>
+              <div style={{ position: 'absolute', top: '-4px', left: '-4px', fontSize: '14px' }}>{esFC ? '🃏' : '🎯'}</div>
             )}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY }}>
             {yo?.usuario?.nick ?? yo?.usuario?.nombre ?? 'Tú'} (tú)
           </div>
-          <div style={{ fontSize: '17px', fontWeight: 800, color: (ambosCompletados && yoGano) ? '#D97706' : TEXT_PRIMARY }}>
+          <div style={{ fontSize: '17px', fontWeight: 800, color: (ambosCompletados && yoGano) ? colorGanador : TEXT_PRIMARY }}>
             {yo?.completado ? `${yo.porcentaje}%` : <span style={{ fontSize: '12px', color: TEXT_MUTED, fontWeight: 500 }}>Pendiente</span>}
           </div>
 
@@ -989,7 +1135,7 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false }: a
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: 1 }}>
           <div style={{
             position: 'relative', width: '64px', height: '64px', borderRadius: '50%',
-            border: (ambosCompletados && !yoGano && !empate) ? '3px solid #D97706' : '3px solid transparent',
+            border: (ambosCompletados && !yoGano && !empate) ? `3px solid ${colorGanador}` : '3px solid transparent',
             boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <AvatarUsuario persona={rival?.usuario} size={56} />
@@ -1000,13 +1146,13 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false }: a
               <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', fontSize: '18px' }}>🤝</div>
             )}
             {!yoSoyCreador && !ambosCompletados && ( // ⭐ nuevo: icono de retador
-              <div style={{ position: 'absolute', top: '-4px', left: '-4px', fontSize: '14px' }}>⚡</div>
+              <div style={{ position: 'absolute', top: '-4px', left: '-4px', fontSize: '14px' }}>{esFC ? '🃏' : '⚡'}</div>
             )}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY }}>
             {rival?.usuario?.nick ?? rival?.usuario?.nombre ?? 'Rival'}
           </div>
-          <div style={{ fontSize: '17px', fontWeight: 800, color: (ambosCompletados && !yoGano && !empate) ? '#D97706' : TEXT_PRIMARY }}>
+          <div style={{ fontSize: '17px', fontWeight: 800, color: (ambosCompletados && !yoGano && !empate) ? colorGanador : TEXT_PRIMARY }}>
             {!rival?.completado ? (
               <span style={{ fontSize: '12px', color: TEXT_MUTED, fontWeight: 500 }}>Pendiente</span>
             ) : yoCompletado ? (
@@ -1062,19 +1208,21 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
             : p.reto.creador;
           const rivalParticipacion = p.reto.participaciones?.find((x: any) => x.usuario?.id !== usuario?.id);
           const gane = p.posicion === 1;
+          const esFC = !!p.reto._esFC;
 
           return (
             <div
               key={p.id}
-              onClick={() => onVer(p.reto.id)}
+              onClick={() => onVer(p)}
               style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', minHeight: '68px', boxSizing: 'border-box' }}
             >
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: expirado ? '#F4F5F7' : gane ? '#f0fdf4' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: '17px' }}>{expirado ? '⏱️' : gane ? '🏆' : '😤'}</span>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: expirado ? '#F4F5F7' : gane ? (esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: '17px' }}>{expirado ? '⏱️' : gane ? (esFC ? '🃏' : '🏆') : '😤'}</span>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>
                   {expirado ? 'Cancelado por tiempo' : gane ? 'Victoria' : 'Derrota'} vs {rival?.nick ?? rival?.nombre ?? 'Usuario'}
+                  {esFC && <span style={{ fontSize: '10px', color: COLOR_FC, fontWeight: 700, marginLeft: 6 }}>FC</span>}
                 </div>
                 <div style={{ fontSize: '12px', color: TEXT_MUTED, marginTop: '2px' }}>
                   {expirado ? 'El plazo terminó antes de completarse' : `${p.porcentaje}% — ${rivalParticipacion?.porcentaje ?? '?'}%`}

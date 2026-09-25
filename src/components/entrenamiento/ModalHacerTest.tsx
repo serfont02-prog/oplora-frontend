@@ -134,6 +134,12 @@ const numeroInvalido = excedeMaxPorTest || excedeRestante;
   const continuarASeleccion = () => {
     if (tipoTest === 'tema' && temasSeleccionados.length === 0) return;
     if (tipoTest === 'ley' && !leySeleccionada) return;
+    // ⭐ No dejar pasar mientras la comprobación de disponibilidad sigue en
+    // curso: si no se espera a la respuesta, un clic rápido en "Continuar"
+    // se adelanta al resultado y el aviso solo llega a verse ya en
+    // "ajustes" en vez de en esta misma pantalla.
+    if (tipoTest === 'tema' && comprobandoDesglose) return;
+    if (tipoTest === 'ley' && comprobandoDisponibilidad) return;
     // ⭐ No dejar pasar de la pantalla de selección solo si NINGUNO de los
     // elegidos tiene preguntas. Si al menos uno sí las tiene, se deja
     // continuar (el aviso ya avisó de cuáles no).
@@ -304,10 +310,10 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
             />
             <button
               onClick={continuarASeleccion}
-              disabled={temasSeleccionados.length === 0 || ningunTemaConPreguntas}
-              style={{ width: '100%', padding: '13px', background: temasSeleccionados.length > 0 && !ningunTemaConPreguntas ? '#0f172a' : '#e5e7eb', color: temasSeleccionados.length > 0 && !ningunTemaConPreguntas ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: temasSeleccionados.length > 0 && !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
+              disabled={temasSeleccionados.length === 0 || comprobandoDesglose || ningunTemaConPreguntas}
+              style={{ width: '100%', padding: '13px', background: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? '#0f172a' : '#e5e7eb', color: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
             >
-              Continuar ({temasSeleccionados.length} seleccionados)
+              {comprobandoDesglose ? 'Comprobando…' : `Continuar (${temasSeleccionados.length} seleccionados)`}
             </button>
           </>
         )}
@@ -354,13 +360,17 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                   />
                   <button
                     onClick={() => {
-                      if (ningunTemaConPreguntas) return;
+                      // ⭐ No dejar pasar mientras aún no sabemos el resultado de la
+                      // comprobación (evita que un clic rápido se adelante a la
+                      // respuesta del servidor y acabe en "ajustes" sin haber
+                      // mostrado antes el aviso).
+                      if (comprobandoDesglose || ningunTemaConPreguntas) return;
                       setPaso('ajustes');
                     }}
-                    disabled={ningunTemaConPreguntas}
-                    style={{ width: '100%', padding: '13px', background: !ningunTemaConPreguntas ? '#0f172a' : '#e5e7eb', color: !ningunTemaConPreguntas ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
+                    disabled={comprobandoDesglose || ningunTemaConPreguntas}
+                    style={{ width: '100%', padding: '13px', background: !comprobandoDesglose && !ningunTemaConPreguntas ? '#0f172a' : '#e5e7eb', color: !comprobandoDesglose && !ningunTemaConPreguntas ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: !comprobandoDesglose && !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
                   >
-                    Continuar
+                    {comprobandoDesglose ? 'Comprobando…' : 'Continuar'}
                   </button>
                 </>
               )}
@@ -409,10 +419,10 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
             )}
             <button
               onClick={continuarASeleccion}
-              disabled={!leySeleccionada || sinPreguntasDisponibles}
-              style={{ width: '100%', padding: '13px', background: leySeleccionada && !sinPreguntasDisponibles ? '#0f172a' : '#e5e7eb', color: leySeleccionada && !sinPreguntasDisponibles ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: leySeleccionada && !sinPreguntasDisponibles ? 'pointer' : 'not-allowed' }}
+              disabled={!leySeleccionada || comprobandoDisponibilidad || sinPreguntasDisponibles}
+              style={{ width: '100%', padding: '13px', background: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? '#0f172a' : '#e5e7eb', color: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? 'pointer' : 'not-allowed' }}
             >
-              Continuar
+              {leySeleccionada && comprobandoDisponibilidad ? 'Comprobando…' : 'Continuar'}
             </button>
           </>
         )}
