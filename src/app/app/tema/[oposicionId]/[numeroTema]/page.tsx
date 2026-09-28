@@ -20,6 +20,7 @@ import {
   BarChart2,
 } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
 
 type TabTema = 'material' | 'mi-estudio' | 'progreso';
 
@@ -95,6 +96,33 @@ export default function TemaPage() {
     },
     enabled: !!tema?.id,
   });
+
+  // Mapa siglas → versionLeyId, para poder convertir las referencias
+  // "[CC 17.2]" / "[CC art. 14]" del contexto del tema en enlaces clicables,
+  // igual que ya se hace en la página de Apuntes OPLORA.
+  const { data: leyesOposicion = [] } = useQuery({
+    queryKey: ['leyes-siglas', oposicionId],
+    queryFn: async () => {
+      const res = await api.get(`/leyes/oposicion/${oposicionId}`);
+      return res.data;
+    },
+    enabled: !!oposicionId,
+  });
+
+  const mapaSiglas = useMemo(() => construirMapaSiglas(leyesOposicion), [leyesOposicion]);
+
+  // Resuelve una referencia [SIGLAS numero] a su artículo real y navega a la
+  // página de la ley, igual que ya hacen los botones de "Normativa vinculada".
+  const abrirArticuloDesdeContexto = async (numero: string, versionLeyId: string) => {
+    try {
+      const res = await api.get(`/normativa/articulo-por-numero/${versionLeyId}/${numero}`);
+      if (res.data?.id) {
+        router.push(`/app/articulo/${res.data.id}?oposicionId=${oposicionId}`);
+      }
+    } catch (e) {
+      console.error('Error abriendo artículo:', e);
+    }
+  };
 
   // ⭐ Agrupa la normativa por ley para mostrarla concentrada
 const normativaPorLey = useMemo(() => {
@@ -520,7 +548,9 @@ const hoy = new Date().toISOString().split('T')[0];
         </div>
       ) : (
         <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>
-          {tema?.contexto ?? 'El equipo está preparando la normativa de este tema'}
+          {tema?.contexto
+            ? renderReferencias(tema.contexto, mapaSiglas, abrirArticuloDesdeContexto, 'ctx')
+            : 'El equipo está preparando la normativa de este tema'}
         </div>
       )}
     </div>

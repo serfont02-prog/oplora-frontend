@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ArrowLeft, Download, Play, Pause } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
 
 export default function ApunteOploraPage() {
   const router = useRouter();
@@ -88,15 +89,7 @@ const { data: leyesOposicion = [] } = useQuery({
   enabled: !!oposicionId,
 });
 
-const mapaSiglas = useMemo(() => {
-  const mapa: Record<string, string> = {};
-  for (const ol of leyesOposicion) {
-    if (ol.ley?.siglas && ol.versionLey?.id) {
-      mapa[ol.ley.siglas.toUpperCase()] = ol.versionLey.id;
-    }
-  }
-  return mapa;
-}, [leyesOposicion]);
+const mapaSiglas = useMemo(() => construirMapaSiglas(leyesOposicion), [leyesOposicion]);
 
   useEffect(() => {
     if (progresoGuardado?.porcentaje) {
@@ -719,60 +712,6 @@ function calcularOffsetEnContenedor(contenedor: Node, range: Range): number {
     offset += nodo.textContent?.length ?? 0;
   }
   return offset;
-}
-
-type ParteReferencia = string | { siglas: string; numero: string };
-
-function partesReferencias(texto: string): ParteReferencia[] {
-  const regex = /\[([A-ZÁÉÍÓÚÑ]+)\s+art[ií]culo\s+([\d.]+)\]/gi;
-  const partes: ParteReferencia[] = [];
-  let ultimoIndex = 0;
-  let match;
-
-  while ((match = regex.exec(texto)) !== null) {
-    if (match.index > ultimoIndex) {
-      partes.push(texto.slice(ultimoIndex, match.index));
-    }
-    partes.push({ siglas: match[1].toUpperCase(), numero: match[2] });
-    ultimoIndex = match.index + match[0].length;
-  }
-  if (ultimoIndex < texto.length) {
-    partes.push(texto.slice(ultimoIndex));
-  }
-  return partes;
-}
-
-function renderReferencias(
-  texto: string,
-  mapaSiglas: Record<string, string>,
-  onAbrirArticulo: (numero: string, versionLeyId: string) => void,
-  keyPrefix: string,
-) {
-  return partesReferencias(texto).map((parte, j) => {
-    const key = `${keyPrefix}-${j}`;
-    if (typeof parte === 'string') {
-      return <span key={key}>{parte}</span>;
-    }
-    const versionLeyId = mapaSiglas[parte.siglas];
-    if (!versionLeyId) {
-      return <span key={key}>{parte.siglas} art. {parte.numero}</span>;
-    }
-    return (
-      <button
-        key={key}
-        title={`${parte.siglas} · art. ${parte.numero}`}
-        onClick={() => onAbrirArticulo(parte.numero, versionLeyId)}
-        style={{
-          display: 'inline', background: 'none', border: 'none', padding: 0,
-          color: '#1F7CFF', fontWeight: 600, cursor: 'pointer',
-          textDecoration: 'underline', textDecorationStyle: 'dotted',
-          fontSize: 'inherit', fontFamily: 'inherit',
-        }}
-      >
-        Artículo {parte.numero}
-      </button>
-    );
-  });
 }
 
 // Combina, sobre un mismo bloque de texto, el resaltado amarillo de los
