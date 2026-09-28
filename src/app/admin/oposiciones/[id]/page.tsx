@@ -93,9 +93,11 @@ const [formEditarConv, setFormEditarConv] = useState({
   plazasPromocionInterna: '', 
   plazasMilitares: '', 
   plazasDiscapacidad: '', 
-  fasesTexto: '', 
-  puestosTexto: '', 
-  bloquesTemarioTexto: '', 
+  fasesTexto: '',
+  puestosTexto: '',
+  bloquesTemarioTexto: '',
+  tienePsicotecnicos: true,
+  numOpcionesPsicotecnico: '',
 });
 
   const { data: oposicion, isLoading } = useQuery({
@@ -287,6 +289,10 @@ const crearConv = useMutation({
           fasesAdicionales: parsearFases(formEditarConv.fasesTexto) ?? null,
           puestos: parsearPuestos(formEditarConv.puestosTexto) ?? null,
           bloquesTemario: parsearBloques(formEditarConv.bloquesTemarioTexto) ?? null,
+          tienePsicotecnicos: formEditarConv.tienePsicotecnicos,
+          numOpcionesPsicotecnico: formEditarConv.tienePsicotecnicos && formEditarConv.numOpcionesPsicotecnico
+            ? parseInt(formEditarConv.numOpcionesPsicotecnico)
+            : undefined,
         });
 
         if (urlCambio && formEditarConv.urlOficial) {
@@ -348,6 +354,8 @@ const crearConv = useMutation({
       fasesTexto: serializarFases(c.fasesAdicionales ?? []),
       puestosTexto: serializarPuestos(c.puestos ?? []),
       bloquesTemarioTexto: serializarBloques(c.bloquesTemario ?? []),
+      tienePsicotecnicos: c.tienePsicotecnicos ?? true,
+      numOpcionesPsicotecnico: c.numOpcionesPsicotecnico?.toString() ?? '',
     });
     setModalEditarConv(true);
   };
@@ -1049,6 +1057,32 @@ const crearConv = useMutation({
                   <option value="libre">Libre</option>
                   <option value="promocion_interna">Promoción interna</option>
                 </select>
+              </div>
+
+              {/* Psicotécnicos */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '13px', color: '#374151', marginBottom: formEditarConv.tienePsicotecnicos ? '10px' : 0, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={formEditarConv.tienePsicotecnicos}
+                    onChange={(e) => setFormEditarConv({ ...formEditarConv, tienePsicotecnicos: e.target.checked })}
+                  />
+                  ¿Tiene psicotécnicos esta convocatoria?
+                </label>
+                {formEditarConv.tienePsicotecnicos && (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Número de opciones en psicotécnicos</label>
+                    <select
+                      value={formEditarConv.numOpcionesPsicotecnico}
+                      onChange={(e) => setFormEditarConv({ ...formEditarConv, numOpcionesPsicotecnico: e.target.value })}
+                      style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                    >
+                      <option value="">Todas las guardadas (sin recortar)</option>
+                      <option value="3">3 opciones</option>
+                      <option value="4">4 opciones</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Requisitos */}

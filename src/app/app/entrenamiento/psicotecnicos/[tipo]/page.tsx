@@ -36,8 +36,10 @@ export default function PsicotecnicoTipoPage() {
   const [preguntas, setPreguntas] = useState<any[]>([]);
   const [indice, setIndice] = useState(0);
   const [respuestas, setRespuestas] = useState<Record<string, number | null>>({});
+  const [respuestasTexto, setRespuestasTexto] = useState<Record<string, string | null>>({});
   const [respuestaActual, setRespuestaActual] = useState<number | null>(null);
   const [mostrarCorreccion, setMostrarCorreccion] = useState(false);
+  const [correctaTexto, setCorrectaTexto] = useState<string | null>(null);
   const [tiempoInicio, setTiempoInicio] = useState(0);
   const [tiempoPreguntaMs, setTiempoPreguntaMs] = useState<Record<string, number>>({});
   const [segundos, setSegundos] = useState(0);
@@ -74,11 +76,13 @@ export default function PsicotecnicoTipoPage() {
       setPreguntas(res.data);
       setIndice(0);
       setRespuestas({});
+      setRespuestasTexto({});
       setTiempoPreguntaMs({});
       setSegundos(0);
       setTiempoInicio(Date.now());
       setRespuestaActual(null);
       setMostrarCorreccion(false);
+      setCorrectaTexto(null);
       setFase('jugando');
     } catch (e: any) {
       alert(e?.response?.data?.message || 'No hay preguntas disponibles para esta modalidad todavía.');
@@ -86,7 +90,11 @@ export default function PsicotecnicoTipoPage() {
   };
 
   const enviarResultado = useMutation({
-    mutationFn: async (respuestasFinal: Record<string, number | null>) => {
+    mutationFn: async (payload: {
+      respuestasFinal: Record<string, number | null>;
+      respuestasTextoFinal: Record<string, string | null>;
+    }) => {
+      const { respuestasFinal, respuestasTextoFinal } = payload;
       const body = {
         oposicionId,
         tipo,
@@ -94,7 +102,13 @@ export default function PsicotecnicoTipoPage() {
         tiempoSegundos: segundos,
         respuestas: preguntas.map((p) => ({
           preguntaId: p.id,
+          // Índice legacy: solo tiene sentido dentro del array recortado/
+          // reordenado que vio el cliente, no sirve para comparar contra la
+          // fila original en el backend. Se manda igualmente por compat.
           respuesta: respuestasFinal[p.id] ?? null,
+          // Texto de la opción elegida: es lo que el backend usa para corregir,
+          // ya que sobrevive al recorte/reordenado de opciones por convocatoria.
+          respuestaTexto: respuestasTextoFinal[p.id] ?? null,
           tiempoMs: tiempoPreguntaMs[p.id],
         })),
       };
@@ -111,21 +125,36 @@ export default function PsicotecnicoTipoPage() {
 
   const responder = (opcionIndex: number) => {
     if (mostrarCorreccion) return;
+    const preguntaId = preguntaActual.id;
     setRespuestaActual(opcionIndex);
     setMostrarCorreccion(true);
-    setTiempoPreguntaMs((prev) => ({ ...prev, [preguntaActual.id]: Date.now() - tiempoInicio }));
+    setCorrectaTexto(null);
+    setTiempoPreguntaMs((prev) => ({ ...prev, [preguntaId]: Date.now() - tiempoInicio }));
+
+    // Solo se pide la respuesta correcta AHORA, justo tras contestar esta
+    // pregunta concreta. Nunca se piden por adelantado para el resto del set.
+    api
+      .get(`/psicotecnicos/preguntas/${preguntaId}/correcta`)
+      .then((res) => setCorrectaTexto(res.data?.correctaTexto ?? null))
+      .catch(() => setCorrectaTexto(null));
   };
 
   const siguiente = () => {
     const nuevasRespuestas = { ...respuestas, [preguntaActual.id]: respuestaActual };
+    const nuevasRespuestasTexto = {
+      ...respuestasTexto,
+      [preguntaActual.id]: respuestaActual !== null ? preguntaActual.opciones[respuestaActual] : null,
+    };
     setRespuestas(nuevasRespuestas);
+    setRespuestasTexto(nuevasRespuestasTexto);
     setRespuestaActual(null);
     setMostrarCorreccion(false);
+    setCorrectaTexto(null);
 
     if (indice + 1 < preguntas.length) {
       setIndice(indice + 1);
     } else {
-      enviarResultado.mutate(nuevasRespuestas);
+      enviarResultado.mutate({ respuestasFinal: nuevasRespuestas, respuestasTextoFinal: nuevasRespuestasTexto });
     }
   };
 
@@ -215,7 +244,10 @@ export default function PsicotecnicoTipoPage() {
 
   /* ───────────────────────── JUGANDO ───────────────────────── */
   if (fase === 'jugando' && preguntaActual) {
-    const esCorrecta = respuestaActual === preguntaActual.correcta;
+    const esCorrecta =
+      correctaTexto != null &&
+      respuestaActual !== null &&
+      preguntaActual.opciones[respuestaActual]?.trim() === correctaTexto.trim();
 
     return (
       <div style={{ minHeight: '100vh', background: BG_APP }}>
@@ -248,7 +280,8 @@ export default function PsicotecnicoTipoPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
             {preguntaActual.opciones.map((op: string, i: number) => {
               const esElegida = respuestaActual === i;
-              const esLaCorrecta = mostrarCorreccion && i === preguntaActual.correcta;
+              const esLaCorrecta =
+                mostrarCorreccion && correctaTexto != null && op.trim() === correctaTexto.trim();
               const esIncorrectaElegida = mostrarCorreccion && esElegida && !esCorrecta;
 
               return (
