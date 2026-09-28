@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Plus, ChevronRight } from 'lucide-react';
+import { Plus, ChevronRight, Brain, Lock } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { FireIcon } from '@heroicons/react/24/outline';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
@@ -13,13 +13,15 @@ import { getOploUrl } from '@/lib/oplo';
 
 
 type TipoRetoUsuario = 'oposicion' | 'normativa' | 'tema';
-type CategoriaReto = 'test' | 'fc';
+type CategoriaReto = 'test' | 'fc' | 'psico';
 
 const BG_APP = '#FCEEE8';
 const COLOR_RETOS = '#C2410C';
 const COLOR_RETOS_BG = '#FACCC0';
 const COLOR_FC = '#9333EA';
 const COLOR_FC_BG = '#F3E8FF';
+const COLOR_PSICO = '#4F46E5';
+const COLOR_PSICO_BG = '#E0E7FF';
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';
@@ -72,6 +74,54 @@ function normalizarRetoFC(r: any, usuarioActualId: string | undefined) {
 }
 
 
+// ⭐ Espejo de normalizarRetoFC, pero para RetoPsicotecnico (duelo 1v1 de
+// preguntas psicotécnicas congeladas en `preguntas`, con `resultados` en vez
+// de `participaciones`). Se normaliza a la misma forma "participación" para
+// poder mezclarse y renderizarse con los mismos componentes DueloReto /
+// WidgetHistorialRetos que ya usan Test y FC.
+function normalizarRetoPsico(r: any, usuarioActualId: string | undefined) {
+  const personas = [r.retador, r.retado].filter(Boolean);
+  const totalPreguntas = Array.isArray(r.preguntas) ? r.preguntas.length : 0;
+
+  const participaciones = personas.map((u: any) => {
+    const res = (r.resultados ?? []).find((x: any) => x.usuario?.id === u.id);
+    const total = res ? res.aciertos + res.fallos : 0;
+    const porcentaje = res && total > 0 ? Math.round((res.aciertos / total) * 100) : (res?.completado ? 0 : null);
+    return {
+      id: `${r.id}-${u.id}`,
+      usuario: u,
+      completado: !!res?.completado,
+      posicion: res?.posicion ?? null,
+      porcentaje,
+    };
+  });
+
+  const retoNormalizado = {
+    id: r.id,
+    tipo: 'usuario',
+    estado: r.estado,
+    fechaFin: r.fechaFin,
+    creadoEn: r.creadoEn,
+    creador: r.retador,
+    oposicion: r.oposicion,
+    participaciones,
+    preguntas: r.preguntas,
+    tipoPsico: r.tipo,
+    totalPreguntas,
+    _esPsico: true,
+  };
+
+  const miParticipacion = participaciones.find((p: any) => p.usuario?.id === usuarioActualId);
+
+  return {
+    id: `${r.id}-p`,
+    reto: retoNormalizado,
+    completado: !!miParticipacion?.completado,
+    posicion: miParticipacion?.posicion ?? null,
+    porcentaje: miParticipacion?.porcentaje ?? null,
+  };
+}
+
 function tiempoRestante(fechaFin: string): string {
   const restante = new Date(fechaFin).getTime() - Date.now();
   if (restante <= 0) return 'Caducado';
@@ -94,6 +144,8 @@ export default function RetosPage() {
     categoria: 'test' as CategoriaReto,
     numPreguntas: 10,
     numFC: 10,
+    numPsico: 10,
+    psicoTipo: '' as string,
     tipoReto: 'oposicion' as TipoRetoUsuario,
     temaId: '',
     versionLeyId: '',
@@ -185,6 +237,43 @@ const oposicionId = usuario?.oposicionActiva?.id;
     enabled: !!usuario,
   });
 
+  const { data: misRetosPsico = [] } = useQuery({
+    queryKey: ['mis-retos-psico'],
+    queryFn: async () => {
+      const res = await api.get('/psicotecnicos/mis-retos');
+      return res.data;
+    },
+    enabled: !!usuario,
+  });
+
+  // Config efectiva de psicotécnicos para la oposición/convocatoria activa —
+  // mismo endpoint y forma que usa EntrenamientoHub para decidir si mostrar
+  // la acción "Psicotécnicos" (array vacío = tienePsicotecnicos===false o sin
+  // tipos habilitados para esta convocatoria).
+  const { data: configPsicotecnicos = [] } = useQuery({
+    queryKey: ['psicotecnicos-config', oposicionId],
+    queryFn: async () => {
+      const res = await api.get(`/psicotecnicos/config/${oposicionId}`);
+      return res.data;
+    },
+    enabled: !!oposicionId && modalAbierto,
+  });
+
+  const psicoDisponible = configPsicotecnicos.length > 0;
+
+  // Pre-flight de disponibilidad para el tipo psicotécnico elegido — mismo
+  // "avisar pero no bloquear" que ya usa Test para tema/ley.
+  const { data: psicoDisponibles } = useQuery({
+    queryKey: ['psicotecnicos-disponibles', oposicionId, form.psicoTipo],
+    queryFn: async () => {
+      const res = await api.get(`/psicotecnicos/disponibles/${oposicionId}`, {
+        params: { tipo: form.psicoTipo },
+      });
+      return res.data;
+    },
+    enabled: !!oposicionId && !!form.psicoTipo && form.categoria === 'psico' && modalAbierto,
+  });
+
   const { data: contactosRecientes = [] } = useQuery({
     queryKey: ['contactos-recientes'],
     queryFn: async () => {
@@ -239,6 +328,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
     categoria: 'test' as CategoriaReto,
     numPreguntas: 10,
     numFC: 10,
+    numPsico: 10,
+    psicoTipo: '',
     tipoReto: 'oposicion' as TipoRetoUsuario,
     temaId: '',
     versionLeyId: '',
@@ -248,6 +339,16 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
   const crearReto = useMutation({
     mutationFn: async () => {
+      if (form.categoria === 'psico') {
+        const res = await api.post('/psicotecnicos/duelo', {
+          retadoNickOEmail: form.retadoNickOEmail,
+          oposicionId,
+          tipo: form.psicoTipo,
+          numPreguntas: form.numPsico,
+          convocatoriaId: convocatoriaReto?.id,
+        });
+        return { ...res.data, _esPsico: true };
+      }
       if (form.categoria === 'fc') {
         const body: any = {
           retadoNickOEmail: form.retadoNickOEmail,
@@ -274,11 +375,12 @@ const oposicionId = usuario?.oposicionActiva?.id;
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mis-retos'] });
       queryClient.invalidateQueries({ queryKey: ['mis-retos-fc'] });
+      queryClient.invalidateQueries({ queryKey: ['mis-retos-psico'] });
       queryClient.invalidateQueries({ queryKey: ['contactos-recientes'] });
       setModalAbierto(false);
       setForm(formInicial);
       setError('');
-      setRetoRecienCreado(data._esFC ? `fc:${data.id}` : data.id);
+      setRetoRecienCreado(data._esPsico ? `psico:${data.id}` : data._esFC ? `fc:${data.id}` : data.id);
     },
     onError: (e: any) => {
       setError(e?.response?.data?.message ?? 'Error creando el reto');
@@ -337,7 +439,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
     };
 
  const misRetosFCNormalizados = misRetosFC.map((r: any) => normalizarRetoFC(r, (usuario as any)?.id));
- const misRetosTodos = [...misRetos, ...misRetosFCNormalizados];
+ const misRetosPsicoNormalizados = misRetosPsico.map((r: any) => normalizarRetoPsico(r, (usuario as any)?.id));
+ const misRetosTodos = [...misRetos, ...misRetosFCNormalizados, ...misRetosPsicoNormalizados];
 
  const retosUsuarioPendientes = misRetosTodos.filter(
   (p: any) => p.reto?.tipo === 'usuario'
@@ -365,8 +468,9 @@ const oposicionId = usuario?.oposicionActiva?.id;
   };
 
   const formularioValido = form.retadoNickOEmail
-    && (form.tipoReto !== 'normativa' || form.versionLeyId)
-    && (form.tipoReto !== 'tema' || form.temaId);
+    && (form.categoria !== 'psico' || !!form.psicoTipo)
+    && (form.categoria === 'psico' || form.tipoReto !== 'normativa' || form.versionLeyId)
+    && (form.categoria === 'psico' || form.tipoReto !== 'tema' || form.temaId);
 
   if (cargando) return null;
 
@@ -509,19 +613,20 @@ const oposicionId = usuario?.oposicionActiva?.id;
         {retosEnCurso.map((p: any) => {
           const esCreador = p.reto.creador?.id === (usuario as any)?.id;
           const esFC = !!p.reto._esFC;
+          const esPsico = !!p.reto._esPsico;
           return (
             <div key={p.id} style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '14px 16px', boxSizing: 'border-box' }}>
               <div
-                onClick={() => esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : setRetoPreview(p.reto.id)}
+                onClick={() => esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : esPsico ? router.push(`/app/retos/psico/${p.reto.id}`) : setRetoPreview(p.reto.id)}
                 style={{ cursor: 'pointer' }}
               >
-                <DueloReto reto={p.reto} usuarioActual={usuario} mostrarBarraTiempo tipo={esFC ? 'fc' : 'test'} />
+                <DueloReto reto={p.reto} usuarioActual={usuario} mostrarBarraTiempo tipo={esFC ? 'fc' : esPsico ? 'psico' : 'test'} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #F1F5F9' }}>
                 <span style={{ fontSize: '11px', color: TEXT_MUTED }}>
-                  {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {esFC ? `${p.reto.totalFC ?? '—'} flashcards` : (p.reto.tema?.titulo ? `Tema ${p.reto.tema.numero}` : 'Oposición')}
+                  {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {esFC ? `${p.reto.totalFC ?? '—'} flashcards` : esPsico ? `${p.reto.totalPreguntas ?? '—'} preguntas psicotécnicas` : (p.reto.tema?.titulo ? `Tema ${p.reto.tema.numero}` : 'Oposición')}
                 </span>
-                {!esFC && (
+                {!esFC && !esPsico && (
                   <button
                     onClick={(e) => { e.stopPropagation(); confirmarAccion(p.reto, esCreador ? 'cancelar' : 'rechazar'); }}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT_MUTED, fontSize: '11px', fontWeight: 600, flexShrink: 0 }}
@@ -554,7 +659,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               (a, b) => new Date(b.reto.creadoEn).getTime() - new Date(a.reto.creadoEn).getTime()
             )}
             usuario={usuario}
-            onVer={(p: any) => p.reto?._esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : setRetoPreview(p.reto.id)}
+            onVer={(p: any) => p.reto?._esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : p.reto?._esPsico ? router.push(`/app/retos/psico/${p.reto.id}`) : setRetoPreview(p.reto.id)}
           />
         )}
 
@@ -642,23 +747,71 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   {[
                     { key: 'test', icon: '📝', label: 'Test' },
                     { key: 'fc', icon: '🃏', label: 'Flashcards' },
-                  ].map(({ key, icon, label }) => (
+                    { key: 'psico', icon: '🧠', label: 'Psicotécnicos' },
+                  ].map(({ key, icon, label }) => {
+                    const bloqueadoPsico = key === 'psico' && !psicoDisponible;
+                    return (
                     <button
                       key={key}
-                      onClick={() => setForm({ ...form, categoria: key as CategoriaReto })}
+                      onClick={() => { if (bloqueadoPsico) return; setForm({ ...form, categoria: key as CategoriaReto, psicoTipo: '' }); }}
+                      disabled={bloqueadoPsico}
                       style={{
-                        flex: 1, padding: '10px 6px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
-                        border: form.categoria === key ? `2px solid ${key === 'fc' ? COLOR_FC : '#111827'}` : 'none',
+                        flex: 1, padding: '10px 6px', borderRadius: '12px', cursor: bloqueadoPsico ? 'not-allowed' : 'pointer', textAlign: 'center',
+                        border: form.categoria === key ? `2px solid ${key === 'fc' ? COLOR_FC : key === 'psico' ? COLOR_PSICO : '#111827'}` : 'none',
                         background: 'white',
+                        opacity: bloqueadoPsico ? 0.45 : 1,
                       }}
                     >
-                      <div style={{ fontSize: '16px', marginBottom: '3px' }}>{icon}</div>
+                      <div style={{ fontSize: '16px', marginBottom: '3px' }}>{bloqueadoPsico ? <Lock size={16} color="#9ca3af" style={{ display: 'inline' }} /> : icon}</div>
                       <div style={{ fontSize: '11px', fontWeight: 500, color: TEXT_PRIMARY }}>{label}</div>
+                      {bloqueadoPsico && (
+                        <div style={{ fontSize: '9px', color: TEXT_MUTED, marginTop: '2px' }}>No disponible</div>
+                      )}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
+              {form.categoria === 'psico' && (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Modalidad</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {configPsicotecnicos.map((m: any) => (
+                      <button
+                        key={m.tipo}
+                        onClick={() => setForm({ ...form, psicoTipo: m.tipo })}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '12px', cursor: 'pointer', textAlign: 'left',
+                          border: form.psicoTipo === m.tipo ? `2px solid ${COLOR_PSICO}` : 'none',
+                          background: 'white',
+                        }}
+                      >
+                        <span style={{ fontSize: '18px' }}>{m.icono ?? '🧠'}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY }}>{m.nombre}</div>
+                          {m.descripcion && (
+                            <div style={{ fontSize: '10px', color: TEXT_MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.descripcion}</div>
+                          )}
+                        </div>
+                        <div style={{
+                          width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
+                          border: `2px solid ${form.psicoTipo === m.tipo ? COLOR_PSICO : '#d1d5db'}`,
+                          background: form.psicoTipo === m.tipo ? COLOR_PSICO : 'white',
+                        }} />
+                      </button>
+                    ))}
+                  </div>
+                  {form.psicoTipo && psicoDisponibles && psicoDisponibles.total < form.numPsico && (
+                    <div style={{ marginTop: '8px', fontSize: '11px', color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '8px 10px' }}>
+                      ⚠ Solo hay {psicoDisponibles.total} preguntas disponibles para esta modalidad (pediste {form.numPsico}). El duelo se creará igualmente con las que haya.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {form.categoria !== 'psico' && (
+              <>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Sobre qué va el reto</div>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -703,6 +856,25 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     <option key={t.id} value={t.id}>Tema {t.numero} — {t.titulo.slice(0, 40)}{t.titulo.length > 40 ? '...' : ''}</option>
                   ))}
                 </select>
+              )}
+              </>
+              )}
+
+              {form.categoria === 'psico' && (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Número de preguntas</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[5, 10, 20].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setForm({ ...form, numPsico: n })}
+                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numPsico === n ? COLOR_PSICO : 'white', color: form.numPsico === n ? 'white' : '#6b7280' }}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {form.categoria === 'fc' ? (
@@ -780,7 +952,9 @@ const oposicionId = usuario?.oposicionActiva?.id;
               )}
 
               <div style={{ background: 'white', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: TEXT_SECONDARY }}>
-                {form.categoria === 'fc'
+                {form.categoria === 'psico'
+                  ? `🧠 El retado jugará el mismo duelo de ${form.numPsico} preguntas psicotécnicas`
+                  : form.categoria === 'fc'
                   ? `🃏 El retado jugará el mismo duelo de ${form.numFC} flashcards`
                   : `⏱ El retado tiene ${form.horasPlazo}h para completar el mismo test`}
               </div>
@@ -810,10 +984,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
           >
             <div style={{
               width: '56px', height: '56px', borderRadius: '50%',
-              background: retoRecienCreado.startsWith('fc:') ? COLOR_FC_BG : COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: retoRecienCreado.startsWith('fc:') ? COLOR_FC_BG : retoRecienCreado.startsWith('psico:') ? COLOR_PSICO_BG : COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 14px',
             }}>
-              <FireIcon style={{ width: 26, height: 26, color: retoRecienCreado.startsWith('fc:') ? COLOR_FC : COLOR_RETOS }} />
+              <FireIcon style={{ width: 26, height: 26, color: retoRecienCreado.startsWith('fc:') ? COLOR_FC : retoRecienCreado.startsWith('psico:') ? COLOR_PSICO : COLOR_RETOS }} />
             </div>
             <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT_PRIMARY, marginBottom: '6px' }}>
               ¡Reto enviado!
@@ -826,8 +1000,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
               <button
                 onClick={() => {
                   const esFC = retoRecienCreado.startsWith('fc:');
-                  const idReal = esFC ? retoRecienCreado.slice(3) : retoRecienCreado;
-                  router.push(esFC ? `/app/retos/fc/${idReal}?directo=true` : `/app/retos/${idReal}?directo=true`);
+                  const esPsico = retoRecienCreado.startsWith('psico:');
+                  const idReal = esFC || esPsico ? retoRecienCreado.slice(retoRecienCreado.indexOf(':') + 1) : retoRecienCreado;
+                  const ruta = esFC ? `/app/retos/fc/${idReal}?directo=true` : esPsico ? `/app/retos/psico/${idReal}?directo=true` : `/app/retos/${idReal}?directo=true`;
+                  router.push(ruta);
                 }}
                 style={{ width: '100%', padding: '13px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
               >
@@ -1082,7 +1258,8 @@ function colorPorTiempoRestante(fechaFin: string, fechaInicio: string): string {
 
 export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tipo = 'test' }: any) {
   const esFC = tipo === 'fc';
-  const colorGanador = esFC ? COLOR_FC : '#D97706';
+  const esPsico = tipo === 'psico';
+  const colorGanador = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : '#D97706';
   const participaciones = reto.participaciones ?? [];
   const yo = participaciones.find((p: any) => p.usuario?.id === usuarioActual?.id);
   const rival = participaciones.find((p: any) => p.usuario?.id !== usuarioActual?.id);
@@ -1115,7 +1292,7 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
               <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', fontSize: '18px' }}>🤝</div>
             )}
             {!yoSoyCreador && !ambosCompletados && (
-              <div style={{ position: 'absolute', top: '-4px', left: '-4px', fontSize: '14px' }}>{esFC ? '🃏' : '🎯'}</div>
+              <div style={{ position: 'absolute', top: '-4px', left: '-4px', fontSize: '14px' }}>{esPsico ? '🧠' : esFC ? '🃏' : '🎯'}</div>
             )}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY }}>
@@ -1146,7 +1323,7 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
               <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', fontSize: '18px' }}>🤝</div>
             )}
             {!yoSoyCreador && !ambosCompletados && ( // ⭐ nuevo: icono de retador
-              <div style={{ position: 'absolute', top: '-4px', left: '-4px', fontSize: '14px' }}>{esFC ? '🃏' : '⚡'}</div>
+              <div style={{ position: 'absolute', top: '-4px', left: '-4px', fontSize: '14px' }}>{esPsico ? '🧠' : esFC ? '🃏' : '⚡'}</div>
             )}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY }}>
@@ -1209,6 +1386,7 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
           const rivalParticipacion = p.reto.participaciones?.find((x: any) => x.usuario?.id !== usuario?.id);
           const gane = p.posicion === 1;
           const esFC = !!p.reto._esFC;
+          const esPsico = !!p.reto._esPsico;
 
           return (
             <div
@@ -1216,13 +1394,14 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
               onClick={() => onVer(p)}
               style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', minHeight: '68px', boxSizing: 'border-box' }}
             >
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: expirado ? '#F4F5F7' : gane ? (esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: '17px' }}>{expirado ? '⏱️' : gane ? (esFC ? '🃏' : '🏆') : '😤'}</span>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: expirado ? '#F4F5F7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {expirado ? <span style={{ fontSize: '17px' }}>⏱️</span> : esPsico ? <Brain size={17} color={gane ? COLOR_PSICO : '#dc2626'} /> : <span style={{ fontSize: '17px' }}>{gane ? (esFC ? '🃏' : '🏆') : '😤'}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>
                   {expirado ? 'Cancelado por tiempo' : gane ? 'Victoria' : 'Derrota'} vs {rival?.nick ?? rival?.nombre ?? 'Usuario'}
                   {esFC && <span style={{ fontSize: '10px', color: COLOR_FC, fontWeight: 700, marginLeft: 6 }}>FC</span>}
+                  {esPsico && <span style={{ fontSize: '10px', color: COLOR_PSICO, fontWeight: 700, marginLeft: 6 }}>PSICO</span>}
                 </div>
                 <div style={{ fontSize: '12px', color: TEXT_MUTED, marginTop: '2px' }}>
                   {expirado ? 'El plazo terminó antes de completarse' : `${p.porcentaje}% — ${rivalParticipacion?.porcentaje ?? '?'}%`}
