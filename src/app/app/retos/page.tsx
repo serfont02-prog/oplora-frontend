@@ -154,6 +154,13 @@ export default function RetosPage() {
   });
   const [error, setError] = useState('');
 
+  // ⭐ Wizard "Nuevo reto": un paso a pantalla completa por vez, en vez del
+  // acordeón anterior. El orden es fijo para las 3 categorías (test/fc/psico);
+  // lo que cambia es el contenido de "sobre-que-va" y "ajustes" según form.categoria.
+  const PASOS = ['retado', 'tipo', 'sobre-que-va', 'ajustes', 'resumen'] as const;
+  type PasoWizard = typeof PASOS[number];
+  const [paso, setPaso] = useState<PasoWizard>('retado');
+
 const [validacion, setValidacion] = useState<any>(null);
 const [validando, setValidando] = useState(false);
 const [modalInvitar, setModalInvitar] = useState(false);
@@ -380,6 +387,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
       setModalAbierto(false);
       setForm(formInicial);
       setError('');
+      setPaso('retado');
       setRetoRecienCreado(data._esPsico ? `psico:${data.id}` : data._esFC ? `fc:${data.id}` : data.id);
     },
     onError: (e: any) => {
@@ -471,6 +479,22 @@ const oposicionId = usuario?.oposicionActiva?.id;
     && (form.categoria !== 'psico' || !!form.psicoTipo)
     && (form.categoria === 'psico' || form.tipoReto !== 'normativa' || form.versionLeyId)
     && (form.categoria === 'psico' || form.tipoReto !== 'tema' || form.temaId);
+
+  // ⭐ Validación por paso del wizard: gatea el botón "Continuar" con las
+  // mismas reglas que ya existían para el envío final (puedeEnviar / los
+  // selects obligatorios de tema-ley), solo que repartidas por paso.
+  const pasoValido = (() => {
+    if (paso === 'retado') return !!puedeEnviar;
+    if (paso === 'tipo') return true;
+    if (paso === 'sobre-que-va') {
+      if (form.categoria === 'psico') return !!form.psicoTipo;
+      return (form.tipoReto !== 'normativa' || !!form.versionLeyId) && (form.tipoReto !== 'tema' || !!form.temaId);
+    }
+    if (paso === 'ajustes') return true;
+    return !!puedeEnviar; // resumen
+  })();
+
+  const colorPasoActivo = form.categoria === 'fc' ? COLOR_FC : form.categoria === 'psico' ? COLOR_PSICO : COLOR_RETOS;
 
   if (cargando) return null;
 
@@ -586,7 +610,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
         {/* Botón nuevo reto */}
         <button
-          onClick={() => setModalAbierto(true)}
+          onClick={() => { setModalAbierto(true); setPaso('retado'); }}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             background: '#111827', color: 'white', border: 'none', borderRadius: '12px',
@@ -665,23 +689,57 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
       </div>
 
-      {/* Modal crear reto */}
+      {/* Modal crear reto — wizard paso a paso, pantalla completa por paso */}
       {modalAbierto && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
-          <div style={{ background: BG_APP, borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '400px', maxHeight: '85vh', overflowY: 'auto' }}>
+          <div style={{ background: BG_APP, borderRadius: '20px', width: '100%', maxWidth: '400px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: TEXT_PRIMARY }}>Enviar reto</div>
-              <button
-                onClick={() => { setModalAbierto(false); setError(''); }}
-                style={{ background: 'white', border: 'none', borderRadius: '10px', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', color: TEXT_MUTED }}
-              >
-                ✕
-              </button>
+            <style>{`@keyframes oplora-paso-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }`}</style>
+
+            {/* Header: volver + título + cerrar + barra de progreso */}
+            <div style={{ padding: '1.5rem 1.5rem 0.9rem', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem' }}>
+                {paso !== 'retado' ? (
+                  <button
+                    onClick={() => setPaso(PASOS[PASOS.indexOf(paso) - 1])}
+                    style={{ background: 'white', border: 'none', borderRadius: '10px', width: '32px', height: '32px', fontSize: '15px', cursor: 'pointer', color: TEXT_PRIMARY, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    ←
+                  </button>
+                ) : (
+                  <div style={{ width: '32px' }} />
+                )}
+                <div style={{ fontSize: '15px', fontWeight: 700, color: TEXT_PRIMARY }}>Enviar reto</div>
+                <button
+                  onClick={() => { setModalAbierto(false); setError(''); setPaso('retado'); }}
+                  style={{ background: 'white', border: 'none', borderRadius: '10px', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', color: TEXT_MUTED }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {PASOS.map((p, i) => (
+                  <div
+                    key={p}
+                    style={{
+                      flex: 1, height: '4px', borderRadius: '999px',
+                      background: i <= PASOS.indexOf(paso) ? colorPasoActivo : '#E5E7EB',
+                      transition: 'background 0.25s ease',
+                    }}
+                  />
+                ))}
+              </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* Body: solo el contenido del paso actual, con transición horizontal suave */}
+            <div style={{ padding: '0.25rem 1.5rem 1.25rem', overflowY: 'auto', flex: 1 }}>
+              <div
+                key={paso}
+                style={{ display: 'flex', flexDirection: 'column', gap: '14px', animation: 'oplora-paso-in 0.22s ease' }}
+              >
 
+              {paso === 'retado' && (
+              <>
               {contactosRecientes.length > 0 && (
                 <div>
                   <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Recientes</div>
@@ -740,7 +798,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 </div>
               )}
               </div>
+              </>
+              )}
 
+              {paso === 'tipo' && (
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Tipo de reto</div>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -772,7 +833,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   })}
                 </div>
               </div>
+              )}
 
+              {paso === 'sobre-que-va' && (
+              <>
               {form.categoria === 'psico' && (
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Modalidad</div>
@@ -859,7 +923,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
               )}
               </>
               )}
+              </>
+              )}
 
+              {paso === 'ajustes' && (
+              <>
               {form.categoria === 'psico' && (
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Número de preguntas</div>
@@ -944,6 +1012,25 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   />
                 </div>
               )}
+              </>
+              )}
+
+              {paso === 'resumen' && (
+              <>
+              <div style={{ background: 'white', borderRadius: '12px', padding: '14px', fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.5 }}>
+                Retas a {validacion?.nombre ?? form.retadoNickOEmail}
+                {' · '}
+                {form.categoria === 'psico'
+                  ? (configPsicotecnicos.find((m: any) => m.tipo === form.psicoTipo)?.nombre ?? 'Psicotécnico')
+                  : form.categoria === 'fc'
+                  ? 'Flashcards'
+                  : 'Test'}
+                {' · '}
+                {form.categoria === 'psico' ? form.numPsico : form.categoria === 'fc' ? form.numFC : form.numPreguntas}
+                {' '}
+                {form.categoria === 'fc' ? 'flashcards' : 'preguntas'}
+                {form.categoria === 'test' && ` · ${form.horasPlazo}h`}
+              </div>
 
               {error && (
                 <div style={{ fontSize: '12px', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '8px 12px' }}>
@@ -958,16 +1045,31 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   ? `🃏 El retado jugará el mismo duelo de ${form.numFC} flashcards`
                   : `⏱ El retado tiene ${form.horasPlazo}h para completar el mismo test`}
               </div>
+              </>
+              )}
 
-              <button
-                onClick={() => crearReto.mutate()}
-                disabled={!puedeEnviar || crearReto.isPending}
-                style={{ /* ... */ opacity: !puedeEnviar ? 0.5 : 1 }}
-              >
-                {crearReto.isPending ? 'Enviando...' : 'Enviar reto'}
-              </button>
-
+              </div>
             </div>
+
+            {/* Footer: Continuar / Enviar reto, fijo */}
+            <div style={{ padding: '0.85rem 1.5rem 1.25rem', flexShrink: 0, borderTop: '1px solid rgba(17,24,39,0.06)' }}>
+              <button
+                onClick={() => {
+                  if (paso === 'resumen') { crearReto.mutate(); return; }
+                  setPaso(PASOS[PASOS.indexOf(paso) + 1]);
+                }}
+                disabled={!pasoValido || (paso === 'resumen' && crearReto.isPending)}
+                style={{
+                  width: '100%', padding: '13px', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700,
+                  cursor: (!pasoValido || (paso === 'resumen' && crearReto.isPending)) ? 'not-allowed' : 'pointer',
+                  background: '#111827', color: 'white',
+                  opacity: (!pasoValido || (paso === 'resumen' && crearReto.isPending)) ? 0.5 : 1,
+                }}
+              >
+                {paso === 'resumen' ? (crearReto.isPending ? 'Enviando...' : 'Enviar reto') : 'Continuar'}
+              </button>
+            </div>
+
           </div>
         </div>
       )}
