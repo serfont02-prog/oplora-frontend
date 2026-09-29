@@ -945,7 +945,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 </div>
               )}
 
-              {form.categoria === 'fc' ? (
+              {form.categoria === 'fc' && (
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Número de flashcards</div>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -960,7 +960,9 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     ))}
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {form.categoria === 'test' && (
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Número de preguntas</div>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -998,20 +1000,6 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 </div>
               )}
 
-              {form.categoria === 'test' && (
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, display: 'block', marginBottom: '4px' }}>
-                    Mensaje <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>(opcional)</span>
-                  </label>
-                  <textarea
-                    value={form.mensaje}
-                    onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
-                    placeholder="Escribe algo motivador para tu rival..."
-                    maxLength={140}
-                    style={{ width: '100%', minHeight: '60px', padding: '10px 12px', fontSize: '13px', border: 'none', borderRadius: '10px', outline: 'none', boxSizing: 'border-box', background: 'white', resize: 'vertical', fontFamily: 'inherit' }}
-                  />
-                </div>
-              )}
               </>
               )}
 
@@ -1031,6 +1019,21 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 {form.categoria === 'fc' ? 'flashcards' : 'preguntas'}
                 {form.categoria === 'test' && ` · ${form.horasPlazo}h`}
               </div>
+
+              {form.categoria === 'test' && (
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, display: 'block', marginBottom: '4px' }}>
+                    Mensaje <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>(opcional)</span>
+                  </label>
+                  <textarea
+                    value={form.mensaje}
+                    onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
+                    placeholder="Escribe algo motivador para tu rival..."
+                    maxLength={140}
+                    style={{ width: '100%', minHeight: '60px', padding: '10px 12px', fontSize: '13px', border: 'none', borderRadius: '10px', outline: 'none', boxSizing: 'border-box', background: 'white', resize: 'vertical', fontFamily: 'inherit' }}
+                  />
+                </div>
+              )}
 
               {error && (
                 <div style={{ fontSize: '12px', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '8px 12px' }}>
