@@ -54,7 +54,11 @@ export default function TemaPage() {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
 
-  const { data: convocatorias = [] } = useQuery({
+  const {
+    data: convocatorias = [],
+    isLoading: convocatoriasLoading,
+    isError: convocatoriasError,
+  } = useQuery({
     queryKey: ['convocatorias-tema', oposicionId],
     queryFn: async () => {
       const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
@@ -65,7 +69,11 @@ export default function TemaPage() {
 
   const convocatoria = convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0];
 
-  const { data: temas = [] } = useQuery({
+  const {
+    data: temas = [],
+    isLoading: temasLoading,
+    isError: temasError,
+  } = useQuery({
     queryKey: ['temas-tema', convocatoria?.id],
     queryFn: async () => {
       const res = await api.get(`/temas/convocatoria/${convocatoria.id}`);
@@ -78,7 +86,11 @@ export default function TemaPage() {
   const temaAnterior = temas.find((t: any) => t.numero === parseInt(numeroTema) - 1);
   const temaSiguiente = temas.find((t: any) => t.numero === parseInt(numeroTema) + 1);
 
-  const { data: progresoCompleto } = useQuery({
+  const {
+    data: progresoCompleto,
+    isLoading: progresoCompletoLoading,
+    isError: progresoCompletoError,
+  } = useQuery({
     queryKey: ['progreso-completo-tema', tema?.id, oposicionId],
     queryFn: async () => {
       const res = await api.get(`/temas/${tema.id}/progreso-completo?oposicionId=${oposicionId}`);
@@ -88,7 +100,11 @@ export default function TemaPage() {
   });
 
 
-  const { data: normativa = [] } = useQuery({
+  const {
+    data: normativa = [],
+    isLoading: normativaLoading,
+    isError: normativaError,
+  } = useQuery({
     queryKey: ['normativa-tema', tema?.id],
     queryFn: async () => {
       const res = await api.get(`/temas/${tema.id}/normativa`);
@@ -180,7 +196,11 @@ const normativaPorLey = useMemo(() => {
   enabled: !!tema?.id,
   });
 
-  const { data: apuntes = [] } = useQuery({
+  const {
+    data: apuntes = [],
+    isLoading: apuntesLoading,
+    isError: apuntesError,
+  } = useQuery({
     queryKey: ['apuntes-tema', tema?.id],
     queryFn: async () => {
       const res = await api.get(`/apuntes-usuario/tema/${tema.id}`);
@@ -189,7 +209,11 @@ const normativaPorLey = useMemo(() => {
     enabled: !!tema?.id,
   });
 
-  const { data: apuntesOplora = [] } = useQuery({
+  const {
+    data: apuntesOplora = [],
+    isLoading: apuntesOploraLoading,
+    isError: apuntesOploraError,
+  } = useQuery({
     queryKey: ['apuntes-oplora-tema', tema?.id],
     queryFn: async () => {
       const res = await api.get(`/apuntes-oplora/tema/${tema.id}`);
@@ -265,19 +289,35 @@ const normativaPorLey = useMemo(() => {
 
 useEffect(() => {
   if (tema?.id) {
-    console.log('Registrando sesión para tema:', tema.id); // ⭐
     api.post(`/sesiones-tema/${tema.id}`)
       .then(() => {
-        console.log('Sesión registrada, invalidando query'); // ⭐
         queryCliente.invalidateQueries({ queryKey: ['ultimo-tema-estudiado'] });
       })
       .catch((err) => {
-        console.error('Error registrando sesión:', err);
+        console.error('Error registrando sesión de estudio:', err);
       });
   }
 }, [tema?.id]);
 
   if (cargando) return null;
+
+  // ⭐ Carga/errores de las queries "primarias" (las que determinan si hay tema que mostrar).
+  // Usamos isLoading (no isFetching) para no parpadear en refetchs en segundo plano.
+  if (convocatoriasLoading || temasLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando...</span>
+      </div>
+    );
+  }
+
+  if (convocatoriasError || temasError) {
+    return (
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center' }}>
+        <span style={{ fontSize: '13px', color: '#dc2626' }}>No se ha podido cargar el tema. Inténtalo de nuevo.</span>
+      </div>
+    );
+  }
 
   const TABS: { key: TabTema; label: string; icon: typeof BookOpen }[] = [
     { key: 'material', label: 'Material', icon: BookOpen },
@@ -474,11 +514,15 @@ const hoy = new Date().toISOString().split('T')[0];
   <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
     {/* Apuntes OPLORA */}
-    {apuntesOplora.length > 0 && (
-      <div>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
-          Apuntes OPLORA ({apuntesOplora.length})
-        </div>
+    <div>
+      <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+        Apuntes OPLORA ({apuntesOplora.length})
+      </div>
+      {apuntesOploraLoading ? (
+        <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>Cargando...</div>
+      ) : apuntesOploraError ? (
+        <div style={{ fontSize: '13px', color: '#dc2626', padding: '4px 2px' }}>No se han podido cargar los apuntes</div>
+      ) : apuntesOplora.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {apuntesOplora.map((ap: any) => (
             <button
@@ -510,47 +554,9 @@ const hoy = new Date().toISOString().split('T')[0];
             </button>
           ))}
         </div>
-      </div>
-    )}
-
-    {/* Normativa vinculada */}
-    <div>
-      <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
-        Normativa vinculada
-      </div>
-      {Object.keys(normativaPorLey).length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {Object.entries(normativaPorLey).map(([leyNombre, data]: [string, any]) => (
-            <div key={leyNombre} style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '14px 16px' }}>
-              <button
-                onClick={() => data.leyId && router.push(`/app/ley/${data.leyId}?oposicionId=${oposicionId}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', cursor: 'pointer', background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0 }}
-              >
-                <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: '#F3F0FC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <BookOpen size={15} color="#8B5CF6" />
-                </div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', flex: 1 }}>{leyNombre}</div>
-                <ChevronRight size={14} color="#D1D5DB" />
-              </button>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingLeft: '42px' }}>
-                {data.articulos.map((art: any) => (
-                  <button
-                    key={art.id}
-                    onClick={() => router.push(`/app/articulo/${art.id}?oposicionId=${oposicionId}`)}
-                    style={{ padding: '3px 10px', borderRadius: '999px', border: '1px solid #E5E7EB', background: '#FAFAFA', fontSize: '11px', color: '#374151', cursor: 'pointer', fontWeight: 500 }}
-                  >
-                    Art. {art.numero}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
       ) : (
         <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>
-          {tema?.contexto
-            ? renderReferencias(tema.contexto, mapaSiglas, abrirArticuloDesdeContexto, 'ctx')
-            : 'El equipo está preparando la normativa de este tema'}
+          El tema actualmente no tiene apuntes
         </div>
       )}
     </div>
@@ -561,6 +567,17 @@ const hoy = new Date().toISOString().split('T')[0];
         Mis apuntes ({apuntes.length})
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {apuntesLoading && (
+          <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>Cargando...</div>
+        )}
+        {apuntesError && (
+          <div style={{ fontSize: '13px', color: '#dc2626', padding: '4px 2px' }}>No se han podido cargar tus apuntes</div>
+        )}
+        {!apuntesLoading && !apuntesError && apuntes.length === 0 && (
+          <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>
+            El tema no tiene apuntes propios
+          </div>
+        )}
         {apuntes.map((ap: any) => (
           <a
             key={ap.id}
@@ -632,6 +649,52 @@ const hoy = new Date().toISOString().split('T')[0];
           </div>
         </button>
       </div>
+    </div>
+
+    {/* Normativa vinculada */}
+    <div>
+      <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+        Normativa vinculada ({normativa.length})
+      </div>
+      {normativaLoading ? (
+        <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>Cargando...</div>
+      ) : normativaError ? (
+        <div style={{ fontSize: '13px', color: '#dc2626', padding: '4px 2px' }}>No se ha podido cargar la normativa</div>
+      ) : Object.keys(normativaPorLey).length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {Object.entries(normativaPorLey).map(([leyNombre, data]: [string, any]) => (
+            <div key={leyNombre} style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '14px 16px' }}>
+              <button
+                onClick={() => data.leyId && router.push(`/app/ley/${data.leyId}?oposicionId=${oposicionId}`)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', cursor: 'pointer', background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0 }}
+              >
+                <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: '#F3F0FC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <BookOpen size={15} color="#8B5CF6" />
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', flex: 1 }}>{leyNombre}</div>
+                <ChevronRight size={14} color="#D1D5DB" />
+              </button>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingLeft: '42px' }}>
+                {data.articulos.map((art: any) => (
+                  <button
+                    key={art.id}
+                    onClick={() => router.push(`/app/articulo/${art.id}?oposicionId=${oposicionId}`)}
+                    style={{ padding: '3px 10px', borderRadius: '999px', border: '1px solid #E5E7EB', background: '#FAFAFA', fontSize: '11px', color: '#374151', cursor: 'pointer', fontWeight: 500 }}
+                  >
+                    Art. {art.numero}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>
+          {tema?.contexto
+            ? renderReferencias(tema.contexto, mapaSiglas, abrirArticuloDesdeContexto, 'ctx')
+            : 'El tema no tiene normativa vinculada'}
+        </div>
+      )}
     </div>
   </div>
 )}
@@ -774,6 +837,16 @@ const hoy = new Date().toISOString().split('T')[0];
 {tab === 'progreso' && (
   <>
     {/* Widget: Desglose del progreso */}
+    {progresoCompletoLoading && (
+      <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
+        <span style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando...</span>
+      </div>
+    )}
+    {progresoCompletoError && (
+      <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
+        <span style={{ fontSize: '13px', color: '#dc2626' }}>No se ha podido cargar el progreso</span>
+      </div>
+    )}
     {progresoCompleto?.desglose && (
       <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
         <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px', paddingLeft: '2px' }}>
