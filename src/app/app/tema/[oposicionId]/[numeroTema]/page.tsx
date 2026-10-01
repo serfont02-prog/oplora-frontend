@@ -47,8 +47,12 @@ export default function TemaPage() {
   const [subiendoApunte, setSubiendoApunte] = useState(false);
   const [modalTest, setModalTest] = useState(false);
   const [tituloExpandido, setTituloExpandido] = useState(false);
+  // ⭐ Movido aquí (antes estaba declarado después de los `return` condicionales
+  // de carga/error más abajo, violando las Reglas de los Hooks: React montaba
+  // un hook menos en esos renders y lanzaba un error al navegar a un tema).
+  const [mostrarCalendario, setMostrarCalendario] = useState(false);
 
-  
+
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
@@ -143,7 +147,7 @@ export default function TemaPage() {
   // ⭐ Agrupa la normativa por ley para mostrarla concentrada
 const normativaPorLey = useMemo(() => {
   if (!normativa?.length) return {};
-  return normativa.reduce((acc: any, item: any) => {
+  const agrupado = normativa.reduce((acc: any, item: any) => {
     const ley = item.articulo?.capitulo?.tituloRef?.versionLey?.ley
       ?? item.articulo?.tituloRef?.versionLey?.ley;
     const leyNombre = ley?.nombre ?? 'Normativa';
@@ -158,6 +162,25 @@ const normativaPorLey = useMemo(() => {
     }
     return acc;
   }, {});
+
+  // ⭐ Ordena los artículos de cada ley por número. "numero" es texto
+  // (puede venir como "69 bis"), así que se extrae la parte numérica inicial
+  // para ordenar de verdad por valor (1, 2, ..., 10) en vez de alfabéticamente
+  // ("1", "10", "2", ...), y se desempata por el resto del texto (p. ej. que
+  // "69" vaya antes que "69 bis").
+  const numeroOrden = (numero: string) => {
+    const match = /^\d+/.exec(numero ?? '');
+    return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
+  };
+  Object.values(agrupado).forEach((data: any) => {
+    data.articulos.sort((a: any, b: any) => {
+      const diff = numeroOrden(a.numero) - numeroOrden(b.numero);
+      if (diff !== 0) return diff;
+      return (a.numero ?? '').localeCompare(b.numero ?? '');
+    });
+  });
+
+  return agrupado;
 }, [normativa]);
 
   const { data: progresoTest } = useQuery({
@@ -324,8 +347,6 @@ useEffect(() => {
     { key: 'mi-estudio', label: 'Mi estudio', icon: NotebookPen },
     { key: 'progreso', label: 'Progreso', icon: BarChart2 },
   ];
-
-  const [mostrarCalendario, setMostrarCalendario] = useState(false);
 
 // Fecha mínima seleccionable = hoy
 const hoy = new Date().toISOString().split('T')[0];
