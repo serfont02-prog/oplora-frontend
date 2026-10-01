@@ -18,10 +18,9 @@ import {
   PhotoIcon,
 } from '@heroicons/react/24/outline';
 
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+
 const BG_APP = '#F4F5F7';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
 
 const NIVELES = [
   { nivel: 1, nombre: 'Opositor', puntosMin: 0, puntosMax: 100 },

@@ -8,12 +8,10 @@ import { api } from '@/lib/api';
 import { ChevronRight, Layers } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC } from '@/styles/tokens';
+
 const BG_APP = '#FDF4FE';
 const BG_WIDGET = '#F7F0F8';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
-const COLOR_FC = '#9333EA';
 const COLOR_FC_BG = '#FADEF7';
 
 function Donut({ porcentaje, color, size = 64, grosor = 7 }: { porcentaje: number; color: string; size?: number; grosor?: number }) {

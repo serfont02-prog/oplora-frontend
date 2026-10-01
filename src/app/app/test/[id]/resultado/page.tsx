@@ -18,6 +18,12 @@ export default function ResultadoTestPage() {
   const modo = searchParams.get('modo');
 
   const [preguntaExpandida, setPreguntaExpandida] = useState<number | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const mostrarToast = (mensaje: string) => {
+    setToast(mensaje);
+    setTimeout(() => setToast(null), 2500);
+  };
 
   const { data: resultado, isLoading } = useQuery({
     queryKey: ['ultimo-resultado'],
@@ -44,7 +50,7 @@ export default function ResultadoTestPage() {
       await navigator.share({ title: 'Mi resultado en Oplora', text: texto });
     } else {
       await navigator.clipboard.writeText(texto);
-      alert('Resultado copiado al portapapeles');
+      mostrarToast('Resultado copiado al portapapeles');
     }
   };
 
@@ -322,6 +328,17 @@ export default function ResultadoTestPage() {
       </div>
 
       </div>
+
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)',
+          background: '#111827', color: 'white', fontSize: '13px', fontWeight: 600,
+          padding: '10px 18px', borderRadius: '999px', boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
+          zIndex: 100, pointerEvents: 'none', whiteSpace: 'nowrap',
+        }}>
+          {toast}
+        </div>
+      )}
 
       <FooterNavegacion usuario={usuario} oposicionId={oposicionId} activo="practicar" />
     </div>

@@ -4,12 +4,15 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Brain } from 'lucide-react';
 
 const BG_APP = '#F4F5F7';
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';
+// ⭐ Mismo índigo que el resto de la app usa para la categoría "psico" (ver COLOR_PSICO en retos/page.tsx)
+const COLOR_PSICO = '#4F46E5';
+const COLOR_PSICO_BG = '#E0E7FF';
 
 export default function PsicotecnicosHubPage() {
   const router = useRouter();
@@ -40,7 +43,12 @@ export default function PsicotecnicosHubPage() {
         </button>
 
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ fontSize: 40, marginBottom: 10 }}>🧠</div>
+          <div style={{
+            width: 64, height: 64, borderRadius: '50%', background: COLOR_PSICO_BG,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px',
+          }}>
+            <Brain size={32} color={COLOR_PSICO} />
+          </div>
           <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>Psicotécnicos</div>
           <div style={{ fontSize: 13, color: TEXT_MUTED, marginTop: 4 }}>
             Entrena las aptitudes que evalúa tu proceso selectivo

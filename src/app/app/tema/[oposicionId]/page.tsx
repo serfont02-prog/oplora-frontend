@@ -8,14 +8,14 @@ import { api } from '@/lib/api';
 import { Search, CheckCircle2, ChevronRight, BookOpen, FileText, Upload, Layers } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
+import EmptyState from '@/components/ui/EmptyState';
 
 type Tab = 'programa' | 'material';
 
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+
 const BG_APP = '#F5F1EB'; // marrón pastel muy claro
 const BG_WIDGET = '#EFE9E0';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
 const COLOR_ESTUDIAR = '#1F7CFF';
 
 export default function TemarioOposicionPage() {
@@ -215,15 +215,15 @@ export default function TemarioOposicionPage() {
         <div style={{ fontSize: '13px', color: TEXT_MUTED }}>Cargando temario...</div>
       </div>
     ) : temasFiltrados.length === 0 ? (
-      <div style={{ background: BG_WIDGET, borderRadius: '16px', padding: '2.5rem', textAlign: 'center' }}>
-        <div style={{ fontSize: '28px', marginBottom: '10px' }}>📚</div>
-        <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT_PRIMARY, marginBottom: '4px' }}>
-          {temas.length === 0 ? 'Temario no disponible' : 'Sin resultados'}
-        </div>
-        <div style={{ fontSize: '12px', color: TEXT_MUTED }}>
-          {temas.length === 0 ? 'El temario de esta convocatoria está siendo preparado' : 'Prueba con otro término'}
-        </div>
-      </div>
+      <EmptyState
+        icon={<span style={{ fontSize: '28px' }}>📚</span>}
+        title={temas.length === 0 ? 'Temario no disponible' : 'Sin resultados'}
+        description={
+          temas.length === 0
+            ? 'El temario de esta convocatoria está siendo preparado'
+            : 'Prueba con otro término'
+        }
+      />
     ) : (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
     {temasFiltrados.map((tema: any) => {

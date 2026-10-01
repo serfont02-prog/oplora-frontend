@@ -8,10 +8,9 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+
 const BG_APP = '#F4F5F7';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
 
 export default function ArticuloPage() {
   const router = useRouter();
@@ -38,7 +37,7 @@ export default function ArticuloPage() {
 
   const touchStartX = useRef<number | null>(null);
 
-  const { data: articulo, isLoading } = useQuery({
+  const { data: articulo, isLoading, isError } = useQuery({
     queryKey: ['articulo', id],
     queryFn: async () => {
       const res = await api.get(`/normativa/articulo/${id}`);
@@ -311,8 +310,28 @@ export default function ArticuloPage() {
     );
   };
 
-  if (cargando || isLoading) return null;
-  if (!articulo) return null;
+  if (cargando || isLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: '13px', color: TEXT_MUTED }}>Cargando...</span>
+      </div>
+    );
+  }
+
+  if (isError || !articulo) {
+    return (
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: '12px' }}>
+        <span style={{ fontSize: '13px', color: '#dc2626' }}>No se ha podido cargar el artículo. Inténtalo de nuevo.</span>
+        <button
+          onClick={() => router.back()}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          <ArrowLeft size={14} />
+          Volver
+        </button>
+      </div>
+    );
+  }
 
   const leyNombre = articulo.capitulo?.tituloRef?.versionLey?.ley?.nombre
     ?? articulo.tituloRef?.versionLey?.ley?.nombre

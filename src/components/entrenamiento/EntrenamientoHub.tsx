@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Zap, BookOpen, Trophy, RotateCcw, ChevronRight, Target, Settings, Lock, X, Puzzle } from 'lucide-react';
+import { Brain, Zap, BookOpen, Trophy, RotateCcw, RefreshCw, ChevronRight, Target, Settings, Lock, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import WidgetProgresoGlobal from '@/components/widgets/WidgetProgreso';
@@ -10,13 +10,12 @@ import ModalHacerTest from './ModalHacerTest';
 import { ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+
 const BG_APP = '#EAF0FF'; // azul OPLORA muy suave, pantallas principales
 const BG_WIDGET = '#F7F8FA'; // gris claro, todos los widgets
 const BG_CARD_INNER = '#FFFFFF';
 const BORDER = '#E9EAEC';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
 
 const COLOR_ACTIVIDAD: Record<string, { bg: string; icon: string }> = {
   test:        { bg: '#F3FAE9', icon: '#4D7C0F' },
@@ -148,10 +147,12 @@ const ACCIONES_CONFIG: Record<string, { icon: any; descripcion: string; esHeroic
   primer_reto: { icon: ClipboardDocumentCheckIcon, esHeroicon: true, descripcion: 'Empieza con 5 preguntas básicas' },
   test:        { icon: ClipboardDocumentCheckIcon, esHeroicon: true, descripcion: 'Elige cómo quieres practicar' },
   flashcards:  { icon: RotateCcw,  descripcion: 'Repasa con tarjetas de memoria' },
-  repaso:      { icon: Brain,      descripcion: 'Refuerza lo que más falla' },
+  repaso:      { icon: RefreshCw,  descripcion: 'Refuerza lo que más falla' },
   simulacro:   { icon: Trophy,     descripcion: 'Examen completo con tiempo real' },
   racha:       { icon: Target,     descripcion: 'Recupera tu racha diaria' },
-  psicotecnicos: { icon: Puzzle,   descripcion: 'Numérico, verbal, lógico y más' },
+  // ⭐ Brain unificado como icono de Psicotécnico en toda la app (antes Puzzle
+  // aquí, porque Brain ya estaba usado por "repaso" en este mismo hub).
+  psicotecnicos: { icon: Brain,    descripcion: 'Numérico, verbal, lógico y más' },
 };
 
 

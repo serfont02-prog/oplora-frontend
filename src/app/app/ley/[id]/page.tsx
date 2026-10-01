@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Search } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
+import EmptyState from '@/components/ui/EmptyState';
 
 function LeyPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ const oposicionId = searchParams.get('oposicionId');
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
 
-  const { data: ley, isLoading } = useQuery({
+  const { data: ley, isLoading, isError } = useQuery({
     queryKey: ['ley', id],
     queryFn: async () => {
       const res = await api.get(`/leyes/${id}`);
@@ -124,7 +125,28 @@ const toggleSeccion = async (seccionId: string) => {
   }
 };
 
-  if (!ley) return null;
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando...</span>
+      </div>
+    );
+  }
+
+  if (isError || !ley) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: '12px' }}>
+        <span style={{ fontSize: '13px', color: '#dc2626' }}>No se ha podido cargar la ley. Inténtalo de nuevo.</span>
+        <button
+          onClick={() => router.back()}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          <ArrowLeft size={14} />
+          Volver
+        </button>
+      </div>
+    );
+  }
 
   const filtrarArticulos = (arts: any[]) =>
     !search ? arts : arts.filter((a) =>
@@ -240,10 +262,10 @@ const toggleSeccion = async (seccionId: string) => {
 ) : loadingTitulos ? (
   <div style={{ textAlign: 'center', padding: '2rem', fontSize: '13px', color: '#9ca3af' }}>Cargando estructura...</div>
 ) : titulos.length === 0 ? (
-  <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '2rem', textAlign: 'center' }}>
-    <div style={{ fontSize: '24px', marginBottom: '8px' }}>📖</div>
-    <div style={{ fontSize: '13px', color: '#9ca3af' }}>Esta ley no tiene estructura cargada todavía</div>
-  </div>
+  <EmptyState
+    icon={<span style={{ fontSize: '24px' }}>📖</span>}
+    title="Esta ley no tiene estructura cargada todavía"
+  />
 ) : (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
     {titulos.map((titulo: any) => (

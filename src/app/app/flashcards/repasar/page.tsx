@@ -11,11 +11,9 @@ import { PuntosGanadosCard, GamificacionInfo } from '@/components/gamificacion/P
 
 type EstadoRepaso = 'pregunta' | 'respuesta' | 'fin';
 
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC } from '@/styles/tokens';
+
 const BG_APP = '#FDF4FE';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
-const COLOR_FC = '#9333EA';
 
 export default function RepasarPage() {
   const router = useRouter();

@@ -26,15 +26,13 @@ import {
 /* -------------------------------------------------------
    TOKENS DE DISEÑO (compartidos con Entrenamiento)
 ------------------------------------------------------- */
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_RETOS } from '@/styles/tokens';
+
 const BG_APP = '#EAF0FF';
 const BG_WIDGET = '#F7F8FA';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
 
 // Colores de actividad (los mismos que en Entrenamiento)
 const COLOR_ESTUDIAR = '#1F7CFF';
-const COLOR_RETOS = '#C2410C';
 const COLOR_PRACTICAR = '#4D7C0F';
 
 /* -------------------------------------------------------

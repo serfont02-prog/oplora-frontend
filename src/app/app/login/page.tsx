@@ -117,21 +117,15 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {error && <div style={{ color: '#dc2626', fontSize: 12, background: '#fef2f2', borderRadius: 10, padding: '8px 12px' }}>{error}</div>}
-
-          <div style={{ position: 'relative' }}>
-            
-          </div>
-
-         <div
-          onClick={() => { console.log('Click en olvidé contraseña'); window.location.href = '/app/recuperar-password'; }}
+          <Link
+          href="/app/recuperar-password"
           style={{ fontSize: 12, color: '#1F7CFF', cursor: 'pointer', fontWeight: 500, textAlign: 'right' }}
         >
           ¿Has olvidado tu Contraseña?
-        </div>
+        </Link>
 
           {error && <div style={{ color: '#dc2626', fontSize: 12, background: '#fef2f2', borderRadius: 10, padding: '8px 12px' }}>{error}</div>}
-          
+
           <button type="submit" disabled={cargando} style={primaryButton(cargando)}>
             {cargando ? 'Accediendo...' : 'Acceder'}
           </button>
