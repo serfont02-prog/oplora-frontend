@@ -122,33 +122,66 @@ useEffect(() => {
       paddingBottom: 'calc(200px + env(safe-area-inset-bottom))',
     }}>
 
-      {/* Header con progreso y cancelar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#111827' }}>
-              Pregunta {preguntaActual + 1}
-            </span>
-            <span style={{ fontSize: '12px', color: '#9ca3af' }}>
-              {preguntas.length}
-            </span>
+      {/* ⭐ Cabecera fija: barra de progreso + temporizador. Antes esto
+          scrolleaba junto con el enunciado/opciones, así que en preguntas
+          largas (texto + 4 opciones amplias) el tiempo restante dejaba de
+          verse justo cuando más falta hacía (al bajar a elegir la respuesta).
+          Se fija con position:sticky arriba del todo, con fondo blanco para
+          tapar el contenido que pasa por debajo al hacer scroll. */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10, background: '#fff',
+        paddingTop: '4px', paddingBottom: '12px', marginBottom: '16px',
+        borderBottom: '1px solid #f3f4f6',
+      }}>
+        {/* Header con progreso y cancelar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#111827' }}>
+                Pregunta {preguntaActual + 1}
+              </span>
+              <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+                {preguntas.length}
+              </span>
+            </div>
+            <div style={{ height: '8px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
+              <div style={{
+                width: `${((preguntaActual + 1) / preguntas.length) * 100}%`,
+                height: '100%',
+                background: '#111827',
+                borderRadius: '999px',
+                transition: 'width .25s',
+              }} />
+            </div>
           </div>
-          <div style={{ height: '8px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{
-              width: `${((preguntaActual + 1) / preguntas.length) * 100}%`,
-              height: '100%',
-              background: '#111827',
-              borderRadius: '999px',
-              transition: 'width .25s',
-            }} />
-          </div>
+          <button
+            onClick={() => setMostrarConfirmSalir(true)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', flexShrink: 0 }}
+          >
+            <X size={18} />
+          </button>
         </div>
-        <button
-          onClick={() => setMostrarConfirmSalir(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', flexShrink: 0 }}
-        >
-          <X size={18} />
-        </button>
+
+        {/* Temporizador (ahora dentro de la cabecera fija) */}
+        {tiempoTotal && tiempoRestante !== null && (
+          <div style={{ marginTop: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Tiempo restante</span>
+              <span style={{ fontSize: '16px', fontWeight: 800, color: colorTiempo, transition: 'color 0.3s' }}>
+                {tiempoRestante}s
+              </span>
+            </div>
+            <div style={{ height: '6px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
+              <div style={{
+                width: `${porcentajeTiempo}%`,
+                height: '100%',
+                background: colorTiempo,
+                borderRadius: '999px',
+                transition: 'width 1s linear, background 0.3s',
+              }} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal de confirmación al salir del test */}
@@ -187,28 +220,6 @@ useEffect(() => {
           </div>
         </div>
       )}
-
-      {/* Temporizador */}
-      {tiempoTotal && tiempoRestante !== null && (
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>Tiempo restante</span>
-            <span style={{ fontSize: '16px', fontWeight: 800, color: colorTiempo, transition: 'color 0.3s' }}>
-              {tiempoRestante}s
-            </span>
-          </div>
-          <div style={{ height: '6px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{
-              width: `${porcentajeTiempo}%`,
-              height: '100%',
-              background: colorTiempo,
-              borderRadius: '999px',
-              transition: 'width 1s linear, background 0.3s',
-            }} />
-          </div>
-        </div>
-      )}
-
 
       {/* Pregunta */}
       {/* ⭐ fontSize fijo en 24px se veía desproporcionado en pantallas de móvil estrechas
