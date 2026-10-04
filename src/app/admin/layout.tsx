@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { FileText, Users, BarChart2, BookOpen, Home, ChevronRight, LogOut, Newspaper, Settings,Layers, BookMarked, LifeBuoy, Brain  } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const navItems = [
   { href: '/admin', label: 'Inicio', icon: Home, exact: true },
@@ -24,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#f9fafb' }}>
+    <div style={{ display: 'flex', height: '100vh', background: BG_NEUTRAL }}>
 
       {/* Sidebar */}
       <div style={{ width: '220px', background: '#111827', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>

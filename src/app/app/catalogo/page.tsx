@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { Search, ChevronDown } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const CCAA = [
   'Andalucía', 'Aragón', 'Asturias', 'Baleares', 'Canarias',
@@ -37,7 +38,7 @@ export default function CatalogoPage() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL }}>
 
       {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

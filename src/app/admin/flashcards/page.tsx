@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const TIPOS = ['vf', 'hueco', 'trampa', 'articulo'];
 const NIVELES = ['basico', 'medio', 'alto'];
@@ -237,7 +238,7 @@ const guardarManual = async () => {
         ))}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: '#f9fafb' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: BG_NEUTRAL }}>
         <div style={{ maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           {/* Resultado */}

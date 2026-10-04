@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, X, CheckCircle, AlertCircle, FileText, Upload } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const DIFICULTADES = ['facil', 'medio', 'dificil', 'experto'];
 
@@ -25,7 +26,7 @@ export default function AdminPsicotecnicosPage() {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: '#f9fafb' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: BG_NEUTRAL }}>
         <div style={{ maxWidth: '860px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {isLoading ? (
             <div style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando...</div>

@@ -8,9 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 
-import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
-
-const BG_APP = '#F4F5F7';
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL as BG_APP } from '@/styles/tokens';
 
 export default function ArticuloPage() {
   const router = useRouter();

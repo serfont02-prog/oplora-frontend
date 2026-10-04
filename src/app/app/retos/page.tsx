@@ -652,21 +652,21 @@ const oposicionId = usuario?.oposicionActiva?.id;
           const esPsico = !!p.reto._esPsico;
           const colorCategoria = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : COLOR_RETOS;
           return (
-            <div key={p.id} style={{ background: 'white', border: '1px solid #F1F5F9', borderLeft: `4px solid ${colorCategoria}`, borderRadius: '14px', padding: '14px 16px', boxSizing: 'border-box' }}>
+            <div key={p.id} style={{ background: 'white', border: '1px solid #F1F5F9', borderLeft: `4px solid ${colorCategoria}`, borderRadius: '14px', padding: '10px 12px', boxSizing: 'border-box' }}>
               <div
                 onClick={() => esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : esPsico ? router.push(`/app/retos/psico/${p.reto.id}`) : setRetoPreview(p.reto.id)}
                 style={{ cursor: 'pointer' }}
               >
                 <DueloReto reto={p.reto} usuarioActual={usuario} mostrarBarraTiempo tipo={esFC ? 'fc' : esPsico ? 'psico' : 'test'} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid #F1F5F9' }}>
                 <span style={{ fontSize: '11px', color: TEXT_MUTED }}>
                   {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {esFC ? `${p.reto.totalFC ?? '—'} flashcards` : esPsico ? `${p.reto.totalPreguntas ?? '—'} preguntas psicotécnicas` : (p.reto.tema?.titulo ? `Tema ${p.reto.tema.numero}` : 'Oposición')}
                 </span>
                 {!esFC && !esPsico && (
                   <button
                     onClick={(e) => { e.stopPropagation(); confirmarAccion(p.reto, esCreador ? 'cancelar' : 'rechazar'); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT_MUTED, fontSize: '11px', fontWeight: 600, flexShrink: 0 }}
+                    style={{ background: 'white', border: '1px solid #FECACA', borderRadius: '999px', padding: '5px 12px', cursor: 'pointer', color: '#B91C1C', fontSize: '12px', fontWeight: 600, flexShrink: 0, lineHeight: 1 }}
                   >
                     {esCreador ? 'Cancelar' : 'Rechazar'}
                   </button>
@@ -1405,85 +1405,84 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
   const iconoCategoria = esPsico ? '🧠' : esFC ? '🃏' : '🎯';
   const colorCategoriaBg = esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : COLOR_RETOS_BG;
 
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+  // ⭐ Diseño compacto: avatares pequeños en horizontal (avatar + nombre/estado a cada lado)
+  // y la "línea de tiempo" en vertical entre los dos participantes, para que quepan más retos
+  // en pantalla sin scroll.
+  const mostrarTiempo = mostrarBarraTiempo && !ambosCompletados;
+  const colorTiempo = colorPorTiempoRestante(reto.fechaFin, reto.creadoEn);
+  const pctTiempo = Math.max(0, Math.min(100, ((new Date(reto.fechaFin).getTime() - Date.now()) / (new Date(reto.fechaFin).getTime() - new Date(reto.creadoEn).getTime())) * 100));
+  const etiquetaTiempo = tiempoRestante(reto.fechaFin).replace(' restantes', '');
 
-        {/* Columna YO */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: 1 }}>
-          <div style={{
-            position: 'relative', width: '64px', height: '64px', borderRadius: '50%',
-            border: (ambosCompletados && yoGano) ? `3px solid ${colorGanador}` : '3px solid transparent',
-            boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <AvatarUsuario persona={yo?.usuario} size={56} />
-            {ambosCompletados && !empate && yoGano && (
-              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', fontSize: '18px' }}>🏆</div>
-            )}
-            {empate && (
-              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', fontSize: '18px' }}>🤝</div>
-            )}
-            {yoSoyCreador && (
-              // ⭐ Identifica quién lanzó el reto: icono de espadas en la esquina de su avatar.
-              <div style={{
-                position: 'absolute', top: '-4px', left: '-4px', width: '20px', height: '20px',
-                borderRadius: '50%', background: '#111827', border: '2px solid white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Swords size={11} color="white" />
-              </div>
-            )}
+  const avatarCompacto = (persona: any, esCreadorDeEste: boolean, esGanador: boolean, esEmpate: boolean) => (
+    <div style={{
+      position: 'relative', width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
+      border: esGanador ? `2px solid ${colorGanador}` : '2px solid transparent',
+      boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <AvatarUsuario persona={persona} size={38} />
+      {esGanador && <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', fontSize: '14px' }}>🏆</div>}
+      {esEmpate && <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', fontSize: '14px' }}>🤝</div>}
+      {esCreadorDeEste && (
+        // ⭐ Identifica quién lanzó el reto: icono de espadas en la esquina de su avatar.
+        <div style={{
+          position: 'absolute', top: '-4px', left: '-4px', width: '16px', height: '16px',
+          borderRadius: '50%', background: '#111827', border: '2px solid white',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Swords size={9} color="white" />
+        </div>
+      )}
+    </div>
+  );
+
+  const rivalGana = ambosCompletados && !yoGano && !empate;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: '8px' }}>
+
+      {/* Lado YO: avatar + nombre + estado */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+        {avatarCompacto(yo?.usuario, yoSoyCreador, !!(ambosCompletados && yoGano), !!empate)}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {yo?.usuario?.nick ?? yo?.usuario?.nombre ?? 'Tú'} <span style={{ color: TEXT_MUTED, fontWeight: 500 }}>(tú)</span>
           </div>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY }}>
-            {yo?.usuario?.nick ?? yo?.usuario?.nombre ?? 'Tú'} (tú)
-          </div>
-          <div style={{ fontSize: '17px', fontWeight: 800, color: (ambosCompletados && yoGano) ? colorGanador : TEXT_PRIMARY }}>
+          <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.2, color: (ambosCompletados && yoGano) ? colorGanador : TEXT_PRIMARY }}>
             {yo?.completado ? `${yo.porcentaje}%` : <span style={{ fontSize: '12px', color: TEXT_MUTED, fontWeight: 500 }}>Pendiente</span>}
           </div>
-
         </div>
+      </div>
 
-        {/* ⭐ Antes "VS" en texto plano; ahora el icono de la categoría del reto
-            (test/flashcards/psicotécnico) en un chip de color, coherente con el
-            borde de color de la tarjeta. */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '64px', flexShrink: 0 }}>
-          <div style={{
-            width: '32px', height: '32px', borderRadius: '50%', background: colorCategoriaBg,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px',
-          }}>
-            {iconoCategoria}
-          </div>
+      {/* Centro: icono de categoría + línea de tiempo vertical */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', flexShrink: 0, width: '40px' }}>
+        <div style={{
+          width: '24px', height: '24px', borderRadius: '50%', background: colorCategoriaBg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px',
+        }}>
+          {iconoCategoria}
         </div>
-
-        {/* Columna RIVAL */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: 1 }}>
-          <div style={{
-            position: 'relative', width: '64px', height: '64px', borderRadius: '50%',
-            border: (ambosCompletados && !yoGano && !empate) ? `3px solid ${colorGanador}` : '3px solid transparent',
-            boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <AvatarUsuario persona={rival?.usuario} size={56} />
-            {ambosCompletados && !empate && !yoGano && (
-              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', fontSize: '18px' }}>🏆</div>
-            )}
-            {empate && (
-              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', fontSize: '18px' }}>🤝</div>
-            )}
-            {rivalEsCreador && (
-              // ⭐ Mismo badge de espadas si fue el rival quien lanzó el reto.
+        {mostrarTiempo && (
+          <>
+            <div style={{ position: 'relative', width: '4px', height: '18px', background: '#F1F5F9', borderRadius: '999px', overflow: 'hidden' }}>
               <div style={{
-                position: 'absolute', top: '-4px', left: '-4px', width: '20px', height: '20px',
-                borderRadius: '50%', background: '#111827', border: '2px solid white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Swords size={11} color="white" />
-              </div>
-            )}
-          </div>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY }}>
+                position: 'absolute', bottom: 0, left: 0, width: '100%', height: `${pctTiempo}%`,
+                background: colorTiempo, borderRadius: '999px', transition: 'height 0.5s ease',
+              }} />
+            </div>
+            <div style={{ fontSize: '9px', fontWeight: 600, color: colorTiempo, lineHeight: 1, whiteSpace: 'nowrap' }}>
+              {etiquetaTiempo}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Lado RIVAL: nombre + estado + avatar (espejo) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flex: 1, minWidth: 0 }}>
+        <div style={{ minWidth: 0, textAlign: 'right' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {rival?.usuario?.nick ?? rival?.usuario?.nombre ?? 'Rival'}
           </div>
-          <div style={{ fontSize: '17px', fontWeight: 800, color: (ambosCompletados && !yoGano && !empate) ? colorGanador : TEXT_PRIMARY }}>
+          <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.2, color: rivalGana ? colorGanador : TEXT_PRIMARY }}>
             {!rival?.completado ? (
               <span style={{ fontSize: '12px', color: TEXT_MUTED, fontWeight: 500 }}>Pendiente</span>
             ) : yoCompletado ? (
@@ -1493,23 +1492,8 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
             )}
           </div>
         </div>
+        {avatarCompacto(rival?.usuario, rivalEsCreador, !!rivalGana, !!empate)}
       </div>
-
-      {mostrarBarraTiempo && !ambosCompletados && (
-        <div style={{ marginTop: '12px' }}>
-          <div style={{ height: '5px', background: '#F1F5F9', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{
-              width: `${Math.max(0, Math.min(100, ((new Date(reto.fechaFin).getTime() - Date.now()) / (new Date(reto.fechaFin).getTime() - new Date(reto.creadoEn).getTime())) * 100))}%`,
-              height: '100%',
-              background: colorPorTiempoRestante(reto.fechaFin, reto.creadoEn),
-              borderRadius: '999px', transition: 'width 0.5s ease',
-            }} />
-          </div>
-          <div style={{ fontSize: '10px', color: TEXT_MUTED, marginTop: '4px', textAlign: 'center' }}>
-            {tiempoRestante(reto.fechaFin)}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -1531,7 +1515,7 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
           {expandido ? 'Ver menos' : 'Ver historial'}
         </button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {aMostrar.map((p: any) => {
           const expirado = p.reto.estado === 'expirado';
           const rival = p.reto.creador?.id === usuario?.id
@@ -1547,9 +1531,9 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
             <div
               key={p.id}
               onClick={() => onVer(p)}
-              style={{ background: 'white', border: '1px solid #F1F5F9', borderLeft: expirado ? '1px solid #F1F5F9' : `4px solid ${colorCategoria}`, borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', minHeight: '68px', boxSizing: 'border-box' }}
+              style={{ background: 'white', border: '1px solid #F1F5F9', borderLeft: expirado ? '1px solid #F1F5F9' : `4px solid ${colorCategoria}`, borderRadius: '14px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', minHeight: '52px', boxSizing: 'border-box' }}
             >
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: expirado ? '#F4F5F7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: expirado ? '#F4F5F7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {expirado ? <span style={{ fontSize: '17px' }}>⏱️</span> : esPsico ? <Brain size={17} color={gane ? COLOR_PSICO : '#dc2626'} /> : <span style={{ fontSize: '17px' }}>{gane ? (esFC ? '🃏' : '🏆') : '😤'}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>

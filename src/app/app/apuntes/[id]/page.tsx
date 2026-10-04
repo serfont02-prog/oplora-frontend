@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, Download, Play, Pause } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 export default function ApunteOploraPage() {
   const router = useRouter();
@@ -290,7 +291,7 @@ const updateProgreso = () => {
 
   if (cargando || isLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#FAF9F6' }}>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_NEUTRAL }}>
         <div style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando apunte...</div>
       </div>
     );
@@ -298,7 +299,7 @@ const updateProgreso = () => {
 
   if (!apunte) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#FAF9F6' }}>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_NEUTRAL }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '32px', marginBottom: '12px' }}>📄</div>
           <div style={{ fontSize: '14px', color: '#374151' }}>Apunte no encontrado</div>
@@ -313,7 +314,7 @@ const updateProgreso = () => {
   let offsetAcumulado = 0;
 
   return (
-    <div style={{ minHeight: '100vh', height: '100vh', background: '#FAF9F6', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', height: '100vh', background: BG_NEUTRAL, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* Header compacto y fijo */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'white', borderBottom: '1px solid #f3f4f6' }}>

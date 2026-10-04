@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const tipoDocLabel: Record<string, string> = {
   resolucion_convocatoria: 'Convocatoria', // ⭐ antes 'Resolución'
@@ -81,7 +82,7 @@ export default function OposicionDocumentosPage() {
 
  
     if (cargando || isLoading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL }}>
       <div style={{ fontSize: '14px', color: '#9ca3af' }}>Cargando...</div>
     </div>
   );
@@ -89,7 +90,7 @@ export default function OposicionDocumentosPage() {
   if (!oposicion) return null;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', paddingBottom: '90px' }}>
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: '90px' }}>
 
       {/* Header sticky */}
       <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.25rem', position: 'sticky', top: 0, zIndex: 10 }}>

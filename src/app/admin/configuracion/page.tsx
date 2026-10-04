@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Save } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const TABS = [
   { key: 'limites_planes', label: 'Planes y límites' },
@@ -70,7 +71,7 @@ export default function ConfiguracionPage() {
       </div>
 
       {/* Contenido */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: '#f9fafb' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: BG_NEUTRAL }}>
         <div style={{ maxWidth: '720px' }}>
 
           {/* TAB: Planes y límites */}

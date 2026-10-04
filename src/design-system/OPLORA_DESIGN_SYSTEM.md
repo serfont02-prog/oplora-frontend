@@ -12,6 +12,17 @@ OPLORA debe sentirse como una mesa de estudio despejada: calma, clara y preparad
 - Accion/progreso: `--op-color-primary` `#1f7cff`.
 - Estados: exito `#12805c`, aviso `#b45309`, error `#c24135`.
 
+## Color Por Actividad (BG_APP)
+Cada pantalla define su fondo de pagina completa (`BG_APP`) segun la familia de actividad a la que pertenece, en vez de usar grises sueltos. Los valores viven como exports en `src/styles/tokens.ts`.
+- Dashboard / Entrenamiento: `BG_DASHBOARD` `#EAF0FF` (azul).
+- Retos: `BG_RETOS` `#FCEEE8` (naranja/salmon).
+- Flashcards: `BG_FLASHCARDS` `#FDF4FE` (lila/morado).
+- Tema (estudiar): `BG_TEMA` `#F5F1EB` (marron pastel).
+- Alertas: `BG_ALERTAS` `#FDF8E8` (amarillo pastel).
+- Pantallas neutras (ley, test, ranking, progreso, catalogo, apuntes, suscripciones, admin, etc.): `BG_NEUTRAL` `#F8F9FA`, que sustituye a literales casi-duplicados como `#f9fafb`, `#FAF9F6`, `#f8fafc` o `#F4F5F7`.
+
+Usar siempre el token correspondiente a la familia de la pantalla; nunca un literal hexadecimal suelto para el fondo de pagina completa.
+
 ## Tipografia
 - Sans: `--op-font-sans`, para navegacion, controles y UI densa.
 - Lectura: `--op-font-reading`, reservada para textos juridicos largos o apuntes.

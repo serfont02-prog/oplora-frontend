@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { Share2, ChevronDown, ChevronUp, ChevronRight, X } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { PuntosGanadosCard } from '@/components/gamificacion/PuntosGanadosCard';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 export default function ResultadoTestPage() {
   const router = useRouter();
@@ -56,7 +57,7 @@ export default function ResultadoTestPage() {
 
   if (isLoading || !resultado) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f9fafb' }}>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_NEUTRAL }}>
         <div style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando resultado...</div>
       </div>
     );
@@ -87,7 +88,7 @@ export default function ResultadoTestPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', paddingBottom: '90px' }}>
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: '90px' }}>
 
       {/* HERO */}
       <div style={{ background: '#0f172a', padding: '2rem 1.25rem 1.5rem' }}>

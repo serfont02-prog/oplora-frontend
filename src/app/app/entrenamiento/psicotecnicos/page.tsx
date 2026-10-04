@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, Brain } from 'lucide-react';
+import { BG_DASHBOARD as BG_APP } from '@/styles/tokens';
 
-const BG_APP = '#F4F5F7';
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';

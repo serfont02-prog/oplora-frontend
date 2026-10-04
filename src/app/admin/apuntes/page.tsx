@@ -4,6 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Upload, Trash2, FileText, ChevronDown, ChevronUp, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const TITULO_MARCADOR: Record<string, string> = {
   EJEMPLO: 'Ejemplos',
@@ -159,7 +160,7 @@ export default function ApuntesAdminPage() {
         <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>Sube apuntes oficiales por tema o generales de la oposición</div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: '#f9fafb' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: BG_NEUTRAL }}>
         <div style={{ maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           {/* Resultado de la última subida: resumen de lo detectado por el parser */}

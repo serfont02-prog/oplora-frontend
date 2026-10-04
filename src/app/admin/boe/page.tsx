@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Search, Calendar, CheckCircle, XCircle, ChevronRight, ExternalLink } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 export default function BoePage() {
   const queryClient = useQueryClient();
@@ -126,7 +127,7 @@ export default function BoePage() {
         ))}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', background: '#f9fafb' }}>
+      <div style={{ flex: 1, overflowY: 'auto', background: BG_NEUTRAL }}>
 
         {/* TAB CONSULTAR */}
         {tab === 'consultar' && (

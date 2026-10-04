@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const NIVELES = [
   { value: '', label: 'Todos' },
@@ -69,7 +70,7 @@ export default function RankingPage() {
   const oposicionActual = oposiciones[0];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', paddingBottom: '72px' }}>
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: '72px' }}>
 
       {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.25rem', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>

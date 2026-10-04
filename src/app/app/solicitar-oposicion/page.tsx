@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 export default function SolicitarOposicionPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function SolicitarOposicionPage() {
 
   if (enviado) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL }}>
         <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #f3f4f6', padding: '2.5rem', maxWidth: '400px', width: '100%', margin: '0 1rem', textAlign: 'center' }}>
           <CheckCircle size={40} color="#15803d" style={{ margin: '0 auto 1rem' }} />
           <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>¡Solicitud enviada!</div>
@@ -36,7 +37,7 @@ export default function SolicitarOposicionPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL }}>
       <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button
           onClick={() => router.push('/app/catalogo')}

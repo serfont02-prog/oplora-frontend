@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, Play, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { Suspense } from 'react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 const TIPO_LABEL: Record<string, string> = {
   test: 'Test',
@@ -62,7 +63,7 @@ function ExamenesPage() {
   const anyos = Object.keys(examenesAgrupados).sort((a, b) => Number(b) - Number(a));
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', paddingBottom: '80px' }}>
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: '80px' }}>
 
       {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.25rem', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>

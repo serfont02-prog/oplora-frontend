@@ -6,8 +6,8 @@ import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { BG_DASHBOARD as BG_APP } from '@/styles/tokens';
 
-const BG_APP = '#F4F5F7';
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
 const TEXT_MUTED = '#9CA3AF';

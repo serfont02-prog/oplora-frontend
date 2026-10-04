@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Search } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import EmptyState from '@/components/ui/EmptyState';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 function LeyPage() {
   const router = useRouter();
@@ -127,7 +128,7 @@ const toggleSeccion = async (seccionId: string) => {
 
   if (isLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: BG_NEUTRAL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando...</span>
       </div>
     );
@@ -135,7 +136,7 @@ const toggleSeccion = async (seccionId: string) => {
 
   if (isError || !ley) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: '12px' }}>
+      <div style={{ minHeight: '100vh', background: BG_NEUTRAL, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: '12px' }}>
         <span style={{ fontSize: '13px', color: '#dc2626' }}>No se ha podido cargar la ley. Inténtalo de nuevo.</span>
         <button
           onClick={() => router.back()}
@@ -154,7 +155,7 @@ const toggleSeccion = async (seccionId: string) => {
     );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', paddingBottom: '72px' }}>
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: '72px' }}>
 
       {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.25rem', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>

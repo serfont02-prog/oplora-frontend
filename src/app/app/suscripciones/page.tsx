@@ -17,6 +17,7 @@ import {
   Flame,
   Crown,
 } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 /* =========================================================
    SUSCRIPCIONES
@@ -111,7 +112,7 @@ export default function SuscripcionesPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#f8fafc',
+        background: BG_NEUTRAL,
         paddingBottom: 100,
       }}
     >

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Search, Plus, ChevronRight, BookOpen } from 'lucide-react';
 import { api } from '@/lib/api';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 export default function LeyesPage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function LeyesPage() {
       </div>
 
       {/* Tabla */}
-      <div style={{ flex: 1, overflowY: 'auto', background: '#f9fafb' }}>
+      <div style={{ flex: 1, overflowY: 'auto', background: BG_NEUTRAL }}>
         {isLoading ? (
           <div style={{ padding: '2rem', fontSize: '13px', color: '#9ca3af' }}>Cargando...</div>
         ) : leyes.length === 0 ? (

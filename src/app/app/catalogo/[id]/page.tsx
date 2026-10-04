@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ArrowLeft, Lock } from 'lucide-react';
+import { BG_NEUTRAL } from '@/styles/tokens';
 
 export default function ProgramaPublicoPage() {
   const params = useParams();
@@ -29,7 +30,7 @@ export default function ProgramaPublicoPage() {
   });
 
   if (isLoading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL }}>
       <div style={{ fontSize: '14px', color: '#9ca3af' }}>Cargando...</div>
     </div>
   );
@@ -51,7 +52,7 @@ export default function ProgramaPublicoPage() {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL }}>
 
       {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
