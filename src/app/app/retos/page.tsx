@@ -127,6 +127,16 @@ function normalizarRetoPsico(r: any, usuarioActualId: string | undefined) {
   };
 }
 
+// ⭐ Un reto está caducado si el backend ya lo marcó 'expirado' O si su plazo ya pasó y no
+// llegó a completarse. Así Historial no depende de que el backend (cron/consulta) haya
+// actualizado el estado antes de que el frontend pinte la lista.
+function retoCaducado(reto: any): boolean {
+  if (!reto) return false;
+  if (reto.estado === 'expirado') return true;
+  if (reto.estado === 'completado') return false;
+  return !!reto.fechaFin && new Date(reto.fechaFin).getTime() < Date.now();
+}
+
 function tiempoRestante(fechaFin: string): string {
   const restante = new Date(fechaFin).getTime() - Date.now();
   if (restante <= 0) return 'Caducado';
@@ -134,6 +144,19 @@ function tiempoRestante(fechaFin: string): string {
   if (horas < 1) return `${Math.floor(restante / (1000 * 60))} min restantes`;
   if (horas < 24) return `${horas}h restantes`;
   return `${Math.floor(horas / 24)}d restantes`;
+}
+
+// ⭐ Texto descriptivo unificado para todos los retos (sistema y duelos):
+// "{Tipo} · {N preguntas|tarjetas} · {Tema N|Oposición}". Un único sitio para que
+// diario, semanal, en curso e historial no vuelvan a divergir en redacción.
+function descripcionReto(reto: any): string {
+  const esFC = !!reto?._esFC;
+  const esPsico = !!reto?._esPsico;
+  const tipo = esFC ? 'Flashcards' : esPsico ? 'Psicotécnico' : 'Test';
+  const n = esFC ? reto?.totalFC : esPsico ? reto?.totalPreguntas : reto?.preguntas?.length;
+  const cantidad = n != null ? `${n} ${esFC ? 'tarjetas' : 'preguntas'}` : null;
+  const ambito = !esFC && !esPsico ? (reto?.tema?.titulo ? `Tema ${reto.tema.numero}` : 'Oposición') : null;
+  return [tipo, cantidad, ambito].filter(Boolean).join(' · ');
 }
 
 export default function RetosPage() {
@@ -462,11 +485,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
  const retosUsuarioPendientes = misRetosTodos.filter(
   (p: any) => p.reto?.tipo === 'usuario'
-    && p.reto?.estado !== 'expirado'
+    && !retoCaducado(p.reto)
     && (!p.completado || p.posicion === null)
   );
   const retosUsuarioCompletados = misRetosTodos.filter(
-    (p: any) => p.reto?.tipo === 'usuario' && p.completado && p.posicion !== null
+    (p: any) => p.reto?.tipo === 'usuario' && p.completado && p.posicion !== null && !retoCaducado(p.reto)
   );
 
   const retosEnviados = retosUsuarioPendientes.filter((p: any) => p.reto.creador?.id === (usuario as any)?.id);
@@ -506,19 +529,20 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
   const colorPasoActivo = form.categoria === 'fc' ? COLOR_FC : form.categoria === 'psico' ? COLOR_PSICO : COLOR_RETOS;
 
+  const { data: estadisticas } = useQuery({
+    queryKey: ['estadisticas-retos'],
+    queryFn: async () => {
+      const res = await api.get('/retos/estadisticas');
+      return res.data;
+    },
+    enabled: !!usuario,
+  });
+
   if (cargando) return null;
 
-      const { data: estadisticas } = useQuery({
-      queryKey: ['estadisticas-retos'],
-      queryFn: async () => {
-        const res = await api.get('/retos/estadisticas');
-        return res.data;
-      },
-      enabled: !!usuario,
-    });
 
     const retosExpirados = misRetosTodos.filter(
-      (p: any) => p.reto?.tipo === 'usuario' && p.reto?.estado === 'expirado'
+      (p: any) => p.reto?.tipo === 'usuario' && retoCaducado(p.reto)
     );
 
   return (
@@ -581,7 +605,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY }}>Reto diario</div>
                 <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '2px' }}>
-                  {retoDiario?.preguntas?.length ?? '—'} preguntas · Nivel {usuario?.oposicionActiva?.nivel ?? 1} ·
+                  {retoDiario?.preguntas?.length ?? '—'} preguntas · Nivel {usuario?.oposicionActiva?.nivel ?? 1} · Cierra hoy
                 </div>
               </div>
               {yaHizoRetoDiario ? (
@@ -605,10 +629,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {retoSemanal?.tema?.titulo ? `Tema ${retoSemanal.tema.numero}` : 'Reto semanal'}
+                  Reto semanal
                 </div>
                 <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '2px' }}>
-                  {retoSemanal?.preguntas?.length ?? '—'} preguntas · Cierra el domingo
+                  {retoSemanal?.preguntas?.length ?? '—'} preguntas{retoSemanal?.tema?.titulo ? ` · Tema ${retoSemanal.tema.numero}` : ''} · Cierra el domingo
                 </div>
               </div>
               {yaHizoRetoSemanal ? (
@@ -642,9 +666,13 @@ const oposicionId = usuario?.oposicionActiva?.id;
     return tiempoA - tiempoB;
   });
 
+  if (retosEnCurso.length === 0) return null;
+
   return (
     <div>
-
+      <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+        Retos en curso · {retosEnCurso.length}
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         {retosEnCurso.map((p: any) => {
           const esCreador = p.reto.creador?.id === (usuario as any)?.id;
@@ -661,7 +689,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid #F1F5F9' }}>
                 <span style={{ fontSize: '11px', color: TEXT_MUTED }}>
-                  {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {esFC ? `${p.reto.totalFC ?? '—'} flashcards` : esPsico ? `${p.reto.totalPreguntas ?? '—'} preguntas psicotécnicas` : (p.reto.tema?.titulo ? `Tema ${p.reto.tema.numero}` : 'Oposición')}
+                  {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {descripcionReto(p.reto)}
                 </span>
                 {!esFC && !esPsico && (
                   <button
@@ -1517,7 +1545,7 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {aMostrar.map((p: any) => {
-          const expirado = p.reto.estado === 'expirado';
+          const expirado = retoCaducado(p.reto);
           const rival = p.reto.creador?.id === usuario?.id
             ? p.reto.participaciones?.find((x: any) => x.usuario?.id !== usuario?.id)?.usuario
             : p.reto.creador;
@@ -1538,12 +1566,10 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>
-                  {expirado ? 'Cancelado por tiempo' : gane ? 'Victoria' : 'Derrota'} vs {rival?.nick ?? rival?.nombre ?? 'Usuario'}
-                  {esFC && <span style={{ fontSize: '10px', color: COLOR_FC, fontWeight: 700, marginLeft: 6 }}>FC</span>}
-                  {esPsico && <span style={{ fontSize: '10px', color: COLOR_PSICO, fontWeight: 700, marginLeft: 6 }}>PSICO</span>}
+                  {expirado ? 'Caducado' : gane ? 'Victoria' : 'Derrota'} vs {rival?.nick ?? rival?.nombre ?? 'Usuario'}
                 </div>
-                <div style={{ fontSize: '12px', color: TEXT_MUTED, marginTop: '2px' }}>
-                  {expirado ? 'El plazo terminó antes de completarse' : `${p.porcentaje}% — ${rivalParticipacion?.porcentaje ?? '?'}%`}
+                <div style={{ fontSize: '12px', color: TEXT_MUTED, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {expirado ? 'Plazo terminado' : `${p.porcentaje}% — ${rivalParticipacion?.porcentaje ?? '?'}%`} · {descripcionReto(p.reto)}
                 </div>
               </div>
               <ChevronRight size={16} color="#D1D5DB" style={{ flexShrink: 0 }} />
