@@ -14,7 +14,17 @@ const TEXT_MUTED = '#9CA3AF';
 const COLOR_FC = '#9333EA';
 
 type EstadoFCReto = 'intro' | 'jugando' | 'resultado';
-type EstadoTarjeta = 'pregunta' | 'respuesta';
+
+// ⭐ Mismo texto de cuenta atrás que usa la pantalla principal de retos.
+function tiempoRestanteTexto(fechaFin?: string | null): string {
+  if (!fechaFin) return '';
+  const restante = new Date(fechaFin).getTime() - Date.now();
+  if (restante <= 0) return 'Caducado';
+  const horas = Math.floor(restante / (1000 * 60 * 60));
+  if (horas < 1) return `${Math.floor(restante / (1000 * 60))} min restantes`;
+  if (horas < 24) return `${horas}h restantes`;
+  return `${Math.floor(horas / 24)}d restantes`;
+}
 
 export default function RetoFCDetallePage() {
   const router = useRouter();
@@ -27,13 +37,13 @@ export default function RetoFCDetallePage() {
 
   const [estado, setEstado] = useState<EstadoFCReto>(directo ? 'jugando' : 'intro');
   const [indice, setIndice] = useState(0);
-  const [estadoTarjeta, setEstadoTarjeta] = useState<EstadoTarjeta>('pregunta');
-  const [respuestaVF, setRespuestaVF] = useState<boolean | null>(null);
   const [tiempoInicioTarjeta, setTiempoInicioTarjeta] = useState(0);
   const [tiempoInicioReto, setTiempoInicioReto] = useState(0);
-  const [respuestas, setRespuestas] = useState<{ flashcardId: string; correcta: boolean; tiempoRespuesta: number }[]>([]);
+  const [respuestas, setRespuestas] = useState<{ flashcardId: string; respuesta: boolean; tiempoRespuesta: number }[]>([]);
   const [resultadoFinal, setResultadoFinal] = useState<{ aciertos: number; fallos: number; tiempoTotal: number; posicion: number | null } | null>(null);
   const yaEnviado = useRef(false);
+  const [revanchaAbierta, setRevanchaAbierta] = useState(false);
+  const [mensajeRevancha, setMensajeRevancha] = useState('');
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
@@ -89,31 +99,47 @@ export default function RetoFCDetallePage() {
     },
   });
 
+  // ⭐ Revancha igual que en test: nuevo duelo contra el mismo rival (con mensaje opcional).
+  const enviarRevancha = useMutation({
+    mutationFn: async () => {
+      const res = await api.post('/flashcards/duelo', {
+      retadoNickOEmail: rivalUsuario?.nick ?? rivalUsuario?.email,
+      oposicionId: reto?.oposicion?.id,
+      numFC: flashcards.length,
+      temaId: reto?.tema?.id,
+      mensaje: mensajeRevancha || undefined,
+      horasPlazo: 48,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mis-retos-fc'] });
+      router.push('/app/retos');
+    },
+  });
+
   const empezar = () => {
     setEstado('jugando');
     setTiempoInicioReto(Date.now());
     setTiempoInicioTarjeta(Date.now());
   };
 
-  const registrarYSiguiente = (correcta: boolean) => {
+  // ⭐ Corrección en servidor (como test): se envía lo contestado y se pasa a la siguiente
+  // tarjeta directamente, sin autoevaluación ni pantalla intermedia.
+  const responder = (respuesta: boolean) => {
+    if (completar.isPending || yaEnviado.current) return;
     const tiempoRespuesta = Date.now() - tiempoInicioTarjeta;
-    const nuevas = [...respuestas, { flashcardId: fc.id, correcta, tiempoRespuesta }];
+    const nuevas = [...respuestas, { flashcardId: fc.id, respuesta, tiempoRespuesta }];
     setRespuestas(nuevas);
 
     if (indice + 1 >= flashcards.length) {
-      if (yaEnviado.current) return;
       yaEnviado.current = true;
       completar.mutate(nuevas);
     } else {
       setIndice((i) => i + 1);
-      setEstadoTarjeta('pregunta');
-      setRespuestaVF(null);
       setTiempoInicioTarjeta(Date.now());
     }
   };
-
-  const handleVerRespuesta = () => setEstadoTarjeta('respuesta');
-  const handleVF = (r: boolean) => { setRespuestaVF(r); setEstadoTarjeta('respuesta'); };
 
   const TIPO_LABEL: Record<string, string> = {
     vf: 'Verdadero / Falso',
@@ -149,6 +175,11 @@ export default function RetoFCDetallePage() {
   const tiempoTotalMs = resultadoFinal?.tiempoTotal ?? miResultado?.tiempoTotal ?? 0;
   const posicion = resultadoFinal?.posicion ?? miResultado?.posicion ?? null;
   const ambosCompletados = !!miResultado?.completado && !!rivalResultado?.completado;
+  // ⭐ Empate: ambos completaron y comparten posición (mismos aciertos y mismo tiempo).
+  const empate = ambosCompletados && posicion != null && rivalResultado?.posicion === posicion;
+  const gane = ambosCompletados && !empate && posicion === 1;
+  const perdi = ambosCompletados && !empate && posicion != null && posicion > 1;
+  const caducado = !yaCompleto && (reto.estado === 'expirado' || (!!reto.fechaFin && new Date(reto.fechaFin).getTime() < Date.now()));
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>
@@ -176,9 +207,19 @@ export default function RetoFCDetallePage() {
             {reto.tema && (
               <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginBottom: 4 }}>Tema: {reto.tema.titulo}</div>
             )}
-            <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: '0.75rem' }}>
               {flashcards.length} flashcards · vs {rivalUsuario?.nick ?? rivalUsuario?.nombre ?? 'Rival'}
             </div>
+            {reto.mensaje && (
+              <div style={{ background: '#F8F9FA', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: TEXT_SECONDARY, fontStyle: 'italic', marginBottom: '0.75rem' }}>
+                “{reto.mensaje}” — {reto.retador?.nick ?? reto.retador?.nombre}
+              </div>
+            )}
+            {!ambosCompletados && reto.fechaFin && (
+              <div style={{ fontSize: 12, fontWeight: 600, color: caducado ? '#DC2626' : TEXT_SECONDARY, marginBottom: '1.25rem' }}>
+                ⏱️ {tiempoRestanteTexto(reto.fechaFin)}
+              </div>
+            )}
 
             {yaCompleto ? (
               <div>
@@ -191,6 +232,10 @@ export default function RetoFCDetallePage() {
                 >
                   Ver resultado
                 </button>
+              </div>
+            ) : caducado ? (
+              <div style={{ fontSize: 13, color: '#DC2626', fontWeight: 600 }}>
+                Este reto caducó, ya no se puede completar
               </div>
             ) : (
               <button
@@ -222,119 +267,31 @@ export default function RetoFCDetallePage() {
               </span>
             </div>
 
-            <div style={{
-              background: 'white',
-              border: estadoTarjeta === 'respuesta' ? `2px solid ${COLOR_FC}` : '1px solid #F1F5F9',
-              borderRadius: 18,
-              padding: '1.5rem',
-              marginBottom: 16,
-              minHeight: 180,
-              transition: 'border-color 0.3s',
-            }}>
+            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 18, padding: '1.5rem', marginBottom: 16, minHeight: 180 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
                 Pregunta
               </div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.7, marginBottom: estadoTarjeta === 'respuesta' ? '1rem' : 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.7 }}>
                 {fc.pregunta}
               </div>
-
-              {estadoTarjeta === 'respuesta' && (
-                <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '1rem' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: COLOR_FC, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
-                    Respuesta
-                  </div>
-                  <div style={{ fontSize: 14, color: TEXT_PRIMARY, lineHeight: 1.6, fontWeight: 500 }}>
-                    {fc.tipo === 'vf'
-                      ? (fc.respuesta === 'true' ? '✅ Verdadero' : '❌ Falso')
-                      : fc.respuesta}
-                  </div>
-                  {fc.explicacion && (
-                    <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 10, lineHeight: 1.6, background: '#FAF5FB', borderRadius: 10, padding: '8px 10px' }}>
-                      💡 {fc.explicacion}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
-            {/* VF — pregunta */}
-            {estadoTarjeta === 'pregunta' && fc.tipo === 'vf' && (
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  onClick={() => handleVF(true)}
-                  style={{ flex: 1, padding: 14, background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#15803d', cursor: 'pointer' }}
-                >
-                  ✅ Verdadero
-                </button>
-                <button
-                  onClick={() => handleVF(false)}
-                  style={{ flex: 1, padding: 14, background: '#fef2f2', border: '2px solid #fca5a5', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#dc2626', cursor: 'pointer' }}
-                >
-                  ❌ Falso
-                </button>
-              </div>
-            )}
-
-            {/* No VF — pregunta */}
-            {estadoTarjeta === 'pregunta' && fc.tipo !== 'vf' && (
+            <div style={{ display: 'flex', gap: 10 }}>
               <button
-                onClick={handleVerRespuesta}
-                style={{ width: '100%', padding: 14, background: '#111827', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                onClick={() => responder(true)}
+                disabled={completar.isPending}
+                style={{ flex: 1, padding: 14, background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#15803d', cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
               >
-                Ver respuesta
+                ✅ Verdadero
               </button>
-            )}
-
-            {/* VF — resultado tras ver respuesta */}
-            {estadoTarjeta === 'respuesta' && fc.tipo === 'vf' && (
-              <div>
-                <div style={{
-                  background: respuestaVF === (fc.respuesta === 'true') ? '#f0fdf4' : '#fef2f2',
-                  border: `1px solid ${respuestaVF === (fc.respuesta === 'true') ? '#86efac' : '#fca5a5'}`,
-                  borderRadius: 12, padding: '10px 14px', marginBottom: 10,
-                  display: 'flex', alignItems: 'center', gap: 8,
-                }}>
-                  <span style={{ fontSize: 16 }}>
-                    {respuestaVF === (fc.respuesta === 'true') ? '✅' : '❌'}
-                  </span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: respuestaVF === (fc.respuesta === 'true') ? '#15803d' : '#dc2626' }}>
-                    {respuestaVF === (fc.respuesta === 'true') ? '¡Correcto!' : 'Incorrecto'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => registrarYSiguiente(respuestaVF === (fc.respuesta === 'true'))}
-                  disabled={completar.isPending}
-                  style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
-                >
-                  {completar.isPending ? 'Enviando...' : (indice + 1 >= flashcards.length ? 'Terminar duelo' : 'Siguiente →')}
-                </button>
-              </div>
-            )}
-
-            {/* No VF — ¿acertaste? */}
-            {estadoTarjeta === 'respuesta' && fc.tipo !== 'vf' && (
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 500, color: TEXT_SECONDARY, marginBottom: 10, textAlign: 'center' }}>
-                  ¿Has acertado?
-                </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button
-                    onClick={() => registrarYSiguiente(false)}
-                    disabled={completar.isPending}
-                    style={{ flex: 1, padding: 14, background: '#fef2f2', border: '2px solid #fca5a5', borderRadius: 14, fontSize: 14, fontWeight: 700, color: '#dc2626', cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
-                  >
-                    ❌ No
-                  </button>
-                  <button
-                    onClick={() => registrarYSiguiente(true)}
-                    disabled={completar.isPending}
-                    style={{ flex: 1, padding: 14, background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 14, fontSize: 14, fontWeight: 700, color: '#15803d', cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
-                  >
-                    ✅ Sí
-                  </button>
-                </div>
-              </div>
-            )}
+              <button
+                onClick={() => responder(false)}
+                disabled={completar.isPending}
+                style={{ flex: 1, padding: 14, background: '#fef2f2', border: '2px solid #fca5a5', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#dc2626', cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
+              >
+                ❌ Falso
+              </button>
+            </div>
           </div>
         )}
 
@@ -363,7 +320,7 @@ export default function RetoFCDetallePage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', textAlign: 'center' }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 4 }}>Tú</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: posicion === 1 ? COLOR_FC : TEXT_PRIMARY }}>{aciertos}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: gane ? COLOR_FC : TEXT_PRIMARY }}>{aciertos}</div>
                 </div>
                 <div style={{ fontSize: 13, color: TEXT_MUTED, fontWeight: 700 }}>VS</div>
                 <div>
@@ -381,11 +338,46 @@ export default function RetoFCDetallePage() {
                 </div>
               )}
               {ambosCompletados && posicion && (
-                <div style={{ marginTop: 10, textAlign: 'center', fontSize: 13, fontWeight: 700, color: posicion === 1 ? '#15803d' : '#dc2626' }}>
-                  {posicion === 1 ? '🏆 ¡Has ganado el duelo!' : 'Has perdido este duelo'}
+                <div style={{ marginTop: 10, textAlign: 'center', fontSize: 13, fontWeight: 700, color: empate ? '#B45309' : gane ? '#15803d' : '#dc2626' }}>
+                  {empate ? '🤝 ¡Empate!' : gane ? '🏆 ¡Has ganado el duelo!' : 'Has perdido este duelo'}
                 </div>
               )}
             </div>
+
+            {perdi && (
+              <div style={{ marginBottom: 10 }}>
+                {!revanchaAbierta ? (
+                  <button
+                    onClick={() => setRevanchaAbierta(true)}
+                    style={{ width: '100%', padding: 12, background: 'white', color: TEXT_PRIMARY, border: '1px solid #E5E7EB', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    ⚔️ Pedir revancha
+                  </button>
+                ) : (
+                  <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 14, padding: 12 }}>
+                    <textarea
+                      value={mensajeRevancha}
+                      onChange={(e) => setMensajeRevancha(e.target.value)}
+                      placeholder="Escribe un mensaje para la revancha..."
+                      maxLength={140}
+                      style={{ width: '100%', minHeight: 56, padding: '10px 12px', fontSize: 13, border: '1px solid #F1F5F9', borderRadius: 10, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', marginBottom: 8 }}
+                    />
+                    {enviarRevancha.isError && (
+                      <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 8 }}>
+                        {(enviarRevancha.error as any)?.response?.data?.message ?? 'No se pudo enviar la revancha'}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => enviarRevancha.mutate()}
+                      disabled={enviarRevancha.isPending}
+                      style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: enviarRevancha.isPending ? 'not-allowed' : 'pointer', opacity: enviarRevancha.isPending ? 0.6 : 1 }}
+                    >
+                      {enviarRevancha.isPending ? 'Enviando...' : 'Enviar revancha'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <button
               onClick={() => router.push('/app/retos')}

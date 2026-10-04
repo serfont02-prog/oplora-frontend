@@ -59,6 +59,7 @@ function normalizarRetoFC(r: any, usuarioActualId: string | undefined) {
     fechaFin: r.fechaFin,
     creadoEn: r.creadoEn,
     creador: r.retador,
+    mensaje: r.mensaje,
     tema: r.tema,
     oposicion: r.oposicion,
     participaciones,
@@ -108,6 +109,7 @@ function normalizarRetoPsico(r: any, usuarioActualId: string | undefined) {
     fechaFin: r.fechaFin,
     creadoEn: r.creadoEn,
     creador: r.retador,
+    mensaje: r.mensaje,
     oposicion: r.oposicion,
     participaciones,
     preguntas: r.preguntas,
@@ -155,7 +157,12 @@ function descripcionReto(reto: any): string {
   const tipo = esFC ? 'Flashcards' : esPsico ? 'Psicotécnico' : 'Test';
   const n = esFC ? reto?.totalFC : esPsico ? reto?.totalPreguntas : reto?.preguntas?.length;
   const cantidad = n != null ? `${n} ${esFC ? 'tarjetas' : 'preguntas'}` : null;
-  const ambito = !esFC && !esPsico ? (reto?.tema?.titulo ? `Tema ${reto.tema.numero}` : 'Oposición') : null;
+  const modalidadPsico = reto?.tipoPsico
+    ? String(reto.tipoPsico).replace(/_/g, ' ').replace(/^./, (c: string) => c.toUpperCase())
+    : null;
+  const ambito = esPsico
+    ? modalidadPsico
+    : (reto?.tema?.titulo ? `Tema ${reto.tema.numero}` : 'Oposición');
   return [tipo, cantidad, ambito].filter(Boolean).join(' · ');
 }
 
@@ -386,6 +393,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
           tipo: form.psicoTipo,
           numPreguntas: form.numPsico,
           convocatoriaId: convocatoriaReto?.id,
+          mensaje: form.mensaje || undefined,
+          horasPlazo: form.horasPlazo,
         });
         return { ...res.data, _esPsico: true };
       }
@@ -394,6 +403,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
           retadoNickOEmail: form.retadoNickOEmail,
           oposicionId,
           numFC: form.numFC,
+          mensaje: form.mensaje || undefined,
+          horasPlazo: form.horasPlazo,
         };
         if (form.tipoReto === 'tema' && form.temaId) body.temaId = form.temaId;
         if (form.tipoReto === 'normativa' && form.versionLeyId) body.versionLeyId = form.versionLeyId;
@@ -429,11 +440,15 @@ const oposicionId = usuario?.oposicionActiva?.id;
   });
 
   const eliminarReto = useMutation({
-    mutationFn: async (retoId: string) => {
-      await api.delete(`/retos/${retoId}`);
+    // ⭐ Cancelar/rechazar funciona igual para los tres tipos de reto; solo cambia el endpoint.
+    mutationFn: async (reto: any) => {
+      const ruta = reto._esFC ? `/flashcards/duelo/${reto.id}` : reto._esPsico ? `/psicotecnicos/duelo/${reto.id}` : `/retos/${reto.id}`;
+      await api.delete(ruta);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mis-retos'] });
+      queryClient.invalidateQueries({ queryKey: ['mis-retos-fc'] });
+      queryClient.invalidateQueries({ queryKey: ['mis-retos-psico'] });
     },
   });
 
@@ -469,7 +484,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
     const ejecutarAccion = () => {
       if (!confirmacion) return;
-      eliminarReto.mutate(confirmacion.reto.id, {
+      eliminarReto.mutate(confirmacion.reto, {
         onSuccess: () => {
           setConfirmacion(null);
         },
@@ -691,7 +706,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <span style={{ fontSize: '11px', color: TEXT_MUTED }}>
                   {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {descripcionReto(p.reto)}
                 </span>
-                {!esFC && !esPsico && (
+                {(
                   <button
                     onClick={(e) => { e.stopPropagation(); confirmarAccion(p.reto, esCreador ? 'cancelar' : 'rechazar'); }}
                     style={{ background: 'white', border: '1px solid #FECACA', borderRadius: '999px', padding: '5px 12px', cursor: 'pointer', color: '#B91C1C', fontSize: '12px', fontWeight: 600, flexShrink: 0, lineHeight: 1 }}
@@ -1020,7 +1035,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 </div>
               )}
 
-              {form.categoria === 'test' && (
+              {(
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Plazo para completarlo</div>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -1058,10 +1073,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 {form.categoria === 'psico' ? form.numPsico : form.categoria === 'fc' ? form.numFC : form.numPreguntas}
                 {' '}
                 {form.categoria === 'fc' ? 'flashcards' : 'preguntas'}
-                {form.categoria === 'test' && ` · ${form.horasPlazo}h`}
+                {` · ${form.horasPlazo}h`}
               </div>
 
-              {form.categoria === 'test' && (
+              {(
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, display: 'block', marginBottom: '4px' }}>
                     Mensaje <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>(opcional)</span>
@@ -1550,7 +1565,9 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
             ? p.reto.participaciones?.find((x: any) => x.usuario?.id !== usuario?.id)?.usuario
             : p.reto.creador;
           const rivalParticipacion = p.reto.participaciones?.find((x: any) => x.usuario?.id !== usuario?.id);
-          const gane = p.posicion === 1;
+          // ⭐ Empate: ambos completaron y comparten posición.
+          const empate = !expirado && !!rivalParticipacion?.completado && p.posicion != null && rivalParticipacion.posicion === p.posicion;
+          const gane = !empate && p.posicion === 1;
           const esFC = !!p.reto._esFC;
           const esPsico = !!p.reto._esPsico;
           const colorCategoria = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : COLOR_RETOS;
@@ -1561,12 +1578,12 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
               onClick={() => onVer(p)}
               style={{ background: 'white', border: '1px solid #F1F5F9', borderLeft: expirado ? '1px solid #F1F5F9' : `4px solid ${colorCategoria}`, borderRadius: '14px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', minHeight: '52px', boxSizing: 'border-box' }}
             >
-              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: expirado ? '#F4F5F7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {expirado ? <span style={{ fontSize: '17px' }}>⏱️</span> : esPsico ? <Brain size={17} color={gane ? COLOR_PSICO : '#dc2626'} /> : <span style={{ fontSize: '17px' }}>{gane ? (esFC ? '🃏' : '🏆') : '😤'}</span>}
+              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: expirado ? '#F4F5F7' : empate ? '#FEF3C7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {expirado ? <span style={{ fontSize: '17px' }}>⏱️</span> : esPsico ? <Brain size={17} color={gane || empate ? COLOR_PSICO : '#dc2626'} /> : <span style={{ fontSize: '17px' }}>{empate ? '🤝' : gane ? (esFC ? '🃏' : '🏆') : '😤'}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>
-                  {expirado ? 'Caducado' : gane ? 'Victoria' : 'Derrota'} vs {rival?.nick ?? rival?.nombre ?? 'Usuario'}
+                  {expirado ? 'Caducado' : empate ? 'Empate' : gane ? 'Victoria' : 'Derrota'} vs {rival?.nick ?? rival?.nombre ?? 'Usuario'}
                 </div>
                 <div style={{ fontSize: '12px', color: TEXT_MUTED, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {expirado ? 'Plazo terminado' : `${p.porcentaje}% — ${rivalParticipacion?.porcentaje ?? '?'}%`} · {descripcionReto(p.reto)}

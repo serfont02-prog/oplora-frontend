@@ -16,6 +16,17 @@ const COLOR_PSICO_BG = '#E0E7FF';
 
 type EstadoDuelo = 'intro' | 'jugando' | 'resultado';
 
+// ⭐ Mismo texto de cuenta atrás que usa la pantalla principal de retos.
+function tiempoRestanteTexto(fechaFin?: string | null): string {
+  if (!fechaFin) return '';
+  const restante = new Date(fechaFin).getTime() - Date.now();
+  if (restante <= 0) return 'Caducado';
+  const horas = Math.floor(restante / (1000 * 60 * 60));
+  if (horas < 1) return `${Math.floor(restante / (1000 * 60))} min restantes`;
+  if (horas < 24) return `${horas}h restantes`;
+  return `${Math.floor(horas / 24)}d restantes`;
+}
+
 export default function RetoPsicoDetallePage() {
   const router = useRouter();
   const params = useParams();
@@ -35,6 +46,8 @@ export default function RetoPsicoDetallePage() {
   const [respuestas, setRespuestas] = useState<{ preguntaId: string; respuestaTexto: string | null; tiempoRespuesta: number }[]>([]);
   const [resultadoFinal, setResultadoFinal] = useState<{ aciertos: number; fallos: number; tiempoTotal: number; posicion: number | null } | null>(null);
   const yaEnviado = useRef(false);
+  const [revanchaAbierta, setRevanchaAbierta] = useState(false);
+  const [mensajeRevancha, setMensajeRevancha] = useState('');
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
@@ -85,6 +98,25 @@ export default function RetoPsicoDetallePage() {
       });
       queryClient.invalidateQueries({ queryKey: ['mis-retos-psico'] });
       setEstado('resultado');
+    },
+  });
+
+  // ⭐ Revancha igual que en test: nuevo duelo contra el mismo rival (con mensaje opcional).
+  const enviarRevancha = useMutation({
+    mutationFn: async () => {
+      const res = await api.post('/psicotecnicos/duelo', {
+      retadoNickOEmail: rivalUsuario?.nick ?? rivalUsuario?.email,
+      oposicionId: reto?.oposicion?.id,
+      tipo: reto?.tipo,
+      numPreguntas: preguntas.length,
+      mensaje: mensajeRevancha || undefined,
+      horasPlazo: 48,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mis-retos-psico'] });
+      router.push('/app/retos');
     },
   });
 
@@ -155,6 +187,11 @@ export default function RetoPsicoDetallePage() {
   const tiempoTotalMs = resultadoFinal?.tiempoTotal ?? miResultado?.tiempoTotal ?? 0;
   const posicion = resultadoFinal?.posicion ?? miResultado?.posicion ?? null;
   const ambosCompletados = !!miResultado?.completado && !!rivalResultado?.completado;
+  // ⭐ Empate: ambos completaron y comparten posición (mismos aciertos y mismo tiempo).
+  const empate = ambosCompletados && posicion != null && rivalResultado?.posicion === posicion;
+  const gane = ambosCompletados && !empate && posicion === 1;
+  const perdi = ambosCompletados && !empate && posicion != null && posicion > 1;
+  const caducado = !yaCompleto && (reto.estado === 'expirado' || (!!reto.fechaFin && new Date(reto.fechaFin).getTime() < Date.now()));
 
   const esCorrecta =
     correctaTexto != null &&
@@ -186,12 +223,22 @@ export default function RetoPsicoDetallePage() {
               <Brain size={26} color={COLOR_PSICO} />
             </div>
             <div style={{ fontSize: 16, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4 }}>Duelo psicotécnico</div>
-            {reto.tipoPsico && (
-              <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginBottom: 4, textTransform: 'capitalize' }}>{reto.tipo}</div>
+            {reto.tipo && (
+              <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginBottom: 4, textTransform: 'capitalize' }}>{String(reto.tipo).replace(/_/g, ' ')}</div>
             )}
-            <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: '0.75rem' }}>
               {preguntas.length} preguntas · vs {rivalUsuario?.nick ?? rivalUsuario?.nombre ?? 'Rival'}
             </div>
+            {reto.mensaje && (
+              <div style={{ background: '#F8F9FA', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: TEXT_SECONDARY, fontStyle: 'italic', marginBottom: '0.75rem' }}>
+                “{reto.mensaje}” — {reto.retador?.nick ?? reto.retador?.nombre}
+              </div>
+            )}
+            {!ambosCompletados && reto.fechaFin && (
+              <div style={{ fontSize: 12, fontWeight: 600, color: caducado ? '#DC2626' : TEXT_SECONDARY, marginBottom: '1.25rem' }}>
+                ⏱️ {tiempoRestanteTexto(reto.fechaFin)}
+              </div>
+            )}
 
             {yaCompleto ? (
               <div>
@@ -204,6 +251,10 @@ export default function RetoPsicoDetallePage() {
                 >
                   Ver resultado
                 </button>
+              </div>
+            ) : caducado ? (
+              <div style={{ fontSize: 13, color: '#DC2626', fontWeight: 600 }}>
+                Este reto caducó, ya no se puede completar
               </div>
             ) : (
               <button
@@ -304,7 +355,7 @@ export default function RetoPsicoDetallePage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', textAlign: 'center' }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 4 }}>Tú</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: posicion === 1 ? COLOR_PSICO : TEXT_PRIMARY }}>{aciertos}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: gane ? COLOR_PSICO : TEXT_PRIMARY }}>{aciertos}</div>
                 </div>
                 <div style={{ fontSize: 13, color: TEXT_MUTED, fontWeight: 700 }}>VS</div>
                 <div>
@@ -322,11 +373,46 @@ export default function RetoPsicoDetallePage() {
                 </div>
               )}
               {ambosCompletados && posicion && (
-                <div style={{ marginTop: 10, textAlign: 'center', fontSize: 13, fontWeight: 700, color: posicion === 1 ? '#15803d' : '#dc2626' }}>
-                  {posicion === 1 ? '🏆 ¡Has ganado el duelo!' : 'Has perdido este duelo'}
+                <div style={{ marginTop: 10, textAlign: 'center', fontSize: 13, fontWeight: 700, color: empate ? '#B45309' : gane ? '#15803d' : '#dc2626' }}>
+                  {empate ? '🤝 ¡Empate!' : gane ? '🏆 ¡Has ganado el duelo!' : 'Has perdido este duelo'}
                 </div>
               )}
             </div>
+
+            {perdi && (
+              <div style={{ marginBottom: 10 }}>
+                {!revanchaAbierta ? (
+                  <button
+                    onClick={() => setRevanchaAbierta(true)}
+                    style={{ width: '100%', padding: 12, background: 'white', color: TEXT_PRIMARY, border: '1px solid #E5E7EB', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    ⚔️ Pedir revancha
+                  </button>
+                ) : (
+                  <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 14, padding: 12 }}>
+                    <textarea
+                      value={mensajeRevancha}
+                      onChange={(e) => setMensajeRevancha(e.target.value)}
+                      placeholder="Escribe un mensaje para la revancha..."
+                      maxLength={140}
+                      style={{ width: '100%', minHeight: 56, padding: '10px 12px', fontSize: 13, border: '1px solid #F1F5F9', borderRadius: 10, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', marginBottom: 8 }}
+                    />
+                    {enviarRevancha.isError && (
+                      <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 8 }}>
+                        {(enviarRevancha.error as any)?.response?.data?.message ?? 'No se pudo enviar la revancha'}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => enviarRevancha.mutate()}
+                      disabled={enviarRevancha.isPending}
+                      style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: enviarRevancha.isPending ? 'not-allowed' : 'pointer', opacity: enviarRevancha.isPending ? 0.6 : 1 }}
+                    >
+                      {enviarRevancha.isPending ? 'Enviando...' : 'Enviar revancha'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <button
               onClick={() => router.push('/app/retos')}
