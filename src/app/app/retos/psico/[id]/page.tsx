@@ -84,6 +84,12 @@ export default function RetoPsicoDetallePage() {
     }
   }, [reto, yaCompleto, estado]);
 
+  // ⭐ Un reto caducado no se puede jugar, ni siquiera entrando por una alerta con ?directo=true.
+  const caducadoSinJugar = !!reto && !yaCompleto && (reto.estado === 'expirado' || (!!reto.fechaFin && new Date(reto.fechaFin).getTime() < Date.now()));
+  useEffect(() => {
+    if (caducadoSinJugar && estado === 'jugando') setEstado('intro');
+  }, [caducadoSinJugar, estado]);
+
   const completar = useMutation({
     mutationFn: async (respuestasFinal: typeof respuestas) => {
       const res = await api.post(`/psicotecnicos/reto/${id}/completar`, { respuestas: respuestasFinal });
@@ -294,7 +300,9 @@ export default function RetoPsicoDetallePage() {
               {pregunta.opciones.map((op: string, i: number) => {
                 const esElegida = respuestaElegida === i;
                 const esLaCorrecta = mostrarCorreccion && correctaTexto != null && op.trim() === correctaTexto.trim();
-                const esIncorrectaElegida = mostrarCorreccion && esElegida && !esCorrecta;
+                // ⭐ Solo se marca como fallo cuando ya llegó la solución del servidor; mientras carga
+                // la opción queda neutra (antes parpadeaba en rojo hasta que llegaba la respuesta).
+                const esIncorrectaElegida = mostrarCorreccion && correctaTexto != null && esElegida && !esCorrecta;
 
                 return (
                   <button

@@ -149,7 +149,7 @@ function tiempoRestante(fechaFin: string): string {
 }
 
 // ⭐ Texto descriptivo unificado para todos los retos (sistema y duelos):
-// "{Tipo} · {N preguntas|tarjetas} · {Tema N|Oposición}". Un único sitio para que
+// "{Tipo} · {Tema N|Oposición} · {N preguntas|tarjetas}". Un único sitio para que
 // diario, semanal, en curso e historial no vuelvan a divergir en redacción.
 function descripcionReto(reto: any): string {
   const esFC = !!reto?._esFC;
@@ -163,7 +163,7 @@ function descripcionReto(reto: any): string {
   const ambito = esPsico
     ? modalidadPsico
     : (reto?.tema?.titulo ? `Tema ${reto.tema.numero}` : 'Oposición');
-  return [tipo, cantidad, ambito].filter(Boolean).join(' · ');
+  return [tipo, ambito, cantidad].filter(Boolean).join(' · ');
 }
 
 export default function RetosPage() {
@@ -704,7 +704,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid #F1F5F9' }}>
                 <span style={{ fontSize: '11px', color: TEXT_MUTED }}>
-                  {esCreador ? 'Reto enviado' : `${p.reto.creador?.nick ?? p.reto.creador?.nombre} te retó`} · {descripcionReto(p.reto)}
+                  {descripcionReto(p.reto)}
                 </span>
                 {(
                   <button

@@ -282,7 +282,9 @@ export default function PsicotecnicoTipoPage() {
               const esElegida = respuestaActual === i;
               const esLaCorrecta =
                 mostrarCorreccion && correctaTexto != null && op.trim() === correctaTexto.trim();
-              const esIncorrectaElegida = mostrarCorreccion && esElegida && !esCorrecta;
+              // ⭐ Solo se marca como fallo cuando ya llegó la solución del servidor; mientras carga
+                // la opción queda neutra (antes parpadeaba en rojo hasta que llegaba la respuesta).
+                const esIncorrectaElegida = mostrarCorreccion && correctaTexto != null && esElegida && !esCorrecta;
 
               return (
                 <button

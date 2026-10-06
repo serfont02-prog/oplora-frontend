@@ -65,6 +65,13 @@ export default function RetoDetallePage() {
     }
   }, [reto, miParticipacion]);
 
+  // ⭐ Un reto entre usuarios caducado no se puede jugar (ni entrando por una alerta con ?directo=true).
+  const caducado = !!reto && reto.tipo === 'usuario' && !miParticipacion?.completado
+    && (reto.estado === 'expirado' || (!!reto.fechaFin && new Date(reto.fechaFin).getTime() < Date.now()));
+  useEffect(() => {
+    if (caducado && estado === 'jugando') setEstado('intro');
+  }, [caducado, estado]);
+
   const { data: ranking = [] } = useQuery({
     queryKey: ['ranking-reto', id],
     queryFn: async () => {
@@ -202,6 +209,10 @@ export default function RetoDetallePage() {
                   >
                     Ver resultado y ranking
                   </button>
+                </div>
+              ) : caducado ? (
+                <div style={{ fontSize: '13px', color: '#DC2626', fontWeight: 600 }}>
+                  Este reto caducó, ya no se puede completar
                 </div>
               ) : (
                 <button

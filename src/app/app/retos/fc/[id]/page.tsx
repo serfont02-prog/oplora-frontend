@@ -80,6 +80,12 @@ export default function RetoFCDetallePage() {
     }
   }, [reto, yaCompleto, estado]);
 
+  // ⭐ Un reto caducado no se puede jugar, ni siquiera entrando por una alerta con ?directo=true.
+  const caducadoSinJugar = !!reto && !yaCompleto && (reto.estado === 'expirado' || (!!reto.fechaFin && new Date(reto.fechaFin).getTime() < Date.now()));
+  useEffect(() => {
+    if (caducadoSinJugar && estado === 'jugando') setEstado('intro');
+  }, [caducadoSinJugar, estado]);
+
   const completar = useMutation({
     mutationFn: async (respuestasFinal: typeof respuestas) => {
       const res = await api.post(`/flashcards/reto/${id}/completar`, { respuestas: respuestasFinal });
