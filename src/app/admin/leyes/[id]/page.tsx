@@ -218,29 +218,28 @@ const { data: titulosEstructura = [] } = useQuery({
     },
   });
 
-  // ⭐ Corregir texto de artículos (saltos de línea del PDF) desde el BOE
-  const [sincro, setSincro] = useState<{ versionId: string; referenciaBoe: string; modo: 'boe' | 'local'; resultado: any | null } | null>(null);
+  // ⭐ Actualizar desde JSON: corrige textos de una versión ya subida SIN borrar
+  // artículos (se conservan preguntas, flashcards, notas y subrayados).
+  const [actJson, setActJson] = useState<{ versionId: string; texto: string; resultado: any | null } | null>(null);
 
-  const sincronizarTexto = useMutation({
+  const actualizarJson = useMutation({
     mutationFn: async (aplicar: boolean) => {
-      if (!sincro) return null;
-      const res = await api.post(`/leyes/versiones/${sincro.versionId}/sincronizar-texto`, {
-        modo: sincro.modo,
-        referenciaBoe: sincro.referenciaBoe || undefined,
-        aplicar,
-      });
+      if (!actJson) return null;
+      const estructura = JSON.parse(actJson.texto);
+      const res = await api.post(`/leyes/versiones/${actJson.versionId}/actualizar-json`, { estructura, aplicar });
       return res.data;
     },
     onSuccess: (data) => {
       if (!data) return;
-      setSincro((prev) => (prev ? { ...prev, resultado: data } : prev));
+      setActJson((prev) => (prev ? { ...prev, resultado: data } : prev));
       if (data.aplicado) {
         queryClient.invalidateQueries({ queryKey: ['ley', id] });
         queryClient.invalidateQueries({ queryKey: ['titulos-estructura'] });
+        queryClient.invalidateQueries({ queryKey: ['disposiciones-ley'] });
       }
     },
     onError: (e: any) => {
-      alert('Error: ' + (e?.response?.data?.message ?? e.message));
+      alert('Error: ' + (e?.response?.data?.message ?? e.message ?? 'JSON inválido'));
     },
   });
 
@@ -676,10 +675,10 @@ const editarArticulo = useMutation({
                           Importar JSON
                         </button>
                         <button
-                          onClick={() => setSincro({ versionId: v.id, referenciaBoe: v.referenciaBoe ?? '', modo: 'boe', resultado: null })}
+                          onClick={() => setActJson({ versionId: v.id, texto: '', resultado: null })}
                           style={{ fontSize: '12px', padding: '5px 10px', background: '#F0FDF4', color: '#15803d', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}
                         >
-                          Corregir texto
+                          Actualizar desde JSON
                         </button>
                         {!v.activa && (
                           <button
@@ -1187,48 +1186,39 @@ const editarArticulo = useMutation({
         </div>
       )}
 
-      {sincro && (
+      {actJson && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '760px', maxHeight: '88vh', overflowY: 'auto' }}>
-            <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Corregir texto de los artículos</div>
+            <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Actualizar desde JSON</div>
             <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '14px', lineHeight: 1.5 }}>
-              Deja cada artículo con el formato de la Constitución (párrafos separados por una línea en blanco).
-              No borra artículos: se mantienen preguntas, flashcards, notas y subrayados.
+              Corrige el texto y la rúbrica de los artículos (y las disposiciones) emparejando por número.
+              No borra nada: se mantienen preguntas, flashcards, notas, subrayados y vínculos con temas.
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-              {(['boe', 'local'] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setSincro({ ...sincro, modo: m, resultado: null })}
-                  style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '8px', cursor: 'pointer', border: `1px solid ${sincro.modo === m ? '#111827' : '#e5e7eb'}`, background: sincro.modo === m ? '#111827' : 'white', color: sincro.modo === m ? 'white' : '#374151' }}
-                >
-                  {m === 'boe' ? 'Texto oficial del BOE (recomendado)' : 'Reparar saltos sin conexión'}
-                </button>
-              ))}
-            </div>
-
-            {sincro.modo === 'boe' && (
-              <input
-                value={sincro.referenciaBoe}
-                onChange={(e) => setSincro({ ...sincro, referenciaBoe: e.target.value, resultado: null })}
-                placeholder="Referencia BOE, p. ej. BOE-A-2015-10566"
-                style={{ width: '100%', padding: '9px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', marginBottom: '10px' }}
+            {!actJson.resultado?.aplicado && (
+              <textarea
+                value={actJson.texto}
+                onChange={(e) => setActJson({ ...actJson, texto: e.target.value, resultado: null })}
+                rows={10}
+                placeholder='{ "titulos": [...], "disposiciones": [...] }'
+                style={{ width: '100%', padding: '10px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical', marginBottom: '10px' }}
               />
             )}
 
-            {sincro.resultado && (() => {
-              const r = sincro.resultado;
+            {actJson.resultado && (() => {
+              const r = actJson.resultado;
               return (
                 <div style={{ fontSize: '12px', color: '#374151', marginBottom: '12px' }}>
                   <div style={{ padding: '10px 12px', borderRadius: '8px', background: r.aplicado ? '#f0fdf4' : '#f9fafb', border: `1px solid ${r.aplicado ? '#bbf7d0' : '#f3f4f6'}`, marginBottom: '10px', lineHeight: 1.6 }}>
-                    <strong>{r.aplicado ? 'Cambios guardados.' : 'Simulación (aún no se ha guardado nada).'}</strong><br />
-                    Artículos en la app: {r.totalArticulosBd}{r.totalArticulosBoe != null && <> · en el BOE: {r.totalArticulosBoe}</>}<br />
-                    {r.aplicado ? 'Corregidos' : 'Se corregirán'}: <strong>{r.aCambiar}</strong> · ya correctos: {r.sinCambios}
-                    {r.aplicado && <> · subrayados recolocados: {r.subrayados.recolocados}{r.subrayados.noEncontrados > 0 && ` (${r.subrayados.noEncontrados} no encontrados)`}</>}
-                    {r.noEncontradosEnBoe.length > 0 && <><br />No encontrados en el BOE: {r.noEncontradosEnBoe.join(', ')}</>}
-                    {r.noEncontradosEnBd.length > 0 && <><br />En el BOE pero no en la app: {r.noEncontradosEnBd.join(', ')}</>}
-                    {r.rubricasDistintas.length > 0 && <><br />Rúbricas distintas (no se tocan): {r.rubricasDistintas.map((x: any) => x.numero).join(', ')}</>}
+                    <strong>{r.aplicado ? 'Cambios guardados.' : 'Vista previa (aún no se ha guardado nada).'}</strong><br />
+                    Artículos en la app: {r.articulos.enApp} · en el JSON: {r.articulos.enJson}<br />
+                    {r.aplicado ? 'Actualizados' : 'Se actualizarán'}: <strong>{r.articulos.aCambiar}</strong>
+                    {r.articulos.rubricasCambiadas > 0 && <> ({r.articulos.rubricasCambiadas} con rúbrica nueva)</>} · ya iguales: {r.articulos.sinCambios}<br />
+                    Disposiciones: {r.disposiciones.aCambiar} a corregir · {r.disposiciones.nuevas} nuevas · {r.disposiciones.sinCambios} iguales
+                    {r.aplicado && <><br />Subrayados recolocados: {r.subrayados.recolocados}{r.subrayados.noEncontrados > 0 && ` (${r.subrayados.noEncontrados} no encontrados en el texto nuevo)`}</>}
+                    {r.articulos.soloEnJson.length > 0 && <><br /><span style={{ color: '#b45309' }}>En el JSON pero no en la app (no se crean): {r.articulos.soloEnJson.join(', ')}</span></>}
+                    {r.articulos.soloEnApp.length > 0 && <><br /><span style={{ color: '#b45309' }}>En la app pero no en el JSON (no se tocan): {r.articulos.soloEnApp.join(', ')}</span></>}
+                    {r.disposiciones.soloEnApp.length > 0 && <><br />Disposiciones solo en la app (no se tocan): {r.disposiciones.soloEnApp.join(', ')}</>}
                   </div>
                   {!r.aplicado && r.muestras.map((mu: any) => (
                     <div key={mu.numero} style={{ marginBottom: '10px' }}>
@@ -1244,17 +1234,17 @@ const editarArticulo = useMutation({
             })()}
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              {!sincro.resultado?.aplicado && (
-                <button onClick={() => sincronizarTexto.mutate(false)} disabled={sincronizarTexto.isPending} style={{ padding: '9px 18px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                  {sincronizarTexto.isPending ? 'Procesando...' : 'Previsualizar'}
+              {!actJson.resultado?.aplicado && (
+                <button onClick={() => actualizarJson.mutate(false)} disabled={actualizarJson.isPending || !actJson.texto.trim()} style={{ padding: '9px 18px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                  {actualizarJson.isPending ? 'Procesando...' : 'Previsualizar'}
                 </button>
               )}
-              {sincro.resultado && !sincro.resultado.aplicado && sincro.resultado.aCambiar > 0 && (
-                <button onClick={() => sincronizarTexto.mutate(true)} disabled={sincronizarTexto.isPending} style={{ padding: '9px 18px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                  Aplicar a {sincro.resultado.aCambiar} artículos
+              {actJson.resultado && !actJson.resultado.aplicado && (actJson.resultado.articulos.aCambiar + actJson.resultado.disposiciones.aCambiar + actJson.resultado.disposiciones.nuevas) > 0 && (
+                <button onClick={() => actualizarJson.mutate(true)} disabled={actualizarJson.isPending} style={{ padding: '9px 18px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                  Aplicar cambios
                 </button>
               )}
-              <button onClick={() => setSincro(null)} style={{ padding: '9px 18px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', marginLeft: 'auto' }}>
+              <button onClick={() => setActJson(null)} style={{ padding: '9px 18px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', marginLeft: 'auto' }}>
                 Cerrar
               </button>
             </div>
