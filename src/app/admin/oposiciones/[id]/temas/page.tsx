@@ -651,6 +651,7 @@ const importarTemario = async () => {
             {temaVinculando.normativas.map((tn: any) => {
               const ley = tn.articulo?.capitulo?.tituloRef?.versionLey?.ley?.nombre
                 ?? tn.articulo?.tituloRef?.versionLey?.ley?.nombre
+                ?? tn.articulo?.seccion?.capitulo?.tituloRef?.versionLey?.ley?.nombre
                 ?? '—';
               return (
                 <div key={tn.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px' }}>
