@@ -7,8 +7,37 @@ import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ArrowLeft, Download, Play, Pause } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
-import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
+import { renderReferencias, construirMapaSiglas, construirMapaNombres } from '@/lib/referenciasArticulos';
 import { BG_NEUTRAL } from '@/styles/tokens';
+
+// ⭐ Colores de las cajas destacadas (compartidos por las cajas y por la barra de filtros).
+// "Idea" y "Regla de examen" se fusionan en una sola categoría visual ("Idea clave"): ambas
+// cumplen la misma función (algo a recordar/aplicar). "Trampa de examen" se mantiene aparte a
+// propósito: es una alerta, no un tip, y ese contraste es lo que la hace útil de un vistazo.
+const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; emoji: string; label: string }> = {
+  EJEMPLO: { bg: '#FFFFFF', border: '#E5E7EB', color: '#374151', emoji: '📘', label: 'EJEMPLO' },
+  IDEA: { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡', label: 'IDEA CLAVE' },
+  'REGLA DE EXAMEN': { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡', label: 'IDEA CLAVE' },
+  ESQUEMA: { bg: '#F3FBF5', border: '#BBF0CB', color: '#15803d', emoji: '🗺️', label: 'ESQUEMA' },
+  'TRAMPA DE EXAMEN': { bg: '#FEF2F2', border: '#fca5a5', color: '#dc2626', emoji: '⚠️', label: 'TRAMPA DE EXAMEN' },
+  'PREGUNTA FRECUENTE': { bg: '#FFF7ED', border: '#FED7AA', color: '#C2410C', emoji: '❓', label: 'PREGUNTA FRECUENTE' },
+};
+
+// ⭐ Filtros de la barra fija: cada chip muestra/oculta un tipo de caja. Los ejemplos forman
+// parte de la explicación y se muestran siempre.
+type FiltroCaja = 'trampa' | 'pregunta' | 'esquema' | 'idea';
+const FILTROS_CAJA: { key: FiltroCaja; label: string; titulos: string[]; cfg: string }[] = [
+  { key: 'trampa', label: 'Trampa', titulos: ['TRAMPA DE EXAMEN'], cfg: 'TRAMPA DE EXAMEN' },
+  { key: 'pregunta', label: 'Pregunta', titulos: ['PREGUNTA FRECUENTE'], cfg: 'PREGUNTA FRECUENTE' },
+  { key: 'esquema', label: 'Esquema', titulos: ['ESQUEMA'], cfg: 'ESQUEMA' },
+  { key: 'idea', label: 'Idea', titulos: ['IDEA', 'REGLA DE EXAMEN'], cfg: 'IDEA' },
+];
+const FILTROS_POR_DEFECTO: Record<FiltroCaja, boolean> = { trampa: true, pregunta: true, esquema: true, idea: true };
+const CLAVE_FILTROS = 'oplora-apunte-filtros-cajas';
+
+function filtroDeTitulo(titulo: string): FiltroCaja | null {
+  return FILTROS_CAJA.find((f) => f.titulos.includes(titulo))?.key ?? null;
+}
 
 export default function ApunteOploraPage() {
   const router = useRouter();
@@ -25,6 +54,22 @@ export default function ApunteOploraPage() {
   const [progreso, setProgreso] = useState(0);
   const [menuSubrayado, setMenuSubrayado] = useState<{ x: number; y: number; inicio: number; fin: number; texto: string } | null>(null);
   const [subrayadoSeleccionado, setSubrayadoSeleccionado] = useState<string | null>(null);
+  const [filtrosCajas, setFiltrosCajas] = useState<Record<FiltroCaja, boolean>>(FILTROS_POR_DEFECTO);
+
+  // la elección de filtros se recuerda en este dispositivo (si el navegador lo permite)
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem(CLAVE_FILTROS);
+      if (guardado) setFiltrosCajas({ ...FILTROS_POR_DEFECTO, ...JSON.parse(guardado) });
+    } catch {}
+  }, []);
+  const toggleFiltroCaja = (key: FiltroCaja) => {
+    setFiltrosCajas((prev) => {
+      const nuevo = { ...prev, [key]: !prev[key] };
+      try { localStorage.setItem(CLAVE_FILTROS, JSON.stringify(nuevo)); } catch {}
+      return nuevo;
+    });
+  };
 
   const contentRef = useRef<HTMLDivElement>(null);
   const ultimoGuardado = useRef(0);
@@ -91,6 +136,8 @@ const { data: leyesOposicion = [] } = useQuery({
 });
 
 const mapaSiglas = useMemo(() => construirMapaSiglas(leyesOposicion), [leyesOposicion]);
+// ⭐ versionLeyId → nombre de la ley, para indicar en el modal a qué ley pertenece el artículo
+const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leyesOposicion]);
 
   useEffect(() => {
     if (progresoGuardado?.porcentaje) {
@@ -101,6 +148,16 @@ const mapaSiglas = useMemo(() => construirMapaSiglas(leyesOposicion), [leyesOpos
   const esFormatoNuevo = apunte?.versionParser === 2 && apunte?.contenidoEstructurado?.bloques;
   const bloques = esFormatoNuevo ? apunte.contenidoEstructurado.bloques : [];
   const secciones = !esFormatoNuevo ? (apunte?.contenidoEstructurado?.secciones ?? []) : [];
+  // nº de cajas de cada tipo en este apunte (los chips sin cajas se muestran atenuados)
+  const conteoCajas = useMemo(() => {
+    const c: Record<FiltroCaja, number> = { trampa: 0, pregunta: 0, esquema: 0, idea: 0 };
+    for (const b of bloques) {
+      if (b.tipo !== 'destacado') continue;
+      const f = filtroDeTitulo(b.titulo);
+      if (f) c[f]++;
+    }
+    return c;
+  }, [bloques]);
 
   const textoCompleto = esFormatoNuevo
     ? bloques.map((b: any) => {
@@ -326,9 +383,7 @@ const updateProgreso = () => {
             <ArrowLeft size={13} />
             Volver
           </button>
-          <span style={{ fontSize: '12px', fontWeight: 500, color: '#111827', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {apunte.titulo}
-          </span>
+          {/* el nombre del archivo ya no se muestra: su sitio lo ocupa la barra de filtros de abajo */}
           <div style={{ display: 'flex', gap: '6px' }}>
             <a
               href={apunte.urlArchivo}
@@ -340,6 +395,48 @@ const updateProgreso = () => {
             </a>
           </div>
         </div>
+
+        {/* ⭐ Barra fija de filtros: cada chip muestra u oculta un tipo de caja.
+            Desmarcándolos todos quedan solo los apuntes (y los ejemplos). */}
+        {esFormatoNuevo && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 1rem', borderTop: '1px solid #f9fafb', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {FILTROS_CAJA.map((f) => {
+              const cfg = DESTACADO_CONFIG[f.cfg];
+              const activo = filtrosCajas[f.key];
+              const sinCajas = conteoCajas[f.key] === 0;
+              return (
+                <button
+                  key={f.key}
+                  role="checkbox"
+                  aria-checked={activo}
+                  onClick={() => toggleFiltroCaja(f.key)}
+                  title={activo ? `Ocultar ${f.label.toLowerCase()}` : `Mostrar ${f.label.toLowerCase()}`}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0,
+                    padding: '4px 9px 4px 6px', borderRadius: '999px', cursor: 'pointer',
+                    fontSize: '11px', fontWeight: 600,
+                    background: activo ? cfg.bg : 'white',
+                    border: `1px solid ${activo ? cfg.border : '#e5e7eb'}`,
+                    color: activo ? cfg.color : '#9ca3af',
+                    opacity: sinCajas ? 0.45 : 1,
+                  }}
+                >
+                  <span style={{
+                    width: '13px', height: '13px', borderRadius: '4px', flexShrink: 0,
+                    border: `1.5px solid ${activo ? cfg.color : '#d1d5db'}`,
+                    background: activo ? cfg.color : 'white',
+                    display: 'grid', placeItems: 'center',
+                    color: 'white', fontSize: '9px', lineHeight: 1,
+                  }}>
+                    {activo ? '✓' : ''}
+                  </span>
+                  {f.label}
+                  {!sinCajas && <span style={{ fontWeight: 500, opacity: 0.7 }}>{conteoCajas[f.key]}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Controles fuente + progreso, compactos */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 1rem', borderTop: '1px solid #f9fafb' }}>
@@ -379,9 +476,6 @@ const updateProgreso = () => {
           position: 'relative',
         }}
       >
-        <div style={{ fontSize: '17px', fontWeight: 700, color: '#1a1a1a', marginBottom: '4px', lineHeight: 1.35 }}>
-          {apunte.titulo}
-        </div>
         {apunte.descripcion && (
           <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '16px' }}>{apunte.descripcion}</div>
         )}
@@ -454,42 +548,44 @@ const updateProgreso = () => {
         
 
         
-           case 'destacado': {
-              // ⭐ "Idea" y "Regla de examen" se fusionan en una sola categoría visual
-              // ("Idea clave"): ambas cumplen la misma función (algo a recordar/aplicar) y
-              // tener dos colores distintos para lo mismo solo añadía ruido. "Trampa de examen"
-              // se mantiene aparte a propósito: es una alerta, no un tip, y ese contraste es lo
-              // que la hace útil de un vistazo.
-              const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; emoji: string; label: string }> = {
-                EJEMPLO: { bg: '#FFFFFF', border: '#E5E7EB', color: '#374151', emoji: '📘', label: 'EJEMPLO' },
-                IDEA: { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡', label: 'IDEA CLAVE' },
-                'REGLA DE EXAMEN': { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡', label: 'IDEA CLAVE' },
-                ESQUEMA: { bg: '#F3FBF5', border: '#BBF0CB', color: '#15803d', emoji: '🗺️', label: 'ESQUEMA' },
-                'TRAMPA DE EXAMEN': { bg: '#FEF2F2', border: '#fca5a5', color: '#dc2626', emoji: '⚠️', label: 'TRAMPA DE EXAMEN' },
-                'PREGUNTA FRECUENTE': { bg: '#FFF7ED', border: '#FED7AA', color: '#C2410C', emoji: '❓', label: 'PREGUNTA FRECUENTE' },
-              };
-            const cfg = DESTACADO_CONFIG[bloque.titulo] ?? DESTACADO_CONFIG.IDEA;
-            return (
-              <div key={bloque.id} style={{
-                background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '12px',
-                padding: '14px 16px', marginBottom: '16px', marginTop: '18px',
-              }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: cfg.color, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {cfg.emoji} {cfg.label}
-                </div>
-                {bloque.contenido.map((c: any, i: number) => {
-                  if (c.tipo === 'parrafo') {
-                    return (
-                      <div key={i} style={{ fontSize: `${fontSize}px`, color: cfg.color, lineHeight: 1.75, marginBottom: i < bloque.contenido.length - 1 ? '8px' : 0, opacity: 0.9 }}>
-                        {c.texto}
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
+        case 'destacado': {
+          // oculto si el usuario ha desmarcado su tipo en la barra de filtros
+          const filtro = filtroDeTitulo(bloque.titulo);
+          if (filtro && !filtrosCajas[filtro]) return null;
+          const cfg = DESTACADO_CONFIG[bloque.titulo] ?? DESTACADO_CONFIG.IDEA;
+          return (
+            <div key={bloque.id} style={{
+              background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '12px',
+              padding: '14px 16px', marginBottom: '16px', marginTop: '18px',
+            }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: cfg.color, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {cfg.emoji} {cfg.label}
               </div>
-            );
-          }
+              {bloque.contenido.map((c: any, i: number) => {
+                if (c.tipo !== 'parrafo') return null;
+                const texto: string = c.texto ?? '';
+                // ⭐ En las preguntas: las opciones "a) b) c)" van sangradas y la solución
+                // (✅ / ❌) separada con una línea fina, para que no se lea todo seguido.
+                const esOpcion = /^[a-eA-E]\)\s/.test(texto);
+                const esSolucion = /^[✅❌]/u.test(texto);
+                const anteriorEsSolucion = i > 0 && /^[✅❌]/u.test(bloque.contenido[i - 1]?.texto ?? '');
+                return (
+                  <div key={i} style={{
+                    fontSize: `${fontSize}px`, color: cfg.color, lineHeight: 1.75, opacity: 0.9,
+                    marginBottom: i < bloque.contenido.length - 1 ? (esOpcion ? '4px' : '8px') : 0,
+                    ...(esOpcion ? { paddingLeft: '12px' } : {}),
+                    ...(esSolucion && !anteriorEsSolucion
+                      ? { borderTop: `1px dashed ${cfg.border}`, paddingTop: '8px', marginTop: '8px', fontWeight: 600 }
+                      : esSolucion ? { fontWeight: 600 } : {}),
+                  }}>
+                    {/* ⭐ las referencias [SIGLAS artículo N] también son clicables dentro de las cajas */}
+                    {renderReferencias(texto, mapaSiglas, abrirArticulo, `d${bloque.id}-${i}`)}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
 
         case 'parrafo':
           return (
@@ -646,9 +742,16 @@ const updateProgreso = () => {
       onClick={(e) => e.stopPropagation()}
       style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '480px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>
-          Artículo {articuloModal.numero}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '1rem' }}>
+        <div style={{ minWidth: 0 }}>
+          {mapaNombresLey[articuloModal.versionLeyId] && (
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '2px', lineHeight: 1.4 }}>
+              {mapaNombresLey[articuloModal.versionLeyId]}
+            </div>
+          )}
+          <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>
+            Artículo {articuloModal.numero}
+          </div>
         </div>
         <button
           onClick={() => setArticuloModal(null)}
