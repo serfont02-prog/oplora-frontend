@@ -276,7 +276,7 @@ const toggleSeccion = async (seccionId: string) => {
           style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
         >
           <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
-            {titulo.numero ? `Título ${titulo.numero}` : ''}{titulo.nombre ? ` — ${titulo.nombre}` : ''}
+            {[titulo.numero ? `Título ${titulo.numero}` : null, titulo.nombre].filter(Boolean).join(' — ')}
           </div>
           {titulosAbiertos[titulo.id] ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
         </button>

@@ -82,10 +82,13 @@ export default function RetoDetallePage() {
   });
 
   const completar = useMutation({
-    mutationFn: async () => {
+    // ⭐ Recibe la lista final como argumento: antes leía `respuestas` del render anterior
+    // y se enviaba sin la última respuesta, así que el servidor lo rechazaba siempre
+    // ("El número de respuestas no coincide") y el duelo no se podía terminar.
+    mutationFn: async (respuestasFinal: { seleccionada: number }[]) => {
       const tiempoTotal = Math.round((Date.now() - tiempoInicio) / 1000);
       const res = await api.post(`/retos/${id}/completar`, {
-        respuestas: respuestas.map((r) => r.seleccionada),
+        respuestas: respuestasFinal.map((r) => r.seleccionada),
         tiempoSegundos: tiempoTotal,
       });
       return res.data;
@@ -113,13 +116,22 @@ export default function RetoDetallePage() {
     const yaEnviado = useRef(false);
 
     const seleccionarYSiguiente = (idx: number) => {
+      // ⭐ Bloquea el doble toque durante la transición (antes metía dos respuestas).
+      if (seleccionada !== null || yaEnviado.current) return;
       setSeleccionada(idx);
-      setRespuestas((prev) => [...prev, { seleccionada: idx }]);
+      const nuevas = [...respuestas, { seleccionada: idx }];
+      setRespuestas(nuevas);
 
       if (preguntaActual + 1 >= preguntas.length) {
-        if (yaEnviado.current) return; // ⭐ bloqueo inmediato
-        yaEnviado.current = true;
-        completar.mutate();
+        yaEnviado.current = true; // ⭐ bloqueo inmediato
+        completar.mutate(nuevas, {
+          onError: () => {
+            // Permite reintentar el envío desde la última pregunta.
+            yaEnviado.current = false;
+            setRespuestas(respuestas);
+            setSeleccionada(null);
+          },
+        });
       } else {
         setTimeout(() => {
           setPreguntaActual((p) => p + 1);
@@ -242,6 +254,7 @@ export default function RetoDetallePage() {
               <button
                 key={idx}
                 onClick={() => seleccionarYSiguiente(idx)}
+                disabled={seleccionada !== null || completar.isPending}
                 style={{
                   padding: '12px 14px', borderRadius: '12px',
                   border: seleccionada === idx ? '1.5px solid #3b82f6' : '1.5px solid #e5e7eb',
@@ -255,6 +268,11 @@ export default function RetoDetallePage() {
               </button>
             ))}
           </div>
+          {completar.isError && (
+            <div style={{ fontSize: '12px', color: '#DC2626', textAlign: 'center' }}>
+              {(completar.error as any)?.response?.data?.message ?? 'No se pudo enviar el reto. Elige de nuevo la respuesta para reintentar.'}
+            </div>
+          )}
 
          </div>
         )}

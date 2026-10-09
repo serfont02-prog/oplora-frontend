@@ -201,17 +201,32 @@ const { data: titulosEstructura = [] } = useQuery({
   const [jsonTexto, setJsonTexto] = useState('');
   const [versionParaImportar, setVersionParaImportar] = useState<string | null>(null);
 
+  // ⭐ Lo que está vinculado a los artículos de la versión: si hay algo, se
+  // avisa de que se perderá antes de reimportar y se pide confirmación.
+  const [avisoImportar, setAvisoImportar] = useState<{ total: number; detalle: Record<string, number> } | null>(null);
+
   const importarJson = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (forzar: boolean) => {
       const estructura = JSON.parse(jsonTexto);
-      const res = await api.post(`/leyes/${id}/versiones/${versionParaImportar}/importar-json`, { estructura });
+      if (!forzar) {
+        const dep = await api.get(`/leyes/versiones/${versionParaImportar}/dependencias`);
+        if (dep.data?.total > 0) {
+          setAvisoImportar(dep.data);
+          return null;
+        }
+      }
+      const res = await api.post(`/leyes/${id}/versiones/${versionParaImportar}/importar-json`, { estructura, forzar });
       return res.data;
     },
     onSuccess: (data) => {
-      alert(`Importado: ${data.totalTitulos} títulos, ${data.totalCapitulos} capítulos, ${data.totalArticulos} artículos`);
+      if (!data) return; // se está mostrando el aviso
+      alert(`Importado: ${data.totalTitulos} títulos, ${data.totalCapitulos} capítulos, ${data.totalArticulos} artículos, ${data.totalDisposiciones ?? 0} disposiciones`);
       setModalImportarJson(false);
+      setAvisoImportar(null);
       setJsonTexto('');
       queryClient.invalidateQueries({ queryKey: ['ley', id] });
+      queryClient.invalidateQueries({ queryKey: ['titulos-estructura'] });
+      queryClient.invalidateQueries({ queryKey: ['disposiciones-ley'] });
     },
     onError: (e: any) => {
       alert('Error: ' + (e?.response?.data?.message ?? e.message ?? 'JSON inválido'));
@@ -669,7 +684,7 @@ const editarArticulo = useMutation({
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                         <button
-                          onClick={() => { setVersionParaImportar(v.id); setModalImportarJson(true); }}
+                          onClick={() => { setVersionParaImportar(v.id); setAvisoImportar(null); setModalImportarJson(true); }}
                           style={{ fontSize: '12px', padding: '5px 10px', background: '#EFF6FF', color: '#1F7CFF', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}
                         >
                           Importar JSON
@@ -1258,16 +1273,38 @@ const editarArticulo = useMutation({
             <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px' }}>Importar estructura JSON</div>
             <textarea
               value={jsonTexto}
-              onChange={(e) => setJsonTexto(e.target.value)}
+              onChange={(e) => { setJsonTexto(e.target.value); setAvisoImportar(null); }}
               rows={16}
               placeholder='{ "titulos": [...] }'
               style={{ width: '100%', padding: '10px', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
             />
+            {avisoImportar && (
+              <div style={{ marginTop: '12px', padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '12px', color: '#7f1d1d', lineHeight: 1.6 }}>
+                <div style={{ fontWeight: 600, marginBottom: '4px' }}>⚠️ Si continúas perderás las vinculaciones de esta versión</div>
+                Importar JSON borra y vuelve a crear todos los artículos. Esto es lo que está vinculado ahora:
+                <ul style={{ margin: '6px 0', paddingLeft: '18px' }}>
+                  {Object.entries(avisoImportar.detalle).filter(([, n]) => n > 0).map(([k, n]) => (
+                    <li key={k}><strong>{n}</strong> {k}</li>
+                  ))}
+                </ul>
+                Las preguntas de test, flashcards y preguntas cortas no se borran, pero se quedan sin artículo.
+                Los subrayados, notas de los usuarios y vínculos con temas se eliminan.
+                <div style={{ marginTop: '6px' }}>
+                  Si solo quieres corregir textos, cancela y usa <strong>Actualizar desde JSON</strong>: no borra nada.
+                </div>
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-              <button onClick={() => importarJson.mutate()} disabled={importarJson.isPending} style={{ padding: '9px 18px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                {importarJson.isPending ? 'Importando...' : 'Importar'}
-              </button>
-              <button onClick={() => setModalImportarJson(false)} style={{ padding: '9px 18px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+              {avisoImportar ? (
+                <button onClick={() => importarJson.mutate(true)} disabled={importarJson.isPending} style={{ padding: '9px 18px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                  {importarJson.isPending ? 'Importando...' : 'Importar igualmente'}
+                </button>
+              ) : (
+                <button onClick={() => importarJson.mutate(false)} disabled={importarJson.isPending} style={{ padding: '9px 18px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                  {importarJson.isPending ? 'Importando...' : 'Importar'}
+                </button>
+              )}
+              <button onClick={() => { setModalImportarJson(false); setAvisoImportar(null); }} style={{ padding: '9px 18px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
                 Cancelar
               </button>
             </div>
@@ -1333,7 +1370,7 @@ const editarArticulo = useMutation({
           style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: titulosAbiertos[titulo.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
         >
           <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
-            Título {titulo.numero}{titulo.nombre ? ` — ${titulo.nombre}` : ''}
+            {[titulo.numero ? `Título ${titulo.numero}` : null, titulo.nombre].filter(Boolean).join(' — ')}
           </div>
           {titulosAbiertos[titulo.id] ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
         </button>
