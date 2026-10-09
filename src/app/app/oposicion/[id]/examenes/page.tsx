@@ -146,7 +146,6 @@ function ExamenesPage() {
         {[
           { label: 'Inicio', icon: '🏠', path: '/app/dashboard' },
           { label: 'Retos', icon: '⚡', path: '/app/retos' },
-          { label: 'Ranking', icon: '🏆', path: '/app/ranking' },
           { label: 'Alertas', icon: '🔔', path: '/app/alertas' },
         ].map(({ label, icon, path }) => (
           <button

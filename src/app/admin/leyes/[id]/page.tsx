@@ -39,6 +39,19 @@ function FilaArticulo({ art, onEditar }: { art: any; onEditar: (art: any) => voi
   );
 }
 
+// ⭐ Agrupa los títulos consecutivos que pertenecen al mismo Libro (Código Penal,
+// Código Civil...). Los títulos sin libro (Título Preliminar) forman su propio grupo.
+function agruparPorLibro(titulos: any[]): { libro: any | null; titulos: any[] }[] {
+  const grupos: { libro: any | null; titulos: any[] }[] = [];
+  for (const t of titulos ?? []) {
+    const ultimo = grupos[grupos.length - 1];
+    const libroId = t.libro?.id ?? null;
+    if (ultimo && (ultimo.libro?.id ?? null) === libroId) ultimo.titulos.push(t);
+    else grupos.push({ libro: t.libro ?? null, titulos: [t] });
+  }
+  return grupos;
+}
+
 export default function LeyDetallePage() {
   const router = useRouter();
   const params = useParams();
@@ -52,6 +65,7 @@ export default function LeyDetallePage() {
   const [modalVersion, setModalVersion] = useState(false);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [resultadoVersion, setResultadoVersion] = useState<any>(null);
+  const [librosAbiertos, setLibrosAbiertos] = useState<Record<string, boolean>>({});
   const [titulosAbiertos, setTitulosAbiertos] = useState<Record<string, boolean>>({});
 const [capitulosAbiertos, setCapitulosAbiertos] = useState<Record<string, boolean>>({});
 const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>({});
@@ -1363,7 +1377,31 @@ const editarArticulo = useMutation({
           No hay versión activa
         </div>
       )}
-      {titulosEstructura.map((titulo: any) => (
+      {agruparPorLibro(titulosEstructura).map((grupo, gi) => {
+      const claveLibro = grupo.libro?.id ?? `sin-libro-${gi}`;
+      const libroAbierto = !grupo.libro || librosAbiertos[claveLibro];
+      return (
+        <div key={claveLibro}>
+          {grupo.libro && (
+            <button
+              onClick={() => setLibrosAbiertos((prev) => ({ ...prev, [claveLibro]: !prev[claveLibro] }))}
+              style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: '#EFF6FF', border: 'none', borderBottom: '1px solid #DBEAFE', cursor: 'pointer', textAlign: 'left' }}
+            >
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#1F7CFF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Libro {grupo.libro.numero}
+                </div>
+                {grupo.libro.nombre && (
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginTop: '2px' }}>{grupo.libro.nombre}</div>
+                )}
+                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                  {grupo.titulos.length} {grupo.titulos.length === 1 ? 'título' : 'títulos'}
+                </div>
+              </div>
+              {libroAbierto ? <ChevronUp size={14} color="#1F7CFF" /> : <ChevronDown size={14} color="#1F7CFF" />}
+            </button>
+          )}
+          {libroAbierto && grupo.titulos.map((titulo: any) => (
       <div key={titulo.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
         <button
           onClick={() => toggleTitulo(titulo.id)}
@@ -1423,6 +1461,9 @@ const editarArticulo = useMutation({
         )}
       </div>
     ))}
+        </div>
+      );
+    })}
     </div>
 
 {disposiciones.length > 0 && (() => {

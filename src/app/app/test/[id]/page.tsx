@@ -91,6 +91,14 @@ export default function TestPage({ params }: TestPageProps) {
     return res.data;
   },
   enabled: !!usuario,
+  // ⭐ Generar un test crea una sesión en el servidor: no se puede volver a pedir
+  // por sí solo (antes, al volver a la app desde otra, llegaban preguntas nuevas
+  // a mitad del test). Al salir de la pantalla se descarta (gcTime 0).
+  staleTime: Infinity,
+  gcTime: 0,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+  retry: false,
   });
 
   // ⭐ movida aquí arriba antes de cualquier return
@@ -192,9 +200,12 @@ export default function TestPage({ params }: TestPageProps) {
         tipoTest: modo,
         tiempoSegundos: Math.round((Date.now() - inicio) / 1000),
         detallePreguntas: todasLasRespuestas,
+        sesionId: (preguntas[0] as any)?.sesionId,
       });
 
       queryClient.invalidateQueries({ queryKey: ['limites', usuario?.id] });
+      // ⭐ Sin esto la pantalla de resultado podía mostrar primero el test anterior.
+      queryClient.invalidateQueries({ queryKey: ['ultimo-resultado'] });
 
       router.replace(`/app/test/${oposicionId}/resultado?modo=${modo}`); // ⭐ siempre resultado, sin condicional
     } catch (error) {

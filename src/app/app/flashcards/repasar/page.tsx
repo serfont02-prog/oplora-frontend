@@ -64,6 +64,13 @@ export default function RepasarPage() {
       return res.data;
     },
     enabled: !!(oposicionId || temaId || articuloId) && !!usuario,
+    // ⭐ La lista de la sesión no se vuelve a pedir sola: al volver a la app desde otra,
+    // se recargaba la lista de pendientes (ya más corta por las tarjetas valoradas) y el
+    // índice saltaba tarjetas o la sesión acababa antes. Al salir se descarta (gcTime 0).
+    staleTime: Infinity,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const registrar = useMutation({

@@ -267,7 +267,6 @@ export default function ProgresoPage() {
         {[
         { label: 'Inicio', icon: '🏠', path: '/app/dashboard', active: false },
         { label: 'Retos', icon: '⚡', path: '/app/retos', active: false },
-        { label: 'Ranking', icon: '🏆', path: '/app/ranking', active: false },
         { label: 'Alertas', icon: '🔔', path: '/app/alertas', active: false },
         ].map(({ label, icon, path, active }) => (
           <button
