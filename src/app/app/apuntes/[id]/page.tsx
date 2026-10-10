@@ -567,18 +567,23 @@ const updateProgreso = () => {
                 // ⭐ En las preguntas: las opciones "a) b) c)" van sangradas y la solución
                 // (✅ / ❌) separada con una línea fina, para que no se lea todo seguido.
                 const esOpcion = /^[a-eA-E]\)\s/.test(texto);
-                const esSolucion = /^[✅❌]/u.test(texto);
-                const anteriorEsSolucion = i > 0 && /^[✅❌]/u.test(bloque.contenido[i - 1]?.texto ?? '');
+                // la solución se escribe en texto ("Respuesta correcta (b): …" / "Ojo: …") porque los
+                // emojis ✅ / ❌ se pierden al exportar el Word a PDF; aquí se les vuelve a poner el icono
+                const REGEX_SOLUCION = /^(?:[✅❌]|Respuesta correcta\b|Ojo:)/u;
+                const esSolucion = REGEX_SOLUCION.test(texto);
+                const anteriorEsSolucion = i > 0 && REGEX_SOLUCION.test(bloque.contenido[i - 1]?.texto ?? '');
+                const iconoSolucion = /^Respuesta correcta\b/.test(texto) ? '✅ ' : /^Ojo:/.test(texto) ? '❌ ' : '';
                 return (
                   <div key={i} style={{
                     fontSize: `${fontSize}px`, color: cfg.color, lineHeight: 1.75, opacity: 0.9,
                     marginBottom: i < bloque.contenido.length - 1 ? (esOpcion ? '4px' : '8px') : 0,
                     ...(esOpcion ? { paddingLeft: '12px' } : {}),
                     ...(esSolucion && !anteriorEsSolucion
-                      ? { borderTop: `1px dashed ${cfg.border}`, paddingTop: '8px', marginTop: '8px', fontWeight: 600 }
-                      : esSolucion ? { fontWeight: 600 } : {}),
+                      ? { borderTop: `1px dashed ${cfg.border}`, paddingTop: '8px', marginTop: '8px', fontWeight: iconoSolucion.startsWith('❌') ? 400 : 600 }
+                      : esSolucion && !iconoSolucion.startsWith('❌') ? { fontWeight: 600 } : {}),
                   }}>
                     {/* ⭐ las referencias [SIGLAS artículo N] también son clicables dentro de las cajas */}
+                    {iconoSolucion}
                     {renderReferencias(texto, mapaSiglas, abrirArticulo, `d${bloque.id}-${i}`)}
                   </div>
                 );

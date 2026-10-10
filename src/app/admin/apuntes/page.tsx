@@ -11,7 +11,6 @@ const TITULO_MARCADOR: Record<string, string> = {
   IDEA: 'Ideas clave',
   ESQUEMA: 'Esquemas',
   'TRAMPA DE EXAMEN': 'Trampas de examen',
-  'REGLA DE EXAMEN': 'Reglas de examen',
   'PREGUNTA FRECUENTE': 'Preguntas frecuentes',
 };
 
@@ -19,7 +18,9 @@ function contarMarcadores(bloques: any[] = []): Record<string, number> {
   const contadores: Record<string, number> = {};
   for (const b of bloques) {
     if (b?.tipo === 'destacado') {
-      contadores[b.titulo] = (contadores[b.titulo] || 0) + 1;
+      // "Regla de examen" ya no es una categoría propia: cuenta como Idea clave
+      const clave = b.titulo === 'REGLA DE EXAMEN' ? 'IDEA' : b.titulo;
+      contadores[clave] = (contadores[clave] || 0) + 1;
       // los marcadores no se anidan entre sí, pero por si acaso:
       Object.assign(contadores, contarMarcadores(b.contenido));
     }
@@ -29,7 +30,8 @@ function contarMarcadores(bloques: any[] = []): Record<string, number> {
 
 function contarReferenciasArticulo(texto?: string | null): number {
   if (!texto) return 0;
-  const m = texto.match(/\[[A-ZÁÉÍÓÚÑ]+\s+art[íi]culo\s+[\d.]+\]/gi);
+  // mismo formato que reconoce lib/referenciasArticulos: [CP Artículo 242], [LO 4/2015 Artículo 16], [CP Artículo 31 bis]
+  const m = texto.match(/\[[A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\s+\d+\/\d{4})?\s+art[íi]culo\s+\d+(?:\s+(?:bis|ter|qu[aá]ter|quinquies|sexies|septies|octies|nonies|decies))?(?:\.\d+)*\]/gi);
   return m ? m.length : 0;
 }
 
