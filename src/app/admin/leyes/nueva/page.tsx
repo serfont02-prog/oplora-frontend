@@ -174,7 +174,7 @@ export default function NuevaLeyPage() {
                   value={form.siglas}
                   onChange={(e) => setForm({ ...form, siglas: e.target.value.toUpperCase() })}
                   placeholder="CE"
-                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: `1px solid ${subir.error && (subir.error as any)?.response?.status === 409 ? '#fca5a5' : '#e5e7eb'}`, borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
@@ -262,12 +262,18 @@ export default function NuevaLeyPage() {
           </div>
 
           <button
-            onClick={() => validar() && subir.mutate()}
+            onClick={() => { subir.reset(); if (validar()) subir.mutate(); }}
             disabled={subir.isPending}
             style={{ marginTop: '1.25rem', padding: '10px 20px', background: '#111827', color: 'white', borderRadius: '9px', fontSize: '13px', fontWeight: 500, border: 'none', cursor: 'pointer', opacity: subir.isPending ? 0.4 : 1 }}
           >
             {subir.isPending ? 'Subiendo...' : 'Subir Ley'}
           </button>
+          {/* ⭐ Error del servidor (p. ej. siglas repetidas) */}
+          {subir.error && (
+            <div style={{ marginTop: '10px', padding: '10px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '12px', color: '#991b1b' }}>
+              {(subir.error as any)?.response?.data?.message ?? 'No se ha podido subir la ley.'}
+            </div>
+          )}
         </div>
       </div>
     </div>

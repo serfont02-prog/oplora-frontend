@@ -299,6 +299,8 @@ const { data: titulosEstructura = [] } = useQuery({
 
   const actualizar = useMutation({
     mutationFn: () => api.patch(`/leyes/${id}`, formLey),
+    // ⭐ p. ej. siglas que ya tiene otra ley
+    onError: (e: any) => alert(e?.response?.data?.message ?? 'No se han podido guardar los cambios.'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ley', id] });
       queryClient.invalidateQueries({ queryKey: ['leyes'] });
