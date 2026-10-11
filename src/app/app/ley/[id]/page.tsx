@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { etiquetaArticulo } from '@/lib/articulos';
 import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Search } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import EmptyState from '@/components/ui/EmptyState';
@@ -249,7 +250,7 @@ const toggleSeccion = async (seccionId: string) => {
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151', marginBottom: '1px' }}>
-              Artículo {art.numero}
+              {etiquetaArticulo(art.numero)}
               {art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
             </div>
             <div style={{ fontSize: '11px', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -318,7 +319,7 @@ const toggleSeccion = async (seccionId: string) => {
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151', marginBottom: '1px' }}>
-                    Artículo {art.numero}
+                    {etiquetaArticulo(art.numero)}
                     {art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
                   </div>
                   <div style={{ fontSize: '11px', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -351,7 +352,7 @@ const toggleSeccion = async (seccionId: string) => {
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151', marginBottom: '1px' }}>
-                        Artículo {art.numero}
+                        {etiquetaArticulo(art.numero)}
                         {art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
                       </div>
                       <div style={{ fontSize: '11px', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -384,7 +385,7 @@ const toggleSeccion = async (seccionId: string) => {
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151', marginBottom: '1px' }}>
-                          Artículo {art.numero}
+                          {etiquetaArticulo(art.numero)}
                           {art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
                         </div>
                         <div style={{ fontSize: '11px', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

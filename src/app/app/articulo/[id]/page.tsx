@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { etiquetaArticulo } from '@/lib/articulos';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
@@ -151,7 +152,7 @@ export default function ArticuloPage() {
   const iniciarAudio = (continuo = false) => {
     if (!articulo?.contenido) return;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(`Artículo ${articulo.numero}. ${articulo.contenido}`);
+    const u = new SpeechSynthesisUtterance(`${etiquetaArticulo(articulo.numero)}. ${articulo.contenido}`);
     u.lang = 'es-ES';
     u.rate = velocidad;
     const voz = getVoz(vozGenero);
@@ -186,7 +187,7 @@ export default function ArticuloPage() {
     if (reproduciendo) {
       window.speechSynthesis.cancel();
       setTimeout(() => {
-        const u = new SpeechSynthesisUtterance(`Artículo ${articulo.numero}. ${articulo.contenido}`);
+        const u = new SpeechSynthesisUtterance(`${etiquetaArticulo(articulo.numero)}. ${articulo.contenido}`);
         u.lang = 'es-ES';
         u.rate = velocidad;
         const voz = getVoz(nuevo);
@@ -370,7 +371,7 @@ export default function ArticuloPage() {
         </button>
 
         <div style={{ fontSize: '13px', fontWeight: 700, color: TEXT_PRIMARY }}>
-          Artículo {articulo.numero}
+          {etiquetaArticulo(articulo.numero)}
         </div>
 
         <button

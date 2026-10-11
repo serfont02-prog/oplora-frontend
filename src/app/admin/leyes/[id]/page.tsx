@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Link, Unlink, Plus, Upload, CheckCircle, FileText, Pencil, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '@/lib/api';
+import { etiquetaArticulo } from '@/lib/articulos';
 
 const tiposNorma = [
   'Ley orgánica', 'Ley ordinaria', 'Real Decreto Legislativo',
@@ -28,7 +29,7 @@ function FilaArticulo({ art, onEditar }: { art: any; onEditar: (art: any) => voi
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151' }}>
-          Artículo {art.numero}{art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
+          {etiquetaArticulo(art.numero)}{art.titulo && <span style={{ color: '#9ca3af', fontWeight: 400 }}> — {art.titulo}</span>}
         </div>
         <div style={{ fontSize: '11px', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {art.contenido?.slice(0, 90)}...
@@ -1251,7 +1252,7 @@ const editarArticulo = useMutation({
                   </div>
                   {!r.aplicado && r.muestras.map((mu: any) => (
                     <div key={mu.numero} style={{ marginBottom: '10px' }}>
-                      <div style={{ fontWeight: 600, marginBottom: '4px' }}>Artículo {mu.numero}</div>
+                      <div style={{ fontWeight: 600, marginBottom: '4px' }}>{etiquetaArticulo(mu.numero)}</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                         <div style={{ whiteSpace: 'pre-wrap', background: '#fef2f2', borderRadius: '8px', padding: '8px', maxHeight: '180px', overflowY: 'auto', lineHeight: 1.5 }}>{mu.antes}</div>
                         <div style={{ whiteSpace: 'pre-wrap', background: '#f0fdf4', borderRadius: '8px', padding: '8px', maxHeight: '180px', overflowY: 'auto', lineHeight: 1.5 }}>{mu.despues}</div>
