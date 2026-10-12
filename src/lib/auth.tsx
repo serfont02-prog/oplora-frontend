@@ -24,6 +24,7 @@ interface Usuario {
   rol: string;
   tipoAvatar?: 'oplo' | 'foto';
   avatarUrl?: string | null;
+  copaLiga?: { color: string; veces: number; total: number } | null; // Liga Oplora
   nick?: string;
 
   //¿Completo en onboarding general

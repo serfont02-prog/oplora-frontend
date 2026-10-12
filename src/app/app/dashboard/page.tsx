@@ -9,6 +9,7 @@ import { Newspaper, FileText, Scale, Sparkles } from 'lucide-react';
 import {Cog6ToothIcon, ArchiveBoxIcon, ClipboardDocumentListIcon} from '@heroicons/react/24/outline';
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
+import TarjetaLiga from '@/components/liga/TarjetaLiga';
 import { getOploUrl } from '@/lib/oplo';
 
 import {
@@ -210,7 +211,7 @@ const countNoLeidas = countData?.count ?? 0;
             style={{
               width: 44, height: 44, borderRadius: '50%',
               border: 'none', background: 'transparent',
-              padding: 0, cursor: 'pointer', overflow: 'hidden', flexShrink: 0,
+              padding: 0, cursor: 'pointer', overflow: 'visible', flexShrink: 0,
             }}
           >
             <AvatarPerfil usuario={usuario} size={44} />
@@ -469,6 +470,7 @@ export function DashboardActivo({ usuario, oposicionId }: { usuario: any; oposic
 
       <WidgetNoticias oposicionId={oposicionId} router={router} />
       <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
+      <TarjetaLiga />
       <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
       <SeccionOplo usuario={usuario} />
     </div>
@@ -487,6 +489,7 @@ export function DashboardInactivo({ usuario, oposicionId }: { usuario: any; opos
 
     <WidgetNoticias oposicionId={oposicionId} router={router} />
     <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
+    <TarjetaLiga />
     <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
 
       {/* Hero — recuperar racha */}

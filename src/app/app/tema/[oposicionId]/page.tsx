@@ -140,7 +140,7 @@ export default function TemarioOposicionPage() {
           </div>
           <button
             onClick={() => router.push('/app/perfil')}
-            style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}
+            style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', overflow: 'visible', flexShrink: 0 }}
           >
             <AvatarPerfil usuario={usuario} size={44} />
           </button>

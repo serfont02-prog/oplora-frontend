@@ -10,6 +10,8 @@ import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { FireIcon } from '@heroicons/react/24/outline';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { getOploUrl } from '@/lib/oplo';
+import TarjetaLiga from '@/components/liga/TarjetaLiga';
+import { CopaEnAvatar } from '@/components/liga/ligaUtils';
 
 
 type TipoRetoUsuario = 'oposicion' | 'normativa' | 'tema';
@@ -247,24 +249,6 @@ const oposicionId = usuario?.oposicionActiva?.id;
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
-
-  const { data: retoDiario } = useQuery({
-    queryKey: ['reto-diario', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/retos/diario/${oposicionId}`);
-      return res.data;
-    },
-    enabled: !!oposicionId,
-  });
-
-  const { data: retoSemanal } = useQuery({
-    queryKey: ['reto-semanal', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/retos/semanal/${oposicionId}`);
-      return res.data;
-    },
-    enabled: !!oposicionId,
-  });
 
   const { data: misRetos = [] } = useQuery({
     queryKey: ['mis-retos'],
@@ -510,12 +494,6 @@ const oposicionId = usuario?.oposicionActiva?.id;
   const retosEnviados = retosUsuarioPendientes.filter((p: any) => p.reto.creador?.id === (usuario as any)?.id);
   const retosRecibidos = retosUsuarioPendientes.filter((p: any) => p.reto.creador?.id !== (usuario as any)?.id);
 
-  const yaHizoRetoDiario = retoDiario?.participaciones?.some(
-    (p: any) => p.usuario?.id === (usuario as any)?.id && p.completado
-  );
-  const yaHizoRetoSemanal = retoSemanal?.participaciones?.some(
-    (p: any) => p.usuario?.id === (usuario as any)?.id && p.completado
-  );
 
   const cerrarModalPreview = () => {
     setRetoPreview(null);
@@ -577,7 +555,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
             </div>
             <button
               onClick={() => router.push('/app/perfil')}
-              style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}
+              style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', overflow: 'visible', flexShrink: 0 }}
             >
               <AvatarPerfil usuario={usuario} size={44} />
             </button>
@@ -598,66 +576,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
         </div>
       )}
 
-        {/* ── 1. Retos del sistema ── */}
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
-            Retos del sistema
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-
-            <div
-              onClick={() => retoDiario && setRetoPreview(retoDiario.id)}
-              style={{
-                background: 'white', border: '1px solid #F1F5F9', borderLeft: `4px solid ${COLOR_RETOS}`,
-                borderRadius: '14px',
-                padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px',
-                cursor: 'pointer', minHeight: '68px', boxSizing: 'border-box',
-              }}
-            >
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: '16px' }}>⚡</span>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY }}>Reto diario</div>
-                <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '2px' }}>
-                  {retoDiario?.preguntas?.length ?? '—'} preguntas · Nivel {usuario?.oposicionActiva?.nivel ?? 1} · Cierra hoy
-                </div>
-              </div>
-              {yaHizoRetoDiario ? (
-                <span style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '20px', background: '#f0fdf4', color: '#15803d', fontWeight: 600, flexShrink: 0 }}>✓ Hecho</span>
-              ) : (
-                <ChevronRight size={16} color="#D1D5DB" style={{ flexShrink: 0 }} />
-              )}
-            </div>
-
-            <div
-              onClick={() => retoSemanal && setRetoPreview(retoSemanal.id)}
-              style={{
-                background: 'white', border: '1px solid #F1F5F9', borderLeft: `4px solid ${COLOR_SEMANAL}`,
-                borderRadius: '14px',
-                padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px',
-                cursor: 'pointer', minHeight: '68px', boxSizing: 'border-box',
-              }}
-            >
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: COLOR_SEMANAL_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: '16px' }}>🏆</span>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  Reto semanal
-                </div>
-                <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '2px' }}>
-                  {retoSemanal?.preguntas?.length ?? '—'} preguntas{retoSemanal?.tema?.titulo ? ` · Tema ${retoSemanal.tema.numero}` : ''} · Cierra el domingo
-                </div>
-              </div>
-              {yaHizoRetoSemanal ? (
-                <span style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '20px', background: '#f0fdf4', color: '#15803d', fontWeight: 600, flexShrink: 0 }}>✓ Hecho</span>
-              ) : (
-                <ChevronRight size={16} color="#D1D5DB" style={{ flexShrink: 0 }} />
-              )}
-            </div>
-          </div>
-        </div>
+        {/* ⭐ Liga Oplora (sustituye a los antiguos reto diario y semanal) */}
+        <TarjetaLiga />
 
         {/* Botón nuevo reto */}
         <button
@@ -1387,7 +1307,17 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
 
 
+// ⭐ Con la copa de la Liga Oplora encima si la tiene (persona.copaLiga).
 function AvatarUsuario({ persona, size = 64 }: { persona: any; size?: number }) {
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+      <AvatarUsuarioBase persona={persona} size={size} />
+      <CopaEnAvatar copa={persona?.copaLiga} size={size} />
+    </span>
+  );
+}
+
+function AvatarUsuarioBase({ persona, size = 64 }: { persona: any; size?: number }) {
   if (persona?.tipoAvatar === 'foto' && persona?.avatarUrl) {
     return (
       <img

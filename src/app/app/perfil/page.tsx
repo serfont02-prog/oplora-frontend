@@ -3,9 +3,11 @@
 import { useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { getOploUrl } from '@/lib/oplo';
+import { useMiLiga } from '@/components/liga/TarjetaLiga';
+import { CopaEnAvatar, CopaBadge, COLOR_LIGA, BG_LIGA, nombreMes } from '@/components/liga/ligaUtils';
 
 import {
   ArrowRightIcon,
@@ -96,6 +98,7 @@ export default function PerfilPage() {
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
           <button
             onClick={() => setModalAvatar(true)}
             style={{ position: 'relative', width: 64, height: 64, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, overflow: 'hidden', background: 'rgba(255,255,255,0.1)' }}
@@ -109,6 +112,8 @@ export default function PerfilPage() {
               <CameraIcon style={{ width: 11, height: 11, color: 'white' }} />
             </div>
           </button>
+          <CopaEnAvatar copa={usuario.copaLiga} size={64} />
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'white' }}>{usuario.nombre}</div>
             <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{usuario.email}</div>
@@ -176,6 +181,8 @@ export default function PerfilPage() {
             })}
           </div>
         </div>
+
+        <SeccionLiga />
 
         {/* Menú */}
         <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, overflow: 'hidden' }}>
@@ -303,6 +310,73 @@ export default function PerfilPage() {
               {subiendo ? 'Subiendo...' : 'Cancelar'}
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/* -------------------------------------------------------
+   ⭐ LIGA OPLORA: división actual y palmarés
+------------------------------------------------------- */
+
+function SeccionLiga() {
+  const router = useRouter();
+  const { data: liga } = useMiLiga();
+  const { data: palmares } = useQuery({
+    queryKey: ['liga-palmares'],
+    queryFn: async () => (await api.get('/liga/palmares')).data,
+    staleTime: 5 * 60_000,
+  });
+
+  const copas: any[] = palmares?.copas ?? [];
+  if (!liga?.liga && !copas.length) return null;
+
+  return (
+    <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Liga Oplora</div>
+          {liga?.liga && (
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>
+              {liga.nombreDivision} división · Convocatoria {liga.convocatoria?.anyo}
+            </div>
+          )}
+        </div>
+        {liga?.liga && (
+          <button
+            onClick={() => router.push('/app/liga')}
+            style={{ padding: '7px 12px', background: BG_LIGA, color: COLOR_LIGA, border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+          >
+            Ver liga
+          </button>
+        )}
+      </div>
+
+      {copas.length === 0 ? (
+        <div style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.5, background: '#FAFAFA', borderRadius: 12, padding: '10px 12px' }}>
+          Aún no tienes copas. Gana tu división un mes y tu copa aparecerá aquí y sobre tu avatar.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Palmarés · {copas.length} {copas.length === 1 ? 'copa' : 'copas'}
+          </div>
+          {copas.map((c: any) => (
+            <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FAFAFA', borderRadius: 12, padding: '8px 10px' }}>
+              <CopaBadge color={c.color} size={26} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY }}>
+                  {c.tipo === 'temporada' ? 'Campeón de la temporada' : `Campeón de ${c.nombreDivision}`}
+                </div>
+                <div style={{ fontSize: 11, color: TEXT_MUTED }}>
+                  {c.tipo === 'temporada' ? 'Clasificación general' : nombreMes(c.mes)}
+                  {c.convocatoria?.anyo ? ` · ${[c.convocatoria.oposicion, c.convocatoria.anyo].filter(Boolean).join(' ')}` : ''}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
