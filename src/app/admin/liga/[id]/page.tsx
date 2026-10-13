@@ -217,7 +217,7 @@ export default function LigaDetalleAdminPage() {
           Liga Oplora · {liga.convocatoria?.oposicion?.nombre ?? 'Oposición'} {liga.convocatoria?.anyo}
         </div>
         <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-          {temasOrdenados.length} temas activos · {bloques.length} bloques · {liga.convocatoria?.numOpcionesTest ?? 4} opciones por pregunta ·
+          {temasOrdenados.length} temas activos · {bloques.length} bloques · {liga.convocatoria?.numOpcionesTest ? `${liga.convocatoria.numOpcionesTest} opciones por pregunta` : 'opciones por pregunta sin definir (se muestran las guardadas)'} ·
           penalización {liga.convocatoria?.fraccionPenalizacion || 'sin penalización'} ·
           examen {liga.convocatoria?.fechaExamen ? new Date(liga.convocatoria.fechaExamen).toLocaleDateString('es-ES') : 'sin fecha'} ·
           último mes cerrado {liga.ultimoMesCerrado ?? 'ninguno'}

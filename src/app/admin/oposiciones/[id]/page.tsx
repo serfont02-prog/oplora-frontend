@@ -54,6 +54,7 @@ export default function OposicionDetallePage() {
     fasesTexto: '',
     puestosTexto: '',
     bloquesTemarioTexto: '',
+    numOpcionesTest: '',
   });
 
   const [formEditarOpo, setFormEditarOpo] = useState({
@@ -98,6 +99,7 @@ const [formEditarConv, setFormEditarConv] = useState({
   bloquesTemarioTexto: '',
   tienePsicotecnicos: true,
   numOpcionesPsicotecnico: '',
+  numOpcionesTest: '',
 });
 
   const { data: oposicion, isLoading } = useQuery({
@@ -198,6 +200,7 @@ const crearConv = useMutation({
           }))
         : undefined,
         fraccionPenalizacion: formNuevaConv.fraccionPenalizacion || undefined,
+        numOpcionesTest: formNuevaConv.numOpcionesTest ? parseInt(formNuevaConv.numOpcionesTest) : undefined,
         permiteBlancos: formNuevaConv.permiteBlancos,
         fraccionPenalizacionBlanco: formNuevaConv.permiteBlancos ? undefined : (formNuevaConv.fraccionPenalizacionBlanco || undefined),
         notaMinimaAprobado: formNuevaConv.notaMinimaAprobado ? parseFloat(formNuevaConv.notaMinimaAprobado) : undefined,
@@ -229,7 +232,7 @@ const crearConv = useMutation({
         notaMinimaAprobado: '', diferenciasAnterior: '', requisitos: '', formacionPosterior: '',
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
         plazasLibres: '', plazasPromocionInterna: '', plazasMilitares: '', plazasDiscapacidad: '',
-        fasesTexto: '', puestosTexto: '', bloquesTemarioTexto: '',
+        fasesTexto: '', puestosTexto: '', bloquesTemarioTexto: '', numOpcionesTest: '',
       });
     },
   });
@@ -280,6 +283,7 @@ const crearConv = useMutation({
             }))
           : null,
           fraccionPenalizacion: formEditarConv.fraccionPenalizacion || undefined,
+          numOpcionesTest: formEditarConv.numOpcionesTest ? parseInt(formEditarConv.numOpcionesTest) : null,
           permiteBlancos: formEditarConv.permiteBlancos,
           fraccionPenalizacionBlanco: formEditarConv.permiteBlancos ? '' : (formEditarConv.fraccionPenalizacionBlanco || undefined),
           notaMinimaAprobado: formEditarConv.notaMinimaAprobado ? parseFloat(formEditarConv.notaMinimaAprobado) : undefined,
@@ -360,6 +364,7 @@ const crearConv = useMutation({
       bloquesTemarioTexto: serializarBloques(c.bloquesTemario ?? []),
       tienePsicotecnicos: c.tienePsicotecnicos ?? true,
       numOpcionesPsicotecnico: c.numOpcionesPsicotecnico?.toString() ?? '',
+      numOpcionesTest: c.numOpcionesTest?.toString() ?? '',
     });
     setModalEditarConv(true);
   };
@@ -774,6 +779,17 @@ const crearConv = useMutation({
                   </div>
                 </div>
 
+                {/* ⭐ Nº de opciones del test: recorta las preguntas de artículo (guardadas con 4) */}
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Opciones por pregunta en el test</label>
+                  <select value={formNuevaConv.numOpcionesTest} onChange={(e) => setFormNuevaConv({ ...formNuevaConv, numOpcionesTest: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
+                    <option value="">Sin definir (se muestran las guardadas)</option>
+                    <option value="3">3 opciones</option>
+                    <option value="4">4 opciones</option>
+                    <option value="5">5 opciones</option>
+                  </select>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: formNuevaConv.permiteBlancos ? '1fr' : '1fr 1fr', gap: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
                     <input
@@ -1052,6 +1068,17 @@ const crearConv = useMutation({
                   <input type="text" value={formEditarConv.fraccionPenalizacion} onChange={(e) => setFormEditarConv({ ...formEditarConv, fraccionPenalizacion: e.target.value })} placeholder="1/3" style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               </div>
+
+                {/* ⭐ Nº de opciones del test: recorta las preguntas de artículo (guardadas con 4) */}
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Opciones por pregunta en el test</label>
+                  <select value={formEditarConv.numOpcionesTest} onChange={(e) => setFormEditarConv({ ...formEditarConv, numOpcionesTest: e.target.value })} style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}>
+                    <option value="">Sin definir (se muestran las guardadas)</option>
+                    <option value="3">3 opciones</option>
+                    <option value="4">4 opciones</option>
+                    <option value="5">5 opciones</option>
+                  </select>
+                </div>
 
               {/* Turno */}
               <div>
