@@ -10,9 +10,6 @@ const SUSCRIPCION_COLORS: Record<string, { bg: string; color: string; label: str
   profesional: { bg: '#EEEDFE', color: '#3C3489', label: 'Profesional' },
 };
 
-const NIVEL_LABEL: Record<number, string> = {
-  1: 'Iniciado', 2: 'Aprendiz', 3: 'Avanzado', 4: 'Experto', 5: 'Maestro',
-};
 
 const NIVEL_COLOR: Record<number, string> = {
   1: '#9ca3af', 2: '#3b82f6', 3: '#f97316', 4: '#8b5cf6', 5: '#eab308',
@@ -26,6 +23,16 @@ export default function EstadisticasAdminPage() {
       return res.data;
     },
   });
+
+  // ⭐ Nombres de nivel desde la configuración (antes Iniciado…Maestro, distintos a los de la app)
+  const { data: niveles = [] } = useQuery({
+    queryKey: ['config-niveles'],
+    queryFn: async () => (await api.get('/configuracion/niveles_estudio')).data,
+    staleTime: 5 * 60_000,
+  });
+  const NIVEL_LABEL: Record<number, string> = Object.fromEntries(
+    (Array.isArray(niveles) ? niveles : []).map((n: any) => [n.nivel, n.nombre]),
+  );
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios-admin'],
@@ -63,9 +70,9 @@ export default function EstadisticasAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '1.5rem' }}>
           {[
             { icon: Users, label: 'Usuarios totales', value: stats?.total ?? 0, color: '#3b82f6', bg: '#eff6ff' },
-            { icon: CreditCard, label: 'Con suscripción', value: stats?.conSuscripcion ?? 0, color: '#15803d', bg: '#f0fdf4' },
-            { icon: UserCheck, label: 'Tasa conversión', value: `${tasaConversion}%`, color: '#8b5cf6', bg: '#f5f3ff' },
-            { icon: TrendingUp, label: 'Nuevos hoy', value: stats?.nuevosHoy ?? 0, color: '#f97316', bg: '#fff7ed' },
+            { icon: CreditCard, label: 'De pago (Esencial + Profesional)', value: stats?.conSuscripcion ?? 0, color: '#15803d', bg: '#f0fdf4' },
+            { icon: UserCheck, label: 'Conversión a pago', value: `${tasaConversion}%`, color: '#8b5cf6', bg: '#f5f3ff' },
+            { icon: TrendingUp, label: 'Activos últimos 7 días', value: stats?.activos7dias ?? 0, color: '#f97316', bg: '#fff7ed' },
           ].map(({ icon: Icon, label, value, color, bg }) => (
             <div key={label} style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1rem' }}>
               <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
@@ -81,6 +88,9 @@ export default function EstadisticasAdminPage() {
 
           {/* Registro de usuarios */}
           <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1rem' }}>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '0.75rem' }}>
+              Activos: <strong style={{ color: '#111827' }}>{stats?.activos7dias ?? 0}</strong> en 7 días · <strong style={{ color: '#111827' }}>{stats?.activos30dias ?? 0}</strong> en 30 días · {stats?.desactivados ?? 0} cuentas desactivadas
+            </div>
             <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827', marginBottom: '1rem' }}>Nuevos registros</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
@@ -105,15 +115,6 @@ export default function EstadisticasAdminPage() {
           <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1rem' }}>
             <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827', marginBottom: '1rem' }}>Por suscripción</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '13px', color: '#6b7280' }}>Sin suscripción</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '80px', height: '4px', background: '#f3f4f6', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ width: `${stats?.total > 0 ? (stats.sinSuscripcion / stats.total) * 100 : 0}%`, height: '100%', background: '#e5e7eb', borderRadius: '2px' }} />
-                  </div>
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#111827', minWidth: '20px', textAlign: 'right' }}>{stats?.sinSuscripcion ?? 0}</span>
-                </div>
-              </div>
               {(stats?.porSuscripcion ?? []).map((p: any) => {
                 const config = SUSCRIPCION_COLORS[p.suscripcion] ?? { bg: '#f3f4f6', color: '#6b7280', label: p.suscripcion };
                 return (

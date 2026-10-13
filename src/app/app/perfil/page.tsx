@@ -187,7 +187,7 @@ export default function PerfilPage() {
         {/* Menú */}
         <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, overflow: 'hidden' }}>
           {[
-            { icon: <ShieldCheckIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Mi oposición', subtitle: usuario.oposicionActiva?.nombre, href: '/app/oposicion' },
+            { icon: <ShieldCheckIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Mi oposición', subtitle: usuario.oposicionActiva?.nombre ?? 'Elige tu oposición', href: usuario.oposicionActiva?.id ? `/app/oposicion/${usuario.oposicionActiva.id}/ajustes` : '/app/onboarding/oposicion' },
             { icon: <CreditCardIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Mi suscripción', subtitle: usuario.suscripcion === 'gratuito' ? 'Descubre OPLORA PRO' : 'Plan Profesional', href: '/app/suscripciones' },
             { icon: <BellIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Notificaciones', subtitle: 'Alertas y recordatorios', href: '/app/alertas' },
             { icon: <Cog6ToothIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Preferencias', subtitle: 'Ajustes de la aplicación', href: '/app/preferencias' },

@@ -15,7 +15,9 @@ const TEXT_MUTED = '#9CA3AF';
 export default function AjustesOposicionPage() {
   const params = useParams();
   const router = useRouter();
-  const { usuario } = useAuth();
+  const { usuario, actualizarUsuario } = useAuth();
+  const [errorExportar, setErrorExportar] = useState<string | null>(null);
+  const [exportando, setExportando] = useState(false);
   const queryClient = useQueryClient();
   const oposicionId = params.id as string;
 
@@ -50,23 +52,42 @@ export default function AjustesOposicionPage() {
     },
   });
 
+  // ⭐ Ruta corregida (antes DELETE /usuarios/oposiciones/:id → 404) y refresco del usuario
+  // en sesión, que es de donde sale la oposición activa.
   const abandonar = useMutation({
     mutationFn: async () => {
-      await api.delete(`/usuarios/oposiciones/${oposicionId}`);
+      await api.delete(`/usuarios/desactivar-oposicion/${oposicionId}`);
+      const me = await api.get('/usuarios/me');
+      return me.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['me'] });
-      router.push('/app/dashboard');
+    onSuccess: (me) => {
+      if (me) actualizarUsuario(me);
+      queryClient.invalidateQueries();
+      router.push(me?.oposicionActiva ? '/app/dashboard' : '/app/onboarding/oposicion?modo=cambiar');
     },
   });
 
+  // ⭐ Descarga un CSV (se abre con Excel) con el resumen y todos los tests de la oposición.
   const exportarProgreso = async () => {
-    const res = await api.get(`/usuarios/exportar-progreso/${oposicionId}`, { responseType: 'blob' });
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `progreso-${oposicion?.nombre ?? 'oplora'}.pdf`;
-    a.click();
+    if (exportando) return;
+    setErrorExportar(null);
+    setExportando(true);
+    try {
+      const res = await api.get(`/usuarios/exportar-progreso/${oposicionId}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url;
+      const nombre = (oposicion?.nombre ?? 'oplora').toLowerCase().replace(/[^a-z0-9áéíóúñü]+/gi, '-').replace(/^-|-$/g, '');
+      a.download = `progreso-${nombre || 'oplora'}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch {
+      setErrorExportar('No se ha podido exportar. Inténtalo de nuevo.');
+    } finally {
+      setExportando(false);
+    }
   };
 
   return (
@@ -164,7 +185,9 @@ export default function AjustesOposicionPage() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Exportar mi progreso</div>
-              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>Descarga un resumen en PDF</div>
+              <div style={{ fontSize: 11, color: errorExportar ? '#B91C1C' : TEXT_MUTED, marginTop: 1 }}>
+                {exportando ? 'Preparando…' : errorExportar ?? 'Descarga tus tests y aciertos en una hoja de cálculo'}
+              </div>
             </div>
             <ChevronRight size={14} color="#D1D5DB" />
           </button>

@@ -43,6 +43,7 @@ export default function NuevaOposicionPage() {
   });
 
   const [errores, setErrores] = useState<Record<string, string>>({});
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
  const crear = useMutation({
   mutationFn: async () => {
@@ -59,6 +60,10 @@ export default function NuevaOposicionPage() {
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['oposiciones'] });
     router.push('/admin/oposiciones');
+  },
+  onError: (e: any) => {
+    const m = e?.response?.data?.message;
+    setErrorEnvio(Array.isArray(m) ? m.join('. ') : m || 'No se ha podido crear la oposición');
   },
 });
 
@@ -210,7 +215,7 @@ export default function NuevaOposicionPage() {
 
       <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #f3f4f6', background: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <button
-          onClick={() => { if (validar()) crear.mutate(); }}
+          onClick={() => { setErrorEnvio(null); if (validar()) crear.mutate(); }}
           disabled={crear.isPending}
           style={{ background: '#111827', color: 'white', border: 'none', borderRadius: '8px', padding: '9px 20px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', opacity: crear.isPending ? 0.5 : 1 }}
         >
@@ -222,10 +227,8 @@ export default function NuevaOposicionPage() {
         >
           Cancelar
         </button>
-        {crear.isError && (
-          <span style={{ fontSize: '12px', color: '#dc2626' }}>
-            {(crear.error as any)?.response?.data?.message ?? 'Error al guardar. Inténtalo de nuevo.'}
-          </span>
+        {errorEnvio && (
+          <span style={{ fontSize: '12px', color: '#dc2626' }}>{errorEnvio}</span>
         )}
       </div>
 

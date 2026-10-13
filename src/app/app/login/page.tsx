@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
@@ -32,6 +32,15 @@ export default function LoginPage() {
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
+  const [aviso, setAviso] = useState('');
+
+  // ⭐ Mensaje que deja el interceptor de la API al caducar la sesión
+  useEffect(() => {
+    try {
+      const m = sessionStorage.getItem('oplora-aviso-login');
+      if (m) { setAviso(m); sessionStorage.removeItem('oplora-aviso-login'); }
+    } catch { /* sin sessionStorage */ }
+  }, []);
 
   const handleSubmit = async () => {
     if (!form.email || !form.password) {
@@ -124,6 +133,7 @@ export default function LoginPage() {
           ¿Has olvidado tu Contraseña?
         </Link>
 
+          {aviso && !error && <div style={{ color: '#1e40af', fontSize: 12, background: '#eff6ff', borderRadius: 10, padding: '8px 12px' }}>{aviso}</div>}
           {error && <div style={{ color: '#dc2626', fontSize: 12, background: '#fef2f2', borderRadius: 10, padding: '8px 12px' }}>{error}</div>}
 
           <button type="submit" disabled={cargando} style={primaryButton(cargando)}>

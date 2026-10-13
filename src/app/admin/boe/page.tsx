@@ -500,11 +500,20 @@ export default function BoePage() {
           oposicionExistenteId: vinculaciones[i] || null,
         }));
 
-        for (const cuerpo of cuerposACrear) {
-          await api.patch(`/boe/${datosExtraidos?.id}/datos`, cuerpo);
-          await api.post(`/boe/${datosExtraidos?.id}/procesar`, {
-            oposicionExistenteId: cuerpo.oposicionExistenteId,
-          });
+        // ⭐ Uno a uno; el BOE solo se cierra (PROCESADA) con el último cuerpo
+        try {
+          for (let n = 0; n < cuerposACrear.length; n++) {
+            const cuerpo = cuerposACrear[n];
+            await api.patch(`/boe/${datosExtraidos?.id}/datos`, cuerpo);
+            await api.post(`/boe/${datosExtraidos?.id}/procesar`, {
+              oposicionExistenteId: cuerpo.oposicionExistenteId,
+              continuar: n < cuerposACrear.length - 1,
+            });
+          }
+        } catch (e: any) {
+          const m = e?.response?.data?.message;
+          alert(`No se pudo procesar: ${Array.isArray(m) ? m.join('. ') : m ?? 'error desconocido'}`);
+          return;
         }
 
         aprobar.mutate(datosExtraidos?.id ?? '');

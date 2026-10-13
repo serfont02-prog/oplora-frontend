@@ -273,7 +273,7 @@ const importarTemario = async () => {
   setImportando(true);
   try {
     const lineas = textoTemario.split('\n').filter(l => l.trim());
-    const temas: { numero: number; titulo: string; bloque?: string }[] = [];
+    const temasDetectados: { numero: number; titulo: string; bloque?: string }[] = [];
     let bloqueActual: string | undefined = undefined;
 
     // Bloques ya existentes (los oficiales de la convocatoria + los usados en temas)
@@ -305,7 +305,7 @@ const importarTemario = async () => {
       // Patrones: "1. Título", "1.- Título", "Tema 1. Título", "TEMA 1. Título"
       const match = lineaTrim.match(/^(?:tema\s+)?(\d+)[.\-)\s]+(.+)$/i);
       if (match) {
-        temas.push({
+        temasDetectados.push({
           numero: parseInt(match[1]),
           titulo: match[2].trim(),
           bloque: bloqueActual,
@@ -313,28 +313,36 @@ const importarTemario = async () => {
       }
     }
 
-    if (temas.length === 0) {
+    if (temasDetectados.length === 0) {
       alert('No se detectaron temas. Asegúrate de que cada línea empiece con el número del tema.');
       return;
     }
 
-    for (const tema of temas) {
+    // ⭐ No duplicar: se saltan los números que ya existen en esta convocatoria
+    // (antes, importar dos veces creaba todos los temas repetidos).
+    const existentes = new Set((temas as any[]).map((t: any) => Number(t.numero)));
+    const nuevos = temasDetectados.filter((t) => !existentes.has(t.numero));
+    const repetidos = temasDetectados.length - nuevos.length;
+    let creados = 0;
+    for (const tema of nuevos) {
       await api.post('/temas', {
         numero: tema.numero,
         titulo: tema.titulo,
         tipo: 'con_normativa',
-        bloque: tema.bloque, 
+        bloque: tema.bloque,
         convocatoriaId,
       });
+      creados++;
     }
 
     queryClient.invalidateQueries({ queryKey: ['temas-admin', convocatoriaId] });
     setModalImportar(false);
     setTextoTemario('');
-    alert(`✅ ${temas.length} temas importados correctamente`);
-  } catch (e) {
-    console.error('Error importando temario:', e);
-    alert('Error al importar el temario');
+    alert(`${creados} temas importados${repetidos ? ` · ${repetidos} ya existían y no se han tocado` : ''}`);
+  } catch (e: any) {
+    queryClient.invalidateQueries({ queryKey: ['temas-admin', convocatoriaId] });
+    const m = e?.response?.data?.message;
+    alert(`Error al importar el temario${m ? `: ${Array.isArray(m) ? m.join('. ') : m}` : ''}. Los temas creados antes del error se conservan.`);
   } finally {
     setImportando(false);
   }

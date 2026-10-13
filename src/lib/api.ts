@@ -11,6 +11,39 @@
     return config;
   });
 
+  // ⭐ Sesión caducada o cuenta desactivada: antes las pantallas se quedaban vacías.
+  // Ante un 401 (fuera de login/registro) se borra la sesión y se vuelve al login con aviso.
+  let redirigiendo = false;
+  api.interceptors.response.use(
+    (res) => res,
+    (error) => {
+      const status = error?.response?.status;
+      const url: string = error?.config?.url ?? '';
+      if (status === 401 && typeof window !== 'undefined' && !url.startsWith('/auth/')) {
+        const teniaSesion = !!localStorage.getItem('token');
+        if (teniaSesion && !redirigiendo) {
+          redirigiendo = true;
+          localStorage.removeItem('token');
+          document.cookie = 'token=; path=/; max-age=0';
+          delete api.defaults.headers.common['Authorization'];
+          const m = error?.response?.data?.message;
+          try {
+            sessionStorage.setItem(
+              'oplora-aviso-login',
+              typeof m === 'string' && /desactivada/i.test(m) ? m : 'Tu sesión ha caducado. Vuelve a entrar.',
+            );
+          } catch { /* sin sessionStorage */ }
+          if (!window.location.pathname.startsWith('/app/login')) {
+            window.location.href = '/app/login';
+          } else {
+            redirigiendo = false;
+          }
+        }
+      }
+      return Promise.reject(error);
+    },
+  );
+
   // Tipos
   export interface Oposicion {
     id: string;

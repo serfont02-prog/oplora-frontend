@@ -19,7 +19,6 @@ export default function AppLayout({
   pathname.startsWith('/app/recuperar-password') ||
   pathname.startsWith('/app/resetear-password');
 
-  console.log('pathname actual:', pathname, '¿es pública?', esRutaPublica); // ⭐ temporal
 
   useEffect(() => {
     if (esRutaPublica || cargando) return;

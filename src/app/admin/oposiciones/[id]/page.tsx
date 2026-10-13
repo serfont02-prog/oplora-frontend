@@ -132,6 +132,8 @@ const [formEditarConv, setFormEditarConv] = useState({
   const eliminarOpo = useMutation({
     mutationFn: async () => { await api.delete(`/oposiciones/${id}`); },
     onSuccess: () => router.push('/admin/oposiciones'),
+    // ⭐ Antes fallaba en silencio (p. ej. si tiene alumnos inscritos)
+    onError: (e: any) => alert(e?.response?.data?.message ?? 'No se ha podido borrar la oposición'),
   });
 
   const editarOpo = useMutation({
@@ -158,6 +160,8 @@ const [formEditarConv, setFormEditarConv] = useState({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['convocatorias', id] });
   },
+  // ⭐ Antes fallaba en silencio (p. ej. convocatoria con usuarios vinculados)
+  onError: (e: any) => alert(e?.response?.data?.message ?? 'No se ha podido borrar la convocatoria'),
 });
 
 const crearConv = useMutation({

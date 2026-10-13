@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth'; 
+import { useAuth } from '@/lib/auth';
+import { FooterNavegacion } from '@/app/app/dashboard/page';
 import {
   ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
@@ -488,87 +489,8 @@ export default function SuscripcionesPage() {
           FOOTER APP
       ========================================================= */}
 
-      <footer
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 64,
-          background: 'white',
-          borderTop: '1px solid #e5e7eb',
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          boxShadow: '0 -2px 6px rgba(0,0,0,0.06)',
-          zIndex: 50,
-        }}
-      >
-        <button
-          onClick={() => router.push('/app')}
-          style={footerBtn}
-        >
-          <Home size={24} color="#1F7CFF" />
-          <span style={{ fontSize: 11, color: '#1F7CFF' }}>
-            Inicio
-          </span>
-        </button>
-
-        <button
-          onClick={() => router.push('/app/estudiar')}
-          style={footerBtn}
-        >
-          <BookOpen size={24} color="#B45309" />
-          <span style={{ fontSize: 11, color: '#B45309' }}>
-            Estudiar
-          </span>
-        </button>
-
-        <button
-          onClick={() => router.push('/app/retos')}
-          style={footerBtn}
-        >
-          <Flame size={24} color="#EF4444" />
-          <span style={{ fontSize: 11, color: '#EF4444' }}>
-            Retos
-          </span>
-        </button>
-
-        <button
-          onClick={() => router.push('/app/tests')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          <ClipboardDocumentCheckIcon
-            style={{
-              width: 26,
-              height: 26,
-              color: '#0EA5E9',
-            }}
-          />
-          <span style={{ fontSize: 11, color: '#0EA5E9' }}>
-            Tests
-          </span>
-        </button>
-
-        <button
-          onClick={() => router.push('/app/alertas')}
-          style={footerBtn}
-        >
-          <Bell size={24} color="#FACC15" />
-          <span style={{ fontSize: 11, color: '#FACC15' }}>
-            Alertas
-          </span>
-        </button>
-      </footer>
+      {/* ⭐ Barra inferior común (antes enlazaba a /app, /app/estudiar y /app/tests, que no existen) */}
+      <FooterNavegacion usuario={usuario} oposicionId={usuario?.oposicionActiva?.id} />
     </div>
   );
 }

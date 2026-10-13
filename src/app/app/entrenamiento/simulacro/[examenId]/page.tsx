@@ -26,7 +26,8 @@ export default function SimulacroPage() {
   const [resultado, setResultado] = useState<any>(null);
   const intervaloRef = useRef<any>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
+    retry: false,
     queryKey: ['simulacro-preguntas', examenId],
     queryFn: async () => {
       const res = await api.get(`/temas/examenes/${examenId}/preguntas`);
@@ -82,7 +83,29 @@ export default function SimulacroPage() {
   };
 
   if (isLoading) return null;
-  if (!data) return null;
+  if (!data) {
+    // ⭐ Antes la pantalla se quedaba en blanco (p. ej. plan sin simulacros)
+    let bloqueado = false;
+    try { bloqueado = JSON.parse((error as any)?.response?.data?.message ?? '{}')?.motivo === 'simulacro_bloqueado'; } catch { /* mensaje normal */ }
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', background: '#F8F9FA' }}>
+        <div style={{ background: 'white', borderRadius: 20, padding: '2rem 1.5rem', maxWidth: 380, width: '100%', textAlign: 'center' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6 }}>
+            {bloqueado ? 'Los simulacros son de los planes de pago' : 'No se ha podido cargar el simulacro'}
+          </div>
+          <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 18, lineHeight: 1.5 }}>
+            {bloqueado ? 'Mejora tu plan para hacer exámenes oficiales con tiempo y corrección como el día del examen.' : 'Inténtalo de nuevo en unos minutos.'}
+          </div>
+          <button
+            onClick={() => router.push(bloqueado ? '/app/suscripciones' : '/app/entrenamiento')}
+            style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          >
+            {bloqueado ? 'Ver planes' : 'Volver'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const preguntas = data.preguntas ?? [];
   const preguntaActual = preguntas[indiceActual];

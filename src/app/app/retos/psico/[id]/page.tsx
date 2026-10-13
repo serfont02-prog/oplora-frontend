@@ -132,9 +132,8 @@ export default function RetoPsicoDetallePage() {
     setTiempoInicioPregunta(Date.now());
   };
 
-  // ⭐ Igual que el flujo individual de práctica (entrenamiento/psicotecnicos/[tipo]):
-  // solo se pide la respuesta correcta JUSTO tras contestar esta pregunta concreta,
-  // nunca por adelantado para el resto del duelo.
+  // ⭐ La respuesta se fija en el servidor al contestar y solo entonces llega la solución
+  // de ESTA pregunta. Si ya estaba respondida (p. ej. se salió y volvió), cuenta la fijada.
   const responder = (opcionIndex: number) => {
     if (mostrarCorreccion) return;
     setRespuestaElegida(opcionIndex);
@@ -142,8 +141,18 @@ export default function RetoPsicoDetallePage() {
     setCorrectaTexto(null);
 
     api
-      .get(`/psicotecnicos/preguntas/${pregunta.id}/correcta`)
-      .then((res) => setCorrectaTexto(res.data?.correctaTexto ?? null))
+      .post(`/psicotecnicos/reto/${id}/responder`, {
+        preguntaId: pregunta.id,
+        respuestaTexto: pregunta.opciones[opcionIndex],
+        tiempoRespuesta: Date.now() - tiempoInicioPregunta,
+      })
+      .then((res) => {
+        if (res.data?.yaRespondida) {
+          const idx = pregunta.opciones.findIndex((o: string) => o === res.data?.respuestaTexto);
+          setRespuestaElegida(idx >= 0 ? idx : null);
+        }
+        setCorrectaTexto(res.data?.correctaTexto ?? null);
+      })
       .catch(() => setCorrectaTexto(null));
   };
 

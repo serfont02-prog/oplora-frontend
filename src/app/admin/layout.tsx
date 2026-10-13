@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { FileText, Users, BarChart2, BookOpen, Home, ChevronRight, LogOut, Newspaper, Settings,Layers, BookMarked, LifeBuoy, Brain, Trophy } from 'lucide-react';
+import { FileText, Users, BarChart2, BookOpen, Home, ChevronRight, LogOut, Newspaper, Settings,Layers, BookMarked, LifeBuoy, Brain, Trophy, ScrollText, Smartphone } from 'lucide-react';
 import { BG_NEUTRAL } from '@/styles/tokens';
+import { useAuth } from '@/lib/auth';
 
 const navItems = [
   { href: '/admin', label: 'Inicio', icon: Home, exact: true },
@@ -13,7 +15,7 @@ const navItems = [
   { href: '/admin/soporte', label: 'Soporte', icon: LifeBuoy },
   { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
   { href: '/admin/estadisticas', label: 'Estadísticas', icon: BarChart2 },
-  { href: '/admin/boe', label: 'BOE', icon: Newspaper },
+  { href: '/admin/boe', label: 'BOE', icon: ScrollText },
   { href: '/admin/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/admin/psicotecnicos', label: 'Psicotécnicos', icon: Brain },
   { href: '/admin/liga', label: 'Liga Oplora', icon: Trophy },
@@ -21,9 +23,41 @@ const navItems = [
   { href: '/admin/configuracion', label: 'Configuración', icon: Settings },
 ];
 
+// ⭐ Migas de pan legibles: nombre de sección en vez de la ruta y "Detalle" en vez de ids.
+const NOMBRES_RUTA: Record<string, string> = {
+  admin: 'Admin', nueva: 'Nueva', temas: 'Temas', convocatorias: 'Convocatorias',
+  'banco-preguntas': 'Banco de preguntas', documentos: 'Documentos', examenes: 'Exámenes',
+  preguntas: 'Preguntas', ...Object.fromEntries(navItems.map((n) => [n.href.split('/').pop() as string, n.label])),
+};
+function nombreSegmento(seg: string): string {
+  if (NOMBRES_RUTA[seg]) return NOMBRES_RUTA[seg];
+  if (/^[0-9a-f-]{16,}$/i.test(seg)) return 'Detalle';
+  return seg;
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { usuario, cargando, logout } = useAuth();
+  const esAdmin = usuario?.rol === 'admin';
+
+  // ⭐ Antes el panel se pintaba a cualquiera con sesión (las acciones fallaban en el
+  // servidor, pero se veía todo el panel). Ahora: sin sesión → login; sin rol admin → la app.
+  useEffect(() => {
+    if (cargando) return;
+    if (!usuario) router.replace('/app/login');
+    else if (usuario.rol !== 'admin') router.replace('/app/dashboard');
+  }, [cargando, usuario, router]);
+
+  if (cargando || !esAdmin) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL, fontSize: 13, color: '#6b7280' }}>
+        {cargando ? 'Comprobando acceso…' : 'Sin acceso al panel de administración'}
+      </div>
+    );
+  }
+
+  const inicial = (usuario?.nombre || usuario?.email || 'A').trim().charAt(0).toUpperCase();
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: BG_NEUTRAL }}>
@@ -38,14 +72,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               📚
             </div>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'white' }}>OpositaAI</div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'white' }}>OPLORA</div>
               <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>Panel Admin</div>
             </div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '0.75rem 0.75rem' }}>
+        <nav style={{ flex: 1, padding: '0.75rem 0.75rem', overflowY: 'auto' }}>
           <div style={{ fontSize: '10px', fontWeight: 500, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px', paddingLeft: '8px' }}>
             General
           </div>
@@ -78,8 +112,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             onClick={() => router.push('/app/dashboard')}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
           >
-            <LogOut size={14} />
+            <Smartphone size={14} />
             Ir a la app
+          </button>
+          <button
+            onClick={() => { logout(); router.replace('/app/login'); }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+          >
+            <LogOut size={14} />
+            Cerrar sesión
           </button>
         </div>
       </div>
@@ -93,15 +134,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {pathname.split('/').filter(Boolean).map((segment, i, arr) => (
               <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {i > 0 && <ChevronRight size={11} />}
-                <span style={{ color: i === arr.length - 1 ? '#111827' : '#9ca3af', fontWeight: i === arr.length - 1 ? 500 : 400, textTransform: 'capitalize' }}>
-                  {segment === 'admin' ? 'Admin' : segment}
+                <span style={{ color: i === arr.length - 1 ? '#111827' : '#9ca3af', fontWeight: i === arr.length - 1 ? 500 : 400 }}>
+                  {nombreSegmento(segment)}
                 </span>
               </span>
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: 'white' }}>
-              A
+            <span style={{ fontSize: '12px', color: '#6b7280' }}>{usuario?.nombre ?? usuario?.email}</span>
+            <div title={usuario?.email} style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: 'white' }}>
+              {inicial}
             </div>
           </div>
         </div>
