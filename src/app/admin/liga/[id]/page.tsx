@@ -394,7 +394,7 @@ export default function LigaDetalleAdminPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr>
-                    {['Apertura', 'Cierre', 'División', 'Contenido', 'Preguntas', 'Estado', 'Jugadores', ''].map((h) => (
+                    {['Apertura', 'Cierre', 'División', 'Contenido', 'Preguntas', 'Estado', 'Han jugado', ''].map((h) => (
                       <th key={h} style={{ textAlign: 'left', padding: 8, fontWeight: 500, color: '#6b7280', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>

@@ -180,7 +180,7 @@ export function estadoJornada(data: any): {
         etiqueta: 'Jornada entregada',
         titulo: `Nota ${formatoNota(r.nota)}`,
         detalle: `Clasificación y soluciones el ${diaHora(j.fechaCierre)}`,
-        accion: { label: 'Ver clasificación', href: '/app/liga?tab=jornada' },
+        accion: { label: 'Ver clasificación', href: '/app/liga/clasificacion?tab=jornada' },
         destacado: false,
       };
     }

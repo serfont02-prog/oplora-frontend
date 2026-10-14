@@ -63,7 +63,7 @@ export default function LigasAdminPage() {
         <div>
           <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>Liga Oplora</div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-            Una liga por convocatoria · jornadas cada fin de semana · {ligas.length} {ligas.length === 1 ? 'liga' : 'ligas'}
+            Una liga por convocatoria · se entra sola al elegir la convocatoria, en Quinta · {ligas.length} {ligas.length === 1 ? 'liga' : 'ligas'}
           </div>
         </div>
         <button
@@ -145,7 +145,7 @@ export default function LigasAdminPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                {['Convocatoria', 'Estado', 'Jugadores por división', 'Total', 'Examen', ''].map((h) => (
+                {['Convocatoria', 'Estado', 'Inscritos por división', 'Inscritos', 'Examen', ''].map((h) => (
                   <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontSize: '11px', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', background: '#f9fafb' }}>{h}</th>
                 ))}
               </tr>

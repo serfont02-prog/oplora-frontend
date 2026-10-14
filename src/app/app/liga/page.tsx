@@ -1,42 +1,32 @@
 'use client';
 
-// ⭐ Liga Oplora — pantalla principal: división, jornada del fin de semana, clasificaciones,
-// palmarés y avisos de la liga.
+// ⭐ Liga Oplora — pantalla principal: división, jornada del fin de semana y tu posición.
+// Las clasificaciones completas están en /app/liga/clasificacion; el palmarés en el perfil
+// y los avisos en Preferencias.
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ChevronLeft, ChevronRight, Trophy, Crown, ArrowUp } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Trophy, ArrowUp, BarChart3, Bell } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { useMiLiga } from '@/components/liga/TarjetaLiga';
-import AvisosLiga from '@/components/liga/AvisosLiga';
 import {
-  COLOR_LIGA, BG_LIGA, HEX_COPA, NOMBRE_COPA, NOMBRE_DIVISION,
-  CopaBadge, AvatarMini, nombreVisible, estadoJornada, cuentaAtras, fechaCompleta,
-  nombreMes, sumarMes, formatoNota, formatoPuntos, formatoTiempo, mensajeError,
+  COLOR_LIGA, BG_LIGA,
+  CopaBadge, AvatarMini, nombreVisible, estadoJornada, cuentaAtras,
+  nombreMes, formatoPuntos, formatoTiempo, mensajeError,
 } from '@/components/liga/ligaUtils';
 
 const TEXT_PRIMARY = '#111827';
 const TEXT_MUTED = '#6B7280';
 const BG_APP = '#FCEEE8';
 
-type Tab = 'mensual' | 'general' | 'jornada';
-
 export default function LigaPage() {
   const router = useRouter();
   const { usuario } = useAuth();
   const oposicionId = (usuario as any)?.oposicionActiva?.id;
   const { data, isLoading, error } = useMiLiga(!!usuario);
-  const [tab, setTab] = useState<Tab>('mensual');
-
-  useEffect(() => {
-    try {
-      const t = new URLSearchParams(window.location.search).get('tab');
-      if (t === 'mensual' || t === 'general' || t === 'jornada') setTab(t);
-    } catch { /* sin query */ }
-  }, []);
 
   if (!usuario) return null;
 
@@ -71,37 +61,8 @@ export default function LigaPage() {
             <TarjetaDivision data={data} />
             <TarjetaJornada data={data} />
 
-            <div>
-              <div style={{ display: 'flex', background: 'white', borderRadius: 12, padding: 4, gap: 4 }}>
-                {([
-                  ['mensual', 'Mensual'],
-                  ['general', 'General'],
-                  ['jornada', 'Jornada'],
-                ] as [Tab, string][]).map(([k, label]) => (
-                  <button
-                    key={k}
-                    onClick={() => setTab(k)}
-                    style={{
-                      flex: 1, border: 'none', borderRadius: 9, padding: '9px 0', cursor: 'pointer',
-                      fontSize: 13, fontWeight: 700,
-                      background: tab === k ? COLOR_LIGA : 'transparent',
-                      color: tab === k ? 'white' : TEXT_MUTED,
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div style={{ marginTop: 10 }}>
-                {tab === 'mensual' && <ClasificacionMensual miDivision={data.division} />}
-                {tab === 'general' && <ClasificacionGeneral />}
-                {tab === 'jornada' && <ClasificacionJornada jornada={data.jornada} />}
-              </div>
-            </div>
-
-            <Palmares />
+            <TarjetaPosicion division={data.division} porcentaje={data.liga.porcentajeAscenso} />
             <ComoFunciona data={data} />
-            <AvisosLiga avisos={data.avisos} />
           </>
         )}
       </div>
@@ -115,15 +76,6 @@ export default function LigaPage() {
 
 function Caja({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return <div style={{ background: 'white', borderRadius: 18, padding: 14, border: '1px solid #F1F5F9', ...style }}>{children}</div>;
-}
-
-function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{titulo}</div>
-      {children}
-    </div>
-  );
 }
 
 function SinLiga({ motivo, oposicionId }: { motivo?: string; oposicionId?: string }) {
@@ -252,259 +204,82 @@ function TarjetaJornada({ data }: { data: any }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-
-function FilaUsuario({
-  posicion, usuario, esYo, derecha, sub, marca,
-}: {
-  posicion: number | null; usuario: any; esYo: boolean; derecha: React.ReactNode; sub?: React.ReactNode; marca?: React.ReactNode;
-}) {
-  const medalla = posicion === 1 ? '#EAB308' : posicion === 2 ? '#94A3B8' : posicion === 3 ? '#B45309' : null;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, background: esYo ? BG_LIGA : 'white', border: esYo ? `1px solid ${COLOR_LIGA}33` : '1px solid #F1F5F9' }}>
-      <span style={{ width: 24, textAlign: 'center', fontSize: 13, fontWeight: 800, color: medalla ?? TEXT_MUTED, flexShrink: 0 }}>{posicion ?? '—'}</span>
-      <AvatarMini usuario={usuario} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {nombreVisible(usuario)}{esYo ? ' (tú)' : ''}
-          </span>
-          {marca}
-        </div>
-        {sub && <div style={{ fontSize: 11, color: TEXT_MUTED }}>{sub}</div>}
-      </div>
-      <div style={{ textAlign: 'right', flexShrink: 0 }}>{derecha}</div>
-    </div>
-  );
-}
-
-function Vacio({ texto }: { texto: string }) {
-  return <Caja><div style={{ fontSize: 13, color: TEXT_MUTED, textAlign: 'center', padding: '8px 0' }}>{texto}</div></Caja>;
-}
-
-function ClasificacionMensual({ miDivision }: { miDivision: number }) {
-  const [mes, setMes] = useState<string | null>(null);
-  const [division, setDivision] = useState<number>(miDivision);
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['liga-mensual', mes, division],
-    queryFn: async () =>
-      (await api.get('/liga/clasificacion/mensual', { params: { ...(mes ? { mes } : {}), division } })).data,
-    staleTime: 60_000,
-  });
-
-  const mesMostrado: string | null = data?.mes ?? mes;
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', borderRadius: 12, padding: '6px 8px' }}>
-        <button
-          onClick={() => mesMostrado && setMes(sumarMes(mesMostrado, -1))}
-          aria-label="Mes anterior"
-          style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}
-        >
-          <ChevronLeft size={18} color={TEXT_PRIMARY} />
-        </button>
-        <span style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
-          {mesMostrado ? nombreMes(mesMostrado) : '…'}{data?.cerrado ? ' · cerrada' : ''}
-        </span>
-        <button
-          onClick={() => mesMostrado && setMes(sumarMes(mesMostrado, 1))}
-          aria-label="Mes siguiente"
-          style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}
-        >
-          <ChevronRight size={18} color={TEXT_PRIMARY} />
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
-        {[1, 2, 3, 4, 5].map((d) => (
-          <button
-            key={d}
-            onClick={() => setDivision(d)}
-            style={{
-              flex: '1 0 auto', border: division === d ? `1.5px solid ${COLOR_LIGA}` : '1px solid #F1F5F9',
-              background: division === d ? 'white' : 'rgba(255,255,255,0.6)', color: division === d ? COLOR_LIGA : TEXT_MUTED,
-              borderRadius: 999, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}
-          >
-            {NOMBRE_DIVISION[d]}{d === miDivision ? ' · tú' : ''}
-          </button>
-        ))}
-      </div>
-
-      {isLoading && <Vacio texto="Cargando clasificación…" />}
-      {error && <Vacio texto={mensajeError(error, 'No se ha podido cargar la clasificación')} />}
-      {data && data.filas.length === 0 && <Vacio texto="Nadie ha puntuado todavía este mes en esta división." />}
-
-      {data && data.filas.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {data.filas.map((f: any, i: number) => {
-            const lineaAscenso = data.division > 1 && data.plazasAscenso > 0 && i === data.plazasAscenso && !data.cerrado;
-            return (
-              <div key={f.usuario?.id ?? i}>
-                {lineaAscenso && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 9px' }}>
-                    <div style={{ flex: 1, height: 1, background: '#16A34A55' }} />
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Zona de ascenso</span>
-                    <div style={{ flex: 1, height: 1, background: '#16A34A55' }} />
-                  </div>
-                )}
-                <FilaUsuario
-                  posicion={f.posicion}
-                  usuario={f.usuario}
-                  esYo={f.esYo}
-                  marca={
-                    <>
-                      {f.campeon && <Crown size={13} color={HEX_COPA[colorDivision(data.division)]} />}
-                      {f.zonaAscenso && !f.campeon && <ArrowUp size={13} color="#16A34A" />}
-                    </>
-                  }
-                  sub={`${f.jornadasJugadas} ${f.jornadasJugadas === 1 ? 'jornada' : 'jornadas'}${f.jornadasGanadas ? ` · ${f.jornadasGanadas} ${f.jornadasGanadas === 1 ? 'victoria' : 'victorias'}` : ''}`}
-                  derecha={
-                    <>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: TEXT_PRIMARY }}>{formatoPuntos(f.puntos)}</div>
-                      <div style={{ fontSize: 10, color: TEXT_MUTED }}>puntos</div>
-                    </>
-                  }
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {data && data.division > 1 && !data.cerrado && data.filas.length > 0 && (
-        <div style={{ fontSize: 11, color: TEXT_MUTED, textAlign: 'center' }}>
-          Suben {data.plazasAscenso} de {data.filas.length} ({data.porcentajeAscenso}%) al cerrar el mes.
-        </div>
-      )}
-    </div>
-  );
-}
-
-function colorDivision(d: number): string {
-  return ({ 1: 'oro', 2: 'plata', 3: 'bronce', 4: 'azul', 5: 'verde' } as Record<number, string>)[d] ?? 'oro';
-}
-
-function ClasificacionGeneral() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['liga-general'],
-    queryFn: async () => (await api.get('/liga/clasificacion/general')).data,
-    staleTime: 60_000,
-  });
-
-  if (isLoading) return <Vacio texto="Cargando clasificación…" />;
-  if (error) return <Vacio texto={mensajeError(error, 'No se ha podido cargar la clasificación')} />;
-  if (!data?.filas?.length) return <Vacio texto="La clasificación general empieza con la primera jornada." />;
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <div style={{ fontSize: 11, color: TEXT_MUTED, lineHeight: 1.45, padding: '0 2px 4px' }}>
-        Suma de toda la liga. Los puntos pesan más cuanto más alta es la división (×1,0 en Quinta hasta ×1,5 en Primera).
-        {data.cerrada ? ' Temporada terminada.' : ' El líder al llegar el examen gana la copa de temporada.'}
-      </div>
-      {data.filas.map((f: any, i: number) => (
-        <FilaUsuario
-          key={f.usuario?.id ?? i}
-          posicion={f.posicion}
-          usuario={f.usuario}
-          esYo={f.esYo}
-          sub={`${f.nombreDivision ?? '—'} · ${f.jornadasJugadas} ${f.jornadasJugadas === 1 ? 'jornada' : 'jornadas'}`}
-          derecha={
-            <>
-              <div style={{ fontSize: 14, fontWeight: 800, color: TEXT_PRIMARY }}>{formatoPuntos(f.puntos)}</div>
-              <div style={{ fontSize: 10, color: TEXT_MUTED }}>puntos</div>
-            </>
-          }
-        />
-      ))}
-    </div>
-  );
-}
-
-function ClasificacionJornada({ jornada }: { jornada: any }) {
+/** Tu puesto del mes, distancia al ascenso, podio de tu división y acceso a las clasificaciones. */
+function TarjetaPosicion({ division, porcentaje }: { division: number; porcentaje: number }) {
   const router = useRouter();
-  const activa = !!jornada && (jornada.estado === 'abierta' || jornada.estado === 'cerrada');
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['liga-jornada-clasif', jornada?.id],
-    queryFn: async () => (await api.get(`/liga/jornadas/${jornada.id}/clasificacion`)).data,
-    enabled: activa,
-    staleTime: 30_000,
+  const { data, isLoading } = useQuery({
+    queryKey: ['liga-mensual', null, division],
+    queryFn: async () => (await api.get('/liga/clasificacion/mensual', { params: { division } })).data,
+    staleTime: 60_000,
   });
 
-  if (!activa) return <Vacio texto="La clasificación aparece en cuanto se abre la jornada el viernes." />;
-  if (isLoading) return <Vacio texto="Cargando clasificación…" />;
-  if (error) return <Vacio texto={mensajeError(error, 'No se ha podido cargar la clasificación')} />;
-  if (!data?.filas?.length) return <Vacio texto="Nadie ha entregado todavía. ¡Sé el primero!" />;
+  const filas: any[] = data?.filas ?? [];
+  const yo = filas.find((f) => f.esYo);
+  const plazas: number = data?.plazasAscenso ?? 0;
+  const corte = plazas > 0 ? filas[plazas - 1] : null;
+  const enZona = !!yo?.zonaAscenso;
+  const faltan = !enZona && yo && corte ? Math.max(0, Number(corte.puntos) - Number(yo.puntos)) : null;
+  const podio = filas.slice(0, 3);
+
+  let titular = 'Aún sin puntos este mes';
+  let detalle = 'Juega la jornada del fin de semana para entrar en la clasificación.';
+  if (yo) {
+    titular = `${yo.posicion}.º de ${filas.length} · ${formatoPuntos(yo.puntos)} puntos`;
+    detalle = division === 1
+      ? 'Primera división: el primero del mes gana la copa de oro.'
+      : enZona
+        ? `Estás en zona de ascenso (sube el ${porcentaje}% mejor).`
+        : faltan != null
+          ? `Te faltan ${formatoPuntos(faltan)} puntos para la zona de ascenso.`
+          : `Sube el ${porcentaje}% mejor de la división al cerrar el mes.`;
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <div style={{ fontSize: 11, color: TEXT_MUTED, padding: '0 2px 4px' }}>
-        {data.provisional
-          ? `Provisional: se ordena por nota y, a igualdad, por tiempo. Los puntos se reparten al cierre (${fechaCompleta(jornada.fechaCierre)}).`
-          : `${jornada.descripcion ?? 'Jornada'} · definitiva`}
-      </div>
-      {data.filas.map((f: any, i: number) => (
-        <FilaUsuario
-          key={f.usuario?.id ?? i}
-          posicion={f.posicion}
-          usuario={f.usuario}
-          esYo={f.esYo}
-          sub={`${f.aciertos ?? 0} ✓ · ${f.fallos ?? 0} ✗ · ${formatoTiempo(f.tiempoMs)}`}
-          derecha={
-            <>
-              <div style={{ fontSize: 14, fontWeight: 800, color: TEXT_PRIMARY }}>{formatoNota(f.nota)}</div>
-              <div style={{ fontSize: 10, color: TEXT_MUTED }}>{f.puntos != null ? `+${formatoPuntos(f.puntos)} pts` : 'nota'}</div>
-            </>
-          }
-        />
-      ))}
-      {!data.provisional && (
-        <button
-          onClick={() => router.push(`/app/liga/revision/${jornada.id}`)}
-          style={{ marginTop: 4, border: 'none', borderRadius: 12, padding: 11, background: '#111827', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-        >
-          Ver soluciones
-        </button>
-      )}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-
-function Palmares() {
-  const { data } = useQuery({
-    queryKey: ['liga-palmares'],
-    queryFn: async () => (await api.get('/liga/palmares')).data,
-    staleTime: 5 * 60_000,
-  });
-  if (!data?.copas?.length) return null;
-
-  return (
-    <Seccion titulo={`Tu palmarés · ${data.copas.length}`}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {data.copas.map((c: any) => (
-          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '9px 12px', border: '1px solid #F1F5F9' }}>
-            <CopaBadge color={c.color} size={28} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY }}>
-                {c.tipo === 'temporada' ? 'Campeón de la temporada' : `Campeón de ${c.nombreDivision}`}
-              </div>
-              <div style={{ fontSize: 11, color: TEXT_MUTED, textTransform: c.tipo === 'temporada' ? 'none' : 'capitalize' }}>
-                {c.tipo === 'temporada' ? NOMBRE_COPA.temporada : nombreMes(c.mes)}
-                {c.convocatoria?.anyo ? ` · ${c.convocatoria.oposicion ?? ''} ${c.convocatoria.anyo}`.trimEnd() : ''}
-              </div>
+    <Caja style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Tu posición{data?.mes ? ` · ${nombreMes(data.mes)}` : ''}
+        </div>
+        {isLoading ? (
+          <div style={{ fontSize: 13, color: TEXT_MUTED, marginTop: 4 }}>Cargando…</div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: TEXT_PRIMARY }}>{titular}</span>
+              {enZona && <ArrowUp size={15} color="#16A34A" />}
             </div>
-          </div>
-        ))}
+            <div style={{ fontSize: 12, color: enZona ? '#16A34A' : TEXT_MUTED, marginTop: 2 }}>{detalle}</div>
+          </>
+        )}
       </div>
-    </Seccion>
+
+      {podio.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {podio.map((f: any) => (
+            <div key={f.usuario?.id ?? f.posicion} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 18, fontSize: 12, fontWeight: 800, color: f.posicion === 1 ? '#EAB308' : f.posicion === 2 ? '#94A3B8' : '#B45309' }}>{f.posicion}</span>
+              <AvatarMini usuario={f.usuario} size={24} />
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: f.esYo ? 800 : 600, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {nombreVisible(f.usuario)}{f.esYo ? ' (tú)' : ''}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY }}>{formatoPuntos(f.puntos)} pts</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        onClick={() => router.push('/app/liga/clasificacion')}
+        style={{ width: '100%', border: `1px solid ${COLOR_LIGA}55`, background: 'white', color: COLOR_LIGA, borderRadius: 12, padding: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+      >
+        <BarChart3 size={15} /> Ver clasificaciones
+      </button>
+    </Caja>
   );
 }
 
 function ComoFunciona({ data }: { data: any }) {
+  const router = useRouter();
   const [abierto, setAbierto] = useState(false);
   return (
     <Caja>
@@ -525,6 +300,12 @@ function ComoFunciona({ data }: { data: any }) {
           <li>El campeón de cada división gana una copa: oro en Primera, plata en Segunda, bronce en Tercera, azul en Cuarta y verde en Quinta.</li>
         </ul>
       )}
+      <button
+        onClick={() => router.push('/app/preferencias')}
+        style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: TEXT_MUTED }}
+      >
+        <Bell size={13} /> Configurar los avisos de la liga
+      </button>
     </Caja>
   );
 }
