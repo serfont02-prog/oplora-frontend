@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, Layers } from 'lucide-react';
+import { ArrowLeft, Layers, CheckCircle2, XCircle, Lightbulb, PartyPopper } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import { PuntosGanadosCard, GamificacionInfo } from '@/components/gamificacion/PuntosGanadosCard';
 
@@ -33,18 +33,26 @@ export default function RepasarPage() {
   const [errorRegistro, setErrorRegistro] = useState('');
   const [gamificacionInfo, setGamificacionInfo] = useState<GamificacionInfo | null>(null);
   const numeroTema = searchParams.get('numeroTema');
+  // ⭐ Si se entra desde el hub de Flashcards ("Practicar por tema"), volver lleva al hub y no al tema.
+  const desdeHub = searchParams.get('origen') === 'flashcards';
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
+
+  // Todo lo que muestra el estado de las flashcards (hub, atajo de Inicio, Practicar y límites).
+  const invalidarEstadoFC = () => {
+    for (const k of ['pendientes-fc', 'stats-fc', 'fc-pendientes-widget', 'fc-periodo', 'limites']) {
+      queryClient.invalidateQueries({ queryKey: [k] });
+    }
+  };
 
   // ⭐ Invalidar el estado de FC (pendientes/stats) también al salir de la pantalla de repaso,
   // no solo al pulsar "Repasar de nuevo" — así el hub de flashcards y el resto de widgets
   // reflejan los repasos hechos en esta sesión aunque el usuario navegue fuera sin pulsar nada.
   useEffect(() => {
     return () => {
-      queryClient.invalidateQueries({ queryKey: ['pendientes-fc'] });
-      queryClient.invalidateQueries({ queryKey: ['stats-fc'] });
+      invalidarEstadoFC();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -104,8 +112,7 @@ export default function RepasarPage() {
 
     if (indice + 1 >= flashcards.length) {
       setEstado('fin');
-      queryClient.invalidateQueries({ queryKey: ['pendientes-fc'] });
-      queryClient.invalidateQueries({ queryKey: ['stats-fc'] });
+      invalidarEstadoFC();
     } else {
       setIndice(i => i + 1);
       setEstado('pregunta');
@@ -115,7 +122,9 @@ export default function RepasarPage() {
   };
 
   const volver = () => {
-    if (temaId && oposicionId && numeroTema) {
+    if (desdeHub) {
+      router.push('/app/flashcards');
+    } else if (temaId && oposicionId && numeroTema) {
       router.push(`/app/tema/${oposicionId}/${numeroTema}`);
     } else if (articuloId) {
       router.push(`/app/articulo/${articuloId}?leyId=${leyIdArticulo ?? ''}&oposicionId=${oposicionId ?? ''}`);
@@ -158,7 +167,7 @@ export default function RepasarPage() {
               onClick={volver}
               style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
             >
-              {temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver'}
+              {desdeHub ? 'Volver a flashcards' : temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver'}
             </button>
           }
         />
@@ -179,10 +188,13 @@ export default function RepasarPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <button
             onClick={volver}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
+            aria-label="Volver"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
-            <ArrowLeft size={14} />
-            {temaId ? 'Tema' : articuloId ? 'Artículo' : 'Flashcards'}
+            <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'white', boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ArrowLeft size={17} />
+            </span>
+            {desdeHub ? 'Flashcards' : temaId ? 'Tema' : articuloId ? 'Artículo' : 'Flashcards'}
           </button>
           {estado !== 'fin' && (
             <span style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 600 }}>{indice + 1} / {flashcards.length}</span>
@@ -192,7 +204,9 @@ export default function RepasarPage() {
         {/* FIN */}
         {estado === 'fin' && (
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>🎉</div>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'white', boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <PartyPopper size={28} color={COLOR_FC} />
+            </div>
             <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>¡Repaso completado!</div>
             <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 20 }}>
               {resultados.length} flashcards repasadas
@@ -221,7 +235,8 @@ export default function RepasarPage() {
               </div>
 
               <div style={{ marginTop: 12, padding: '10px 12px', background: '#FAF5FB', borderRadius: 12, fontSize: 12, color: TEXT_SECONDARY }}>
-                💡 Las tarjetas difíciles o falladas aparecerán antes en tu próximo repaso
+                <Lightbulb size={14} color={COLOR_FC} style={{ verticalAlign: '-2px', marginRight: 6 }} />
+                Las tarjetas difíciles o falladas aparecerán antes en tu próximo repaso
               </div>
             </div>
 
@@ -234,8 +249,7 @@ export default function RepasarPage() {
                   setGamificacionInfo(null);
                   setErrorRegistro('');
                   setTiempoInicio(Date.now());
-                  queryClient.invalidateQueries({ queryKey: ['pendientes-fc'] });
-                  queryClient.invalidateQueries({ queryKey: ['stats-fc'] });
+                  invalidarEstadoFC();
                 }}
                 style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
@@ -245,7 +259,7 @@ export default function RepasarPage() {
                 onClick={volver}
                 style={{ width: '100%', padding: 13, background: 'white', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
               >
-                {temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver a flashcards'}
+                {desdeHub ? 'Volver a flashcards' : temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver a flashcards'}
               </button>
             </div>
           </div>
@@ -301,12 +315,13 @@ export default function RepasarPage() {
                   </div>
                   <div style={{ fontSize: 14, color: TEXT_PRIMARY, lineHeight: 1.6, fontWeight: 500 }}>
                     {fc.tipo === 'vf'
-                      ? (fc.respuesta === 'true' ? '✅ Verdadero' : '❌ Falso')
+                      ? (fc.respuesta === 'true' ? 'Verdadero' : 'Falso')
                       : fc.respuesta}
                   </div>
                   {fc.explicacion && (
                     <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 10, lineHeight: 1.6, background: '#FAF5FB', borderRadius: 10, padding: '8px 10px' }}>
-                      💡 {fc.explicacion}
+                      <Lightbulb size={13} color={COLOR_FC} style={{ verticalAlign: '-2px', marginRight: 6 }} />
+                      {fc.explicacion}
                     </div>
                   )}
                 </div>
@@ -320,13 +335,15 @@ export default function RepasarPage() {
                   onClick={() => handleVF(true)}
                   style={{ flex: 1, padding: 14, background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#15803d', cursor: 'pointer' }}
                 >
-                  ✅ Verdadero
+                  <CheckCircle2 size={17} style={{ verticalAlign: '-3px', marginRight: 6 }} />
+                  Verdadero
                 </button>
                 <button
                   onClick={() => handleVF(false)}
                   style={{ flex: 1, padding: 14, background: '#fef2f2', border: '2px solid #fca5a5', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#dc2626', cursor: 'pointer' }}
                 >
-                  ❌ Falso
+                  <XCircle size={17} style={{ verticalAlign: '-3px', marginRight: 6 }} />
+                  Falso
                 </button>
               </div>
             )}
@@ -350,9 +367,9 @@ export default function RepasarPage() {
                   borderRadius: 12, padding: '10px 14px', marginBottom: 10,
                   display: 'flex', alignItems: 'center', gap: 8,
                 }}>
-                  <span style={{ fontSize: 16 }}>
-                    {respuestaVF === (fc.respuesta === 'true') ? '✅' : '❌'}
-                  </span>
+                  {respuestaVF === (fc.respuesta === 'true')
+                    ? <CheckCircle2 size={17} color="#15803d" />
+                    : <XCircle size={17} color="#dc2626" />}
                   <span style={{ fontSize: 13, fontWeight: 600, color: respuestaVF === (fc.respuesta === 'true') ? '#15803d' : '#dc2626' }}>
                     {respuestaVF === (fc.respuesta === 'true') ? '¡Correcto!' : 'Incorrecto'}
                   </span>
