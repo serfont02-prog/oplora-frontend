@@ -1,70 +1,91 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// ⭐ Practicar — mismo sistema que Inicio: sin cajas grises, tarjetas blancas con la sombra común
+// directamente sobre el fondo, títulos suaves y una sola familia de iconos (lucide) con el mismo
+// icono y color por actividad que en el resto de la app:
+//   Test → ClipboardCheck (verde) · Flashcards → Layers (morado) · Psicotécnicos → Brain (índigo)
+//   Simulacro → Timer · Repaso → Target · Racha → Flame
+
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Zap, BookOpen, Trophy, RotateCcw, RefreshCw, ChevronRight, Target, Settings, Lock, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { ClipboardCheck, Layers, Brain, Timer, Target, Flame, Crown, ChevronRight, Lock } from 'lucide-react';
 import { api } from '@/lib/api';
 import WidgetProgresoGlobal from '@/components/widgets/WidgetProgreso';
 import ModalHacerTest from './ModalHacerTest';
-import { ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 
-import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_FC_BG, COLOR_PSICO, COLOR_PSICO_BG, COLOR_RETOS } from '@/styles/tokens';
 
-const BG_APP = '#EAF0FF'; // azul OPLORA muy suave, pantallas principales
-const BG_WIDGET = '#F7F8FA'; // gris claro, todos los widgets
-const BG_CARD_INNER = '#FFFFFF';
-const BORDER = '#E9EAEC';
+const BG_APP = '#EAF0FF';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const BORDER = '#EEF0F3';
 
-const COLOR_ACTIVIDAD: Record<string, { bg: string; icon: string }> = {
-  test:        { bg: '#F3FAE9', icon: '#4D7C0F' },
-  primer_reto: { bg: '#EFFADE', icon: '#4D7C0F' },
-  flashcards:  { bg: '#FADEF7', icon: '#9333EA' },
-  repaso:      { bg: '#FADEF7', icon: '#9333EA' },
-  simulacro:   { bg: '#EDE9DD', icon: '#6B5F3E' },
-  racha:       { bg: '#FACCC0', icon: '#C2410C' },
-  psicotecnicos: { bg: '#E0F2FE', icon: '#0369A1' },
-};
+export const COLOR_TEST = '#4D7C0F';
+export const COLOR_TEST_BG = '#F3FAE9';
+const COLOR_SIMULACRO = '#6B5F3E';
+const COLOR_SIMULACRO_BG = '#EDE9DD';
 
-export default function EntrenamientoHub({
-  usuario,
-  oposicion,
-  progreso,
-  convocatoria,
-  limites,
-}: any) {
+export default function EntrenamientoHub({ usuario, oposicion, convocatoria, limites }: any) {
   const router = useRouter();
-
-  const estado = usuario.estado;
-  const nivel = usuario.oposicionActiva?.nivel ?? 1;
-  const suscripcion = usuario.suscripcion;
+  const [modalTest, setModalTest] = useState(false);
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: '90px', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
         <HeroEntrenamiento oposicion={oposicion} usuario={usuario} router={router} />
 
-        <WidgetProgresoGlobal ubicacion="entrenamiento_progreso" oposicionId={oposicion?.id} convocatoriaId={convocatoria?.id} />
+        {usuario.estado === 'inactivo' && <AvisoRacha onClick={() => setModalTest(true)} />}
 
-        <WidgetAcciones
-          estado={estado}
-          nivel={nivel}
-          suscripcion={suscripcion}
+        {oposicion?.id && (
+          <WidgetProgresoGlobal ubicacion="entrenamiento_progreso" oposicionId={oposicion.id} convocatoriaId={convocatoria?.id} />
+        )}
+
+        <TarjetaTest limites={limites} router={router} onEmpezar={() => setModalTest(true)} />
+
+        <MasFormasDePracticar
+          usuario={usuario}
           oposicion={oposicion}
-          router={router}
-          limites={limites}
           convocatoria={convocatoria}
+          limites={limites}
+          router={router}
         />
 
-        <UpsellPremium suscripcion={suscripcion} router={router} />
-
+        <UpsellPremium suscripcion={usuario.suscripcion} router={router} />
       </div>
+
+      {modalTest && (
+        <ModalHacerTest
+          oposicion={oposicion}
+          convocatoria={convocatoria}
+          limites={limites}
+          router={router}
+          onClose={() => setModalTest(false)}
+        />
+      )}
     </div>
   );
 }
 
+/* ------------------------------------------------------------------ */
+
+function TituloSeccion({ children, derecha }: { children: React.ReactNode; derecha?: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', gap: 8 }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>{children}</span>
+      {derecha}
+    </div>
+  );
+}
+
+function IconoActividad({ Icon, color, bg, bloqueado = false }: any) {
+  return (
+    <div style={{ width: 40, height: 40, borderRadius: 12, background: bloqueado ? '#F3F4F6' : bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      {bloqueado ? <Lock size={18} color="#9CA3AF" /> : <Icon size={20} color={color} />}
+    </div>
+  );
+}
 
 function HeroEntrenamiento({ oposicion, usuario, router }: any) {
   return (
@@ -79,6 +100,7 @@ function HeroEntrenamiento({ oposicion, usuario, router }: any) {
       </div>
       <button
         onClick={() => router.push('/app/perfil')}
+        aria-label="Mi perfil"
         style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', overflow: 'visible', flexShrink: 0 }}
       >
         <AvatarPerfil usuario={usuario} size={44} />
@@ -87,281 +109,191 @@ function HeroEntrenamiento({ oposicion, usuario, router }: any) {
   );
 }
 
-
-function WidgetProgreso({ progreso, limites }: any) {
-  const precision = progreso?.promedioAcierto ?? 0;
-  const preguntasHoy = limites?.consumo?.preguntasTestHoy ?? 0;
-  const limiteDiario = limites?.limites?.preguntasTestDia;
-  const sinLimite = limiteDiario === null || limiteDiario === undefined;
-
+/** Usuarios inactivos: aviso arriba para retomar la racha con un test. */
+function AvisoRacha({ onClick }: { onClick: () => void }) {
   return (
-    <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-      <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px', paddingLeft: '2px' }}>
-        Mi progreso hoy
+    <button
+      onClick={onClick}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: 'white', border: 'none', borderRadius: 18, padding: 14, boxShadow: SOMBRA, cursor: 'pointer' }}
+    >
+      <IconoActividad Icon={Flame} color={COLOR_RETOS} bg="#FFF1E8" />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Recupera tu racha</div>
+        <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Haz un test hoy y vuelve a sumar días seguidos</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-
-        <div style={{ background: BG_CARD_INNER, borderRadius: '14px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', color: TEXT_SECONDARY, fontWeight: 500 }}>Preguntas</span>
-            <Brain size={13} color={TEXT_MUTED} />
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1 }}>
-            {preguntasHoy}
-          </div>
-          {sinLimite ? (
-            <div style={{ fontSize: '11px', color: TEXT_MUTED }}>Sin límite diario</div>
-          ) : (
-            <>
-              <div style={{ fontSize: '11px', color: TEXT_MUTED }}>de {limiteDiario} hoy</div>
-              <div style={{ height: '4px', background: BG_WIDGET, borderRadius: '999px', overflow: 'hidden' }}>
-                <div style={{
-                  width: `${Math.min((preguntasHoy / limiteDiario) * 100, 100)}%`,
-                  height: '100%',
-                  background: preguntasHoy >= limiteDiario ? '#dc2626' : '#111827',
-                  borderRadius: '999px',
-                }} />
-              </div>
-            </>
-          )}
-        </div>
-
-        <div style={{ background: BG_CARD_INNER, borderRadius: '14px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', color: TEXT_SECONDARY, fontWeight: 500 }}>Precisión</span>
-            <Target size={13} color={TEXT_MUTED} />
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1 }}>{precision}%</div>
-          <div style={{ height: '4px', background: BG_WIDGET, borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{ width: `${precision}%`, height: '100%', background: '#111827', borderRadius: '999px' }} />
-          </div>
-        </div>
-
-      </div>
-    </div>
+      <ChevronRight size={16} color="#C4C9D2" />
+    </button>
   );
 }
 
-
-const ACCIONES_CONFIG: Record<string, { icon: any; descripcion: string; esHeroicon?: boolean }> = {
-  primer_reto: { icon: ClipboardDocumentCheckIcon, esHeroicon: true, descripcion: 'Empieza con 5 preguntas básicas' },
-  test:        { icon: ClipboardDocumentCheckIcon, esHeroicon: true, descripcion: 'Elige cómo quieres practicar' },
-  flashcards:  { icon: RotateCcw,  descripcion: 'Repasa con tarjetas de memoria' },
-  repaso:      { icon: RefreshCw,  descripcion: 'Refuerza lo que más falla' },
-  simulacro:   { icon: Trophy,     descripcion: 'Examen completo con tiempo real' },
-  racha:       { icon: Target,     descripcion: 'Recupera tu racha diaria' },
-  // ⭐ Brain unificado como icono de Psicotécnico en toda la app (antes Puzzle
-  // aquí, porque Brain ya estaba usado por "repaso" en este mismo hub).
-  psicotecnicos: { icon: Brain,    descripcion: 'Numérico, verbal, lógico y más' },
-};
-
-
-function WidgetAcciones({ estado, nivel, suscripcion, oposicion, router, limites, convocatoria }: any) {
-  const maxPorTest = limites?.limites?.preguntasPorTest ?? 5;
+/** Acción principal de la pantalla: hacer un test. Muestra el límite diario si el plan lo tiene. */
+function TarjetaTest({ limites, router, onEmpezar }: any) {
   const limiteDiario = limites?.limites?.preguntasTestDia;
   const preguntasHoy = limites?.consumo?.preguntasTestHoy ?? 0;
-  const restantesDia = (limiteDiario !== null && limiteDiario !== undefined)
-    ? Math.max(0, limiteDiario - preguntasHoy)
-    : null;
-  const limitadoPorDia = restantesDia !== null && restantesDia === 0;
-  const [mostrarExplicaciones, setMostrarExplicaciones] = useState(true);
-  const acciones: { title: string; modo: string }[] = [];
-  const opcionesNumPreguntas = [5, 10, 20, 50].filter(n => n <= maxPorTest);
-  const [modalTest, setModalTest] = useState(false);
+  const conLimite = limiteDiario !== null && limiteDiario !== undefined;
+  const agotado = conLimite && preguntasHoy >= limiteDiario;
+  const pct = conLimite && limiteDiario > 0 ? Math.min(100, Math.round((preguntasHoy / limiteDiario) * 100)) : 0;
+
+  return (
+    <section>
+      <TituloSeccion>Tu entrenamiento</TituloSeccion>
+      <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <IconoActividad Icon={ClipboardCheck} color={COLOR_TEST} bg={COLOR_TEST_BG} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Hacer test</div>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Elige temas, número de preguntas y modo</div>
+          </div>
+        </div>
+
+        {conLimite && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: TEXT_MUTED }}>Preguntas de hoy</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: agotado ? '#DC2626' : TEXT_PRIMARY }}>
+                {preguntasHoy} de {limiteDiario}
+              </span>
+            </div>
+            <div style={{ height: 6, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: agotado ? '#DC2626' : COLOR_TEST, borderRadius: 999, transition: 'width 0.5s ease' }} />
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => (agotado ? router.push('/app/suscripciones') : onEmpezar())}
+          style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: '#0f172a', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+        >
+          {agotado ? 'Límite de hoy alcanzado · Ver planes' : 'Empezar test'}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, router }: any) {
+  const nivel = usuario.oposicionActiva?.nivel ?? 1;
+  const limiteDiario = limites?.limites?.preguntasTestDia;
+  const preguntasHoy = limites?.consumo?.preguntasTestHoy ?? 0;
+  const limiteAgotado = limiteDiario !== null && limiteDiario !== undefined && preguntasHoy >= limiteDiario;
+  const conSimulacros = !!limites?.limites?.simulacros;
 
   const { data: configPsicotecnicos = [] } = useQuery({
     queryKey: ['psicotecnicos-config', oposicion?.id, convocatoria?.id],
-    queryFn: async () => {
-      const res = await api.get(`/psicotecnicos/config/${oposicion.id}`, {
-        params: convocatoria?.id ? { convocatoriaId: convocatoria.id } : {},
-      });
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/psicotecnicos/config/${oposicion.id}`, {
+      params: convocatoria?.id ? { convocatoriaId: convocatoria.id } : {},
+    })).data,
     enabled: !!oposicion?.id,
     staleTime: 0,
     refetchOnMount: 'always',
   });
 
-if (estado === 'nuevo') {
-  acciones.push(
-    { title: 'Primer reto', modo: 'primer_reto' },
-    { title: 'Hacer test', modo: 'test' },
-    { title: 'Flashcards básicas', modo: 'flashcards' },
-  );
-}
+  // Misma consulta que el atajo de Flashcards de Inicio (comparte caché).
+  const { data: pendientesFC = [] } = useQuery({
+    queryKey: ['fc-pendientes-widget', oposicion?.id],
+    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicion.id}`)).data,
+    enabled: !!oposicion?.id,
+  });
+  const nFC = Array.isArray(pendientesFC) ? pendientesFC.length : 0;
 
-if (estado === 'activo') {
-  acciones.push(
-    { title: 'Hacer test', modo: 'test' },
-    { title: 'Flashcards del día', modo: 'flashcards' },
-  );
-  acciones.push({ title: 'Repaso inteligente', modo: 'repaso' });
-  acciones.push({ title: 'Simulacro real', modo: 'simulacro' });
-}
+  if (!oposicion?.id) return null;
 
-if (configPsicotecnicos.length > 0 && (estado === 'activo' || estado === 'inactivo')) {
-  acciones.push({ title: 'Psicotécnicos', modo: 'psicotecnicos' });
-}
+  type Fila = {
+    clave: string; titulo: string; descripcion: string; Icon: any; color: string; bg: string;
+    bloqueado?: boolean; etiqueta?: string; badge?: number; onClick: () => void;
+  };
 
-if (estado === 'inactivo') {
-  acciones.push(
-    { title: 'Hacer test', modo: 'test' },
-    { title: 'Flashcards del día', modo: 'flashcards' },
-    { title: 'Recuperar racha', modo: 'racha' },
-  );
-}
-
-
-const handleClick = (modo: string) => {
-  if (!oposicion?.id) return;
-
-  if (modo === 'simulacro') {
-    if (!limites?.limites?.simulacros) {
-      router.push('/app/suscripciones');
-      return;
-    }
-    router.push('/app/entrenamiento/simulacro');
-    return;
-  }
-
-  if (modo === 'primer_reto') {
-    router.push(`/app/test/${oposicion.id}?modo=primer_reto&n=5`);
-    return;
-  }
-
-  if (modo === 'flashcards') {
-    router.push(`/app/flashcards`);
-    return;
-  }
-
-  if (modo === 'psicotecnicos') {
-    router.push('/app/entrenamiento/psicotecnicos');
-    return;
-  }
-
-  if (modo === 'repaso') {
-    router.push(`/app/test/${oposicion.id}?modo=repaso&n=10`);
-    return;
-  }
-};
+  const filas: Fila[] = [
+    {
+      clave: 'flashcards', titulo: 'Flashcards', Icon: Layers, color: COLOR_FC, bg: COLOR_FC_BG,
+      descripcion: nFC > 0 ? `${nFC} ${nFC === 1 ? 'tarjeta pendiente' : 'tarjetas pendientes'} de repaso` : 'Repasa con tarjetas de memoria',
+      badge: nFC,
+      onClick: () => router.push(nFC > 0 ? `/app/flashcards/repasar?oposicionId=${oposicion.id}` : '/app/flashcards'),
+    },
+    (() => {
+      const porNivel = nivel < 2;
+      const bloqueado = porNivel || limiteAgotado;
+      return {
+        clave: 'repaso', titulo: 'Repaso inteligente', Icon: Target, color: COLOR_TEST, bg: COLOR_TEST_BG,
+        descripcion: porNivel ? 'Se desbloquea al llegar al nivel 2' : limiteAgotado ? 'Límite de preguntas de hoy alcanzado' : 'Refuerza las preguntas que más fallas',
+        bloqueado,
+        onClick: () => {
+          if (porNivel) return;
+          if (limiteAgotado) { router.push('/app/suscripciones'); return; }
+          router.push(`/app/test/${oposicion.id}?modo=repaso&n=10`);
+        },
+      };
+    })(),
+    {
+      clave: 'simulacro', titulo: 'Simulacro de examen', Icon: Timer, color: COLOR_SIMULACRO, bg: COLOR_SIMULACRO_BG,
+      descripcion: conSimulacros ? 'Examen completo con el tiempo real' : 'Disponible desde el plan Esencial',
+      bloqueado: !conSimulacros,
+      etiqueta: conSimulacros ? undefined : 'Esencial',
+      onClick: () => router.push(conSimulacros ? '/app/entrenamiento/simulacro' : '/app/suscripciones'),
+    },
+    ...(configPsicotecnicos.length > 0 ? [{
+      // Los psicotécnicos no consumen el límite diario de preguntas de test.
+      clave: 'psicotecnicos', titulo: 'Psicotécnicos', Icon: Brain, color: COLOR_PSICO, bg: COLOR_PSICO_BG,
+      descripcion: 'Numérico, verbal, lógico y más',
+      onClick: () => router.push('/app/entrenamiento/psicotecnicos'),
+    }] : []),
+  ];
 
   return (
-    <>
-      <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-        <div style={{ marginBottom: '10px', paddingLeft: '2px' }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Mi entrenamiento
-        </span>
+    <section>
+      <TituloSeccion>Más formas de practicar</TituloSeccion>
+      <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+        {filas.map((f, i) => (
+          <button
+            key={f.clave}
+            onClick={f.onClick}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px',
+              background: 'none', border: 'none', borderBottom: i < filas.length - 1 ? `1px solid ${BORDER}` : 'none',
+              cursor: 'pointer', textAlign: 'left',
+            }}
+          >
+            <IconoActividad Icon={f.Icon} color={f.color} bg={f.bg} bloqueado={f.bloqueado} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: f.bloqueado ? TEXT_MUTED : TEXT_PRIMARY, lineHeight: 1.3 }}>{f.titulo}</div>
+              <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>{f.descripcion}</div>
+            </div>
+            {f.etiqueta && (
+              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 999, background: '#F1F5F9', color: '#475569', fontWeight: 700, flexShrink: 0 }}>
+                {f.etiqueta}
+              </span>
+            )}
+            {!!f.badge && f.badge > 0 && (
+              <span style={{ minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: '#DC2626', color: 'white', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', flexShrink: 0 }}>
+                {f.badge > 9 ? '9+' : f.badge}
+              </span>
+            )}
+            <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+          </button>
+        ))}
       </div>
-
-        <div style={{ borderRadius: '14px', overflow: 'hidden' }}>
-        {acciones.map((a, i) => {
-            const cfg = ACCIONES_CONFIG[a.modo] ?? ACCIONES_CONFIG.rapido;
-            const colorAct = COLOR_ACTIVIDAD[a.modo] ?? COLOR_ACTIVIDAD.rapido;
-            const Icono = cfg.icon;
-            const bloqueado = (a.modo === 'simulacro' && !limites?.limites?.simulacros) ||
-              (a.modo === 'repaso' && nivel < 2) ||
-              (limitadoPorDia && a.modo !== 'flashcards' && a.modo !== 'primer_reto');
-
-            return (
-              <button
-                key={a.modo}
-                onClick={() => {
-                  if (bloqueado) return;
-                  if (a.modo === 'test') {
-                    setModalTest(true);
-                  } else {
-                    handleClick(a.modo);
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '13px 14px',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: i < acciones.length - 1 ? `1px solid ${BORDER}` : 'none',
-                  cursor: bloqueado ? 'not-allowed' : 'pointer',
-                  textAlign: 'left',
-                  opacity: bloqueado ? 0.45 : 1,
-                }}
-                onMouseEnter={(e) => { if (!bloqueado) e.currentTarget.style.background = '#fafafa'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
-              >
-                <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: bloqueado ? '#f3f4f6' : colorAct.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {bloqueado ? (
-                    <Lock size={20} color="#9ca3af" />
-                  ) : cfg.esHeroicon ? (
-                    <Icono style={{ width: 26, height: 26, color: colorAct.icon }} />
-                  ) : (
-                    <Icono size={20} color={colorAct.icon} />
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
-                    {a.title}
-                  </div>
-                  <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '1px' }}>
-                    {bloqueado && a.modo === 'simulacro' ? 'Requiere suscripción' :
-                     bloqueado && a.modo === 'repaso' ? 'Desbloquéalo al alcanzar el Nivel 2' :
-                     bloqueado ? 'Límite diario alcanzado' :
-                     cfg.descripcion}
-                  </div>
-                </div>
-                {!bloqueado && a.modo === 'rapido' && <Settings size={14} color="#d1d5db" style={{ flexShrink: 0 }} />}
-                {!bloqueado && a.modo !== 'rapido' && <ChevronRight size={14} color="#d1d5db" style={{ flexShrink: 0 }} />}
-                {bloqueado && a.modo === 'simulacro' && (
-                  <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '999px', background: '#f1f5f9', color: '#475569', fontWeight: 600, flexShrink: 0 }}>
-                    Pro
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Modal configuración */}
-    {modalTest && (
-      <ModalHacerTest
-        oposicion={oposicion}
-        convocatoria={convocatoria}
-        limites={limites}
-        router={router}
-        onClose={() => setModalTest(false)}
-      />
-    )}
-    </>
+    </section>
   );
 }
-
 
 function UpsellPremium({ suscripcion, router }: any) {
   if (suscripcion !== 'gratuito') return null;
 
   return (
-    <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-      <div style={{ background: BG_CARD_INNER, borderRadius: '14px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '11px', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Trophy size={18} color="white" />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: TEXT_PRIMARY, marginBottom: '2px' }}>
-            Desbloquea simulacros reales
-          </div>
-          <div style={{ fontSize: '11px', color: TEXT_MUTED }}>
-            Tests ilimitados, simulacros y análisis detallado
-          </div>
-        </div>
-        <button
-          onClick={() => router.push('/app/suscripciones')}
-          style={{ flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none', background: '#111827', color: 'white', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
-        >
-          Ver planes
-        </button>
+    <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ width: 40, height: 40, borderRadius: 12, background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Crown size={19} color="white" />
       </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 2 }}>Practica sin límites</div>
+        <div style={{ fontSize: 12, color: TEXT_MUTED }}>Más preguntas al día, simulacros y análisis detallado</div>
+      </div>
+      <button
+        onClick={() => router.push('/app/suscripciones')}
+        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: '#0f172a', color: 'white', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+      >
+        Ver planes
+      </button>
     </div>
   );
 }

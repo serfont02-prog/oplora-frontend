@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Plus, ChevronRight, Brain, Lock, Swords } from 'lucide-react';
+import { Plus, ChevronRight, Brain, Lock, Swords, ClipboardCheck, Layers, Landmark, Scale, BookOpen, Clock, Handshake } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
-import { FireIcon } from '@heroicons/react/24/outline';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { getOploUrl } from '@/lib/oplo';
 import TarjetaLiga from '@/components/liga/TarjetaLiga';
@@ -791,10 +790,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Tipo de reto</div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {[
-                    { key: 'test', icon: '📝', label: 'Test' },
-                    { key: 'fc', icon: '🃏', label: 'Flashcards' },
-                    { key: 'psico', icon: '🧠', label: 'Psicotécnicos' },
-                  ].map(({ key, icon, label }) => {
+                    { key: 'test', Icon: ClipboardCheck, color: '#4D7C0F', label: 'Test' },
+                    { key: 'fc', Icon: Layers, color: COLOR_FC, label: 'Flashcards' },
+                    { key: 'psico', Icon: Brain, color: COLOR_PSICO, label: 'Psicotécnicos' },
+                  ].map(({ key, Icon, color, label }) => {
                     const bloqueadoPsico = key === 'psico' && !psicoDisponible;
                     return (
                     <button
@@ -808,7 +807,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                         opacity: bloqueadoPsico ? 0.45 : 1,
                       }}
                     >
-                      <div style={{ fontSize: '16px', marginBottom: '3px' }}>{bloqueadoPsico ? <Lock size={16} color="#9ca3af" style={{ display: 'inline' }} /> : icon}</div>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}>{bloqueadoPsico ? <Lock size={18} color="#9ca3af" /> : <Icon size={18} color={color} />}</div>
                       <div style={{ fontSize: '11px', fontWeight: 500, color: TEXT_PRIMARY }}>{label}</div>
                       {bloqueadoPsico && (
                         <div style={{ fontSize: '9px', color: TEXT_MUTED, marginTop: '2px' }}>No disponible</div>
@@ -865,16 +864,16 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Sobre qué va el reto</div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {[
-                    { key: 'oposicion', icon: '🎯', label: 'Oposición' },
-                    { key: 'normativa', icon: '📖', label: 'Normativa' },
-                    { key: 'tema', icon: '📋', label: 'Tema' },
-                  ].map(({ key, icon, label }) => (
+                    { key: 'oposicion', Icon: Landmark, label: 'Oposición' },
+                    { key: 'normativa', Icon: Scale, label: 'Normativa' },
+                    { key: 'tema', Icon: BookOpen, label: 'Tema' },
+                  ].map(({ key, Icon, label }) => (
                     <button
                       key={key}
                       onClick={() => setForm({ ...form, tipoReto: key as TipoRetoUsuario, temaId: '', versionLeyId: '' })}
                       style={{ flex: 1, padding: '10px 6px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', border: form.tipoReto === key ? '2px solid #111827' : 'none', background: 'white' }}
                     >
-                      <div style={{ fontSize: '16px', marginBottom: '3px' }}>{icon}</div>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}><Icon size={18} color={TEXT_PRIMARY} /></div>
                       <div style={{ fontSize: '11px', fontWeight: 500, color: TEXT_PRIMARY }}>{label}</div>
                     </button>
                   ))}
@@ -1077,7 +1076,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               background: retoRecienCreado.startsWith('fc:') ? COLOR_FC_BG : retoRecienCreado.startsWith('psico:') ? COLOR_PSICO_BG : COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 14px',
             }}>
-              <FireIcon style={{ width: 26, height: 26, color: retoRecienCreado.startsWith('fc:') ? COLOR_FC : retoRecienCreado.startsWith('psico:') ? COLOR_PSICO : COLOR_RETOS }} />
+              <Swords size={26} color={retoRecienCreado.startsWith('fc:') ? COLOR_FC : retoRecienCreado.startsWith('psico:') ? COLOR_PSICO : COLOR_RETOS} />
             </div>
             <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT_PRIMARY, marginBottom: '6px' }}>
               ¡Reto enviado!
@@ -1518,7 +1517,13 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
               style={{ background: 'white', border: '1px solid #F1F5F9', borderLeft: expirado ? '1px solid #F1F5F9' : `4px solid ${colorCategoria}`, borderRadius: '14px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', minHeight: '52px', boxSizing: 'border-box' }}
             >
               <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: expirado ? '#F4F5F7' : empate ? '#FEF3C7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {expirado ? <span style={{ fontSize: '17px' }}>⏱️</span> : esPsico ? <Brain size={17} color={gane || empate ? COLOR_PSICO : '#dc2626'} /> : <span style={{ fontSize: '17px' }}>{empate ? '🤝' : gane ? (esFC ? '🃏' : '🏆') : '😤'}</span>}
+                {(() => {
+                  // ⭐ Icono de la actividad (el mismo que en el resto de la app), coloreado por resultado.
+                  if (expirado) return <Clock size={17} color="#9CA3AF" />;
+                  if (empate) return <Handshake size={17} color="#B45309" />;
+                  const IconoAct = esPsico ? Brain : esFC ? Layers : ClipboardCheck;
+                  return <IconoAct size={17} color={gane ? (esPsico ? COLOR_PSICO : esFC ? COLOR_FC : '#16A34A') : '#dc2626'} />;
+                })()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>

@@ -1,106 +1,98 @@
 'use client';
 
-import { useState } from 'react';
+// ⭐ Estadísticas de Practicar flotando sobre el fondo (mismo estilo que los accesos de Inicio):
+// cada dato es un círculo blanco con la sombra común y el aro de progreso dentro. El periodo se
+// cambia con un selector en línea (antes abría una ventana) y se sigue guardando como preferencia.
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_PSICO } from '@/styles/tokens';
 
-const BG_WIDGET = '#F7F8FA';
-const BG_CARD_ITEM = '#FFFFFF';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const COLOR_TEST = '#4D7C0F';
 
-const VARIANTES: Record<string, { label: string; key: 'dia' | 'semana' | 'mes' | 'total' }> = {
-  dia:    { label: 'Hoy', key: 'dia' },
-  semana: { label: 'Esta semana', key: 'semana' },
-  mes:    { label: 'Este mes', key: 'mes' },
-  total:  { label: 'Total', key: 'total' },
-};
+const VARIANTES: { clave: 'dia' | 'semana' | 'mes' | 'total'; corto: string }[] = [
+  { clave: 'dia', corto: 'Hoy' },
+  { clave: 'semana', corto: 'Semana' },
+  { clave: 'mes', corto: 'Mes' },
+  { clave: 'total', corto: 'Total' },
+];
 
-function colorPorPrecision(porcentaje: number): string {
-  if (porcentaje < 30) return '#DC2626';   // rojo
-  if (porcentaje < 60) return '#D97706';   // naranja/ámbar
-  if (porcentaje < 80) return '#1F7CFF';   // azul
-  return '#16A34A';                         // verde
-}
-
-function Donut({ porcentaje, color, size = 64, grosor = 7 }: { porcentaje: number; color: string; size?: number; grosor?: number }) {
+function Donut({ porcentaje, color, size, grosor }: { porcentaje: number; color: string; size: number; grosor: number }) {
   const radio = (size - grosor) / 2;
   const circunferencia = 2 * Math.PI * radio;
-  const offset = circunferencia - (Math.min(100, porcentaje) / 100) * circunferencia;
+  const offset = circunferencia - (Math.max(0, Math.min(100, porcentaje)) / 100) * circunferencia;
 
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="#E5E7EB" strokeWidth={grosor} />
-      <circle
-        cx={size / 2} cy={size / 2} r={radio} fill="none"
-        stroke={color} strokeWidth={grosor} strokeLinecap="round"
-        strokeDasharray={circunferencia} strokeDashoffset={offset}
-        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-      />
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', position: 'absolute', inset: 0 }}>
+      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="#EEF0F3" strokeWidth={grosor} />
+      {porcentaje > 0 && (
+        <circle
+          cx={size / 2} cy={size / 2} r={radio} fill="none"
+          stroke={color} strokeWidth={grosor} strokeLinecap="round"
+          strokeDasharray={circunferencia} strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+        />
+      )}
     </svg>
   );
 }
+
+function CirculoDato({ porcentaje, color, label, sub, sinDatos }: { porcentaje: number; color: string; label: string; sub: string; sinDatos: boolean }) {
+  const D = 78;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', inset: 6 }}>
+          <Donut porcentaje={sinDatos ? 0 : porcentaje} color={color} size={D - 12} grosor={6} />
+        </div>
+        <span style={{ position: 'relative', fontSize: 16, fontWeight: 800, color: sinDatos ? TEXT_MUTED : TEXT_PRIMARY }}>
+          {sinDatos ? '—' : `${porcentaje}%`}
+        </span>
+      </div>
+      <span style={{ fontSize: 12, color: TEXT_PRIMARY, fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{label}</span>
+      <span style={{ fontSize: 10, color: TEXT_MUTED, marginTop: -3, textAlign: 'center' }}>{sub}</span>
+    </div>
+  );
+}
+
+const plural = (n: number, uno: string, varios: string) => `${n.toLocaleString('es-ES')} ${n === 1 ? uno : varios}`;
 
 export default function WidgetProgreso({
   ubicacion,
   oposicionId,
   convocatoriaId,
 }: {
-  ubicacion: string; // ej: 'entrenamiento_progreso', 'inicio_progreso'
+  ubicacion: string; // ej: 'entrenamiento_progreso'
   oposicionId: string;
   convocatoriaId?: string;
 }) {
-  const [modalDetalle, setModalDetalle] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: variantePreferida = 'semana' } = useQuery({
     queryKey: ['preferencia-widget', ubicacion],
-    queryFn: async () => {
-      const res = await api.get(`/preferencias-widget/${ubicacion}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/preferencias-widget/${ubicacion}`)).data,
     enabled: !!ubicacion,
   });
 
-    const { data: progresoPeriodo } = useQuery({
+  const { data: progresoPeriodo } = useQuery({
     queryKey: ['progreso-periodo', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/test/progreso-periodo/${oposicionId}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/test/progreso-periodo/${oposicionId}`)).data,
     enabled: !!oposicionId,
   });
 
-  const cambiarVariante = async (nuevaVariante: string) => {
-    await api.post(`/preferencias-widget/${ubicacion}`, { variante: nuevaVariante });
-    queryClient.invalidateQueries({ queryKey: ['preferencia-widget', ubicacion] });
-    setModalDetalle(false);
-  };
-
-  const cfg = VARIANTES[variantePreferida] ?? VARIANTES.semana;
-  const datos = progresoPeriodo?.[cfg.key] ?? { precision: 0, totalPreguntas: 0 };
-
-    const { data: fcPeriodo } = useQuery({
+  const { data: fcPeriodo } = useQuery({
     queryKey: ['fc-periodo', oposicionId],
-    queryFn: async () => {
-        const res = await api.get(`/flashcards/stats-periodo/${oposicionId}`);
-        return res.data;
-    },
+    queryFn: async () => (await api.get(`/flashcards/stats-periodo/${oposicionId}`)).data,
     enabled: !!oposicionId,
-    });
+  });
 
-    const datosFC = fcPeriodo?.[cfg.key] ?? { porcentajeDominadas: 0, dominadas: 0 };
-
-  // Psicotécnicos: solo se muestra si hay alguna modalidad activa para esta oposición/convocatoria
+  // Psicotécnicos: solo si hay alguna modalidad activa para esta oposición/convocatoria
   const { data: configPsico = [] } = useQuery({
-    queryKey: ['psicotecnicos-config-widget', oposicionId, convocatoriaId],
-    queryFn: async () => {
-      const res = await api.get(`/psicotecnicos/config/${oposicionId}`, {
-        params: convocatoriaId ? { convocatoriaId } : {},
-      });
-      return res.data;
-    },
+    queryKey: ['psicotecnicos-config', oposicionId, convocatoriaId],
+    queryFn: async () => (await api.get(`/psicotecnicos/config/${oposicionId}`, {
+      params: convocatoriaId ? { convocatoriaId } : {},
+    })).data,
     enabled: !!oposicionId,
     staleTime: 0,
     refetchOnMount: 'always',
@@ -112,119 +104,77 @@ export default function WidgetProgreso({
     queryFn: async () => (await api.get(`/psicotecnicos/progreso-periodo/${oposicionId}`)).data,
     enabled: !!oposicionId && hayPsicotecnicos,
   });
-  const datosPsico = psicoPeriodo?.[cfg.key] ?? { precision: 0, totalPreguntas: 0 };
+
+  const clave = (VARIANTES.find((v) => v.clave === variantePreferida) ?? VARIANTES[1]).clave;
+
+  const cambiarVariante = (nueva: string) => {
+    if (nueva === clave) return;
+    // Cambio inmediato en pantalla; la preferencia se guarda en segundo plano.
+    queryClient.setQueryData(['preferencia-widget', ubicacion], nueva);
+    api.post(`/preferencias-widget/${ubicacion}`, { variante: nueva }).catch(() => {
+      queryClient.invalidateQueries({ queryKey: ['preferencia-widget', ubicacion] });
+    });
+  };
+
+  const test = progresoPeriodo?.[clave] ?? { precision: 0, totalPreguntas: 0 };
+  const fc = fcPeriodo?.[clave] ?? { porcentajeDominadas: 0, dominadas: 0 };
+  const psico = psicoPeriodo?.[clave] ?? { precision: 0, totalPreguntas: 0 };
+
+  const nTest = Number(test.totalPreguntas ?? 0);
+  const nDominadas = Number(fc.dominadas ?? 0);
+  const nPsico = Number(psico.totalPreguntas ?? 0);
 
   const items = [
-    { key: 'test', label: 'Precisión Test', porcentaje: datos.precision, color: colorPorPrecision(datos.precision) },
-    { key: 'fc', label: 'FC dominadas', porcentaje: datosFC.porcentajeDominadas, color: '#FADEF7' },
-    ...(hayPsicotecnicos
-      ? [{ key: 'psico', label: 'Psicotécnicos', porcentaje: datosPsico.precision, color: colorPorPrecision(datosPsico.precision) }]
-      : []),
+    {
+      key: 'test', label: 'Acierto en test', color: COLOR_TEST,
+      porcentaje: Math.round(Number(test.precision ?? 0)), sinDatos: nTest === 0,
+      sub: nTest === 0 ? 'Sin preguntas' : plural(nTest, 'pregunta', 'preguntas'),
+    },
+    {
+      key: 'fc', label: 'Flashcards dominadas', color: COLOR_FC,
+      porcentaje: Math.round(Number(fc.porcentajeDominadas ?? 0)), sinDatos: !fcPeriodo,
+      sub: plural(nDominadas, 'dominada', 'dominadas'),
+    },
+    ...(hayPsicotecnicos ? [{
+      key: 'psico', label: 'Acierto en psicotécnicos', color: COLOR_PSICO,
+      porcentaje: Math.round(Number(psico.precision ?? 0)), sinDatos: nPsico === 0,
+      sub: nPsico === 0 ? 'Sin preguntas' : plural(nPsico, 'pregunta', 'preguntas'),
+    }] : []),
   ];
 
   return (
-    <>
-      <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', paddingLeft: '2px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Mi progreso · {cfg.label.toLowerCase()}
-          </span>
-          <button
-            onClick={() => setModalDetalle(true)}
-            style={{ fontSize: '11px', color: '#111827', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            Cambiar vista
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
-          {items.map((item) => (
-            <div
-              key={item.key}
-              style={{
-                flexShrink: 0, width: '92px', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', gap: '8px', padding: '12px 6px', borderRadius: '14px',
-                background: BG_CARD_ITEM,
-              }}
-            >
-              <div style={{ position: 'relative', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Donut porcentaje={item.porcentaje} color={item.color} size={56} grosor={6} />
-                <div style={{ position: 'absolute', fontSize: '13px', fontWeight: 800, color: TEXT_PRIMARY }}>
-                  {item.porcentaje}%
-                </div>
-              </div>
-              <span style={{ fontSize: '10px', color: TEXT_SECONDARY, fontWeight: 500, textAlign: 'center', lineHeight: 1.2 }}>{item.label}</span>
-            </div>
-          ))}
+    <section>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, padding: '0 4px', gap: 8 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Mi progreso</span>
+        <div role="tablist" aria-label="Periodo" style={{ display: 'flex', background: 'rgba(255,255,255,0.7)', borderRadius: 999, padding: 3, gap: 2 }}>
+          {VARIANTES.map((v) => {
+            const activo = v.clave === clave;
+            return (
+              <button
+                key={v.clave}
+                role="tab"
+                aria-selected={activo}
+                onClick={() => cambiarVariante(v.clave)}
+                style={{
+                  border: 'none', borderRadius: 999, padding: '5px 10px', cursor: 'pointer',
+                  fontSize: 11, fontWeight: 700,
+                  background: activo ? '#0f172a' : 'transparent',
+                  color: activo ? 'white' : TEXT_SECONDARY,
+                  transition: 'background 0.15s ease, color 0.15s ease',
+                }}
+              >
+                {v.corto}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {modalDetalle && (
-        <div
-          onClick={() => setModalDetalle(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ background: '#EAF0FF', borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '420px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: TEXT_PRIMARY }}>Elige tu estadística</div>
-              <button onClick={() => setModalDetalle(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: TEXT_MUTED }}>×</button>
-            </div>
-
-{Object.entries(VARIANTES).map(([key, v]) => {
-  const datosVariante = progresoPeriodo?.[v.key] ?? { precision: 0, totalPreguntas: 0 };
-  const datosFCVariante = fcPeriodo?.[v.key] ?? { porcentajeDominadas: 0, dominadas: 0 };
-  const datosPsicoVariante = psicoPeriodo?.[v.key] ?? { precision: 0, totalPreguntas: 0 };
-  const esActual = variantePreferida === key;
-
-  const itemsVariante = [
-    { key: 'test', label: 'Precisión Test', porcentaje: datosVariante.precision, color: colorPorPrecision(datosVariante.precision) },
-    { key: 'fc', label: 'FC dominadas', porcentaje: datosFCVariante.porcentajeDominadas, color: '#FADEF7' },
-    ...(hayPsicotecnicos
-      ? [{ key: 'psico', label: 'Psicotécnicos', porcentaje: datosPsicoVariante.precision, color: colorPorPrecision(datosPsicoVariante.precision) }]
-      : []),
-  ];
-
-  return (
-    <div
-  key={key}
-  onClick={() => !esActual && cambiarVariante(key)}
-  style={{
-    marginBottom: '12px', padding: '14px', borderRadius: '14px',
-    border: esActual ? '2px solid #111827' : '1px solid #E9EAEC',
-    background: esActual ? '#F9FAFB' : 'white',
-    cursor: esActual ? 'default' : 'pointer',
-  }}
->
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <span style={{ fontSize: '12px', fontWeight: 600, color: TEXT_SECONDARY }}>{v.label}</span>
-        {esActual && (
-          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '999px', background: '#111827', color: 'white', fontWeight: 600 }}>
-            Actual
-          </span>
-        )}
-      </div>
-      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '2px' }}>
-        {itemsVariante.map((item) => (
-          <div key={item.key} style={{ flexShrink: 0, width: '76px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-            <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Donut porcentaje={item.porcentaje} color={item.color} size={52} grosor={6} />
-              <div style={{ position: 'absolute', fontSize: '12px', fontWeight: 800, color: TEXT_PRIMARY }}>
-                {item.porcentaje}%
-              </div>
-            </div>
-            <span style={{ fontSize: '10px', color: TEXT_MUTED, textAlign: 'center', lineHeight: 1.2 }}>{item.label}</span>
-          </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 8, padding: '0 4px' }}>
+        {items.map((item) => (
+          <CirculoDato key={item.key} porcentaje={item.porcentaje} color={item.color} label={item.label} sub={item.sub} sinDatos={item.sinDatos} />
         ))}
       </div>
-    </div>
-  );
-})}
-          </div>
-        </div>
-      )}
-    </>
+    </section>
   );
 }

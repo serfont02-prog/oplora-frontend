@@ -1,12 +1,10 @@
 'use client';
 
-import { Brain, CheckCircle2, Clock3, Layers3, Target, Zap } from 'lucide-react';
+import { CheckCircle2, Clock3, ClipboardCheck, Layers, Target, Sparkles, Home } from 'lucide-react';
+import { TEXT_PRIMARY, TEXT_SECONDARY, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 
 const BG_APP = '#EAF0FF';
-const BG_WIDGET = '#F7F8FA';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
 
 export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void }) {
   return (
@@ -21,7 +19,7 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
             background: 'rgba(255,255,255,0.1)', fontSize: 11, fontWeight: 700,
             width: 'fit-content',
           }}>
-            <Zap size={12} />
+            <Sparkles size={12} />
             Práctica guiada
           </div>
 
@@ -34,29 +32,30 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
           </p>
         </div>
 
-        {/* Métricas — widget gris con tarjetas blancas */}
-        <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            <Metric icon={<Clock3 size={16} />} label="3 min" />
-            <Metric icon={<Target size={16} />} label="5 preguntas" />
-            <Metric icon={<CheckCircle2 size={16} />} label="Sin presión" />
-          </div>
+        {/* Métricas — círculos flotantes sobre el fondo, como en Inicio y Practicar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, padding: '4px 0' }}>
+          <Metric icon={<Clock3 size={19} />} label="3 min" />
+          <Metric icon={<Target size={19} />} label="5 preguntas" />
+          <Metric icon={<CheckCircle2 size={19} />} label="Sin presión" />
         </div>
 
         {/* Pasos — tarjeta plana única, sin cajas anidadas */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ background: 'white', borderRadius: '18px', padding: '16px', boxShadow: SOMBRA, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Step
-            icon={<Brain size={18} />}
+            icon={<ClipboardCheck size={18} color="#4D7C0F" />}
+            bg="#F3FAE9"
             title="Primero calibramos"
             text="Un mini test nos ayuda a entender tu punto de partida."
           />
           <Step
-            icon={<Layers3 size={18} />}
+            icon={<Layers size={18} color={COLOR_FC} />}
+            bg={COLOR_FC_BG}
             title="Luego repasas"
             text="Verás flashcards para fijar ideas clave sin saturarte."
           />
           <Step
-            icon={<Target size={18} />}
+            icon={<Home size={18} color="#1F7CFF" />}
+            bg="#EAF0FF"
             title="Después cambia tu inicio"
             text="Cuando acabes, pasarás a estado activo y OPLORA te mostrará el entrenamiento diario."
           />
@@ -78,22 +77,20 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
 
 function Metric({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <div style={{
-      minHeight: 68, borderRadius: '14px', background: 'white',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      gap: 6, color: TEXT_PRIMARY, fontSize: 12, fontWeight: 700,
-    }}>
-      <div style={{ color: '#1F7CFF' }}>{icon}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: TEXT_PRIMARY, fontSize: 12, fontWeight: 600 }}>
+      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, color: '#1F7CFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {icon}
+      </div>
       {label}
     </div>
   );
 }
 
-function Step({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function Step({ icon, title, text, bg }: { icon: React.ReactNode; title: string; text: string; bg: string }) {
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
       <div style={{
-        width: 36, height: 36, borderRadius: '10px', background: '#EAF0FF', color: '#185FA5',
+        width: 36, height: 36, borderRadius: '10px', background: bg,
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
       }}>
         {icon}

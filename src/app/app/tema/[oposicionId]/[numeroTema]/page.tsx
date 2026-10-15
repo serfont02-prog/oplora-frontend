@@ -5,8 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Upload, CheckCircle2 } from 'lucide-react'; // añadir junto a los demás iconos lucide
-import { ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
+import { Upload, CheckCircle2, ClipboardCheck } from 'lucide-react';
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import {
   ArrowLeft,
@@ -484,7 +483,7 @@ const hoy = new Date().toISOString().split('T')[0];
         style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '12px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
       >
         <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#EFFADE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ClipboardDocumentCheckIcon style={{ width: 16, height: 16, color: '#4D7C0F' }} />
+          <ClipboardCheck size={16} color="#4D7C0F" />
         </div>
         <span style={{ fontSize: '11px', fontWeight: 600, color: '#111827' }}>Hacer test</span>
       </button>
