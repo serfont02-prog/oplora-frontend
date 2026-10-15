@@ -259,6 +259,15 @@ const oposicionId = usuario?.oposicionActiva?.id;
     enabled: !!usuario,
   });
 
+  // ⭐ Desde el Inicio ("Retos · N por jugar") se llega con ?vista=pendientes: bajar a la lista
+  useEffect(() => {
+    let ir = false;
+    try { ir = new URLSearchParams(window.location.search).get('vista') === 'pendientes'; } catch { /* sin query */ }
+    if (!ir) return;
+    const t = setTimeout(() => document.getElementById('retos-en-curso')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
+    return () => clearTimeout(t);
+  }, [misRetos]);
+
   const { data: misRetosFC = [] } = useQuery({
     queryKey: ['mis-retos-fc'],
     queryFn: async () => {
@@ -604,7 +613,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
   if (retosEnCurso.length === 0) return null;
 
   return (
-    <div>
+    <div id="retos-en-curso" style={{ scrollMarginTop: 16 }}>
       <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
         Retos en curso · {retosEnCurso.length}
       </div>

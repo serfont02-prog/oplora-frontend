@@ -1,28 +1,24 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useMemo, useState } from 'react';
-import { Newspaper, FileText, Scale, Sparkles } from 'lucide-react';
-import {Cog6ToothIcon, ArchiveBoxIcon, ClipboardDocumentListIcon} from '@heroicons/react/24/outline';
+// ⭐ Una sola familia de iconos (lucide). Se importan con los nombres que tenían los de
+// heroicons para no tocar cada uso.
+import {
+  Newspaper, FileText, Scale, Sparkles, X, Flame,
+  Settings as Cog6ToothIcon, Archive as ArchiveBoxIcon, ClipboardList as ClipboardDocumentListIcon,
+  Bell as BellIcon, Landmark as BuildingLibraryIcon, Building2 as BuildingOffice2Icon, Briefcase as BriefcaseIcon,
+  Home as HomeIcon, BookOpen as BookOpenIcon, Swords as FireIcon, Layers as ArrowPathIcon,
+  ClipboardCheck as ClipboardDocumentCheckIcon,
+} from 'lucide-react';
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import TarjetaLiga from '@/components/liga/TarjetaLiga';
 import { getOploUrl } from '@/lib/oplo';
 
-import {
-  BellIcon,
-  BuildingLibraryIcon,
-  BuildingOffice2Icon,
-  BriefcaseIcon,
-  HomeIcon,
-  BookOpenIcon,
-  FireIcon,
-  ArrowPathIcon,
-  ClipboardDocumentCheckIcon,
-} from '@heroicons/react/24/outline';
 
 /* -------------------------------------------------------
    TOKENS DE DISEÑO (compartidos con Entrenamiento)
@@ -30,7 +26,9 @@ import {
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_RETOS } from '@/styles/tokens';
 
 const BG_APP = '#EAF0FF';
-const BG_WIDGET = '#F7F8FA';
+const BG_WIDGET = '#FFFFFF';
+// ⭐ Una sola sombra para todo lo que "flota" (círculos, accesos y tarjetas)
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
 
 // Colores de actividad (los mismos que en Entrenamiento)
 const COLOR_ESTUDIAR = '#1F7CFF';
@@ -136,7 +134,7 @@ function HeaderDashboard({ usuario, ultimaConvocatoria, router }: any) {
 
   const accesos = [
   { label: 'Ajustes', icon: Cog6ToothIcon, size: 23, onClick: () => router.push(`/app/oposicion/${oposicionId}/ajustes`) },
-  { label: 'Noticias', icon: Newspaper, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/noticias`) }, // ⭐ corregido, sin ?tab=
+  { label: 'Noticias', icon: Newspaper, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/noticias`), badge: true },
   { label: 'Convocatoria', icon: ClipboardDocumentListIcon, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/convocatoria`) }, // ⭐ renombrado
   { label: 'Histórico', icon: ArchiveBoxIcon, size: 19, onClick: () => router.push(`/app/oposicion/${oposicionId}/historial`) }, // ⭐ renombrado (misma ruta)
 ];
@@ -154,6 +152,7 @@ const { data: countData } = useQuery({
 });
 
 const countNoLeidas = countData?.count ?? 0;
+  const { data: novedades } = useNovedades(oposicionId, usuario?.oposicionActiva?.convocatoriaActiva?.id);
   return (
     <header
       style={{
@@ -173,17 +172,13 @@ const countNoLeidas = countData?.count ?? 0;
             Hola, {usuario.nombre?.split(' ')[0] || 'Opositor'}
           </span>
 
-          {usuario.suscripcion && (
-            <button
-              onClick={() => router.push('/app/suscripciones')}
-              style={{
-                padding: '4px 10px', borderRadius: 999,
-                background: 'white', color: TEXT_SECONDARY,
-                fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer',
-              }}
+          {(usuario.rachaActual ?? 0) > 0 && (
+            <span
+              title="Días seguidos estudiando"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999, background: 'white', color: '#C2410C', fontSize: 12, fontWeight: 700, boxShadow: SOMBRA }}
             >
-              {getSuscripcionLabel(usuario.suscripcion)}
-            </button>
+              <Flame size={13} /> {usuario.rachaActual} {usuario.rachaActual === 1 ? 'día' : 'días'}
+            </span>
           )}
         </div>
 
@@ -257,8 +252,8 @@ const countNoLeidas = countData?.count ?? 0;
             position: 'absolute', bottom: '-38px', left: '12px', right: '12px',
             display: 'flex', justifyContent: 'space-between',
           }}>
-            {accesos.map(({ label, icon: Icon, size, onClick }) => (
-              <AccesoCirculo key={label} label={label} Icon={Icon} size={size} onClick={onClick} />
+            {accesos.map(({ label, icon: Icon, size, onClick, badge }: any) => (
+              <AccesoCirculo key={label} label={label} Icon={Icon} size={size} onClick={onClick} badge={badge ? novedades?.noLeidas ?? 0 : 0} />
             ))}
         </div>
         </div>
@@ -346,28 +341,25 @@ export function FooterNavegacion({ usuario, oposicionId, activo = 'inicio' }: an
    WIDGET WRAPPER genérico
 ------------------------------------------------------- */
 
-function Widget({ titulo, accion, children }: { titulo?: string; accion?: { label: string; onClick: () => void }; children: React.ReactNode }) {
+function Widget({ titulo, accion, children, sinCaja = false }: { titulo?: string; accion?: { label: string; onClick: () => void }; children: React.ReactNode; sinCaja?: boolean }) {
+  // ⭐ Antes: fondo azul + caja gris + tarjeta blanca + título en mayúsculas. Ahora la tarjeta
+  // blanca va directamente sobre el fondo, con la sombra común, y el título es una línea suave.
   return (
-    <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
+    <section>
       {(titulo || accion) && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', paddingLeft: '2px' }}>
-          {titulo && (
-            <span style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {titulo}
-            </span>
-          )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
+          {titulo && <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>{titulo}</span>}
           {accion && (
-            <button
-              onClick={accion.onClick}
-              style={{ fontSize: '11px', color: '#111827', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-            >
+            <button onClick={accion.onClick} style={{ fontSize: 12, color: '#1F7CFF', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
               {accion.label}
             </button>
           )}
         </div>
       )}
-      {children}
-    </div>
+      {sinCaja ? children : (
+        <div style={{ background: BG_WIDGET, borderRadius: 18, padding: 14, boxShadow: SOMBRA }}>{children}</div>
+      )}
+    </section>
   );
 }
 
@@ -386,7 +378,7 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-    <WidgetNoticias oposicionId={oposicionId} router={router} />
+    <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
 
       {/* Hero — CTA principal */}
       <div style={{ background: '#0f172a', borderRadius: 18, padding: '20px 18px', color: 'white', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -413,7 +405,7 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button
             onClick={() => oposicionId ? router.push(`/app/tema/${oposicionId}`) : router.push('/app/onboarding/oposicion')}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderRadius: 14, border: 'none', background: 'white', cursor: 'pointer', textAlign: 'left' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 14, border: 'none', background: '#F8F9FA', cursor: 'pointer', textAlign: 'left' }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 11, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <BookOpenIcon style={{ width: 18, height: 18, color: COLOR_ESTUDIAR }} />
@@ -426,10 +418,10 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
 
           <button
             onClick={() => router.push(`/app/oposicion/${oposicionId}/historial`)}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderRadius: 14, border: 'none', background: 'white', cursor: 'pointer', textAlign: 'left' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 14, border: 'none', background: '#F8F9FA', cursor: 'pointer', textAlign: 'left' }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 11, background: '#F3FAE9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontSize: 16 }}>📄</span>
+              <FileText size={17} color="#3B6D11" />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Convocatorias y exámenes</div>
@@ -441,7 +433,7 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
 
       {/* Widget: Primeros pasos */}
       <Widget titulo="Primeros pasos">
-        <div style={{ background: 'white', borderRadius: 14, padding: '14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {['Empieza un reto', 'Explora el temario', 'Practica con exámenes'].map((paso, i) => (
             <div key={paso} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#F4F5F7', color: TEXT_MUTED, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -468,10 +460,10 @@ export function DashboardActivo({ usuario, oposicionId }: { usuario: any; oposic
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      <WidgetNoticias oposicionId={oposicionId} router={router} />
+      <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
       <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
-      <TarjetaLiga />
       <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
+      <TarjetaLiga soloSiRelevante />
       <SeccionOplo usuario={usuario} />
     </div>
   );
@@ -484,44 +476,29 @@ export function DashboardActivo({ usuario, oposicionId }: { usuario: any; oposic
 export function DashboardInactivo({ usuario, oposicionId }: { usuario: any; oposicionId?: string }) {
   const router = useRouter();
 
+  // ⭐ El aviso de racha perdida va primero (antes quedaba al final). Se quita el bloque
+  // "Mi progreso general", que mostraba un 32 % inventado.
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-    <WidgetNoticias oposicionId={oposicionId} router={router} />
-    <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
-    <TarjetaLiga />
-    <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
-
-      {/* Hero — recuperar racha */}
-      <div style={{ background: '#0f172a', borderRadius: 18, padding: '20px 18px', color: 'white', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span style={{ fontSize: 17, fontWeight: 700 }}>Has perdido tu racha</span>
-        <span style={{ fontSize: 13, color: '#94a3b8' }}>No pasa nada, hoy es un buen día para volver</span>
+      <div style={{ background: '#0f172a', borderRadius: 18, padding: '18px 16px', color: 'white', display: 'flex', flexDirection: 'column', gap: 6, boxShadow: SOMBRA }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 700 }}><Flame size={17} color="#FB923C" /> Has perdido tu racha</span>
+        <span style={{ fontSize: 13, color: '#94a3b8' }}>No pasa nada: hoy es un buen día para volver.</span>
         <button
           onClick={() => router.push('/app/entrenamiento')}
-          style={{ marginTop: 8, width: '100%', borderRadius: 999, border: 'none', padding: '13px 16px', background: 'white', color: '#0f172a', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+          style={{ marginTop: 8, width: '100%', borderRadius: 12, border: 'none', padding: '12px 16px', background: 'white', color: '#0f172a', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
         >
-          Empezar reto rápido (2 min)
+          Empezar un test rápido
         </button>
       </div>
 
-      {/* Widget: Progreso general */}
-      <Widget titulo="Mi progreso general">
-        <div style={{ background: 'white', borderRadius: 14, padding: '14px' }}>
-          <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 8 }}>
-            Has completado un 32% del temario. ¡Vamos a por más!
-          </div>
-          <div style={{ height: 8, background: '#F4F5F7', borderRadius: 999, overflow: 'hidden' }}>
-            <div style={{ width: '32%', height: '100%', background: TEXT_PRIMARY, borderRadius: 999 }} />
-          </div>
-        </div>
-      </Widget>
-
+      <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
+      <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
+      <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
+      <TarjetaLiga soloSiRelevante />
       <SeccionOplo usuario={usuario} />
     </div>
   );
 }
-
-
 
 /* -------------------------------------------------------
    WIDGET ULTIMAS NOTICIAS
@@ -585,95 +562,64 @@ function formatearFecha(fecha: string | Date): string {
   return `${dia}-${mes}-${anyo}`;
 }
 
-function WidgetNoticias({ oposicionId, router }: any) {
-  const [expandido, setExpandido] = useState(false);
-
-  // Misma lógica que ConvocatoriaService.getNoticiasByOposicion: se usa la
-  // convocatoria en estado 'activa' y, si no hay ninguna, la más reciente.
-  const { data: convocatorias = [] } = useQuery({
-    queryKey: ['convocatorias-oposicion', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
-      return res.data as { id: string; anyo: number; estado: string }[];
-    },
+/** Novedades del usuario: nº de noticias sin ver y la última (si tiene menos de 2 días). */
+function useNovedades(oposicionId?: string, convocatoriaId?: string) {
+  return useQuery<{ noLeidas: number; ultima: Noticia | null }>({
+    queryKey: ['noticias-novedades', oposicionId, convocatoriaId],
+    queryFn: async () => (await api.get('/noticias/novedades', { params: { oposicionId, convocatoriaId } })).data,
     enabled: !!oposicionId,
+    staleTime: 60_000,
   });
-
-  const convocatoriaRelevante = convocatorias.find((c) => c.estado === 'activa') ?? convocatorias[0];
-
-  const { data: noticias = [], isLoading } = useQuery<Noticia[]>({
-    queryKey: ['noticias-feed', oposicionId, convocatoriaRelevante?.id],
-    queryFn: async () => {
-      const res = await api.get('/noticias/feed', {
-        params: { convocatoriaId: convocatoriaRelevante?.id, oposicionId, limite: 3 },
-      });
-      return res.data;
-    },
-    enabled: !!oposicionId && convocatorias.length > 0,
-  });
-
-  if (!oposicionId || isLoading) return null;
-
-  const noticiasAMostrar = expandido ? noticias : noticias.slice(0, 1);
-
-  return (
-    <Widget
-      titulo={expandido ? 'Últimas noticias' : 'Última noticia'}
-      accion={
-        noticias.length > 0
-          ? expandido
-            ? { label: 'Ver todas', onClick: () => router.push(`/app/oposicion/${oposicionId}/noticias`) }
-            : { label: 'Ver más', onClick: () => setExpandido(true) }
-          : undefined
-      }
-    >
-      {noticias.length === 0 ? (
-        <div style={{ fontSize: 12, color: TEXT_MUTED, padding: '8px 4px' }}>
-          Sin noticias por ahora. Te avisaremos en cuanto haya novedades.
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {noticiasAMostrar.map((n) => {
-            const Icono = ICONO_TIPO_NOTICIA[n.tipo] ?? FileText;
-            return (
-              <div
-                key={n.id}
-                onClick={() => n.urlOrigen && window.open(n.urlOrigen, '_blank')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 4px', cursor: n.urlOrigen ? 'pointer' : 'default' }}
-              >
-                <div style={{
-                  width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-                  background: tipoIconoBg[n.tipo] ?? '#F4F5F7',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginTop: 1,
-                }}>
-                  <Icono size={13} color={tipoIconoColor[n.tipo] ?? TEXT_MUTED} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                    <span style={{ fontSize: 10, color: TEXT_PRIMARY, fontWeight: 700, flexShrink: 0 }}>
-                      {formatearFecha(n.fechaPublicacion ?? n.creadoEn)}
-                    </span>
-                    <span style={{ fontSize: 12, color: TEXT_PRIMARY, fontWeight: 500, lineHeight: 1.3 }}>
-                      {n.titulo}
-                    </span>
-                  </div>
-                  {n.resumen && (
-                    <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.4 }}>
-                      {n.resumen}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </Widget>
-  );
 }
 
+// ⭐ La última noticia solo se destaca mientras es nueva para el usuario: desaparece al
+// abrirla, al descartarla con la X o a los 2 días, y vuelve cuando haya otra. El resto
+// queda a mano en el círculo "Noticias", que muestra cuántas hay sin ver.
+function WidgetNoticias({ oposicionId, convocatoriaId, router }: any) {
+  const queryClient = useQueryClient();
+  const { data } = useNovedades(oposicionId, convocatoriaId);
+  const n = data?.ultima;
+  if (!oposicionId || !n) return null;
 
+  const marcarVista = async () => {
+    try { await api.post('/noticias/marcar-vistas'); } catch { /* no es crítico */ }
+    queryClient.invalidateQueries({ queryKey: ['noticias-novedades'] });
+  };
+  const abrir = () => {
+    marcarVista();
+    if (n.urlOrigen) window.open(n.urlOrigen, '_blank');
+    else router.push(`/app/oposicion/${oposicionId}/noticias`);
+  };
+  const Icono = ICONO_TIPO_NOTICIA[n.tipo] ?? FileText;
+  const otras = Math.max(0, (data?.noLeidas ?? 1) - 1);
+
+  return (
+    <div style={{ background: BG_WIDGET, borderRadius: 18, padding: '12px 12px 12px 14px', boxShadow: SOMBRA, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+      <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: tipoIconoBg[n.tipo] ?? '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icono size={16} color={tipoIconoColor[n.tipo] ?? TEXT_MUTED} />
+      </div>
+      <div onClick={abrir} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#1F7CFF' }}>
+          Nueva · {formatearFecha(n.fechaPublicacion ?? n.creadoEn)}
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.35, marginTop: 2 }}>{n.titulo}</div>
+        {n.resumen && (
+          <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 3, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {n.resumen}
+          </div>
+        )}
+        {otras > 0 && (
+          <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginTop: 6 }}>
+            y {otras} {otras === 1 ? 'noticia más' : 'noticias más'} sin leer
+          </div>
+        )}
+      </div>
+      <button onClick={marcarVista} aria-label="Descartar noticia" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: TEXT_MUTED, flexShrink: 0 }}>
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
 
 /* -------------------------------------------------------
    WIDGET SEGUIR ESTUDIANDO
@@ -683,7 +629,6 @@ function WidgetSeguirEstudiando({ oposicionId, router }: any) {
     queryKey: ['ultimo-tema-estudiado', oposicionId],
     queryFn: async () => {
       const res = await api.get(`/sesiones-tema/ultimo/${oposicionId}`);
-      console.log('Respuesta:', res.data); // ⭐
       return res.data;
     },
     enabled: !!oposicionId,
@@ -773,93 +718,57 @@ function WidgetAccionesRapidas({ usuario, oposicionId, router }: any) {
 
   const { data: convocatorias = [] } = useQuery({
     queryKey: ['convocatorias-acciones-rapidas', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data,
     enabled: !!oposicionId,
   });
   const convocatoria = convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0];
 
   const { data: limites } = useQuery({
     queryKey: ['limites', usuario?.id],
-    queryFn: async () => {
-      const res = await api.get('/usuarios/limites');
-      return res.data;
-    },
+    queryFn: async () => (await api.get('/usuarios/limites')).data,
     enabled: !!usuario,
   });
 
   const { data: pendientesFC = [] } = useQuery({
     queryKey: ['fc-pendientes-widget', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/flashcards/pendientes/${oposicionId}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicionId}`)).data,
     enabled: !!oposicionId,
+  });
+
+  // ⭐ Retos por jugar (test, flashcards y psicotécnicos)
+  const { data: retosPend } = useQuery({
+    queryKey: ['retos-pendientes', usuario?.id],
+    queryFn: async () => (await api.get('/retos/pendientes')).data,
+    enabled: !!usuario,
+    staleTime: 30_000,
   });
 
   if (!oposicionId) return null;
 
+  const nFC = pendientesFC.length;
+  const nRetos = retosPend?.total ?? 0;
 
-
-const acciones = [
-  {
-    label: 'Hacer test',
-    icon: ClipboardDocumentCheckIcon,
-    bg: '#EFFADE',
-    color: COLOR_PRACTICAR,
-    onClick: () => setModalTest(true),
-  },
-  {
-    label: 'Flashcards',
-    sub: pendientesFC.length > 0 ? `${pendientesFC.length} pendientes` : 'Al día',
-    icon: ArrowPathIcon,
-    bg: '#FADEF7',
-    color: '#9333EA',
-    onClick: () => router.push('/app/flashcards'),
-  },
-  {
-    label: 'Retos',
-    icon: FireIcon,
-    bg: '#FACCC0',
-    color: COLOR_RETOS,
-    onClick: () => router.push('/app/retos'),
-  },
-];
+  // ⭐ Atajos directos: el test abre la elección sin pasar por Practicar; las flashcards van al
+  // repaso si hay pendientes; los retos, a la lista de los que tienes por jugar.
+  const acciones = [
+    { label: 'Test', sub: 'Empezar ya', Icon: ClipboardDocumentCheckIcon, color: COLOR_PRACTICAR, badge: 0, onClick: () => setModalTest(true) },
+    {
+      label: 'Flashcards', sub: nFC > 0 ? `${nFC} pendientes` : 'Al día', Icon: ArrowPathIcon, color: '#9333EA', badge: nFC,
+      onClick: () => router.push(nFC > 0 ? `/app/flashcards/repasar?oposicionId=${oposicionId}` : '/app/flashcards'),
+    },
+    {
+      label: 'Retos', sub: nRetos > 0 ? `${nRetos} por jugar` : 'Lanza uno', Icon: FireIcon, color: COLOR_RETOS, badge: nRetos,
+      onClick: () => router.push(nRetos > 0 ? '/app/retos?vista=pendientes' : '/app/retos'),
+    },
+  ];
 
   return (
     <>
-      <Widget titulo="Acciones rápidas">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-          {acciones.map(({ label, sub, icon: Icon, bg, color, onClick }) => (
-            <button
-              key={label}
-              onClick={onClick}
-              style={{
-                background: 'white', border: 'none', borderRadius: 14,
-                padding: '14px 8px', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', gap: 6, cursor: 'pointer',
-                transition: 'box-shadow 0.15s',
-              }}
-              onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 2px #d1d5db'; }}
-              onMouseUp={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
-              onTouchStart={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 2px #d1d5db'; }}
-              onTouchEnd={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
-            >
-              <div style={{
-                width: 38, height: 38, borderRadius: 11, background: bg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Icon style={{ width: 26, height: 26, color }} />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 600, color: TEXT_PRIMARY, textAlign: 'center' }}>{label}</span>
-              {sub && <span style={{ fontSize: 9, color: TEXT_MUTED }}>{sub}</span>}
-            </button>
-          ))}
-        </div>
-      </Widget>
+      <div style={{ display: 'flex', justifyContent: 'space-around', padding: '4px 8px' }}>
+        {acciones.map(({ label, sub, Icon, color, badge, onClick }) => (
+          <AccesoCirculo key={label} label={label} sub={sub} Icon={Icon} size={22} color={color} badge={badge} onClick={onClick} />
+        ))}
+      </div>
 
       {modalTest && (
         <ModalHacerTest
@@ -907,7 +816,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
       <Widget titulo="Mi nivel">
         <div
           onClick={() => setModalAbierto(true)}
-          style={{ background: 'white', borderRadius: 14, padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }}
         >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           <img
@@ -918,10 +827,10 @@ function SeccionOplo({ usuario }: { usuario: any }) {
           {racha > 0 && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: '3px',
-              background: '#EFF6FF', borderRadius: '999px',
-              padding: '2px 8px', fontSize: '10px', fontWeight: 700, color: '#1F7CFF',
+              background: '#FFF1E8', borderRadius: '999px',
+              padding: '2px 8px', fontSize: '10px', fontWeight: 700, color: '#C2410C',
             }}>
-              ⚡ {racha} días
+              <Flame size={11} /> {racha} {racha === 1 ? 'día' : 'días'}
             </div>
           )}
         </div>
@@ -948,7 +857,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
             </div>
 
             <div style={{ fontSize: '11px', color: TEXT_MUTED }}>
-              {nivelSiguiente ? `${puntosParaSiguiente} puntos para ${nivelSiguiente.nombre}` : '🏆 Nivel máximo'}
+              {nivelSiguiente ? `${puntosParaSiguiente} puntos para ${nivelSiguiente.nombre}` : 'Nivel máximo'}
             </div>
           </div>
         </div>
@@ -988,7 +897,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
                 <div style={{ width: `${porcentajeProgreso}%`, height: '100%', background: '#0f172a', borderRadius: '999px' }} />
               </div>
               <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '6px' }}>
-                {nivelSiguiente ? `${puntosParaSiguiente} puntos para ${nivelSiguiente.nombre}` : '🏆 Nivel máximo alcanzado'}
+                {nivelSiguiente ? `${puntosParaSiguiente} puntos para ${nivelSiguiente.nombre}` : 'Nivel máximo alcanzado'}
               </div>
             </div>
 
@@ -1048,7 +957,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
   );
 }
 
-function AccesoCirculo({ label, Icon, size = 19, onClick }: any) {
+function AccesoCirculo({ label, Icon, size = 19, onClick, badge = 0, sub, color = '#111827' }: any) {
   const [pulsado, setPulsado] = useState(false);
 
   return (
@@ -1071,14 +980,19 @@ function AccesoCirculo({ label, Icon, size = 19, onClick }: any) {
         width: 48, height: 48, borderRadius: '50%',
         background: pulsado ? '#1F7CFF' : 'white', // ⭐ relleno azul completo al pulsar
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: pulsado
-          ? '0 2px 8px rgba(31,124,255,0.4)' // ⭐ sombra azul en vez de solo anillo
-          : '0 4px 10px rgba(0,0,0,0.12)',
+        boxShadow: pulsado ? '0 2px 8px rgba(31,124,255,0.35)' : SOMBRA,
         transition: 'background 0.15s ease, box-shadow 0.15s ease',
+        position: 'relative',
       }}>
-       <Icon style={{ width: size, height: size, transition: 'color 0.15s ease' }} color={pulsado ? 'white' : '#111827'} />
+       <Icon style={{ width: size, height: size, transition: 'color 0.15s ease' }} color={pulsado ? 'white' : color} />
+       {badge > 0 && (
+         <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, background: '#DC2626', color: 'white', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white', boxSizing: 'border-box' }}>
+           {badge > 9 ? '9+' : badge}
+         </span>
+       )}
       </div>
-      <span style={{ fontSize: 10, color: pulsado ? '#1F7CFF' : TEXT_SECONDARY, fontWeight: pulsado ? 700 : 500, transition: 'color 0.15s ease' }}>{label}</span>
+      <span style={{ fontSize: 11, color: pulsado ? '#1F7CFF' : TEXT_PRIMARY, fontWeight: 600, transition: 'color 0.15s ease' }}>{label}</span>
+      {sub && <span style={{ fontSize: 10, color: TEXT_MUTED, marginTop: -4 }}>{sub}</span>}
     </button>
   );
 }

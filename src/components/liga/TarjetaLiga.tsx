@@ -17,11 +17,20 @@ export function useMiLiga(enabled = true) {
   });
 }
 
-export default function TarjetaLiga() {
+/**
+ * `soloSiRelevante` (Inicio): solo se muestra si hay jornada próxima o abierta, o si la última
+ * cerró hace menos de 2 días (para ver el resultado). El resto de la semana no ocupa sitio.
+ */
+export default function TarjetaLiga({ soloSiRelevante = false }: { soloSiRelevante?: boolean }) {
   const router = useRouter();
   const { data } = useMiLiga();
 
   if (!data?.liga) return null;
+  if (soloSiRelevante) {
+    const j = data.jornada;
+    const recienCerrada = j?.estado === 'cerrada' && Date.now() - new Date(j.fechaCierre).getTime() < 2 * 86400000;
+    if (!j || !(j.estado === 'programada' || j.estado === 'abierta' || recienCerrada)) return null;
+  }
   const estado = estadoJornada(data);
 
   return (
@@ -31,7 +40,8 @@ export default function TarjetaLiga() {
         background: 'white',
         borderRadius: 18,
         padding: 14,
-        border: estado.destacado ? `1.5px solid ${COLOR_LIGA}` : '1px solid #F1F5F9',
+        border: estado.destacado ? `1.5px solid ${COLOR_LIGA}` : 'none',
+        boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',

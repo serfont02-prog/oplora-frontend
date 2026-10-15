@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, Newspaper, Scale, Sparkles, X } from 'lucide-react';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
@@ -104,6 +104,15 @@ export default function NoticiasPage() {
   const oposicionId = params.id as string;
   const [filtro, setFiltro] = useState<TipoNoticia | 'todas'>('todas');
   const [noticiaAbierta, setNoticiaAbierta] = useState<Noticia | null>(null);
+  const queryClient = useQueryClient();
+
+  // ⭐ Al entrar en Noticias se dan por vistas: el Inicio deja de destacar la última
+  // y el contador del círculo "Noticias" vuelve a cero.
+  useEffect(() => {
+    api.post('/noticias/marcar-vistas')
+      .then(() => queryClient.invalidateQueries({ queryKey: ['noticias-novedades'] }))
+      .catch(() => { /* no es crítico */ });
+  }, [queryClient]);
 
   // Misma lógica que usaba WidgetNoticias / ConvocatoriaService.getNoticiasByOposicion:
   // se elige la convocatoria en estado 'activa', y si no hay ninguna, la más reciente.
