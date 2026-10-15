@@ -3,7 +3,7 @@
 import { use, useMemo, useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, ClipboardList, Database, Home, Sparkles } from 'lucide-react';
+import { BookOpen, ClipboardList, Database, Home, Sparkles, Target, Lock } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import Button from '@/components/ui/Button';
@@ -70,7 +70,7 @@ export default function TestPage({ params }: TestPageProps) {
     const [inicio] = useState(() => Date.now());
   const [guardando, setGuardando] = useState(false);
 
-  const { data: preguntas = [], isLoading } = useQuery<Pregunta[]>({
+  const { data: preguntas = [], isLoading, error: errorGenerar } = useQuery<Pregunta[]>({
   queryKey: ['test', oposicionId, modo, numPreguntas, nivel, temasParam, temaIdParam, versionLeyId],
   queryFn: async () => {
     if (modo === 'repaso') {
@@ -187,7 +187,11 @@ export default function TestPage({ params }: TestPageProps) {
 
   const [errorGuardado, setErrorGuardado] = useState(false);
 
+  const finalizandoRef = useRef(false);
   const finalizar = async () => {
+    // ⭐ Evita guardar dos veces (p. ej. pulsar "Ver resultados" justo cuando salta el tiempo)
+    if (finalizandoRef.current) return;
+    finalizandoRef.current = true;
     const todasLasRespuestas = respuestasRef.current;
     setGuardando(true);
     setErrorGuardado(false);
@@ -213,6 +217,7 @@ export default function TestPage({ params }: TestPageProps) {
       console.error('Error al guardar el resultado del test', error);
       setErrorGuardado(true);
       setGuardando(false);
+      finalizandoRef.current = false;
     }
   };
 
@@ -243,8 +248,55 @@ export default function TestPage({ params }: TestPageProps) {
     return { bg: 'white', border: '#e5e7eb', color: '#6b7280' };
   };
 
+  const titulo = modo === 'repaso' ? 'Repaso inteligente'
+    : modo === 'primer_reto' ? 'Primer reto'
+    : modo === 'tema' ? (temasIds.length > 1 ? 'Test por temas' : 'Test del tema')
+    : modo === 'ley' ? 'Test por ley'
+    : 'Test';
+  const salirDelTest = () => {
+    if (temaIdParam) router.back();
+    else router.push('/app/entrenamiento');
+  };
+
   // ⭐ returns condicionales AL FINAL, después de todas las funciones
-  if (isLoading || !usuario) return <CargandoTest total={numPreguntas} />;
+  if (isLoading || !usuario) return <CargandoTest total={numPreguntas} texto={modo === 'repaso' ? 'Buscando lo que más fallas…' : 'Preparando test…'} />;
+
+  // ⭐ Antes, si el servidor rechazaba el test (límite del plan, etc.) se mostraba
+  // "Aún no hay preguntas", como si faltara el banco.
+  if (errorGenerar) {
+    let motivo: string | undefined;
+    let textoError: string | undefined;
+    try {
+      const m = (errorGenerar as any)?.response?.data?.message;
+      if (typeof m === 'string' && m.startsWith('{')) motivo = JSON.parse(m)?.motivo;
+      else if (typeof m === 'string') textoError = m;
+    } catch { /* sin detalle */ }
+    const esLimite = !!motivo && motivo !== 'simulacro_bloqueado';
+    return (
+      <main style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center', background: '#EAF0FF' }}>
+        <EmptyState
+          icon={<Lock size={28} />}
+          eyebrow={titulo}
+          title={esLimite ? 'Has llegado al límite de tu plan' : 'No se ha podido preparar el test'}
+          description={esLimite
+            ? 'Con tu plan no puedes hacer más preguntas hoy (o tantas en un solo test). Mañana se renueva el límite, o puedes mejorar tu plan.'
+            : textoError ?? 'Inténtalo de nuevo en unos minutos.'}
+          actions={
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+              {esLimite && (
+                <Button variant="primary" size="lg" style={{ width: '100%' }} onClick={() => router.push('/app/suscripciones')}>
+                  Ver planes
+                </Button>
+              )}
+              <Button variant={esLimite ? 'secondary' : 'primary'} size="lg" iconBefore={<Home size={18} />} style={{ width: '100%' }} onClick={() => router.push('/app/entrenamiento')}>
+                Volver a Practicar
+              </Button>
+            </div>
+          }
+        />
+      </main>
+    );
+  }
 
   if (preguntas.length === 0) {
     // ⭐ Distinguimos dos casos: (1) esta selección concreta (tema/ley/
@@ -257,8 +309,20 @@ export default function TestPage({ params }: TestPageProps) {
     const esSeleccionConcreta = temasIds.length > 0 || !!versionLeyId;
 
     return (
-      <main className="op-app-surface" style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center' }}>
-        {esSeleccionConcreta ? (
+      <main className="op-app-surface" style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center', background: '#EAF0FF' }}>
+        {modo === 'repaso' ? (
+          <EmptyState
+            icon={<Target size={28} />}
+            eyebrow="Repaso inteligente"
+            title="Todavía no hay nada que repasar"
+            description="El repaso inteligente se prepara con las preguntas que fallas en tus tests. Haz algún test más y vuelve aquí."
+            actions={
+              <Button variant="primary" size="lg" iconBefore={<Home size={18} />} style={{ width: '100%' }} onClick={() => router.push('/app/entrenamiento')}>
+                Volver a Practicar
+              </Button>
+            }
+          />
+        ) : esSeleccionConcreta ? (
           <EmptyState
             icon={<Database size={28} />}
             eyebrow="Practicar"
@@ -280,13 +344,13 @@ export default function TestPage({ params }: TestPageProps) {
           <EmptyState
             icon={<Database size={28} />}
             eyebrow="Practicar"
-            title="Aun no hay preguntas para entrenar"
-            description="OPLORA necesita un banco de preguntas para preparar tu primer reto. Cuando esten cargadas, este entrenamiento empezara directamente."
-            details={[
-              <EmptyStep key="admin" icon={<ClipboardList size={20} />} text="Carga preguntas desde el panel de administracion." />,
-              <EmptyStep key="temas" icon={<BookOpen size={20} />} text="Vinculalas a temas o articulos de la oposicion." />,
-              <EmptyStep key="test" icon={<Sparkles size={20} />} text="Vuelve aqui y OPLORA creara el test automaticamente." />,
-            ]}
+            title="Aún no hay preguntas para entrenar"
+            description="Todavía no hay preguntas cargadas para tu oposición. En cuanto estén, podrás hacer tests desde aquí."
+            details={usuario?.rol === 'admin' ? [
+              <EmptyStep key="admin" icon={<ClipboardList size={20} />} text="Carga preguntas desde el panel de administración." />,
+              <EmptyStep key="temas" icon={<BookOpen size={20} />} text="Vincúlalas a temas o artículos de la oposición." />,
+              <EmptyStep key="test" icon={<Sparkles size={20} />} text="Vuelve aquí y OPLORA creará el test automáticamente." />,
+            ] : undefined}
             actions={
               <Button
                 variant="primary"
@@ -305,8 +369,9 @@ export default function TestPage({ params }: TestPageProps) {
   }
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
+    <main style={{ minHeight: '100vh', background: '#EAF0FF' }}>
       {errorGuardado && (
+        <div style={{ maxWidth: 560, margin: '0 auto', padding: '12px 1.25rem 0' }}>
         <div style={{
           background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b',
           borderRadius: 12, padding: '12px 14px', marginBottom: 14,
@@ -319,6 +384,7 @@ export default function TestPage({ params }: TestPageProps) {
           >
             Reintentar
           </button>
+        </div>
         </div>
       )}
       {guardando ? (
@@ -338,6 +404,8 @@ export default function TestPage({ params }: TestPageProps) {
           permitirBlancos={permitirBlancos}
           convocatoria={convocatoria}
           dejarEnBlanco={dejarEnBlanco}
+          titulo={titulo}
+          onSalir={salirDelTest}
         />
       )}
     </main>

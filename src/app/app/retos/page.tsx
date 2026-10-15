@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { Plus, ChevronRight, Brain, Lock, Swords, ClipboardCheck, Layers, Landmark, Scale, BookOpen, Clock, Handshake } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
+import { IconoModalidad } from '@/components/psicotecnicos/iconos';
 import { getOploUrl } from '@/lib/oplo';
 import TarjetaLiga from '@/components/liga/TarjetaLiga';
 import { CopaEnAvatar } from '@/components/liga/ligaUtils';
@@ -835,7 +836,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                           background: 'white',
                         }}
                       >
-                        <span style={{ fontSize: '18px' }}>{m.icono ?? '🧠'}</span>
+                        <IconoModalidad tipo={m.tipo} size={32} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_PRIMARY }}>{m.nombre}</div>
                           {m.descripcion && (

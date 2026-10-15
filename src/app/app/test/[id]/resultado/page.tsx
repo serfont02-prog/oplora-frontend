@@ -1,14 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+// ⭐ Resultado del test — mismo sistema que el resto de Practicar: círculo flotante con el acierto,
+// tarjetas blancas con sombra, iconos lucide (sin emojis) y, además, la nota con la penalización de
+// tu convocatoria y accesos directos para seguir practicando.
+
+import { useMemo, useState } from 'react';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Share2, ChevronDown, ChevronUp, ChevronRight, X } from 'lucide-react';
+import { Share2, ChevronDown, ChevronRight, X, CheckCircle2, XCircle, MinusCircle, Lightbulb, Target, Layers } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { PuntosGanadosCard } from '@/components/gamificacion/PuntosGanadosCard';
-import { BG_NEUTRAL } from '@/styles/tokens';
+import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
+
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const COLOR_TEST = '#4D7C0F';
+const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+/** "1/3" → 0.333…, "0,25" → 0.25, vacío → 0 */
+function parseFraccion(f: any): number {
+  if (f == null || f === '') return 0;
+  const s = String(f).trim().replace(',', '.');
+  if (s.includes('/')) {
+    const [a, b] = s.split('/').map(Number);
+    return b ? a / b : 0;
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+const limpiar = (op?: string) => (op ?? '').replace(/^[a-fA-F]\)\s*/, '');
 
 export default function ResultadoTestPage() {
   const router = useRouter();
@@ -18,7 +40,8 @@ export default function ResultadoTestPage() {
   const oposicionId = params.id as string;
   const modo = searchParams.get('modo');
 
-  const [preguntaExpandida, setPreguntaExpandida] = useState<number | null>(null);
+  const [abierta, setAbierta] = useState<number | null>(null);
+  const [filtro, setFiltro] = useState<'todas' | 'falladas' | 'blanco'>('todas');
   const [toast, setToast] = useState<string | null>(null);
 
   const mostrarToast = (mensaje: string) => {
@@ -28,313 +51,294 @@ export default function ResultadoTestPage() {
 
   const { data: resultado, isLoading } = useQuery({
     queryKey: ['ultimo-resultado'],
-    queryFn: async () => {
-      const res = await api.get('/test/ultimo-resultado');
-      return res.data;
-    },
+    queryFn: async () => (await api.get('/test/ultimo-resultado')).data,
     enabled: !!usuario,
   });
 
-  // ⭐ Tras un Repaso inteligente, avisamos si además hay flashcards pendientes de repasar
+  const { data: convocatoria } = useQuery({
+    queryKey: ['convocatoria-test', oposicionId],
+    queryFn: async () => {
+      const lista = (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data;
+      return lista.find((c: any) => c.estado === 'activa') ?? lista[0] ?? null;
+    },
+    enabled: !!usuario && !!oposicionId,
+  });
+
+  // Tras un Repaso inteligente, avisamos si además hay flashcards pendientes
   const { data: fcPendientes = [] } = useQuery({
     queryKey: ['fc-pendientes-tras-repaso', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/flashcards/pendientes/${oposicionId}`, { params: { limite: 20 } });
-      return res.data ?? [];
-    },
+    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicionId}`, { params: { limite: 20 } })).data ?? [],
     enabled: !!usuario && modo === 'repaso',
   });
 
+  const detalle: any[] = resultado?.detallePreguntas ?? [];
+  const visibles = useMemo(() => detalle
+    .map((d, i) => ({ d, i }))
+    .filter(({ d }) => filtro === 'todas' || (filtro === 'falladas' ? !d.correcta && !d.enBlanco : !!d.enBlanco)), [detalle, filtro]);
+
   const compartir = async () => {
-    const texto = `🎯 Acabo de hacer un test en Oplora y he obtenido un ${resultado?.porcentaje}% de aciertos (${resultado?.correctas}/${resultado?.totalPreguntas} correctas). ¡A por la plaza!`;
-    if (navigator.share) {
-      await navigator.share({ title: 'Mi resultado en Oplora', text: texto });
-    } else {
-      await navigator.clipboard.writeText(texto);
-      mostrarToast('Resultado copiado al portapapeles');
-    }
+    const texto = `Acabo de hacer un test en OPLORA: ${resultado?.porcentaje}% de aciertos (${resultado?.correctas}/${resultado?.totalPreguntas}). ¡A por la plaza!`;
+    try {
+      if (navigator.share) await navigator.share({ title: 'Mi resultado en OPLORA', text: texto });
+      else { await navigator.clipboard.writeText(texto); mostrarToast('Resultado copiado'); }
+    } catch { /* compartir cancelado */ }
   };
 
   if (isLoading || !resultado) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_NEUTRAL }}>
-        <div style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando resultado...</div>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_APP }}>
+        <div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando resultado…</div>
       </div>
     );
   }
 
-  const tiempoMinutos = Math.floor(resultado.tiempoSegundos / 60);
-  const tiempoSegundos = resultado.tiempoSegundos % 60;
-  const tiempoMedioPregunta = resultado.totalPreguntas > 0
-    ? Math.round(resultado.tiempoSegundos / resultado.totalPreguntas)
-    : 0;
-
+  const total = resultado.totalPreguntas ?? 0;
+  const correctas = resultado.correctas ?? 0;
   const blancos = resultado.blancos ?? 0;
-  const hayBlancos = blancos > 0;
+  const falladas = resultado.falladas ?? Math.max(0, total - correctas - blancos);
+  const pct = Math.max(0, Math.min(100, resultado.porcentaje ?? 0));
+  const tSeg = resultado.tiempoSegundos ?? 0;
+  const tiempoTexto = `${Math.floor(tSeg / 60)}:${String(tSeg % 60).padStart(2, '0')}`;
+  const medio = total > 0 ? Math.round(tSeg / total) : 0;
 
-  const getColorPorcentaje = (p: number) => {
-    if (p >= 80) return { color: '#15803d', bg: '#f0fdf4', border: '#86efac' };
-    if (p >= 60) return { color: '#1F7CFF', bg: '#eff6ff', border: '#bfdbfe' };
-    if (p >= 40) return { color: '#d97706', bg: '#fffbeb', border: '#fcd34d' };
-    return { color: '#dc2626', bg: '#fef2f2', border: '#fecaca' };
-  };
+  // ⭐ Nota sobre 10 aplicando la penalización de tu convocatoria (antes no se veía en los tests)
+  const fraccion = parseFraccion(convocatoria?.fraccionPenalizacion);
+  const fraccionBlanco = convocatoria?.permiteBlancos === false ? parseFraccion(convocatoria?.fraccionPenalizacionBlanco) : 0;
+  const notaPenalizada = total > 0 ? Math.max(0, ((correctas - falladas * fraccion - blancos * fraccionBlanco) / total) * 10) : 0;
+  const hayPenalizacion = fraccion > 0 || fraccionBlanco > 0;
 
-  const colores = getColorPorcentaje(resultado.porcentaje);
+  const colorNota = pct >= 80 ? '#16A34A' : pct >= 60 ? '#1F7CFF' : pct >= 40 ? '#D97706' : '#DC2626';
+  const mensaje = pct >= 80 ? 'Excelente' : pct >= 60 ? 'Bien hecho' : pct >= 40 ? 'Sigue practicando' : 'Toca repasar';
+  const titulo = modo === 'repaso' ? 'Repaso inteligente' : modo === 'primer_reto' ? 'Primer reto' : 'Resultado del test';
 
-  const getColorDetalle = (detalle: any) => {
-    if (detalle.enBlanco) return { bg: '#f8fafc', circle: '#94a3b8', simbolo: '⬜', color: '#64748b' };
-    if (detalle.correcta) return { bg: '#f0fdf4', circle: '#15803d', simbolo: '✓', color: '#15803d' };
-    return { bg: '#fef2f2', circle: '#dc2626', simbolo: '✗', color: '#dc2626' };
-  };
+  const nivel = usuario?.oposicionActiva?.nivel ?? 1;
+  const puedeRepasar = falladas > 0 && nivel >= 2 && modo !== 'primer_reto';
+
+  const media = Number.isFinite(resultado.mediaAcierto) ? resultado.mediaAcierto : null;
+  const mejor = Number.isFinite(resultado.mejorResultado) ? resultado.mejorResultado : null;
+
+  const D = 140;
+  const r = (D - 24 - 10) / 2;
+  const circ = 2 * Math.PI * r;
 
   return (
-    <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: '90px' }}>
+    <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 90 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-      {/* HERO */}
-      <div style={{ background: '#0f172a', padding: '2rem 1.25rem 1.5rem' }}>
-        <div style={{ maxWidth: '480px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '16px' }}>
-            Resultado del test
+        {/* Cabecera */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Practicar</div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3 }}>{titulo}</div>
           </div>
-
-          <div style={{
-            width: '120px', height: '120px', borderRadius: '50%',
-            background: colores.bg, border: `4px solid ${colores.border}`,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px',
-          }}>
-            <span style={{ fontSize: '32px', fontWeight: 800, color: colores.color, lineHeight: 1 }}>
-              {resultado.porcentaje}%
-            </span>
-            <span style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>acierto</span>
-          </div>
-
-          <div style={{ fontSize: '22px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>
-            {resultado.porcentaje >= 80 ? '🏆 Excelente' :
-             resultado.porcentaje >= 60 ? '👍 Bien hecho' :
-             resultado.porcentaje >= 40 ? '💪 Sigue practicando' :
-             '📚 A repasar'}
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b' }}>
-            {resultado.correctas} correctas · {resultado.falladas} falladas
-            {hayBlancos && ` · ${blancos} en blanco`}
-            {' · '}{resultado.totalPreguntas} preguntas
-          </div>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: '480px', margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
-        {/* Feedback de puntos ganados — OPLO reacciona al resultado */}
-        <PuntosGanadosCard gamificacion={resultado.gamificacion} porcentaje={resultado.porcentaje} />
-
-        {/* CTA para continuar el Repaso inteligente con flashcards pendientes */}
-        {modo === 'repaso' && fcPendientes.length > 0 && (
           <button
-            onClick={() => router.push('/app/flashcards')}
-            style={{
-              width: '100%', textAlign: 'left', cursor: 'pointer',
-              background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: '14px',
-              padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-            }}
+            onClick={() => router.push('/app/entrenamiento')}
+            aria-label="Cerrar"
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#6b21a8' }}>
-                Completa tu repaso inteligente
-              </div>
-              <div style={{ fontSize: '12px', color: '#9333ea', marginTop: '2px' }}>
-                Tienes {fcPendientes.length} flashcard{fcPendientes.length === 1 ? '' : 's'} pendiente{fcPendientes.length === 1 ? '' : 's'} de lo que más fallas
-              </div>
-            </div>
-            <ChevronRight size={16} color="#9333ea" style={{ flexShrink: 0 }} />
+            <X size={18} color={TEXT_PRIMARY} />
           </button>
-        )}
+        </div>
 
-        {/* Stats — 4 columnas si hay blancos, 3 si no */}
-        <div style={{ display: 'grid', gridTemplateColumns: hayBlancos ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)', gap: '8px' }}>
+        {/* Acierto */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width={D - 24} height={D - 24} style={{ position: 'absolute', top: 12, left: 12, transform: 'rotate(-90deg)' }}>
+              <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke="#EEF0F3" strokeWidth={10} />
+              {pct > 0 && (
+                <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke={colorNota} strokeWidth={10} strokeLinecap="round"
+                  strokeDasharray={circ} strokeDashoffset={circ - (pct / 100) * circ} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
+              )}
+            </svg>
+            <div style={{ position: 'relative', textAlign: 'center' }}>
+              <div style={{ fontSize: 30, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1 }}>{pct}%</div>
+              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>de aciertos</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 6 }}>{mensaje}</div>
+          {hayPenalizacion && (
+            <div style={{ fontSize: 12, color: TEXT_SECONDARY }}>
+              Nota con la penalización de tu convocatoria: <strong style={{ color: TEXT_PRIMARY }}>{notaPenalizada.toLocaleString('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</strong> / 10
+            </div>
+          )}
+        </div>
+
+        {/* Cifras */}
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '14px 4px' }}>
           {[
-            { label: 'Correctas', value: resultado.correctas, color: '#15803d', bg: '#f0fdf4' },
-            { label: 'Falladas', value: resultado.falladas, color: '#dc2626', bg: '#fef2f2' },
-            ...(hayBlancos ? [{ label: 'En blanco', value: blancos, color: '#64748b', bg: '#f8fafc' }] : []),
-            { label: 'Tiempo', value: `${tiempoMinutos}m ${tiempoSegundos}s`, color: '#1F7CFF', bg: '#eff6ff' },
-          ].map(({ label, value, color, bg }) => (
-            <div key={label} style={{ background: bg, borderRadius: '12px', padding: '12px 8px', textAlign: 'center' }}>
-              <div style={{ fontSize: hayBlancos ? '18px' : '20px', fontWeight: 700, color }}>{value}</div>
-              <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>{label}</div>
+            { v: correctas, l: 'Aciertos', c: '#16A34A' },
+            { v: falladas, l: 'Fallos', c: '#DC2626' },
+            { v: blancos, l: 'En blanco', c: TEXT_SECONDARY },
+            { v: tiempoTexto, l: `${medio}s / pregunta`, c: TEXT_PRIMARY },
+          ].map((d, i) => (
+            <div key={d.l} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid #EEF0F3' : 'none' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: d.c }}>{d.v}</div>
+              <div style={{ fontSize: 10, color: TEXT_MUTED, marginTop: 2 }}>{d.l}</div>
             </div>
           ))}
         </div>
 
-        {/* Tiempo medio por pregunta */}
-        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>Tiempo medio por pregunta</div>
-            <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>
-              {tiempoMedioPregunta < 30 ? 'Muy rápido' : tiempoMedioPregunta < 60 ? 'Buen ritmo' : 'Tómate tu tiempo'}
-            </div>
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#1F7CFF' }}>
-            {tiempoMedioPregunta}s
-          </div>
-        </div>
+        <PuntosGanadosCard gamificacion={resultado.gamificacion} porcentaje={resultado.porcentaje} />
 
-        {/* Comparativa histórica */}
-        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', padding: '14px 16px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '12px' }}>
-            Tu historial
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {[
-              { label: 'Este test', value: resultado.porcentaje, color: colores.color },
-              { label: 'Tu media', value: resultado.mediaAcierto, color: '#6b7280' },
-              { label: 'Tu mejor', value: resultado.mejorResultado, color: '#15803d' },
-            ].map(({ label, value, color }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '80px', fontSize: '12px', color: '#6b7280', flexShrink: 0 }}>{label}</div>
-                <div style={{ flex: 1, height: '8px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
-                  <div style={{ width: `${value}%`, height: '100%', background: color, borderRadius: '999px', transition: 'width 0.5s' }} />
-                </div>
-                <div style={{ width: '36px', fontSize: '12px', fontWeight: 600, color, textAlign: 'right' }}>{value}%</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '10px' }}>
-            Basado en tus últimos {resultado.totalTestsRealizados} tests
-          </div>
-        </div>
-
-        {/* Desglose preguntas */}
-        {resultado.detallePreguntas?.length > 0 && (
-          <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid #f3f4f6' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>Desglose de preguntas</div>
-            </div>
-            {resultado.detallePreguntas.map((detalle: any, i: number) => {
-              const estilo = getColorDetalle(detalle);
-              return (
-                <div key={i} style={{
-                  borderBottom: i < resultado.detallePreguntas.length - 1 ? '1px solid #f3f4f6' : 'none',
-                  display: 'flex', flexDirection: 'column',
-                }}>
-                  <div
-                    onClick={() => setPreguntaExpandida(preguntaExpandida === i ? null : i)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      padding: '11px 16px',
-                      background: estilo.bg,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{
-                      width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
-                      background: estilo.circle,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '12px', color: 'white', fontWeight: 700,
-                    }}>
-                      {i + 1}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: '12px', color: '#374151', lineHeight: 1.4,
-                        overflow: preguntaExpandida === i ? 'visible' : 'hidden',
-                        textOverflow: preguntaExpandida === i ? 'unset' : 'ellipsis',
-                        whiteSpace: preguntaExpandida === i ? 'normal' : 'nowrap',
-                      }}>
-                        {detalle.enunciado}
-                      </div>
-                      {detalle.enBlanco && (
-                        <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Dejada en blanco</div>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: estilo.color }}>
-                        {estilo.simbolo}
-                      </span>
-                      {preguntaExpandida === i
-                        ? <ChevronUp size={13} color="#9ca3af" />
-                        : <ChevronDown size={13} color="#9ca3af" />
-                      }
+        {/* Seguir practicando */}
+        {(puedeRepasar || (modo === 'repaso' && fcPendientes.length > 0)) && (
+          <section>
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Sigue practicando</div>
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+              {puedeRepasar && (
+                <button
+                  onClick={() => router.push(`/app/test/${oposicionId}?modo=repaso&n=10`)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', borderBottom: modo === 'repaso' && fcPendientes.length > 0 ? '1px solid #EEF0F3' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F3FAE9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Target size={20} color={COLOR_TEST} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>Repaso inteligente</div>
+                    <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Vuelve sobre las preguntas que más fallas</div>
+                  </div>
+                  <ChevronRight size={16} color="#C4C9D2" />
+                </button>
+              )}
+              {modo === 'repaso' && fcPendientes.length > 0 && (
+                <button
+                  onClick={() => router.push(`/app/flashcards/repasar?oposicionId=${oposicionId}`)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_FC_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Layers size={20} color={COLOR_FC} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>Completa con flashcards</div>
+                    <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>
+                      {fcPendientes.length} {fcPendientes.length === 1 ? 'tarjeta pendiente' : 'tarjetas pendientes'} de repaso
                     </div>
                   </div>
-
-                  {preguntaExpandida === i && (
-                    <div style={{ padding: '12px 16px', background: 'white', borderTop: '1px solid #f3f4f6' }}>
-                      {detalle.enBlanco ? (
-                        <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', marginBottom: '10px' }}>
-                          Esta pregunta fue dejada en blanco
-                        </div>
-                      ) : null}
-
-                      {detalle.opciones && detalle.indiceCorrecta !== undefined && (
-                        <div style={{ marginBottom: '10px' }}>
-                          <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
-                            Respuesta correcta
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#15803d', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '8px 10px', fontWeight: 500 }}>
-                            {detalle.opciones[detalle.indiceCorrecta]?.replace(/^[a-dA-D]\)\s*/, '')}
-                          </div>
-                          {!detalle.correcta && !detalle.enBlanco && detalle.indiceSeleccionada !== undefined && detalle.indiceSeleccionada !== null && (
-                            <div style={{ fontSize: '12px', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 10px', fontWeight: 500, marginTop: '4px' }}>
-                              Tu respuesta: {detalle.opciones[detalle.indiceSeleccionada]?.replace(/^[a-dA-D]\)\s*/, '')}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {detalle.explicacion ? (
-                        <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6, background: '#f9fafb', padding: '10px 12px', borderRadius: '8px' }}>
-                          <strong style={{ color: '#374151' }}>Explicación:</strong> {detalle.explicacion}
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>
-                          Sin explicación disponible
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  <ChevronRight size={16} color="#C4C9D2" />
+                </button>
+              )}
+            </div>
+          </section>
         )}
 
-      {/* Acciones */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+        {/* Historial */}
+        {(media !== null || mejor !== null) && (
+          <section>
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Comparado con tus tests</div>
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { l: 'Este test', v: pct, c: colorNota },
+                ...(media !== null ? [{ l: 'Tu media', v: media, c: '#94A3B8' }] : []),
+                ...(mejor !== null ? [{ l: 'Tu mejor', v: mejor, c: '#16A34A' }] : []),
+              ].map(({ l, v, c }) => (
+                <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 74, fontSize: 12, color: TEXT_SECONDARY, flexShrink: 0 }}>{l}</div>
+                  <div style={{ flex: 1, height: 8, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.max(0, Math.min(100, v))}%`, height: '100%', background: c, borderRadius: 999, transition: 'width 0.5s' }} />
+                  </div>
+                  <div style={{ width: 38, fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY, textAlign: 'right' }}>{v}%</div>
+                </div>
+              ))}
+              {resultado.totalTestsRealizados > 0 && (
+                <div style={{ fontSize: 11, color: TEXT_MUTED }}>Según tus últimos {resultado.totalTestsRealizados} tests</div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Revisión */}
+        {detalle.length > 0 && (
+          <section>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Revisa tus respuestas</span>
+              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.7)', borderRadius: 999, padding: 3, gap: 2 }}>
+                {([['todas', 'Todas'], ['falladas', 'Fallos'], ['blanco', 'En blanco']] as const).map(([k, l]) => (
+                  <button key={k} onClick={() => setFiltro(k)} style={{ border: 'none', borderRadius: 999, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', background: filtro === k ? '#0f172a' : 'transparent', color: filtro === k ? 'white' : TEXT_SECONDARY }}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+              {visibles.length === 0 && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>No hay preguntas en este filtro.</div>}
+              {visibles.map(({ d, i }, k) => {
+                const Icono = d.enBlanco ? MinusCircle : d.correcta ? CheckCircle2 : XCircle;
+                const colorEst = d.enBlanco ? '#94A3B8' : d.correcta ? '#16A34A' : '#DC2626';
+                const esta = abierta === i;
+                return (
+                  <div key={i} style={{ borderBottom: k < visibles.length - 1 ? '1px solid #EEF0F3' : 'none' }}>
+                    <button
+                      onClick={() => setAbierta(esta ? null : i)}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <Icono size={18} color={colorEst} style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_MUTED, flexShrink: 0 }}>{i + 1}</span>
+                      <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.4, ...(esta ? {} : { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }) }}>
+                        {d.enunciado}
+                      </span>
+                      <ChevronDown size={15} color="#C4C9D2" style={{ flexShrink: 0, transform: esta ? 'rotate(180deg)' : 'none' }} />
+                    </button>
+                    {esta && (
+                      <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {Array.isArray(d.opciones) && d.opciones.map((op: string, j: number) => {
+                          const esCorrecta = j === d.indiceCorrecta;
+                          const esTuya = j === d.indiceSeleccionada;
+                          return (
+                            <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 10, fontSize: 13, color: TEXT_PRIMARY, background: esCorrecta ? '#F0FDF4' : esTuya ? '#FEF2F2' : '#F8F9FA' }}>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: esCorrecta ? '#16A34A' : esTuya ? '#DC2626' : TEXT_MUTED }}>{LETRAS[j] ?? j + 1}</span>
+                              <span style={{ flex: 1, lineHeight: 1.4 }}>{limpiar(op)}</span>
+                              {esCorrecta && <CheckCircle2 size={15} color="#16A34A" />}
+                              {esTuya && !esCorrecta && <XCircle size={15} color="#DC2626" />}
+                            </div>
+                          );
+                        })}
+                        {d.enBlanco && <div style={{ fontSize: 12, color: TEXT_MUTED }}>La dejaste en blanco.</div>}
+                        {d.explicacion && (
+                          <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.5, background: '#F8F9FA', borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
+                            <Lightbulb size={14} color={COLOR_TEST} style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span>{d.explicacion}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Acciones */}
         {modo === 'primer_reto' ? (
           <button
             onClick={() => router.push('/app/entrenamiento?step=flashcards')}
-            style={{ width: '100%', padding: '14px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+            style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
           >
-            Continuar con las flashcards de OPLORA →
+            Continuar con las flashcards
           </button>
         ) : (
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button
+              onClick={() => router.push('/app/entrenamiento?abrir=test')}
+              style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Hacer otro test
+            </button>
             <button
               onClick={compartir}
-              style={{ flex: 1, padding: '13px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#374151' }}
+              style={{ width: '100%', padding: 13, background: 'white', border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: TEXT_PRIMARY }}
             >
-              <Share2 size={15} />
-              Compartir
-            </button>
-
-            <button
-              onClick={() => router.push('/app/entrenamiento')}
-              style={{ flex: 1, padding: '13px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#374151' }}
-            >
-              <X size={15} />
-              Cerrar
+              <Share2 size={15} /> Compartir resultado
             </button>
           </div>
         )}
-      </div>
-
       </div>
 
       {toast && (
         <div style={{
-          position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)',
-          background: '#111827', color: 'white', fontSize: '13px', fontWeight: 600,
-          padding: '10px 18px', borderRadius: '999px', boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
+          position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
+          background: '#111827', color: 'white', fontSize: 13, fontWeight: 600,
+          padding: '10px 18px', borderRadius: 999, boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
           zIndex: 100, pointerEvents: 'none', whiteSpace: 'nowrap',
         }}>
           {toast}

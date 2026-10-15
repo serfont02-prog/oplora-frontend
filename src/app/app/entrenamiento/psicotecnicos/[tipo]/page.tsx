@@ -1,16 +1,20 @@
 'use client';
 
+// ⭐ Entrenamiento de una modalidad de psicotécnicos (configurar → jugar → resultado), con el mismo
+// diseño que el resto de Practicar: tarjetas blancas con sombra, botón redondo de volver, iconos
+// lucide y color índigo de psicotécnicos.
+
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, Clock, CheckCircle2, XCircle } from 'lucide-react';
-import { BG_DASHBOARD as BG_APP } from '@/styles/tokens';
+import { ArrowLeft, X, Clock, CheckCircle2, XCircle, Lightbulb, Medal } from 'lucide-react';
+import { IconoModalidad } from '@/components/psicotecnicos/iconos';
+import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_PSICO, COLOR_PSICO_BG } from '@/styles/tokens';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 const DIFICULTAD_LABEL: Record<string, string> = {
   facil: 'Fácil',
@@ -21,9 +25,41 @@ const DIFICULTAD_LABEL: Record<string, string> = {
 
 type Fase = 'config' | 'jugando' | 'resultado';
 
+function BotonVolver({ onClick, label = 'Volver' }: { onClick: () => void; label?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+    >
+      <ArrowLeft size={18} color={TEXT_PRIMARY} />
+    </button>
+  );
+}
+
+function Chip({ activo, onClick, children, ancho = false }: { activo: boolean; onClick: () => void; children: React.ReactNode; ancho?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: ancho ? 1 : undefined, padding: ancho ? '10px' : '8px 14px', borderRadius: ancho ? 12 : 999,
+        fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
+        background: activo ? '#0f172a' : '#F3F4F6',
+        color: activo ? 'white' : TEXT_SECONDARY,
+        transition: 'background 0.15s ease, color 0.15s ease',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+const formatearTiempo = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
 export default function PsicotecnicoTipoPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { usuario } = useAuth();
   const tipo = params.tipo as string;
   const oposicionId = usuario?.oposicionActiva?.id;
@@ -32,6 +68,9 @@ export default function PsicotecnicoTipoPage() {
   const [fase, setFase] = useState<Fase>('config');
   const [numPreguntas, setNumPreguntas] = useState(10);
   const [dificultad, setDificultad] = useState<string | null>(null);
+  const [errorInicio, setErrorInicio] = useState('');
+  const [iniciando, setIniciando] = useState(false);
+  const [confirmarSalida, setConfirmarSalida] = useState(false);
 
   const [preguntas, setPreguntas] = useState<any[]>([]);
   const [indice, setIndice] = useState(0);
@@ -40,18 +79,20 @@ export default function PsicotecnicoTipoPage() {
   const [respuestaActual, setRespuestaActual] = useState<number | null>(null);
   const [mostrarCorreccion, setMostrarCorreccion] = useState(false);
   const [correctaTexto, setCorrectaTexto] = useState<string | null>(null);
-  const [tiempoInicio, setTiempoInicio] = useState(0);
+  const [errorCorreccion, setErrorCorreccion] = useState(false);
+  const [inicioPregunta, setInicioPregunta] = useState(0);
   const [tiempoPreguntaMs, setTiempoPreguntaMs] = useState<Record<string, number>>({});
   const [segundos, setSegundos] = useState(0);
   const [resultado, setResultado] = useState<any>(null);
   const intervalRef = useRef<any>(null);
 
+  // ⭐ Misma consulta (y convocatoria) que la lista de modalidades: antes se pedía sin
+  // convocatoria y podía mostrar dificultades que tu convocatoria no tiene.
   const { data: modalidades = [] } = useQuery({
-    queryKey: ['psicotecnicos-config-detalle', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/psicotecnicos/config/${oposicionId}`);
-      return res.data;
-    },
+    queryKey: ['psicotecnicos-config', oposicionId, convocatoriaId],
+    queryFn: async () => (await api.get(`/psicotecnicos/config/${oposicionId}`, {
+      params: convocatoriaId ? { convocatoriaId } : {},
+    })).data,
     enabled: !!oposicionId,
   });
   const modalidad = modalidades.find((m: any) => m.tipo === tipo);
@@ -65,6 +106,8 @@ export default function PsicotecnicoTipoPage() {
   }, [fase]);
 
   const iniciar = async () => {
+    setErrorInicio('');
+    setIniciando(true);
     try {
       const res = await api.post('/psicotecnicos/generar', {
         oposicionId,
@@ -79,13 +122,18 @@ export default function PsicotecnicoTipoPage() {
       setRespuestasTexto({});
       setTiempoPreguntaMs({});
       setSegundos(0);
-      setTiempoInicio(Date.now());
+      setInicioPregunta(Date.now());
       setRespuestaActual(null);
       setMostrarCorreccion(false);
       setCorrectaTexto(null);
+      setErrorCorreccion(false);
+      setConfirmarSalida(false);
       setFase('jugando');
     } catch (e: any) {
-      alert(e?.response?.data?.message || 'No hay preguntas disponibles para esta modalidad todavía.');
+      // ⭐ Antes era un alert() del navegador.
+      setErrorInicio(e?.response?.data?.message || 'No hay preguntas disponibles para esta modalidad todavía.');
+    } finally {
+      setIniciando(false);
     }
   };
 
@@ -93,8 +141,9 @@ export default function PsicotecnicoTipoPage() {
     mutationFn: async (payload: {
       respuestasFinal: Record<string, number | null>;
       respuestasTextoFinal: Record<string, string | null>;
+      tiemposFinal: Record<string, number>;
     }) => {
-      const { respuestasFinal, respuestasTextoFinal } = payload;
+      const { respuestasFinal, respuestasTextoFinal, tiemposFinal } = payload;
       const body = {
         oposicionId,
         tipo,
@@ -102,22 +151,19 @@ export default function PsicotecnicoTipoPage() {
         tiempoSegundos: segundos,
         respuestas: preguntas.map((p) => ({
           preguntaId: p.id,
-          // Índice legacy: solo tiene sentido dentro del array recortado/
-          // reordenado que vio el cliente, no sirve para comparar contra la
-          // fila original en el backend. Se manda igualmente por compat.
           respuesta: respuestasFinal[p.id] ?? null,
-          // Texto de la opción elegida: es lo que el backend usa para corregir,
-          // ya que sobrevive al recorte/reordenado de opciones por convocatoria.
+          // El servidor corrige por el texto de la opción (sobrevive al recorte/reordenado).
           respuestaTexto: respuestasTextoFinal[p.id] ?? null,
-          tiempoMs: tiempoPreguntaMs[p.id],
+          tiempoMs: tiemposFinal[p.id],
         })),
       };
-      const res = await api.post('/psicotecnicos/resultado', body);
-      return res.data;
+      return (await api.post('/psicotecnicos/resultado', body)).data;
     },
     onSuccess: (data) => {
       setResultado(data);
       setFase('resultado');
+      // Estadísticas de Practicar y de la lista de modalidades
+      for (const k of ['psico-periodo', 'psicotecnicos-config']) queryClient.invalidateQueries({ queryKey: [k] });
     },
   });
 
@@ -129,14 +175,15 @@ export default function PsicotecnicoTipoPage() {
     setRespuestaActual(opcionIndex);
     setMostrarCorreccion(true);
     setCorrectaTexto(null);
-    setTiempoPreguntaMs((prev) => ({ ...prev, [preguntaId]: Date.now() - tiempoInicio }));
+    setErrorCorreccion(false);
+    // ⭐ Tiempo de ESTA pregunta (antes se medía desde el inicio del entrenamiento y se acumulaba).
+    setTiempoPreguntaMs((prev) => ({ ...prev, [preguntaId]: Date.now() - inicioPregunta }));
 
-    // Solo se pide la respuesta correcta AHORA, justo tras contestar esta
-    // pregunta concreta. Nunca se piden por adelantado para el resto del set.
+    // La solución solo se pide tras contestar esta pregunta concreta.
     api
       .get(`/psicotecnicos/preguntas/${preguntaId}/correcta`)
       .then((res) => setCorrectaTexto(res.data?.correctaTexto ?? null))
-      .catch(() => setCorrectaTexto(null));
+      .catch(() => setErrorCorreccion(true));
   };
 
   const siguiente = () => {
@@ -147,95 +194,84 @@ export default function PsicotecnicoTipoPage() {
     };
     setRespuestas(nuevasRespuestas);
     setRespuestasTexto(nuevasRespuestasTexto);
-    setRespuestaActual(null);
-    setMostrarCorreccion(false);
-    setCorrectaTexto(null);
 
     if (indice + 1 < preguntas.length) {
+      setRespuestaActual(null);
+      setMostrarCorreccion(false);
+      setCorrectaTexto(null);
+      setErrorCorreccion(false);
       setIndice(indice + 1);
+      setInicioPregunta(Date.now());
     } else {
-      enviarResultado.mutate({ respuestasFinal: nuevasRespuestas, respuestasTextoFinal: nuevasRespuestasTexto });
+      enviarResultado.mutate({ respuestasFinal: nuevasRespuestas, respuestasTextoFinal: nuevasRespuestasTexto, tiemposFinal: tiempoPreguntaMs });
     }
   };
 
-  const formatearTiempo = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const irALista = () => router.push('/app/entrenamiento/psicotecnicos');
 
   if (!usuario) return null;
 
   /* ───────────────────────── CONFIG ───────────────────────── */
   if (fase === 'config') {
     return (
-      <div style={{ minHeight: '100vh', background: BG_APP }}>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.5rem' }}>
-          <button onClick={() => router.back()} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: TEXT_SECONDARY, fontSize: 13, marginBottom: 24 }}>
-            <ArrowLeft size={15} />
-            Volver
-          </button>
+      <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 30 }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ fontSize: 40, marginBottom: 10 }}>{modalidad?.icono ?? '🧠'}</div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>{modalidad?.nombre ?? 'Psicotécnico'}</div>
-            <div style={{ fontSize: 13, color: TEXT_MUTED, marginTop: 4 }}>{modalidad?.descripcion}</div>
-          </div>
-
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 18, padding: 20, marginBottom: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Número de preguntas</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[5, 10, 20].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setNumPreguntas(n)}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    border: numPreguntas === n ? '2px solid #111827' : '1px solid #e5e7eb',
-                    background: numPreguntas === n ? '#111827' : 'white',
-                    color: numPreguntas === n ? 'white' : '#374151',
-                  }}
-                >
-                  {n}
-                </button>
-              ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
+            <BotonVolver onClick={irALista} label="Volver a psicotécnicos" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                Psicotécnicos
+              </div>
+              <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3 }}>{modalidad?.nombre ?? 'Entrenamiento'}</div>
             </div>
           </div>
 
+          <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <IconoModalidad tipo={tipo} size={44} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.45 }}>{modalidad?.descripcion}</div>
+              {modalidad?.estadisticas?.realizadas > 0 && (
+                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>
+                  {modalidad.estadisticas.realizadas} {modalidad.estadisticas.realizadas === 1 ? 'entrenamiento' : 'entrenamientos'} · Mejor {modalidad.estadisticas.mejorPorcentaje}%
+                </div>
+              )}
+            </div>
+          </div>
+
+          <section>
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Número de preguntas</div>
+            <div style={{ background: 'white', borderRadius: 18, padding: 12, boxShadow: SOMBRA, display: 'flex', gap: 8 }}>
+              {[5, 10, 20].map((n) => (
+                <Chip key={n} ancho activo={numPreguntas === n} onClick={() => setNumPreguntas(n)}>{n}</Chip>
+              ))}
+            </div>
+          </section>
+
           {modalidad?.dificultadesDisponibles?.length > 0 && (
-            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 18, padding: 20, marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Dificultad</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setDificultad(null)}
-                  style={{
-                    padding: '8px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    border: !dificultad ? '2px solid #111827' : '1px solid #e5e7eb',
-                    background: !dificultad ? '#111827' : 'white',
-                    color: !dificultad ? 'white' : '#374151',
-                  }}
-                >
-                  Mixta
-                </button>
+            <section>
+              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Dificultad</div>
+              <div style={{ background: 'white', borderRadius: 18, padding: 12, boxShadow: SOMBRA, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Chip activo={!dificultad} onClick={() => setDificultad(null)}>Mixta</Chip>
                 {modalidad.dificultadesDisponibles.map((d: string) => (
-                  <button
-                    key={d}
-                    onClick={() => setDificultad(d)}
-                    style={{
-                      padding: '8px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                      border: dificultad === d ? '2px solid #111827' : '1px solid #e5e7eb',
-                      background: dificultad === d ? '#111827' : 'white',
-                      color: dificultad === d ? 'white' : '#374151',
-                    }}
-                  >
-                    {DIFICULTAD_LABEL[d] ?? d}
-                  </button>
+                  <Chip key={d} activo={dificultad === d} onClick={() => setDificultad(d)}>{DIFICULTAD_LABEL[d] ?? d}</Chip>
                 ))}
               </div>
+            </section>
+          )}
+
+          {errorInicio && (
+            <div style={{ fontSize: 13, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px', lineHeight: 1.4 }}>
+              {errorInicio}
             </div>
           )}
 
           <button
             onClick={iniciar}
-            style={{ width: '100%', padding: 15, background: '#111827', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            disabled={iniciando || !oposicionId}
+            style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: iniciando ? 'default' : 'pointer', opacity: iniciando ? 0.7 : 1 }}
           >
-            Empezar a entrenar
+            {iniciando ? 'Preparando…' : 'Empezar a entrenar'}
           </button>
         </div>
       </div>
@@ -244,47 +280,59 @@ export default function PsicotecnicoTipoPage() {
 
   /* ───────────────────────── JUGANDO ───────────────────────── */
   if (fase === 'jugando' && preguntaActual) {
+    const corregida = mostrarCorreccion && correctaTexto != null;
     const esCorrecta =
-      correctaTexto != null &&
-      respuestaActual !== null &&
-      preguntaActual.opciones[respuestaActual]?.trim() === correctaTexto.trim();
+      corregida && respuestaActual !== null && preguntaActual.opciones[respuestaActual]?.trim() === correctaTexto!.trim();
 
     return (
-      <div style={{ minHeight: '100vh', background: BG_APP }}>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.5rem' }}>
+      <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 30 }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem' }}>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <div style={{ fontSize: 12, color: TEXT_SECONDARY, fontWeight: 600 }}>
-              Pregunta {indice + 1}/{preguntas.length}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: TEXT_SECONDARY, fontWeight: 600 }}>
-              <Clock size={13} />
-              {formatearTiempo(segundos)}
+          {/* Barra superior: salir, progreso y tiempo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+            <button
+              onClick={() => setConfirmarSalida(true)}
+              aria-label="Salir del entrenamiento"
+              style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            >
+              <X size={17} color={TEXT_PRIMARY} />
+            </button>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: TEXT_SECONDARY, fontWeight: 600, marginBottom: 6 }}>
+                <span>Pregunta {indice + 1} de {preguntas.length}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} />{formatearTiempo(segundos)}</span>
+              </div>
+              <div style={{ height: 6, background: 'rgba(255,255,255,0.8)', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ width: `${((indice + 1) / preguntas.length) * 100}%`, height: '100%', background: COLOR_PSICO, borderRadius: 999, transition: 'width 0.3s' }} />
+              </div>
             </div>
           </div>
 
-          <div style={{ height: 4, background: '#e5e7eb', borderRadius: 999, overflow: 'hidden', marginBottom: 20 }}>
-            <div style={{ width: `${((indice + 1) / preguntas.length) * 100}%`, height: '100%', background: '#111827', borderRadius: 999, transition: 'width 0.3s' }} />
-          </div>
+          {confirmarSalida && (
+            <div style={{ background: 'white', borderRadius: 14, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ flex: 1, fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.4 }}>¿Salir? Este entrenamiento no se guardará.</div>
+              <button onClick={() => setConfirmarSalida(false)} style={{ border: 'none', background: '#F3F4F6', color: TEXT_SECONDARY, borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Seguir</button>
+              <button onClick={() => { setFase('config'); setConfirmarSalida(false); }} style={{ border: 'none', background: '#DC2626', color: 'white', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Salir</button>
+            </div>
+          )}
 
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 18, padding: 20, marginBottom: 16 }}>
+          <div style={{ background: 'white', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 14 }}>
             {preguntaActual.imagenUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={preguntaActual.imagenUrl} alt="" style={{ width: '100%', borderRadius: 10, marginBottom: 14 }} />
             )}
-            <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.55 }}>
               {preguntaActual.enunciado}
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
             {preguntaActual.opciones.map((op: string, i: number) => {
               const esElegida = respuestaActual === i;
-              const esLaCorrecta =
-                mostrarCorreccion && correctaTexto != null && op.trim() === correctaTexto.trim();
-              // ⭐ Solo se marca como fallo cuando ya llegó la solución del servidor; mientras carga
-                // la opción queda neutra (antes parpadeaba en rojo hasta que llegaba la respuesta).
-                const esIncorrectaElegida = mostrarCorreccion && correctaTexto != null && esElegida && !esCorrecta;
+              const esLaCorrecta = corregida && op.trim() === correctaTexto!.trim();
+              // Solo se marca el fallo cuando ya llegó la solución (antes parpadeaba en rojo).
+              const esIncorrectaElegida = corregida && esElegida && !esCorrecta;
+              const colorLetra = esLaCorrecta ? '#16A34A' : esIncorrectaElegida ? '#DC2626' : esElegida ? COLOR_PSICO : TEXT_SECONDARY;
 
               return (
                 <button
@@ -292,17 +340,25 @@ export default function PsicotecnicoTipoPage() {
                   onClick={() => responder(i)}
                   disabled={mostrarCorreccion}
                   style={{
-                    textAlign: 'left', padding: '13px 16px', borderRadius: 12, fontSize: 13.5, fontWeight: 500,
+                    textAlign: 'left', padding: '12px 14px', borderRadius: 14, fontSize: 14, fontWeight: 500,
                     cursor: mostrarCorreccion ? 'default' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-                    border: esLaCorrecta ? '2px solid #16A34A' : esIncorrectaElegida ? '2px solid #DC2626' : esElegida ? '2px solid #111827' : '1px solid #e5e7eb',
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    border: esLaCorrecta ? '2px solid #16A34A' : esIncorrectaElegida ? '2px solid #DC2626' : esElegida ? `2px solid ${COLOR_PSICO}` : '2px solid transparent',
                     background: esLaCorrecta ? '#F0FDF4' : esIncorrectaElegida ? '#FEF2F2' : 'white',
+                    boxShadow: SOMBRA,
                     color: TEXT_PRIMARY,
                   }}
                 >
-                  <span>{op}</span>
-                  {esLaCorrecta && <CheckCircle2 size={16} color="#16A34A" />}
-                  {esIncorrectaElegida && <XCircle size={16} color="#DC2626" />}
+                  <span style={{
+                    width: 28, height: 28, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 800, color: colorLetra,
+                    background: esLaCorrecta ? '#DCFCE7' : esIncorrectaElegida ? '#FEE2E2' : esElegida ? COLOR_PSICO_BG : '#F3F4F6',
+                  }}>
+                    {LETRAS[i] ?? i + 1}
+                  </span>
+                  <span style={{ flex: 1, lineHeight: 1.4 }}>{op}</span>
+                  {esLaCorrecta && <CheckCircle2 size={18} color="#16A34A" style={{ flexShrink: 0 }} />}
+                  {esIncorrectaElegida && <XCircle size={18} color="#DC2626" style={{ flexShrink: 0 }} />}
                 </button>
               );
             })}
@@ -310,17 +366,28 @@ export default function PsicotecnicoTipoPage() {
 
           {mostrarCorreccion && (
             <>
-              {preguntaActual.explicacion && (
-                <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 14, marginBottom: 16, fontSize: 12.5, color: TEXT_SECONDARY, lineHeight: 1.5 }}>
-                  {preguntaActual.explicacion}
+              {errorCorreccion && (
+                <div style={{ fontSize: 12, color: TEXT_SECONDARY, background: 'white', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
+                  No se ha podido mostrar la solución ahora. Tu respuesta se corregirá igualmente al terminar.
+                </div>
+              )}
+              {preguntaActual.explicacion && corregida && (
+                <div style={{ display: 'flex', gap: 8, background: 'white', borderRadius: 14, padding: 14, marginBottom: 14, fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.5, boxShadow: SOMBRA }}>
+                  <Lightbulb size={16} color={COLOR_PSICO} style={{ flexShrink: 0, marginTop: 1 }} />
+                  <span>{preguntaActual.explicacion}</span>
+                </div>
+              )}
+              {enviarResultado.isError && (
+                <div style={{ fontSize: 13, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
+                  No se ha podido guardar el resultado. Comprueba la conexión y vuelve a intentarlo.
                 </div>
               )}
               <button
                 onClick={siguiente}
                 disabled={enviarResultado.isPending}
-                style={{ width: '100%', padding: 15, background: '#111827', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: enviarResultado.isPending ? 'default' : 'pointer', opacity: enviarResultado.isPending ? 0.7 : 1 }}
               >
-                {indice + 1 < preguntas.length ? 'Continuar' : enviarResultado.isPending ? 'Guardando...' : 'Ver resultado'}
+                {indice + 1 < preguntas.length ? 'Siguiente' : enviarResultado.isPending ? 'Guardando…' : enviarResultado.isError ? 'Reintentar' : 'Ver resultado'}
               </button>
             </>
           )}
@@ -331,37 +398,86 @@ export default function PsicotecnicoTipoPage() {
 
   /* ───────────────────────── RESULTADO ───────────────────────── */
   if (fase === 'resultado' && resultado) {
+    const pct = resultado.porcentaje ?? 0;
+    const D = 132;
+    const radio = (D - 24 - 10) / 2;
+    const circ = 2 * Math.PI * radio;
+    const colorNota = pct >= 80 ? '#16A34A' : pct >= 50 ? COLOR_PSICO : '#D97706';
+    const mensaje = pct >= 80 ? '¡Muy bien!' : pct >= 50 ? 'Buen entrenamiento' : 'Sigue practicando';
+
     return (
-      <div style={{ minHeight: '100vh', background: BG_APP }}>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.5rem', textAlign: 'center' }}>
+      <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 30 }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-          <div style={{ fontSize: 40, marginTop: 20, marginBottom: 10 }}>
-            {resultado.porcentaje >= 80 ? '🏆' : resultado.porcentaje >= 50 ? '👍' : '💪'}
-          </div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: TEXT_PRIMARY }}>
-            {resultado.correctas}/{resultado.totalPreguntas}
-          </div>
-          <div style={{ fontSize: 15, color: TEXT_SECONDARY, marginBottom: 4 }}>{resultado.porcentaje}% de aciertos</div>
-          <div style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 18 }}>Tiempo: {formatearTiempo(segundos)}</div>
-
-          {resultado.esMejorMarca && (
-            <div style={{ display: 'inline-block', background: '#F0FDF4', color: '#15803D', fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 999, marginBottom: 20 }}>
-              Nueva mejor marca en {modalidad?.nombre ?? 'esta modalidad'} 🎉
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
+            <BotonVolver onClick={irALista} label="Volver a psicotécnicos" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                {modalidad?.nombre ?? 'Psicotécnicos'}
+              </div>
+              <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3 }}>Resultado</div>
             </div>
-          )}
+          </div>
 
-          <button
-            onClick={() => setFase('config')}
-            style={{ width: '100%', padding: 15, background: '#111827', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 10, marginTop: resultado.esMejorMarca ? 0 : 12 }}
-          >
-            Volver a entrenar
-          </button>
-          <button
-            onClick={() => router.push('/app/entrenamiento/psicotecnicos')}
-            style={{ width: '100%', padding: 13, background: 'white', border: '1px solid #e5e7eb', color: TEXT_SECONDARY, borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-          >
-            Cambiar de modalidad
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, paddingTop: 6 }}>
+            <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width={D - 24} height={D - 24} style={{ position: 'absolute', top: 12, left: 12, transform: 'rotate(-90deg)' }}>
+                <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={radio} fill="none" stroke="#EEF0F3" strokeWidth={10} />
+                {pct > 0 && (
+                  <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={radio} fill="none" stroke={colorNota} strokeWidth={10} strokeLinecap="round"
+                    strokeDasharray={circ} strokeDashoffset={circ - (pct / 100) * circ} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
+                )}
+              </svg>
+              <div style={{ position: 'relative', textAlign: 'center' }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1 }}>{pct}%</div>
+                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>de aciertos</div>
+              </div>
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 6 }}>{mensaje}</div>
+            {resultado.esMejorMarca && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#F0FDF4', color: '#15803D', fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 999 }}>
+                <Medal size={14} /> Nueva mejor marca
+              </div>
+            )}
+          </div>
+
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', padding: '14px 6px' }}>
+            {[
+              { valor: `${resultado.correctas}`, label: 'Aciertos', color: '#16A34A' },
+              { valor: `${(resultado.totalPreguntas ?? 0) - (resultado.correctas ?? 0)}`, label: 'Fallos', color: '#DC2626' },
+              { valor: formatearTiempo(segundos), label: 'Tiempo', color: TEXT_PRIMARY },
+            ].map((d, i) => (
+              <div key={d.label} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid #EEF0F3' : 'none' }}>
+                <div style={{ fontSize: 19, fontWeight: 800, color: d.color }}>{d.valor}</div>
+                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{d.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button
+              onClick={iniciar}
+              disabled={iniciando}
+              style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: iniciando ? 0.7 : 1 }}
+            >
+              {iniciando ? 'Preparando…' : 'Otra ronda igual'}
+            </button>
+            <button
+              onClick={() => setFase('config')}
+              style={{ width: '100%', padding: 13, background: 'white', border: 'none', boxShadow: SOMBRA, color: TEXT_PRIMARY, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Cambiar preguntas o dificultad
+            </button>
+            <button
+              onClick={irALista}
+              style={{ width: '100%', padding: 10, background: 'none', border: 'none', color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Elegir otra modalidad
+            </button>
+            {errorInicio && (
+              <div style={{ fontSize: 13, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px' }}>{errorInicio}</div>
+            )}
+          </div>
         </div>
       </div>
     );

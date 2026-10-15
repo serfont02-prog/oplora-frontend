@@ -6,7 +6,7 @@
 //   Test → ClipboardCheck (verde) · Flashcards → Layers (morado) · Psicotécnicos → Brain (índigo)
 //   Simulacro → Timer · Repaso → Target · Racha → Flame
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ClipboardCheck, Layers, Brain, Timer, Target, Flame, Crown, ChevronRight, Lock } from 'lucide-react';
@@ -29,6 +29,17 @@ const COLOR_SIMULACRO_BG = '#EDE9DD';
 export default function EntrenamientoHub({ usuario, oposicion, convocatoria, limites }: any) {
   const router = useRouter();
   const [modalTest, setModalTest] = useState(false);
+
+  // "Hacer otro test" desde el resultado llega con ?abrir=test y abre directamente la elección
+  useEffect(() => {
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      if (qs.get('abrir') === 'test') {
+        setModalTest(true);
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    } catch { /* sin query */ }
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: '90px', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
