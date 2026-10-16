@@ -1,42 +1,85 @@
 'use client';
 
+// ⭐ Ajustes de la oposición — mismo sistema que el resto de la app: botón redondo, listas en
+// tarjetas blancas con la sombra común, títulos suaves, iconos lucide y sin emojis. Lo que no se
+// puede deshacer va al final, con "Abandonar esta oposición" como última opción.
+
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { ArrowLeft, ChevronRight, Bell, RefreshCw, Share2, Download, LogOut, RotateCcw } from 'lucide-react';
-import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
+import {
+  ArrowLeft, ChevronRight, Bell, RefreshCw, Download, LogOut, RotateCcw, CalendarRange, Repeat, UserPlus, AlertTriangle, Check,
+} from 'lucide-react';
+import { BG_NEUTRAL as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const BORDER = '#EEF0F3';
+
+function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>{titulo}</div>
+      <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>{children}</div>
+    </section>
+  );
+}
+
+function Fila({ Icon, color, bg, titulo, sub, onClick, ultima = false, peligro = false, subColor }: {
+  Icon: any; color: string; bg: string; titulo: string; sub?: string; onClick: () => void; ultima?: boolean; peligro?: boolean; subColor?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', borderBottom: ultima ? 'none' : `1px solid ${BORDER}`, cursor: 'pointer', textAlign: 'left' }}
+    >
+      <div style={{ width: 40, height: 40, borderRadius: 12, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={19} color={color} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: peligro ? '#B91C1C' : TEXT_PRIMARY }}>{titulo}</div>
+        {sub && <div style={{ fontSize: 12, color: subColor ?? TEXT_MUTED, marginTop: 1 }}>{sub}</div>}
+      </div>
+      <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+    </button>
+  );
+}
+
+const CONSERVAR: { key: string; label: string }[] = [
+  { key: 'puntosYNivel', label: 'Puntos y nivel' },
+  { key: 'racha', label: 'Racha actual' },
+  { key: 'flashcards', label: 'Flashcards dominadas' },
+  { key: 'lectura', label: 'Progreso de lectura de apuntes' },
+  { key: 'historialTests', label: 'Historial de tests' },
+  { key: 'notas', label: 'Notas personales' },
+];
 
 export default function AjustesOposicionPage() {
   const params = useParams();
   const router = useRouter();
   const { usuario, actualizarUsuario } = useAuth();
-  const [errorExportar, setErrorExportar] = useState<string | null>(null);
-  const [exportando, setExportando] = useState(false);
   const queryClient = useQueryClient();
   const oposicionId = params.id as string;
 
+  const [errorExportar, setErrorExportar] = useState<string | null>(null);
+  const [exportando, setExportando] = useState(false);
   const [modalAbandonar, setModalAbandonar] = useState(false);
-  const [notificaciones, setNotificaciones] = useState(true);
   const [modalResetear, setModalResetear] = useState(false);
-  const [conservar, setConservar] = useState({
-    puntosYNivel: false,
-    racha: false,
-    flashcards: false,
-    lectura: false,
-    historialTests: false,
-    notas: false,
+  const [entiendo, setEntiendo] = useState(false);
+  const [conservar, setConservar] = useState<Record<string, boolean>>({
+    puntosYNivel: false, racha: false, flashcards: false, lectura: false, historialTests: false, notas: false,
   });
 
+  const { data: oposicion } = useQuery({
+    queryKey: ['oposicion', oposicionId],
+    queryFn: async () => (await api.get(`/oposiciones/${oposicionId}`)).data,
+  });
+
+  const convActiva = usuario?.oposicionActiva?.id === oposicionId ? usuario?.oposicionActiva?.convocatoriaActiva : null;
+
   const resetear = useMutation({
-    mutationFn: async () => {
-      await api.post('/usuarios/resetear-progreso', { oposicionId, conservar });
-    },
+    mutationFn: async () => { await api.post('/usuarios/resetear-progreso', { oposicionId, conservar }); },
     onSuccess: () => {
       queryClient.invalidateQueries();
       setModalResetear(false);
@@ -44,21 +87,10 @@ export default function AjustesOposicionPage() {
     },
   });
 
-  const { data: oposicion } = useQuery({
-    queryKey: ['oposicion', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/oposiciones/${oposicionId}`);
-      return res.data;
-    },
-  });
-
-  // ⭐ Ruta corregida (antes DELETE /usuarios/oposiciones/:id → 404) y refresco del usuario
-  // en sesión, que es de donde sale la oposición activa.
   const abandonar = useMutation({
     mutationFn: async () => {
       await api.delete(`/usuarios/desactivar-oposicion/${oposicionId}`);
-      const me = await api.get('/usuarios/me');
-      return me.data;
+      return (await api.get('/usuarios/me')).data;
     },
     onSuccess: (me) => {
       if (me) actualizarUsuario(me);
@@ -67,7 +99,7 @@ export default function AjustesOposicionPage() {
     },
   });
 
-  // ⭐ Descarga un CSV (se abre con Excel) con el resumen y todos los tests de la oposición.
+  // Descarga un CSV (se abre con Excel) con el resumen y todos los tests de la oposición.
   const exportarProgreso = async () => {
     if (exportando) return;
     setErrorExportar(null);
@@ -90,213 +122,175 @@ export default function AjustesOposicionPage() {
     }
   };
 
+  const nadaConservado = Object.values(conservar).every((v) => !v);
+
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem' }}>
-
-        <button
-          onClick={() => router.back()}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: TEXT_SECONDARY, fontSize: 13, marginBottom: 16 }}
-        >
-          <ArrowLeft size={15} />
-          Atrás
-        </button>
-
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
-            Ajustes
-          </div>
-          <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>
-            {oposicion?.nombre ?? 'Tu oposición'}
+        {/* Cabecera */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
+          <button
+            onClick={() => router.push('/app/perfil')}
+            aria-label="Volver al perfil"
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+          >
+            <ArrowLeft size={18} color={TEXT_PRIMARY} />
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Ajustes</div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3 }}>{oposicion?.nombre ?? 'Tu oposición'}</div>
+            {convActiva?.anyo && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2 }}>Convocatoria {convActiva.anyo}</div>}
           </div>
         </div>
 
-        {/* Cambiar oposición / convocatoria */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
-          <button
-            onClick={() => router.push('/app/onboarding/oposicion?modo=cambiar')}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', borderBottom: '1px solid #F1F5F9', cursor: 'pointer', textAlign: 'left' }}
-          >
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <RefreshCw size={16} color="#1F7CFF" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Cambiar de oposición</div>
-              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>Requiere plan de pago</div>
-            </div>
-            <ChevronRight size={14} color="#D1D5DB" />
-          </button>
-
-          <button
+        <Seccion titulo="Tu oposición">
+          <Fila
+            Icon={CalendarRange} color="#1F7CFF" bg="#EAF0FF"
+            titulo="Mi convocatoria" sub="Fechas, plazas, ejercicios y temario"
+            onClick={() => router.push(`/app/oposicion/${oposicionId}/convocatoria`)}
+          />
+          <Fila
+            Icon={RefreshCw} color="#1F7CFF" bg="#EAF0FF"
+            titulo="Cambiar de convocatoria" sub="Solo a convocatorias más recientes"
             onClick={() => router.push(`/app/oposicion/${oposicionId}/cambiar-convocatoria`)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-          >
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <RefreshCw size={16} color="#1F7CFF" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Cambiar de convocatoria</div>
-              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>Solo a convocatorias más recientes</div>
-            </div>
-            <ChevronRight size={14} color="#D1D5DB" />
-          </button>
-        </div>
+          />
+          <Fila
+            Icon={Repeat} color="#1F7CFF" bg="#EAF0FF"
+            titulo="Cambiar de oposición" sub="Tu progreso en esta se guarda"
+            onClick={() => router.push('/app/onboarding/oposicion?modo=cambiar')}
+            ultima
+          />
+        </Seccion>
 
-        {/* Notificaciones */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FDF4E3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Bell size={16} color="#D4A017" />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Notificaciones</div>
-            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>Avisos de esta oposición</div>
-          </div>
-          <button
-            onClick={() => setNotificaciones(!notificaciones)}
-            style={{ width: 40, height: 22, borderRadius: 999, flexShrink: 0, background: notificaciones ? '#111827' : '#e5e7eb', position: 'relative', border: 'none', cursor: 'pointer' }}
-          >
-            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 3, left: notificaciones ? 21 : 3, transition: 'left 0.2s' }} />
-          </button>
-        </div>
+        <Seccion titulo="Avisos">
+          {/* ⭐ Antes había aquí un interruptor que no guardaba nada. Los avisos reales están en Preferencias. */}
+          <Fila
+            Icon={Bell} color="#CA8A04" bg="#FDF8E8"
+            titulo="Notificaciones y avisos" sub="Elige qué avisos quieres recibir"
+            onClick={() => router.push('/app/preferencias')}
+            ultima
+          />
+        </Seccion>
 
-        {/* Compartir + exportar */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
-          <button
-            onClick={() => router.push('/app/retos')}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', borderBottom: '1px solid #F1F5F9', cursor: 'pointer', textAlign: 'left' }}
-          >
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F0FC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Share2 size={16} color="#8B5CF6" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Invitar a un amigo</div>
-              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>Compite juntos en retos</div>
-            </div>
-            <ChevronRight size={14} color="#D1D5DB" />
-          </button>
+        <Seccion titulo="Comparte">
+          <Fila
+            Icon={UserPlus} color="#C2410C" bg="#FCEEE8"
+            titulo="Invitar a un amigo" sub="Por email o compartiendo un enlace"
+            onClick={() => router.push('/app/invitar')}
+            ultima
+          />
+        </Seccion>
 
-          <button
+        <Seccion titulo="Tus datos">
+          <Fila
+            Icon={Download} color="#4D7C0F" bg="#F3FAE9"
+            titulo="Exportar mi progreso"
+            sub={exportando ? 'Preparando…' : errorExportar ?? 'Tus tests y aciertos en una hoja de cálculo'}
+            subColor={errorExportar ? '#B91C1C' : undefined}
             onClick={exportarProgreso}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-          >
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFFADE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Download size={16} color="#4D7C0F" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Exportar mi progreso</div>
-              <div style={{ fontSize: 11, color: errorExportar ? '#B91C1C' : TEXT_MUTED, marginTop: 1 }}>
-                {exportando ? 'Preparando…' : errorExportar ?? 'Descarga tus tests y aciertos en una hoja de cálculo'}
+            ultima
+          />
+        </Seccion>
+
+        <Seccion titulo="Zona delicada">
+          <Fila
+            Icon={RotateCcw} color="#D97706" bg="#FEF6E4"
+            titulo="Reiniciar mi progreso" sub="Empieza de cero conservando lo que elijas"
+            onClick={() => { setEntiendo(false); setModalResetear(true); }}
+          />
+          <Fila
+            Icon={LogOut} color="#DC2626" bg="#FEF2F2"
+            titulo="Abandonar esta oposición" sub="Dejará de aparecer en tu inicio"
+            onClick={() => setModalAbandonar(true)}
+            peligro
+            ultima
+          />
+        </Seccion>
+      </div>
+
+      {/* Reiniciar progreso */}
+      {modalResetear && (
+        <div onClick={() => setModalResetear(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#FEF6E4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <RotateCcw size={20} color="#D97706" />
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Reiniciar progreso</div>
+                <div style={{ fontSize: 12, color: TEXT_MUTED }}>Marca lo que quieres conservar. Lo demás se borrará.</div>
               </div>
             </div>
-            <ChevronRight size={14} color="#D1D5DB" />
-          </button>
-        </div>
 
-        {/* Abandonar */}
-        <button
-          onClick={() => setModalAbandonar(true)}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 13, background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, color: '#dc2626', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
-        >
-          <LogOut size={16} />
-          Abandonar esta oposición
-        </button>
-        <button
-          onClick={() => setModalResetear(true)}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 13, background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, color: '#D97706', fontWeight: 600, fontSize: 13, cursor: 'pointer', marginTop: 10 }}
-        >
-          <RotateCcw size={16} />
-          Reiniciar mi progreso
-        </button>
-
-      </div>
-
-      {modalResetear && (
-      <div
-        onClick={() => setModalResetear(false)}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
-      >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', width: '100%', maxWidth: 480 }}
-        >
-          <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center' }}>⚠️</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6, textAlign: 'center' }}>
-            Reiniciar progreso
-          </div>
-          <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 18, textAlign: 'center' }}>
-            Elige qué quieres conservar. Todo lo demás se borrará.
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-            {[
-              { key: 'puntosYNivel', label: 'Puntos y nivel' },
-              { key: 'racha', label: 'Racha actual' },
-              { key: 'flashcards', label: 'Flashcards dominadas' },
-              { key: 'lectura', label: 'Progreso de lectura de apuntes' },
-              { key: 'historialTests', label: 'Historial de tests realizados' },
-              { key: 'notas', label: 'Notas personales' },
-            ].map(({ key, label }) => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F9FAFB', borderRadius: 12, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={(conservar as any)[key]}
-                  onChange={(e) => setConservar({ ...conservar, [key]: e.target.checked })}
-                  style={{ width: 16, height: 16, cursor: 'pointer' }}
-                />
-                <span style={{ fontSize: 13, color: '#374151' }}>{label}</span>
-              </label>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setModalResetear(false)}
-              style={{ flex: 1, padding: 13, background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={() => resetear.mutate()}
-              disabled={resetear.isPending}
-              style={{ flex: 1, padding: 13, background: '#DC2626', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-            >
-              {resetear.isPending ? 'Reiniciando...' : 'Reiniciar progreso'}
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-
-      {modalAbandonar && (
-        <div
-          onClick={() => setModalAbandonar(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ background: 'white', borderRadius: 20, padding: '1.5rem', width: '100%', maxWidth: 340, textAlign: 'center' }}
-          >
-            <div style={{ fontSize: 32, marginBottom: 10 }}>⚠️</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>
-              ¿Abandonar esta oposición?
+            <div style={{ background: 'white', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden', marginBottom: 14 }}>
+              {CONSERVAR.map(({ key, label }, i) => {
+                const on = conservar[key];
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setConservar({ ...conservar, [key]: !on })}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', borderBottom: i < CONSERVAR.length - 1 ? `1px solid ${BORDER}` : 'none', cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    <span style={{ width: 22, height: 22, borderRadius: 7, background: on ? '#0f172a' : 'white', border: on ? 'none' : '2px solid #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {on && <Check size={14} color="white" strokeWidth={3} />}
+                    </span>
+                    <span style={{ flex: 1, fontSize: 14, color: TEXT_PRIMARY }}>{label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: on ? '#16A34A' : '#B91C1C' }}>{on ? 'Se conserva' : 'Se borra'}</span>
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 18 }}>
-              Tu progreso se conservará, pero dejará de aparecer en tu inicio
-            </div>
+
+            {/* ⭐ Confirmación explícita: antes un solo toque borraba todo (nada venía marcado) */}
+            <button
+              onClick={() => setEntiendo(!entiendo)}
+              style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 10, background: '#FEF2F2', border: 'none', borderRadius: 12, padding: '10px 12px', cursor: 'pointer', textAlign: 'left', marginBottom: 14 }}
+            >
+              <span style={{ width: 20, height: 20, borderRadius: 6, background: entiendo ? '#DC2626' : 'white', border: entiendo ? 'none' : '2px solid #FCA5A5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                {entiendo && <Check size={13} color="white" strokeWidth={3} />}
+              </span>
+              <span style={{ fontSize: 12, color: '#991B1B', lineHeight: 1.45 }}>
+                Entiendo que {nadaConservado ? 'se borrará todo mi progreso' : 'lo que no he marcado se borrará'} y que no se puede deshacer.
+              </span>
+            </button>
+
+            {resetear.isError && <div style={{ fontSize: 12, color: '#B91C1C', marginBottom: 10 }}>No se ha podido reiniciar. Inténtalo de nuevo.</div>}
+
             <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => setModalAbandonar(false)}
-                style={{ flex: 1, padding: 12, background: 'white', color: TEXT_SECONDARY, border: '1px solid #e5e7eb', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-              >
+              <button onClick={() => setModalResetear(false)} style={{ flex: 1, padding: 13, background: 'white', color: TEXT_SECONDARY, border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 Cancelar
               </button>
               <button
-                onClick={() => abandonar.mutate()}
-                disabled={abandonar.isPending}
-                style={{ flex: 1, padding: 12, background: '#dc2626', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                onClick={() => resetear.mutate()}
+                disabled={!entiendo || resetear.isPending}
+                style={{ flex: 1, padding: 13, background: '#DC2626', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: entiendo ? 'pointer' : 'default', opacity: entiendo ? 1 : 0.45 }}
               >
-                {abandonar.isPending ? 'Saliendo...' : 'Abandonar'}
+                {resetear.isPending ? 'Reiniciando…' : 'Reiniciar progreso'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Abandonar oposición */}
+      {modalAbandonar && (
+        <div onClick={() => setModalAbandonar(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: 20, padding: '1.5rem', width: '100%', maxWidth: 360, textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <AlertTriangle size={24} color="#DC2626" />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>¿Abandonar {oposicion?.nombre ?? 'esta oposición'}?</div>
+            <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 18, lineHeight: 1.5 }}>
+              Tu progreso se guarda, pero dejará de aparecer en tu inicio. Podrás volver a añadirla cuando quieras.
+            </div>
+            {abandonar.isError && <div style={{ fontSize: 12, color: '#B91C1C', marginBottom: 10 }}>No se ha podido completar. Inténtalo de nuevo.</div>}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setModalAbandonar(false)} style={{ flex: 1, padding: 12, background: '#F3F4F6', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                Cancelar
+              </button>
+              <button onClick={() => abandonar.mutate()} disabled={abandonar.isPending} style={{ flex: 1, padding: 12, background: '#DC2626', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                {abandonar.isPending ? 'Saliendo…' : 'Abandonar'}
               </button>
             </div>
           </div>

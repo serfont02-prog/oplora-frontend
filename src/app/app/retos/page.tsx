@@ -9,6 +9,7 @@ import { Plus, ChevronRight, ChevronLeft, ChevronDown, Brain, Lock, Swords, Clip
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { IconoModalidad } from '@/components/psicotecnicos/iconos';
+import { ModalInvitar } from '@/components/invitar/FormInvitar';
 import { getOploUrl } from '@/lib/oplo';
 import TarjetaLiga from '@/components/liga/TarjetaLiga';
 import { CopaEnAvatar } from '@/components/liga/ligaUtils';
@@ -210,20 +211,7 @@ const mostrarToast = (mensaje: string) => {
   setTimeout(() => setToast(null), 2500);
 };
 
-const compartirInvitacion = async () => {
-  const url = `https://oplora.app/app/registro?ref=${usuario?.nick ?? ''}`;
-  const texto = `¡Te reto a superarme en OPLORA! Únete y prepara tu oposición conmigo.`;
 
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: 'OPLORA', text: texto, url });
-    } else {
-      await navigator.clipboard.writeText(`${texto} ${url}`);
-      mostrarToast('Enlace copiado al portapapeles');
-    }
-  } catch { /* compartir cancelado */ }
-  setModalInvitar(false);
-};
 const puedeEnviar = validacion?.encontrado && !validacion?.error && validacion?.mismaOposicion && validacion?.mismaConvocatoria;
 const oposicionId = usuario?.oposicionActiva?.id;
 
@@ -766,7 +754,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                         onClick={() => setModalInvitar(true)}
                         style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}
                       >
-                        Invitar
+                        Invitar por email
                       </button>
                     </div>
                   )}
@@ -774,10 +762,16 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.error}</div>
                   )}
                   {validacion.encontrado && !validacion.error && !validacion.mismaOposicion && (
-                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.nombre} no está preparando esta oposición</div>
+                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.nombre} no prepara esta oposición</span>
+                      <button onClick={() => setModalInvitar(true)} style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}>Invitarle</button>
+                    </div>
                   )}
                   {validacion.encontrado && !validacion.error && validacion.mismaOposicion && !validacion.mismaConvocatoria && (
-                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.nombre} está en otra convocatoria</div>
+                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.nombre} está en otra convocatoria</span>
+                      <button onClick={() => setModalInvitar(true)} style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}>Avisarle</button>
+                    </div>
                   )}
                   {validacion.encontrado && !validacion.error && validacion.mismaOposicion && validacion.mismaConvocatoria && (
                     <div style={{ fontSize: '12px', color: '#15803d', display: 'flex', alignItems: 'center', gap: 5 }}><Check size={14} /> {validacion.nombre} — listo para retar</div>
@@ -1115,31 +1109,13 @@ const oposicionId = usuario?.oposicionActiva?.id;
       {/* Modal INVITAR */}
 
       {modalInvitar && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '340px', textAlign: 'center' }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <UserX size={24} color={COLOR_RETOS} />
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', marginBottom: '6px' }}>
-              No hemos encontrado a "{form.retadoNickOEmail}"
-            </div>
-            <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '18px' }}>
-              ¿Quieres invitarle a OPLORA para poder retarle?
-            </div>
-            <button
-              onClick={compartirInvitacion}
-              style={{ width: '100%', padding: '12px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginBottom: '8px' }}
-            >
-              Compartir invitación
-            </button>
-            <button
-              onClick={() => setModalInvitar(false)}
-              style={{ width: '100%', padding: '12px', background: 'white', color: '#6b7280', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
+        <ModalInvitar
+          onClose={() => setModalInvitar(false)}
+          oposicionId={oposicionId}
+          oposicionNombre={usuario?.oposicionActiva?.nombre}
+          destinoInicial={form.retadoNickOEmail}
+          motivo="reto"
+        />
       )}
 
       {/* Modal preview / resultado */}
