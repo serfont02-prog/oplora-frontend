@@ -1,30 +1,136 @@
 'use client';
 
+// ⭐ Página de un tema — mismo sistema que el resto de la app: botones redondos, accesos en círculos
+// flotantes, tarjetas blancas con la sombra común, títulos suaves y solo iconos lucide.
+
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Upload, CheckCircle2, ClipboardCheck } from 'lucide-react';
-import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import {
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  BookOpen,
-  FileText,
-  Lock,
-  CalendarDays,
-  NotebookPen,
-  BarChart2,
+  ArrowLeft, ChevronLeft, ChevronRight, BookOpen, FileText, Upload, Lock, CalendarDays, CalendarCheck,
+  NotebookPen, BarChart3, Library, ClipboardCheck, Layers, CheckCircle2, Scale, X, Target, Flame, Clock,
 } from 'lucide-react';
+import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 
 type TabTema = 'material' | 'mi-estudio' | 'progreso';
 
-const BG_APP = '#F5F1EB';
-const BG_WIDGET = '#EFE9E0';
+const BG_APP = BG_TEMA;
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const BORDER = '#F0ECE6';
+const COLOR_ESTUDIAR = '#1F7CFF';
+const COLOR_TEST = '#4D7C0F';
+const TZ = 'Europe/Madrid';
+
+/** "YYYY-MM-DD" de una fecha en Madrid (antes se usaba toISOString, que es UTC y fallaba de noche) */
+const ymdMadrid = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+const sumarDias = (dias: number) => { const d = new Date(); d.setDate(d.getDate() + dias); return ymdMadrid(d); };
+const fechaLarga = (ymdOIso: string) => {
+  const ymd = ymdOIso.slice(0, 10);
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d, 12)));
+};
+
+const fechaCorta = (ymd: string) => {
+  const [y, m, d] = ymd.slice(0, 10).split('-').map(Number);
+  return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d, 12)));
+};
+
+function TituloSeccion({ children, derecha }: { children: React.ReactNode; derecha?: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', gap: 8 }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>{children}</span>
+      {derecha}
+    </div>
+  );
+}
+
+function BotonRedondo({ onClick, label, disabled, children, size = 38 }: { onClick: () => void; label: string; disabled?: boolean; children: React.ReactNode; size?: number }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      disabled={disabled}
+      style={{ width: size, height: size, borderRadius: '50%', border: 'none', background: 'white', boxShadow: disabled ? 'none' : SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: disabled ? 'default' : 'pointer', flexShrink: 0, opacity: disabled ? 0.4 : 1 }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Acceso en círculo flotante (mismo estilo que los de Inicio) */
+function Acceso({ label, sub, Icon, color, onClick, badge }: { label: string; sub?: string; Icon: any; color: string; onClick: () => void; badge?: number }) {
+  return (
+    <button onClick={onClick} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: 0 }}>
+      <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon size={22} color={color} />
+        {!!badge && badge > 0 && (
+          <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, background: '#DC2626', color: 'white', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white', boxSizing: 'border-box' }}>
+            {badge > 9 ? '9+' : badge}
+          </span>
+        )}
+      </div>
+      <span style={{ fontSize: 11, color: TEXT_PRIMARY, fontWeight: 600 }}>{label}</span>
+      {sub && <span style={{ fontSize: 10, color: TEXT_MUTED, marginTop: -4 }}>{sub}</span>}
+    </button>
+  );
+}
+
+function CirculoDato({ valor, porcentaje, color, label, sub }: { valor: string; porcentaje: number; color: string; label: string; sub: string }) {
+  const D = 78;
+  const g = 6;
+  const r = (D - 12 - g) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width={D - 12} height={D - 12} style={{ position: 'absolute', top: 6, left: 6, transform: 'rotate(-90deg)' }}>
+          <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke="#EEF0F3" strokeWidth={g} />
+          {porcentaje > 0 && (
+            <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke={color} strokeWidth={g} strokeLinecap="round"
+              strokeDasharray={c} strokeDashoffset={c - (Math.min(100, porcentaje) / 100) * c} style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+          )}
+        </svg>
+        <span style={{ position: 'relative', fontSize: 15, fontWeight: 800, color: TEXT_PRIMARY }}>{valor}</span>
+      </div>
+      <span style={{ fontSize: 12, color: TEXT_PRIMARY, fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{label}</span>
+      <span style={{ fontSize: 10, color: TEXT_MUTED, marginTop: -3, textAlign: 'center' }}>{sub}</span>
+    </div>
+  );
+}
+
+function FilaLista({ Icon, color, bg, titulo, sub, onClick, href, ultima, derecha }: {
+  Icon: any; color: string; bg: string; titulo?: string; sub?: string; onClick?: () => void; href?: string; ultima: boolean; derecha?: React.ReactNode;
+}) {
+  const contenido = (
+    <>
+      <div style={{ width: 40, height: 40, borderRadius: 12, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={19} color={color} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titulo}</div>
+        {sub && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
+      </div>
+      {derecha ?? ((onClick || href) && <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />)}
+    </>
+  );
+  const estilo: React.CSSProperties = {
+    width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', textAlign: 'left',
+    background: 'none', border: 'none', borderBottom: ultima ? 'none' : `1px solid ${BORDER}`,
+    cursor: onClick || href ? 'pointer' : 'default', textDecoration: 'none', boxSizing: 'border-box',
+  };
+  if (href) return <a href={href} target="_blank" rel="noopener noreferrer" style={estilo}>{contenido}</a>;
+  if (onClick) return <button onClick={onClick} style={estilo}>{contenido}</button>;
+  return <div style={estilo}>{contenido}</div>;
+}
+
+const Caja = ({ children, padding = 0 }: { children: React.ReactNode; padding?: number }) => (
+  <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden', padding }}>{children}</div>
+);
 
 export default function TemaPage() {
   const router = useRouter();
@@ -36,236 +142,168 @@ export default function TemaPage() {
 
   const [tab, setTab] = useState<TabTema>('material');
   const [notaTexto, setNotaTexto] = useState('');
-  const [notaGuardando, setNotaGuardando] = useState(false);
-  const [notaGuardada, setNotaGuardada] = useState(false);
+  const [estadoNota, setEstadoNota] = useState<'' | 'guardando' | 'guardado' | 'error'>('');
   const notaTimeoutRef = useRef<any>(null);
-  const [fechaRepaso, setFechaRepaso] = useState('');
-  const [repasoProgramado, setRepasoProgramado] = useState<string | null>(null);
+  const [fechaElegida, setFechaElegida] = useState('');
+  const [mostrarCalendario, setMostrarCalendario] = useState(false);
+  const [repasoProgramado, setRepasoProgramado] = useState<string | null>(null); // "YYYY-MM-DD"
   const [programando, setProgramando] = useState(false);
-  const [flippedCard, setFlippedCard] = useState<string | null>(null);
+  const [errorRepaso, setErrorRepaso] = useState('');
   const [subiendoApunte, setSubiendoApunte] = useState(false);
+  const [errorSubida, setErrorSubida] = useState('');
   const [modalTest, setModalTest] = useState(false);
   const [tituloExpandido, setTituloExpandido] = useState(false);
-  // ⭐ Movido aquí (antes estaba declarado después de los `return` condicionales
-  // de carga/error más abajo, violando las Reglas de los Hooks: React montaba
-  // un hook menos en esos renders y lanzaba un error al navegar a un tema).
-  const [mostrarCalendario, setMostrarCalendario] = useState(false);
-
-
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
 
-  const {
-    data: convocatorias = [],
-    isLoading: convocatoriasLoading,
-    isError: convocatoriasError,
-  } = useQuery({
+  const { data: convocatorias = [], isPending: convPendiente, isError: convocatoriasError } = useQuery({
     queryKey: ['convocatorias-tema', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data,
     enabled: !!usuario,
   });
-
   const convocatoria = convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0];
 
-  const {
-    data: temas = [],
-    isLoading: temasLoading,
-    isError: temasError,
-  } = useQuery({
+  const { data: temas = [], isPending: temasPendiente, isError: temasError } = useQuery({
     queryKey: ['temas-tema', convocatoria?.id],
-    queryFn: async () => {
-      const res = await api.get(`/temas/convocatoria/${convocatoria.id}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/temas/convocatoria/${convocatoria.id}`)).data,
     enabled: !!convocatoria?.id,
   });
 
-  const tema = temas.find((t: any) => t.numero === parseInt(numeroTema));
-  const temaAnterior = temas.find((t: any) => t.numero === parseInt(numeroTema) - 1);
-  const temaSiguiente = temas.find((t: any) => t.numero === parseInt(numeroTema) + 1);
+  const num = parseInt(numeroTema);
+  const tema = temas.find((t: any) => t.numero === num);
+  // ⭐ Anterior/siguiente por orden real (antes número ±1: si faltaba un número, se cortaba la navegación)
+  const ordenados = useMemo(() => [...temas].sort((a: any, b: any) => a.numero - b.numero), [temas]);
+  const idx = ordenados.findIndex((t: any) => t.numero === num);
+  const temaAnterior = idx > 0 ? ordenados[idx - 1] : null;
+  const temaSiguiente = idx >= 0 && idx < ordenados.length - 1 ? ordenados[idx + 1] : null;
 
-  const {
-    data: progresoCompleto,
-    isLoading: progresoCompletoLoading,
-    isError: progresoCompletoError,
-  } = useQuery({
+  const { data: progresoCompleto, isPending: progresoPendiente, isError: progresoCompletoError } = useQuery({
     queryKey: ['progreso-completo-tema', tema?.id, oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/temas/${tema.id}/progreso-completo?oposicionId=${oposicionId}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/temas/${tema.id}/progreso-completo?oposicionId=${oposicionId}`)).data,
     enabled: !!tema?.id && !!oposicionId,
   });
 
-
-  const {
-    data: normativa = [],
-    isLoading: normativaLoading,
-    isError: normativaError,
-  } = useQuery({
+  const { data: normativa = [], isPending: normativaPendiente, isError: normativaError } = useQuery({
     queryKey: ['normativa-tema', tema?.id],
-    queryFn: async () => {
-      const res = await api.get(`/temas/${tema.id}/normativa`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/temas/${tema.id}/normativa`)).data,
     enabled: !!tema?.id,
   });
 
-  // Mapa siglas → versionLeyId, para poder convertir las referencias
-  // "[CC 17.2]" / "[CC art. 14]" del contexto del tema en enlaces clicables,
-  // igual que ya se hace en la página de Apuntes OPLORA.
   const { data: leyesOposicion = [] } = useQuery({
     queryKey: ['leyes-siglas', oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/leyes/oposicion/${oposicionId}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/leyes/oposicion/${oposicionId}`)).data,
     enabled: !!oposicionId,
   });
-
   const mapaSiglas = useMemo(() => construirMapaSiglas(leyesOposicion), [leyesOposicion]);
 
-  // Resuelve una referencia [SIGLAS numero] a su artículo real y navega a la
-  // página de la ley, igual que ya hacen los botones de "Normativa vinculada".
   const abrirArticuloDesdeContexto = async (numero: string, versionLeyId: string) => {
     try {
       const res = await api.get(`/normativa/articulo-por-numero/${versionLeyId}/${numero}`);
-      if (res.data?.id) {
-        router.push(`/app/articulo/${res.data.id}?oposicionId=${oposicionId}`);
-      }
-    } catch (e) {
-      console.error('Error abriendo artículo:', e);
-    }
+      if (res.data?.id) router.push(`/app/articulo/${res.data.id}?oposicionId=${oposicionId}`);
+    } catch { /* referencia sin artículo */ }
   };
 
-  // ⭐ Agrupa la normativa por ley para mostrarla concentrada
-const normativaPorLey = useMemo(() => {
-  if (!normativa?.length) return {};
-  const agrupado = normativa.reduce((acc: any, item: any) => {
-    const ley = item.articulo?.capitulo?.tituloRef?.versionLey?.ley
-      ?? item.articulo?.tituloRef?.versionLey?.ley;
-    const leyNombre = ley?.nombre ?? 'Normativa';
-    const leyId = ley?.id;
-
-    if (!acc[leyNombre]) acc[leyNombre] = { leyId, articulos: [] };
-    if (item.articulo) {
-      acc[leyNombre].articulos.push({
-        id: item.articulo.id,
-        numero: item.articulo.numero,
-      });
-    }
-    return acc;
-  }, {});
-
-  // ⭐ Ordena los artículos de cada ley por número. "numero" es texto
-  // (puede venir como "69 bis"), así que se extrae la parte numérica inicial
-  // para ordenar de verdad por valor (1, 2, ..., 10) en vez de alfabéticamente
-  // ("1", "10", "2", ...), y se desempata por el resto del texto (p. ej. que
-  // "69" vaya antes que "69 bis").
-  const numeroOrden = (numero: string) => {
-    const match = /^\d+/.exec(numero ?? '');
-    return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
-  };
-  Object.values(agrupado).forEach((data: any) => {
-    data.articulos.sort((a: any, b: any) => {
-      const diff = numeroOrden(a.numero) - numeroOrden(b.numero);
-      if (diff !== 0) return diff;
-      return (a.numero ?? '').localeCompare(b.numero ?? '');
+  // Normativa agrupada por ley y ordenada por número de artículo
+  const normativaPorLey = useMemo(() => {
+    if (!normativa?.length) return {};
+    const agrupado = normativa.reduce((acc: any, item: any) => {
+      const ley = item.articulo?.capitulo?.tituloRef?.versionLey?.ley
+        ?? item.articulo?.seccion?.capitulo?.tituloRef?.versionLey?.ley
+        ?? item.articulo?.tituloRef?.versionLey?.ley;
+      const leyNombre = ley?.nombre ?? 'Normativa';
+      if (!acc[leyNombre]) acc[leyNombre] = { leyId: ley?.id, articulos: [] };
+      if (item.articulo) acc[leyNombre].articulos.push({ id: item.articulo.id, numero: item.articulo.numero });
+      return acc;
+    }, {});
+    const orden = (n: string) => { const m = /^\d+/.exec(n ?? ''); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
+    Object.values(agrupado).forEach((d: any) => {
+      d.articulos.sort((a: any, b: any) => (orden(a.numero) - orden(b.numero)) || (a.numero ?? '').localeCompare(b.numero ?? ''));
     });
-  });
-
-  return agrupado;
-}, [normativa]);
+    return agrupado;
+  }, [normativa]);
 
   const { data: progresoTest } = useQuery({
     queryKey: ['progreso-test-tema', tema?.id, oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/test/progreso/${oposicionId}/${tema.id}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/test/progreso/${oposicionId}/${tema.id}`)).data,
     enabled: !!tema?.id,
   });
 
   const { data: statsFC } = useQuery({
     queryKey: ['stats-fc-tema', tema?.id, oposicionId],
-    queryFn: async () => {
-      const res = await api.get(`/flashcards/stats/${oposicionId}/${tema.id}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/flashcards/stats/${oposicionId}/${tema.id}`)).data,
     enabled: !!tema?.id,
   });
 
   const { data: limites } = useQuery({
-  queryKey: ['limites', usuario?.id],
-  queryFn: async () => {
-    const res = await api.get('/usuarios/limites');
-    return res.data;
-  },
-  enabled: !!usuario,
+    queryKey: ['limites', usuario?.id],
+    queryFn: async () => (await api.get('/usuarios/limites')).data,
+    enabled: !!usuario,
   });
 
   const { data: progresoSesiones } = useQuery({
-  queryKey: ['progreso-sesiones', tema?.id],
-  queryFn: async () => {
-    const res = await api.get(`/sesiones-tema/${tema.id}/progreso`);
-    return res.data;
-  },
-  enabled: !!tema?.id,
+    queryKey: ['progreso-sesiones', tema?.id],
+    queryFn: async () => (await api.get(`/sesiones-tema/${tema.id}/progreso`)).data,
+    enabled: !!tema?.id,
   });
 
-  const {
-    data: apuntes = [],
-    isLoading: apuntesLoading,
-    isError: apuntesError,
-  } = useQuery({
+  const { data: apuntes = [], isPending: apuntesPendiente, isError: apuntesError } = useQuery({
     queryKey: ['apuntes-tema', tema?.id],
-    queryFn: async () => {
-      const res = await api.get(`/apuntes-usuario/tema/${tema.id}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/apuntes-usuario/tema/${tema.id}`)).data,
     enabled: !!tema?.id,
   });
 
-  const {
-    data: apuntesOplora = [],
-    isLoading: apuntesOploraLoading,
-    isError: apuntesOploraError,
-  } = useQuery({
+  const { data: apuntesOplora = [], isPending: apuntesOploraPendiente, isError: apuntesOploraError } = useQuery({
     queryKey: ['apuntes-oplora-tema', tema?.id],
-    queryFn: async () => {
-      const res = await api.get(`/apuntes-oplora/tema/${tema.id}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/apuntes-oplora/tema/${tema.id}`)).data,
     enabled: !!tema?.id,
   });
 
-  const { data: nota } = useQuery({
+  const { data: nota, isFetched: notaCargada } = useQuery({
     queryKey: ['nota-tema', tema?.id],
-    queryFn: async () => {
-      const res = await api.get(`/normativa/nota-tema/${tema.id}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/normativa/nota-tema/${tema.id}`)).data,
     enabled: !!tema?.id,
   });
 
+  // ⭐ Al cambiar de tema se reinician las notas y el repaso. Antes, si el tema nuevo no tenía
+  // nota, se quedaba el texto del anterior (y al escribir se guardaba en el tema nuevo).
   useEffect(() => {
-    if (nota?.contenido) setNotaTexto(nota.contenido);
-    if (nota?.fechaRepaso) setRepasoProgramado(new Date(nota.fechaRepaso).toLocaleDateString('es-ES'));
-  }, [nota]);
+    clearTimeout(notaTimeoutRef.current);
+    setNotaTexto(nota?.contenido ?? '');
+    setRepasoProgramado(nota?.fechaRepaso ? String(nota.fechaRepaso).slice(0, 10) : null);
+    setEstadoNota('');
+    setFechaElegida('');
+    setMostrarCalendario(false);
+    setErrorRepaso('');
+  }, [nota, tema?.id]);
 
-  const programarRepaso = async (fecha: string) => {
+  // Registrar la sesión de estudio (alimenta "Continúa donde lo dejaste")
+  useEffect(() => {
+    if (!tema?.id) return;
+    api.post(`/sesiones-tema/${tema.id}`)
+      .then(() => queryClient.invalidateQueries({ queryKey: ['ultimo-tema-estudiado'] }))
+      .catch(() => { /* no bloquea la página */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tema?.id]);
+
+  const refrescarRepasos = () => {
+    queryClient.invalidateQueries({ queryKey: ['nota-tema', tema?.id] });
+    queryClient.invalidateQueries({ queryKey: ['repasos-pendientes'] });
+  };
+
+  const guardarRepaso = async (fecha: string | null) => {
+    if (!tema?.id) return;
     setProgramando(true);
+    setErrorRepaso('');
     try {
       await api.post(`/normativa/nota-tema/${tema.id}/programar`, { fecha });
-      setRepasoProgramado(new Date(fecha).toLocaleDateString('es-ES'));
-      setFechaRepaso('');
-    } catch (e) {
-      console.error('Error:', e);
+      setRepasoProgramado(fecha);
+      setFechaElegida('');
+      setMostrarCalendario(false);
+      refrescarRepasos();
+    } catch {
+      setErrorRepaso('No se ha podido guardar. Inténtalo de nuevo.');
     } finally {
       setProgramando(false);
     }
@@ -273,758 +311,524 @@ const normativaPorLey = useMemo(() => {
 
   const handleNotaChange = (texto: string) => {
     setNotaTexto(texto);
-    setNotaGuardada(false);
+    setEstadoNota('');
     clearTimeout(notaTimeoutRef.current);
+    const temaId = tema?.id;
     notaTimeoutRef.current = setTimeout(async () => {
-      setNotaGuardando(true);
+      if (!temaId) return;
+      setEstadoNota('guardando');
       try {
-        await api.post(`/normativa/nota-tema/${tema.id}`, { contenido: texto });
-        setNotaGuardada(true);
-        setTimeout(() => setNotaGuardada(false), 2000);
-      } finally {
-        setNotaGuardando(false);
+        await api.post(`/normativa/nota-tema/${temaId}`, { contenido: texto });
+        setEstadoNota('guardado');
+      } catch {
+        setEstadoNota('error'); // ⭐ antes fallaba en silencio
       }
-    }, 1500);
+    }, 1200);
   };
 
-  const porcentajeProgreso = progresoCompleto?.porcentajeTotal ?? 0;
-  const repasoDesbloqueado = porcentajeProgreso >= 80;
-
-  const touchStartX = useRef<number | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
+  // Deslizar para cambiar de tema (solo gestos claramente horizontales y fuera de campos de texto)
+  const toque = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const el = e.target as HTMLElement;
+    if (el.closest('textarea, input, [data-sin-deslizar]')) { toque.current = null; return; }
+    toque.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const delta = e.changedTouches[0].clientX - touchStartX.current;
-    touchStartX.current = null;
-    if (delta < -60 && temaSiguiente) {
-      router.push(`/app/tema/${oposicionId}/${temaSiguiente.numero}`);
-    } else if (delta > 60 && temaAnterior) {
-      router.push(`/app/tema/${oposicionId}/${temaAnterior.numero}`);
-    }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!toque.current) return;
+    const dx = e.changedTouches[0].clientX - toque.current.x;
+    const dy = e.changedTouches[0].clientY - toque.current.y;
+    toque.current = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+    if (dx < 0 && temaSiguiente) router.push(`/app/tema/${oposicionId}/${temaSiguiente.numero}`);
+    else if (dx > 0 && temaAnterior) router.push(`/app/tema/${oposicionId}/${temaAnterior.numero}`);
   };
-
-  const queryCliente = useQueryClient(); // asegúrate de tenerlo importado y declarado en el componente
-
-useEffect(() => {
-  if (tema?.id) {
-    api.post(`/sesiones-tema/${tema.id}`)
-      .then(() => {
-        queryCliente.invalidateQueries({ queryKey: ['ultimo-tema-estudiado'] });
-      })
-      .catch((err) => {
-        console.error('Error registrando sesión de estudio:', err);
-      });
-  }
-}, [tema?.id]);
 
   if (cargando) return null;
 
-  // ⭐ Carga/errores de las queries "primarias" (las que determinan si hay tema que mostrar).
-  // Usamos isLoading (no isFetching) para no parpadear en refetchs en segundo plano.
-  if (convocatoriasLoading || temasLoading) {
+  const cargandoTema = !usuario || convPendiente || (!!convocatoria?.id && temasPendiente);
+
+  if (cargandoTema) {
     return (
-      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando...</span>
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+        <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <BookOpen size={24} color="#8B7355" />
+        </div>
+        <span style={{ fontSize: 13, color: TEXT_SECONDARY, fontWeight: 600 }}>Cargando tema…</span>
       </div>
     );
   }
 
-  if (convocatoriasError || temasError) {
+  // ⭐ Error o tema inexistente: antes se quedaba en "Cargando…" para siempre si el número no existía
+  if (convocatoriasError || temasError || !tema) {
     return (
-      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center' }}>
-        <span style={{ fontSize: '13px', color: '#dc2626' }}>No se ha podido cargar el tema. Inténtalo de nuevo.</span>
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem' }}>
+        <div style={{ background: 'white', borderRadius: 20, padding: '1.75rem 1.5rem', maxWidth: 380, width: '100%', textAlign: 'center', boxShadow: SOMBRA }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>
+            {convocatoriasError || temasError ? 'No se ha podido cargar el tema' : `No existe el tema ${numeroTema}`}
+          </div>
+          <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 16 }}>
+            {convocatoriasError || temasError ? 'Comprueba la conexión e inténtalo de nuevo.' : 'Puede que el temario de tu convocatoria haya cambiado.'}
+          </div>
+          <button onClick={() => router.push(`/app/tema/${oposicionId}?modo=estudiar`)} style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            Ir al temario
+          </button>
+        </div>
       </div>
     );
   }
 
-  const TABS: { key: TabTema; label: string; icon: typeof BookOpen }[] = [
-    { key: 'material', label: 'Material', icon: BookOpen },
+  const porcentajeProgreso = progresoCompleto?.porcentajeTotal ?? 0;
+  const completado = porcentajeProgreso >= 80;
+  const repasoDesbloqueado = completado;
+  const hoy = ymdMadrid(new Date());
+  const repasoHoy = !!repasoProgramado && repasoProgramado <= hoy;
+  const totalFC = statsFC?.total ?? 0;
+  const maxPorTema = limites?.limites?.preguntasPorTema ?? 20;
+  const numRepasoCompleto = Math.max(5, Math.min(20, maxPorTema));
+
+  const colorAnillo = completado ? '#16A34A' : porcentajeProgreso > 0 ? COLOR_ESTUDIAR : '#D1D5DB';
+  const R = 30;
+  const C = 2 * Math.PI * R;
+
+  const TABS: { key: TabTema; label: string; icon: any }[] = [
+    { key: 'material', label: 'Material', icon: Library },
     { key: 'mi-estudio', label: 'Mi estudio', icon: NotebookPen },
-    { key: 'progreso', label: 'Progreso', icon: BarChart2 },
+    { key: 'progreso', label: 'Progreso', icon: BarChart3 },
   ];
 
-// Fecha mínima seleccionable = hoy
-const hoy = new Date().toISOString().split('T')[0];
+  const desglose = progresoCompleto?.desglose;
 
-  
   return (
+    <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 90 }} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 
-    <div
-      style={{ minHeight: '100vh', background: BG_APP, paddingBottom: '80px' }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <style>{`
-        .flip-inner { transition: transform 0.45s ease; transform-style: preserve-3d; position: relative; }
-        .flip-inner.flipped { transform: rotateY(180deg); }
-        .flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; position: absolute; inset: 0; }
-        .flip-face-back { transform: rotateY(180deg); }
-      `}</style>
-
-      {/* ── HEADER STICKY ── */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 20,
-        background: 'white', borderBottom: '1px solid #f3f4f6',
-      }}>
-        <div style={{
-          padding: '0 1rem', height: '48px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <button
-            onClick={() => router.push(`/app/tema/${oposicionId}?modo=estudiar`)}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
-          >
-            <ArrowLeft size={14} />
-            Temario
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <button
-              onClick={() => temaAnterior && router.push(`/app/tema/${oposicionId}/${temaAnterior.numero}`)}
-              disabled={!temaAnterior}
-              style={{ width: 30, height: 30, borderRadius: '8px', border: '1px solid #e5e7eb', background: temaAnterior ? 'white' : '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: temaAnterior ? 'pointer' : 'not-allowed' }}
-            >
-              <ChevronLeft size={14} color={temaAnterior ? '#374151' : '#d1d5db'} />
-            </button>
-
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#111827', padding: '0 8px' }}>
-              Tema {numeroTema}
-            </span>
-
-            <button
-              onClick={() => temaSiguiente && router.push(`/app/tema/${oposicionId}/${temaSiguiente.numero}`)}
-              disabled={!temaSiguiente}
-              style={{ width: 30, height: 30, borderRadius: '8px', border: '1px solid #e5e7eb', background: temaSiguiente ? 'white' : '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: temaSiguiente ? 'pointer' : 'not-allowed' }}
-            >
-              <ChevronRight size={14} color={temaSiguiente ? '#374151' : '#d1d5db'} />
-            </button>
+      {/* Cabecera fija: volver al temario y cambiar de tema */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: BG_APP, padding: '12px 1.25rem 8px' }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <BotonRedondo onClick={() => router.push(`/app/tema/${oposicionId}?modo=estudiar`)} label="Volver al temario">
+            <ArrowLeft size={18} color={TEXT_PRIMARY} />
+          </BotonRedondo>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <BotonRedondo size={34} disabled={!temaAnterior} onClick={() => temaAnterior && router.push(`/app/tema/${oposicionId}/${temaAnterior.numero}`)} label="Tema anterior">
+              <ChevronLeft size={17} color={TEXT_PRIMARY} />
+            </BotonRedondo>
+            <span style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, minWidth: 64, textAlign: 'center' }}>Tema {numeroTema}</span>
+            <BotonRedondo size={34} disabled={!temaSiguiente} onClick={() => temaSiguiente && router.push(`/app/tema/${oposicionId}/${temaSiguiente.numero}`)} label="Tema siguiente">
+              <ChevronRight size={17} color={TEXT_PRIMARY} />
+            </BotonRedondo>
           </div>
-
-          <span style={{ width: '64px', flexShrink: 0 }} />
+          <span style={{ width: 38, flexShrink: 0 }} />
         </div>
       </div>
 
-      {/* ── HERO DEL TEMA ── */}
-{/* ── HERO DEL TEMA — unificado con el estilo de "Programa" ── */}
-<div style={{ background: BG_APP, padding: '16px 1.25rem 0' }}>
-  <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '6px 1.25rem 0', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-      {/* Círculo con anillo de progreso — igual que en Programa */}
-      {(() => {
-        const radio = 26;
-        const circunferencia = 2 * Math.PI * radio;
-        const offset = circunferencia - (Math.min(porcentajeProgreso, 100) / 100) * circunferencia;
-        const completado = porcentajeProgreso >= 80;
-        const colorAnillo = completado ? '#16A34A' : porcentajeProgreso > 0 ? '#1F7CFF' : '#D1D5DB';
-        const grosorAnillo = porcentajeProgreso > 0 || completado ? '4' : '2.5';
-
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '62px' }}>
-            <div style={{ position: 'relative', width: '62px', height: '62px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="62" height="62" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
-                <circle cx="31" cy="31" r={radio} fill="none" stroke="#E9E2D6" strokeWidth={grosorAnillo} />
-                <circle
-                  cx="31" cy="31" r={radio} fill="none"
-                  stroke={colorAnillo} strokeWidth={grosorAnillo} strokeLinecap="round"
-                  strokeDasharray={circunferencia} strokeDashoffset={offset}
-                  style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                />
-              </svg>
-              {completado ? (
-                <CheckCircle2 size={24} color="#16A34A" />
-              ) : (
-                <span style={{ fontSize: '18px', fontWeight: 800, color: porcentajeProgreso > 0 ? '#111827' : '#9ca3af' }}>
-                  {numeroTema}
-                </span>
+        {/* Título y progreso del tema */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0 4px' }}>
+          <div style={{ position: 'relative', width: 70, height: 70, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="70" height="70" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+              <circle cx="35" cy="35" r={R} fill="none" stroke="#F1EDE6" strokeWidth="4.5" />
+              {porcentajeProgreso > 0 && (
+                <circle cx="35" cy="35" r={R} fill="none" stroke={colorAnillo} strokeWidth="4.5" strokeLinecap="round"
+                  strokeDasharray={C} strokeDashoffset={C - (Math.min(porcentajeProgreso, 100) / 100) * C} style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
               )}
+            </svg>
+            {completado
+              ? <CheckCircle2 size={26} color="#16A34A" />
+              : <span style={{ fontSize: 16, fontWeight: 800, color: porcentajeProgreso > 0 ? TEXT_PRIMARY : TEXT_MUTED }}>{porcentajeProgreso}%</span>}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600, marginBottom: 2 }}>
+              {[tema.bloque, completado ? 'Completado' : porcentajeProgreso > 0 ? 'En curso' : 'Sin empezar'].filter(Boolean).join(' · ')}
             </div>
-            {porcentajeProgreso > 0 && porcentajeProgreso < 100 && (
-              <span style={{ fontSize: '11px', fontWeight: 700, color: colorAnillo, marginTop: '2px' }}>
-                {porcentajeProgreso}%
-              </span>
+            <div style={{
+              fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.35,
+              display: '-webkit-box', WebkitLineClamp: tituloExpandido ? 'unset' : 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            }}>
+              {tema.titulo}
+            </div>
+            {tema.titulo?.length > 90 && (
+              <button onClick={() => setTituloExpandido(!tituloExpandido)} style={{ fontSize: 11, color: COLOR_ESTUDIAR, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2, fontWeight: 600 }}>
+                {tituloExpandido ? 'Ver menos' : 'Ver más'}
+              </button>
             )}
           </div>
-        );
-      })()}
-
-      {/* Título del tema */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: '14px', fontWeight: 700, color: '#111827', lineHeight: 1.35,
-            display: '-webkit-box',
-            WebkitLineClamp: tituloExpandido ? 'unset' : 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {tema?.titulo ?? 'Cargando...'}
         </div>
-        {tema?.titulo && tema.titulo.length > 90 && (
-          <button
-            onClick={() => setTituloExpandido(!tituloExpandido)}
-            style={{ fontSize: '11px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: '2px', fontWeight: 600 }}
-          >
-            {tituloExpandido ? 'Ver menos' : 'Ver más'}
-          </button>
+
+        {/* Repaso programado para hoy */}
+        {repasoHoy && (
+          <div style={{ background: 'white', borderRadius: 18, padding: 14, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 12, border: `1.5px solid ${COLOR_ESTUDIAR}` }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: '#EAF2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <CalendarCheck size={20} color={COLOR_ESTUDIAR} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>
+                {repasoProgramado === hoy ? 'Hoy toca repasar este tema' : 'Tienes pendiente repasar este tema'}
+              </div>
+              <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Cuando acabes, márcalo como hecho</div>
+            </div>
+            <button
+              onClick={() => guardarRepaso(null)}
+              disabled={programando}
+              style={{ border: 'none', background: '#0f172a', color: 'white', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            >
+              Hecho
+            </button>
+          </div>
         )}
-      </div>
-    </div>
 
-    {/* Practicar — siempre visible, fuera de las tabs */}
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '4px' }}>
-      <button
-        onClick={() => setModalTest(true)}
-        style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '12px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
-      >
-        <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#EFFADE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ClipboardCheck size={16} color="#4D7C0F" />
+        {/* Accesos rápidos en círculos flotantes */}
+        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '2px 4px' }}>
+          <Acceso label="Test" sub="Del tema" Icon={ClipboardCheck} color={COLOR_TEST} onClick={() => setModalTest(true)} />
+          <Acceso
+            label="Flashcards" sub={totalFC > 0 ? `${totalFC} tarjetas` : 'Repasar'} Icon={Layers} color={COLOR_FC}
+            onClick={() => router.push(`/app/flashcards/repasar?temaId=${tema.id}&oposicionId=${oposicionId}&numeroTema=${numeroTema}`)}
+          />
+          <Acceso label="Notas" sub={notaTexto ? 'Escritas' : 'Escribir'} Icon={NotebookPen} color="#8B7355" onClick={() => setTab('mi-estudio')} />
+          <Acceso
+            label="Repaso" sub={repasoProgramado ? (repasoHoy ? 'Hoy' : fechaCorta(repasoProgramado)) : 'Programar'}
+            Icon={CalendarDays} color={COLOR_ESTUDIAR} onClick={() => setTab('mi-estudio')}
+          />
         </div>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: '#111827' }}>Hacer test</span>
-      </button>
 
-      <button
-        onClick={() => router.push(`/app/flashcards/repasar?temaId=${tema?.id}&oposicionId=${oposicionId}&numeroTema=${numeroTema}`)}
-        style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '12px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
-      >
-        <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#FADEF7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: '15px' }}>🃏</span>
-        </div>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: '#111827' }}>Flashcards</span>
-      </button>
-    </div>
-
-  </div>
-</div>
-
-      {/* ── TABS TIPO iOS/REVOLUT ── */}
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '12px 1.25rem 0' }}>
-        <div style={{ display: 'flex', background: '#E5DED2', borderRadius: '12px', padding: '3px', gap: '3px' }}>
+        {/* Pestañas */}
+        <div style={{ display: 'flex', background: 'white', borderRadius: 999, padding: 4, gap: 4, boxShadow: SOMBRA }}>
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
               style={{
-                flex: 1, padding: '9px 4px', border: 'none', borderRadius: '9px',
-                background: tab === key ? 'white' : 'none',
-                boxShadow: tab === key ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                cursor: 'pointer', fontSize: '12px',
-                fontWeight: tab === key ? 700 : 500,
-                color: tab === key ? '#111827' : '#6b7280',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
-                transition: 'all 0.15s',
+                flex: 1, padding: '9px 4px', border: 'none', borderRadius: 999, cursor: 'pointer',
+                background: tab === key ? '#0f172a' : 'transparent', color: tab === key ? 'white' : TEXT_SECONDARY,
+                fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                transition: 'background 0.15s ease, color 0.15s ease',
               }}
             >
-              <Icon size={13} />
+              <Icon size={14} />
               {label}
             </button>
           ))}
         </div>
-      </div>
 
-      {/* ── CONTENIDO TABS ── */}
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
-{tab === 'material' && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-
-    {/* Apuntes OPLORA */}
-    <div>
-      <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
-        Apuntes OPLORA ({apuntesOplora.length})
-      </div>
-      {apuntesOploraLoading ? (
-        <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>Cargando...</div>
-      ) : apuntesOploraError ? (
-        <div style={{ fontSize: '13px', color: '#dc2626', padding: '4px 2px' }}>No se han podido cargar los apuntes</div>
-      ) : apuntesOplora.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {apuntesOplora.map((ap: any) => (
-            <button
-              key={ap.id}
-              onClick={() => router.push(`/app/apuntes/${ap.id}`)}
-              style={{
-                background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px',
-                padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px',
-                cursor: 'pointer', textAlign: 'left', width: '100%',
-                minHeight: '68px', boxSizing: 'border-box',
-                transition: 'background 0.18s ease, transform 0.18s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#FAFAFA'; e.currentTarget.style.transform = 'scale(1.01)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.transform = 'scale(1)'; }}
-            >
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FEF9E7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <BookOpen size={16} color="#C79A1E" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {ap.titulo}
-                </div>
-                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px', display: 'flex', gap: '6px' }}>
-                  {ap.tipo && <span>{ap.tipo.toUpperCase()}</span>}
-                  {ap.paginas && <span>· {ap.paginas} págs</span>}
-                </div>
-              </div>
-              <ChevronRight size={16} color="#D1D5DB" style={{ flexShrink: 0 }} />
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>
-          El tema actualmente no tiene apuntes
-        </div>
-      )}
-    </div>
-
-    {/* Mis apuntes */}
-    <div>
-      <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
-        Mis apuntes ({apuntes.length})
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {apuntesLoading && (
-          <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>Cargando...</div>
-        )}
-        {apuntesError && (
-          <div style={{ fontSize: '13px', color: '#dc2626', padding: '4px 2px' }}>No se han podido cargar tus apuntes</div>
-        )}
-        {!apuntesLoading && !apuntesError && apuntes.length === 0 && (
-          <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>
-            El tema no tiene apuntes propios
-          </div>
-        )}
-        {apuntes.map((ap: any) => (
-          <a
-            key={ap.id}
-            href={ap.urlArchivo}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px',
-              padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px',
-              textDecoration: 'none', minHeight: '68px', boxSizing: 'border-box',
-              transition: 'background 0.18s ease, transform 0.18s ease',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#FAFAFA'; e.currentTarget.style.transform = 'scale(1.01)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.transform = 'scale(1)'; }}
-          >
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#EAF2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <FileText size={16} color="#2563EB" />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ap.nombre}</div>
-              <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{new Date(ap.creadoEn).toLocaleDateString('es-ES')}</div>
-            </div>
-            <ChevronRight size={16} color="#D1D5DB" style={{ flexShrink: 0 }} />
-          </a>
-        ))}
-
-        <input
-          id="apunte-input"
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-          style={{ display: 'none' }}
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (!file || !tema?.id) return;
-            setSubiendoApunte(true);
-            try {
-              const formData = new FormData();
-              formData.append('archivo', file);
-              formData.append('oposicionId', oposicionId);
-              await api.post(`/apuntes-usuario/tema/${tema.id}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-              });
-              queryClient.invalidateQueries({ queryKey: ['apuntes-tema', tema.id] });
-            } catch (err) {
-              console.error('Error subiendo apunte:', err);
-            } finally {
-              setSubiendoApunte(false);
-              e.target.value = '';
-            }
-          }}
-        />
-        <button
-          onClick={() => document.getElementById('apunte-input')?.click()}
-          disabled={subiendoApunte}
-          style={{
-            background: 'white', border: '1.5px dashed #D1D5DB', borderRadius: '14px',
-            padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px',
-            cursor: 'pointer', width: '100%', minHeight: '68px', boxSizing: 'border-box',
-            transition: 'background 0.18s ease, transform 0.18s ease',
-          }}
-          onMouseEnter={(e) => { if (!subiendoApunte) { e.currentTarget.style.background = '#FAFAFA'; e.currentTarget.style.transform = 'scale(1.01)'; } }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.transform = 'scale(1)'; }}
-        >
-          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Upload size={16} color="#6b7280" />
-          </div>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            {subiendoApunte ? 'Subiendo...' : 'Subir mis apuntes'}
-          </div>
-        </button>
-      </div>
-    </div>
-
-    {/* Normativa vinculada */}
-    <div>
-      <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
-        Normativa vinculada ({normativa.length})
-      </div>
-      {normativaLoading ? (
-        <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>Cargando...</div>
-      ) : normativaError ? (
-        <div style={{ fontSize: '13px', color: '#dc2626', padding: '4px 2px' }}>No se ha podido cargar la normativa</div>
-      ) : Object.keys(normativaPorLey).length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {Object.entries(normativaPorLey).map(([leyNombre, data]: [string, any]) => (
-            <div key={leyNombre} style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '14px 16px' }}>
-              <button
-                onClick={() => data.leyId && router.push(`/app/ley/${data.leyId}?oposicionId=${oposicionId}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', cursor: 'pointer', background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0 }}
-              >
-                <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: '#F3F0FC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <BookOpen size={15} color="#8B5CF6" />
-                </div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', flex: 1 }}>{leyNombre}</div>
-                <ChevronRight size={14} color="#D1D5DB" />
-              </button>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingLeft: '42px' }}>
-                {data.articulos.map((art: any) => (
-                  <button
-                    key={art.id}
-                    onClick={() => router.push(`/app/articulo/${art.id}?oposicionId=${oposicionId}`)}
-                    style={{ padding: '3px 10px', borderRadius: '999px', border: '1px solid #E5E7EB', background: '#FAFAFA', fontSize: '11px', color: '#374151', cursor: 'pointer', fontWeight: 500 }}
-                  >
-                    Art. {art.numero}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div style={{ fontSize: '13px', color: '#9ca3af', padding: '4px 2px' }}>
-          {tema?.contexto
-            ? renderReferencias(tema.contexto, mapaSiglas, abrirArticuloDesdeContexto, 'ctx')
-            : 'El tema no tiene normativa vinculada'}
-        </div>
-      )}
-    </div>
-  </div>
-)}
-
-        {/* TAB: MI ESTUDIO */}
-        {tab === 'mi-estudio' && (
+        {/* ── MATERIAL ── */}
+        {tab === 'material' && (
           <>
-            {/* Programar repaso */}
-            <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', padding: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                  <CalendarDays size={15} color="#1F7CFF" />
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>Programar repaso</span>
-                </div>
-                {repasoProgramado && (
-                  <span style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '999px', background: '#EFF6FF', color: '#185FA5', fontWeight: 600 }}>
-                    📅 {repasoProgramado}
-                  </span>
-                )}
-              </div>
+            <section>
+              <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{apuntesOplora.length}</span>}>Apuntes OPLORA</TituloSeccion>
+              <Caja>
+                {apuntesOploraPendiente ? <div style={{ padding: 14, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>
+                  : apuntesOploraError ? <div style={{ padding: 14, fontSize: 13, color: '#B91C1C' }}>No se han podido cargar los apuntes.</div>
+                  : apuntesOplora.length === 0 ? <div style={{ padding: 14, fontSize: 13, color: TEXT_MUTED }}>Este tema todavía no tiene apuntes de OPLORA.</div>
+                  : apuntesOplora.map((ap: any, i: number) => (
+                    <FilaLista
+                      key={ap.id} ultima={i === apuntesOplora.length - 1}
+                      Icon={BookOpen} color="#B7791F" bg="#FEF6E4"
+                      titulo={ap.titulo}
+                      sub={[ap.tipo?.toUpperCase(), ap.paginas ? `${ap.paginas} págs` : null].filter(Boolean).join(' · ') || undefined}
+                      onClick={() => router.push(`/app/apuntes/${ap.id}`)}
+                    />
+                  ))}
+              </Caja>
+            </section>
 
-
-
-
-
-<div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '12px' }}>
-  {[
-    { label: 'Mañana', dias: 1 },
-    { label: '3 días', dias: 3 },
-    { label: '1 semana', dias: 7 },
-    { label: '2 semanas', dias: 14 },
-    { label: '1 mes', dias: 30 },
-  ].map(({ label, dias }) => {
-    const fecha = new Date();
-    fecha.setDate(fecha.getDate() + dias);
-    const fechaStr = fecha.toISOString().split('T')[0];
-    const activo = fechaRepaso === fechaStr && !mostrarCalendario;
-    return (
-      <button
-        key={dias}
-        onClick={() => { setFechaRepaso(fechaStr); setMostrarCalendario(false); }}
-        style={{
-          padding: '10px 6px', borderRadius: '10px', fontSize: '12px', cursor: 'pointer',
-          border: activo ? 'none' : '1px solid #e5e7eb',
-          background: activo ? '#1F7CFF' : 'white',
-          color: activo ? 'white' : '#374151',
-          fontWeight: activo ? 600 : 400,
-        }}
-      >
-        {label}
-      </button>
-    );
-  })}
-
-  {/* ⭐ Ocupa el hueco simétrico */}
-  <button
-    onClick={() => { setMostrarCalendario(true); setFechaRepaso(''); }}
-    style={{
-      padding: '10px 6px', borderRadius: '10px', fontSize: '12px', cursor: 'pointer',
-      border: mostrarCalendario ? 'none' : '1px solid #e5e7eb',
-      background: mostrarCalendario ? '#1F7CFF' : 'white',
-      color: mostrarCalendario ? 'white' : '#374151',
-      fontWeight: mostrarCalendario ? 600 : 400,
-    }}
-  >
-    📅 Otra fecha
-  </button>
-</div>
-
-{/* ⭐ Calendario solo visible al elegir "Otra fecha" */}
-{mostrarCalendario && (
-  <input
-    type="date"
-    value={fechaRepaso}
-    min={hoy} // ⭐ bloquea fechas anteriores a hoy
-    onChange={(e) => setFechaRepaso(e.target.value)}
-    style={{
-      width: '100%', padding: '16px 14px', fontSize: '15px',
-      border: '1px solid #e5e7eb', borderRadius: '12px', outline: 'none', color: '#374151',
-      boxSizing: 'border-box', marginBottom: '10px',
-    }}
-  />
-)}
-
-<button
-  onClick={() => fechaRepaso && programarRepaso(fechaRepaso)}
-  disabled={!fechaRepaso || programando}
-  style={{ width: '100%', padding: '13px', background: '#1F7CFF', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: !fechaRepaso ? 'not-allowed' : 'pointer', opacity: !fechaRepaso ? 0.4 : 1 }}
->
-  {programando ? 'Programando...' : 'Programar repaso'}
-</button>
-              {repasoProgramado && (
-                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#EFF6FF', border: '1px solid #bfdbfe', borderRadius: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '16px' }}>📅</span>
-                    <div>
-                      <div style={{ fontSize: '11px', color: '#9ca3af' }}>Repaso programado</div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#185FA5' }}>{repasoProgramado}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => { setRepasoProgramado(null); setFechaRepaso(''); }}
-                    style={{ fontSize: '11px', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
-                  >
-                    ✕ Eliminar
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Notas */}
-            <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', padding: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                  <NotebookPen size={15} color="#3C3489" />
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>Mis notas</span>
-                </div>
-                <div style={{ fontSize: '11px', color: notaGuardada ? '#16A34A' : '#9ca3af', fontWeight: notaGuardada ? 600 : 400 }}>
-                  {notaGuardando ? 'Guardando...' : notaGuardada ? '✓ Guardado' : 'Se guarda solo'}
-                </div>
-              </div>
-              <textarea
-                value={notaTexto}
-                onChange={(e) => handleNotaChange(e.target.value)}
-                placeholder="Escribe aquí tus notas sobre este tema..."
-                style={{
-                  width: '100%', minHeight: '200px', padding: '12px',
-                  fontSize: '13px', color: '#374151', lineHeight: 1.7,
-                  border: '1px solid #e5e7eb', borderRadius: '10px',
-                  outline: 'none', resize: 'vertical',
-                  background: '#fffbeb', boxSizing: 'border-box',
-                  fontFamily: 'inherit',
-                }}
-              />
-            </div>
-          </>
-        )}
-
-        {/* TAB: PROGRESO */}
-{tab === 'progreso' && (
-  <>
-    {/* Widget: Desglose del progreso */}
-    {progresoCompletoLoading && (
-      <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-        <span style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando...</span>
-      </div>
-    )}
-    {progresoCompletoError && (
-      <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-        <span style={{ fontSize: '13px', color: '#dc2626' }}>No se ha podido cargar el progreso</span>
-      </div>
-    )}
-    {progresoCompleto?.desglose && (
-      <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px', paddingLeft: '2px' }}>
-          Desglose del progreso
-        </div>
-        <div style={{ background: 'white', borderRadius: '14px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {[
-            { label: 'Lectura', pct: progresoCompleto.desglose.lectura.porcentaje, puntos: progresoCompleto.desglose.lectura.puntos, max: 50, color: '#1F7CFF' },
-            { label: 'Test', pct: progresoCompleto.desglose.test.pctAcierto, puntos: progresoCompleto.desglose.test.puntos, max: 25, color: '#16A34A' },
-            { label: 'Flashcards', pct: progresoCompleto.desglose.flashcards.pctDominadas, puntos: progresoCompleto.desglose.flashcards.puntos, max: 25, color: '#3C3489' },
-          ].map(({ label, puntos, max, color }) => (
-            <div key={label}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <span style={{ fontSize: '12px', color: '#6b7280' }}>{label}</span>
-                <span style={{ fontSize: '11px', color: '#9ca3af' }}>{puntos}/{max} pts</span>
-              </div>
-              <div style={{ height: '6px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
-                <div style={{ width: `${(puntos / max) * 100}%`, height: '100%', background: color, borderRadius: '999px' }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
-    {/* Widget: Mi actividad */}
-    <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', paddingLeft: '2px' }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Mi actividad
-        </span>
-        <span style={{ fontSize: '10px', color: '#9ca3af' }}>Toca para detalles</span>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-
-        {/* Card Preguntas */}
-        <div style={{ perspective: '600px', cursor: 'pointer', height: '88px' }} onClick={() => setFlippedCard(flippedCard === 'preguntas' ? null : 'preguntas')}>
-          <div className={`flip-inner${flippedCard === 'preguntas' ? ' flipped' : ''}`} style={{ height: '88px' }}>
-            <div className="flip-face" style={{ background: 'white', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-              <span style={{ fontSize: '16px' }}>🎯</span>
-              <span style={{ fontSize: '22px', fontWeight: 700, color: '#1F7CFF' }}>{progresoTest?.total ?? 0}</span>
-              <span style={{ fontSize: '10px', color: '#6b7280' }}>Preguntas</span>
-            </div>
-            <div className="flip-face flip-face-back" style={{ background: 'white', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', padding: '6px' }}>
-              <div style={{ display: 'flex', gap: '6px', width: '100%', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: '#16A34A' }}>{progresoTest?.correctas ?? 0}</div>
-                  <div style={{ fontSize: '9px', color: '#6b7280' }}>Correctas</div>
-                </div>
-                <div style={{ width: '1px', background: '#e5e7eb', alignSelf: 'stretch' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: '#dc2626' }}>{progresoTest?.falladas ?? 0}</div>
-                  <div style={{ fontSize: '9px', color: '#6b7280' }}>Falladas</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card Flashcards */}
-        <div style={{ perspective: '600px', cursor: 'pointer', height: '88px' }} onClick={() => setFlippedCard(flippedCard === 'flashcards' ? null : 'flashcards')}>
-          <div className={`flip-inner${flippedCard === 'flashcards' ? ' flipped' : ''}`} style={{ height: '88px' }}>
-            <div className="flip-face" style={{ background: 'white', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-              <span style={{ fontSize: '16px' }}>🃏</span>
-              <span style={{ fontSize: '22px', fontWeight: 700, color: '#3C3489' }}>{statsFC?.total ?? 0}</span>
-              <span style={{ fontSize: '10px', color: '#6b7280' }}>Flashcards</span>
-            </div>
-            <div className="flip-face flip-face-back" style={{ background: 'white', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', padding: '6px' }}>
-              <div style={{ display: 'flex', gap: '6px', width: '100%', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: '#3C3489' }}>{statsFC?.dominadas ?? 0}</div>
-                  <div style={{ fontSize: '9px', color: '#6b7280' }}>Dominadas</div>
-                </div>
-                <div style={{ width: '1px', background: '#e5e7eb', alignSelf: 'stretch' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: '#9ca3af' }}>{statsFC?.sinVer ?? 0}</div>
-                  <div style={{ fontSize: '9px', color: '#6b7280' }}>Pendientes</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card Repasos */}
-        <div style={{ perspective: '600px', cursor: 'pointer', height: '88px' }} onClick={() => setFlippedCard(flippedCard === 'repasos' ? null : 'repasos')}>
-          <div className={`flip-inner${flippedCard === 'repasos' ? ' flipped' : ''}`} style={{ height: '88px' }}>
-            <div className="flip-face" style={{ background: 'white', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', padding: '8px 6px' }}>
-              <span style={{ fontSize: '15px' }}>🔁</span>
-              <span style={{ fontSize: '20px', fontWeight: 800, color: '#16A34A', lineHeight: 1.1 }}>{progresoSesiones?.diasEstudiados ?? 0}</span>
-              <span style={{ fontSize: '9px', color: '#6b7280', textAlign: 'center', lineHeight: 1.3, whiteSpace: 'pre-line' }}>{'días\nestudiando'}</span>
-            </div>
-            <div className="flip-face flip-face-back" style={{ background: 'white', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '8px 6px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '9px', color: '#9ca3af', lineHeight: 1.3, whiteSpace: 'pre-line' }}>{'Última\nsesión'}</div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#374151', marginTop: '1px' }}>
-                  {progresoSesiones?.ultimaSesion ? new Date(progresoSesiones.ultimaSesion).toLocaleDateString('es-ES') : '—'}
-                </div>
-              </div>
-              <div style={{ width: '80%', height: '1px', background: '#e5e7eb' }} />
-              {repasoProgramado ? (
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '9px', color: '#9ca3af', lineHeight: 1.3, whiteSpace: 'pre-line' }}>{'Próximo\nrepaso'}</div>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', marginTop: '1px' }}>{repasoProgramado}</div>
+            <section>
+              <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{normativa.length} artículos</span>}>Normativa del tema</TituloSeccion>
+              {normativaPendiente ? (
+                <Caja padding={14}><div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</div></Caja>
+              ) : normativaError ? (
+                <Caja padding={14}><div style={{ fontSize: 13, color: '#B91C1C' }}>No se ha podido cargar la normativa.</div></Caja>
+              ) : Object.keys(normativaPorLey).length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {Object.entries(normativaPorLey).map(([leyNombre, data]: [string, any]) => (
+                    <Caja key={leyNombre}>
+                      <FilaLista
+                        ultima={false} Icon={Scale} color="#7C3AED" bg="#F3F0FC"
+                        titulo={leyNombre} sub={`${data.articulos.length} ${data.articulos.length === 1 ? 'artículo' : 'artículos'} en este tema`}
+                        onClick={data.leyId ? () => router.push(`/app/ley/${data.leyId}?oposicionId=${oposicionId}`) : undefined}
+                      />
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '10px 14px 14px' }} data-sin-deslizar>
+                        {data.articulos.map((art: any) => (
+                          <button
+                            key={art.id}
+                            onClick={() => router.push(`/app/articulo/${art.id}?oposicionId=${oposicionId}`)}
+                            style={{ padding: '5px 11px', borderRadius: 999, border: 'none', background: '#F3F0FC', fontSize: 12, color: '#5B21B6', cursor: 'pointer', fontWeight: 600 }}
+                          >
+                            Art. {art.numero}
+                          </button>
+                        ))}
+                      </div>
+                    </Caja>
+                  ))}
                 </div>
               ) : (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setFlippedCard(null); setTab('mi-estudio'); }}
-                  style={{ fontSize: '9px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0, textAlign: 'center', lineHeight: 1.4, whiteSpace: 'pre-line' }}
-                >
-                  {'Programar\nrepaso'}
-                </button>
+                <Caja padding={14}>
+                  <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.6 }}>
+                    {tema.contexto
+                      ? renderReferencias(tema.contexto, mapaSiglas, abrirArticuloDesdeContexto, 'ctx')
+                      : 'Este tema no tiene normativa vinculada.'}
+                  </div>
+                </Caja>
               )}
-            </div>
-          </div>
-        </div>
+            </section>
 
-      </div>
-    </div>
-
-    {/* Widget: Repaso completo */}
-    <div style={{ background: BG_WIDGET, borderRadius: '18px', padding: '14px' }}>
-      <div style={{
-        background: repasoDesbloqueado ? '#F0FDF4' : 'white',
-        border: repasoDesbloqueado ? '1px solid #86efac' : 'none',
-        borderRadius: '14px', padding: '20px', textAlign: 'center',
-      }}>
-        {repasoDesbloqueado ? (
-          <>
-            <div style={{ fontSize: '32px', marginBottom: '10px' }}>🏆</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#15803d', marginBottom: '4px' }}>¡Listo para repasar!</div>
-            <div style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>Has estudiado suficiente material de este tema</div>
-            <button
-              onClick={() => router.push(`/app/test/${oposicionId}?temaId=${tema?.id}&num=20`)}
-              style={{ width: '100%', padding: '13px', background: '#16A34A', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
-            >
-              🎯 Empezar repaso completo
-            </button>
+            <section>
+              <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{apuntes.length}</span>}>Mis apuntes</TituloSeccion>
+              <Caja>
+                {apuntesPendiente && <div style={{ padding: 14, fontSize: 13, color: TEXT_MUTED, borderBottom: `1px solid ${BORDER}` }}>Cargando…</div>}
+                {apuntesError && <div style={{ padding: 14, fontSize: 13, color: '#B91C1C', borderBottom: `1px solid ${BORDER}` }}>No se han podido cargar tus apuntes.</div>}
+                {apuntes.map((ap: any) => (
+                  <FilaLista
+                    key={ap.id} ultima={false}
+                    Icon={FileText} color="#2563EB" bg="#EAF2FE"
+                    titulo={ap.nombre}
+                    sub={ap.creadoEn ? new Date(ap.creadoEn).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : undefined}
+                    href={ap.urlArchivo}
+                  />
+                ))}
+                <input
+                  id="apunte-input"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setSubiendoApunte(true);
+                    setErrorSubida('');
+                    try {
+                      const formData = new FormData();
+                      formData.append('archivo', file);
+                      formData.append('oposicionId', oposicionId);
+                      await api.post(`/apuntes-usuario/tema/${tema.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                      queryClient.invalidateQueries({ queryKey: ['apuntes-tema', tema.id] });
+                    } catch (err: any) {
+                      const m = err?.response?.data?.message;
+                      setErrorSubida(typeof m === 'string' ? m : 'No se ha podido subir el archivo. Inténtalo de nuevo.');
+                    } finally {
+                      setSubiendoApunte(false);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => document.getElementById('apunte-input')?.click()}
+                  disabled={subiendoApunte}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', cursor: subiendoApunte ? 'default' : 'pointer', textAlign: 'left' }}
+                >
+                  <div style={{ width: 40, height: 40, borderRadius: 12, border: '1.5px dashed #CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Upload size={17} color={TEXT_SECONDARY} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>{subiendoApunte ? 'Subiendo…' : 'Subir un apunte'}</div>
+                    <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>PDF, Word o imagen</div>
+                  </div>
+                </button>
+              </Caja>
+              {errorSubida && <div style={{ fontSize: 12, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px', marginTop: 10 }}>{errorSubida}</div>}
+            </section>
           </>
-        ) : (
+        )}
+
+        {/* ── MI ESTUDIO ── */}
+        {tab === 'mi-estudio' && (
           <>
-            <Lock size={24} color="#d1d5db" style={{ margin: '0 auto 10px' }} />
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Repaso bloqueado</div>
-            <div style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>
-              Estudia el material del tema para desbloquear el repaso completo
-            </div>
-            <div style={{ height: '6px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden', marginBottom: '6px' }}>
-              <div style={{ width: `${porcentajeProgreso}%`, height: '100%', background: '#d97706', borderRadius: '999px' }} />
-            </div>
-            <div style={{ fontSize: '11px', color: '#9ca3af' }}>{porcentajeProgreso}% / 80% para desbloquear</div>
+            <section>
+              <TituloSeccion>Programar repaso</TituloSeccion>
+              <Caja padding={16}>
+                {repasoProgramado ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: '#EAF2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CalendarCheck size={20} color={COLOR_ESTUDIAR} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, color: TEXT_MUTED }}>{repasoHoy ? 'Repaso pendiente' : 'Próximo repaso'}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
+                        {repasoProgramado === hoy ? 'Hoy' : fechaLarga(repasoProgramado)}
+                      </div>
+                      <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>Ese día te avisaremos y aparecerá en Inicio</div>
+                    </div>
+                    <button
+                      onClick={() => guardarRepaso(null)}
+                      disabled={programando}
+                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#B91C1C', background: '#FEF2F2', border: 'none', borderRadius: 999, padding: '6px 10px', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}
+                    >
+                      <X size={13} /> Quitar
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginBottom: 12, lineHeight: 1.45 }}>
+                      Elige cuándo quieres volver a este tema. Ese día te avisaremos y lo verás en Inicio.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 12 }}>
+                      {[
+                        { label: 'Mañana', dias: 1 },
+                        { label: 'En 3 días', dias: 3 },
+                        { label: 'En 1 semana', dias: 7 },
+                        { label: 'En 2 semanas', dias: 14 },
+                        { label: 'En 1 mes', dias: 30 },
+                      ].map(({ label, dias }) => {
+                        const f = sumarDias(dias);
+                        const activo = fechaElegida === f && !mostrarCalendario;
+                        return (
+                          <button
+                            key={dias}
+                            onClick={() => { setFechaElegida(f); setMostrarCalendario(false); }}
+                            style={{ padding: '10px 4px', borderRadius: 10, fontSize: 12, cursor: 'pointer', border: 'none', background: activo ? '#0f172a' : '#F3F4F6', color: activo ? 'white' : TEXT_SECONDARY, fontWeight: 700 }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                      <button
+                        onClick={() => { setMostrarCalendario(true); setFechaElegida(''); }}
+                        style={{ padding: '10px 4px', borderRadius: 10, fontSize: 12, cursor: 'pointer', border: 'none', background: mostrarCalendario ? '#0f172a' : '#F3F4F6', color: mostrarCalendario ? 'white' : TEXT_SECONDARY, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                      >
+                        <CalendarDays size={13} /> Otra fecha
+                      </button>
+                    </div>
+                    {mostrarCalendario && (
+                      <input
+                        type="date"
+                        value={fechaElegida}
+                        min={sumarDias(1)}
+                        onChange={(e) => setFechaElegida(e.target.value)}
+                        style={{ width: '100%', padding: '13px 14px', fontSize: 15, border: '1px solid #E5E7EB', borderRadius: 12, outline: 'none', color: TEXT_PRIMARY, boxSizing: 'border-box', marginBottom: 10, background: 'white' }}
+                      />
+                    )}
+                    {fechaElegida && (
+                      <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginBottom: 10, textTransform: 'capitalize' }}>{fechaLarga(fechaElegida)}</div>
+                    )}
+                    <button
+                      onClick={() => fechaElegida && guardarRepaso(fechaElegida)}
+                      disabled={!fechaElegida || programando}
+                      style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: fechaElegida ? 'pointer' : 'default', opacity: fechaElegida ? 1 : 0.4 }}
+                    >
+                      {programando ? 'Guardando…' : 'Programar repaso'}
+                    </button>
+                  </>
+                )}
+                {errorRepaso && <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 10 }}>{errorRepaso}</div>}
+              </Caja>
+            </section>
+
+            <section>
+              <TituloSeccion derecha={
+                <span style={{ fontSize: 11, fontWeight: 600, color: estadoNota === 'error' ? '#B91C1C' : estadoNota === 'guardado' ? '#16A34A' : TEXT_MUTED }}>
+                  {estadoNota === 'guardando' ? 'Guardando…' : estadoNota === 'guardado' ? 'Guardado' : estadoNota === 'error' ? 'No se ha guardado' : 'Se guarda solo'}
+                </span>
+              }>
+                Mis notas
+              </TituloSeccion>
+              <Caja padding={12}>
+                <textarea
+                  value={notaTexto}
+                  onChange={(e) => handleNotaChange(e.target.value)}
+                  disabled={!notaCargada}
+                  placeholder="Escribe aquí tus notas sobre este tema…"
+                  style={{
+                    width: '100%', minHeight: 220, padding: 12, fontSize: 14, color: TEXT_PRIMARY, lineHeight: 1.7,
+                    border: 'none', borderRadius: 12, outline: 'none', resize: 'vertical', background: '#FFFBEB',
+                    boxSizing: 'border-box', fontFamily: 'inherit',
+                  }}
+                />
+              </Caja>
+            </section>
+          </>
+        )}
+
+        {/* ── PROGRESO ── */}
+        {tab === 'progreso' && (
+          <>
+            <section>
+              <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>Total {porcentajeProgreso}%</span>}>Cómo se calcula tu progreso</TituloSeccion>
+              {progresoPendiente ? (
+                <Caja padding={14}><div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</div></Caja>
+              ) : progresoCompletoError || !desglose ? (
+                <Caja padding={14}><div style={{ fontSize: 13, color: '#B91C1C' }}>No se ha podido cargar el progreso.</div></Caja>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, padding: '0 4px' }}>
+                  <CirculoDato valor={`${desglose.lectura.puntos}`} porcentaje={(desglose.lectura.puntos / 50) * 100} color={COLOR_ESTUDIAR} label="Lectura" sub="de 50 puntos" />
+                  <CirculoDato valor={`${desglose.test.puntos}`} porcentaje={(desglose.test.puntos / 25) * 100} color={COLOR_TEST} label="Test" sub="de 25 puntos" />
+                  <CirculoDato valor={`${desglose.flashcards.puntos}`} porcentaje={(desglose.flashcards.puntos / 25) * 100} color={COLOR_FC} label="Flashcards" sub="de 25 puntos" />
+                </div>
+              )}
+            </section>
+
+            <section>
+              <TituloSeccion>Mi actividad en el tema</TituloSeccion>
+              <Caja>
+                <FilaLista
+                  ultima={false} Icon={ClipboardCheck} color={COLOR_TEST} bg="#F3FAE9"
+                  titulo={`${progresoTest?.total ?? 0} preguntas respondidas`}
+                  sub={`${progresoTest?.correctas ?? 0} correctas · ${progresoTest?.falladas ?? 0} falladas`}
+                  derecha={<span />}
+                />
+                <FilaLista
+                  ultima={false} Icon={Layers} color={COLOR_FC} bg={COLOR_FC_BG}
+                  titulo={`${statsFC?.dominadas ?? 0} de ${totalFC} flashcards dominadas`}
+                  sub={`${statsFC?.dudosas ?? 0} dudosas · ${statsFC?.sinVer ?? 0} sin ver`}
+                  derecha={<span />}
+                />
+                <FilaLista
+                  ultima={false} Icon={Flame} color="#C2410C" bg="#FFF1E8"
+                  titulo={`${progresoSesiones?.diasEstudiados ?? 0} ${(progresoSesiones?.diasEstudiados ?? 0) === 1 ? 'día' : 'días'} estudiando el tema`}
+                  sub={progresoSesiones?.ultimaSesion ? `Última vez: ${new Date(progresoSesiones.ultimaSesion).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}` : 'Primera vez que entras'}
+                  derecha={<span />}
+                />
+                <FilaLista
+                  ultima Icon={Clock} color={COLOR_ESTUDIAR} bg="#EAF2FE"
+                  titulo={repasoProgramado ? `Repaso: ${repasoProgramado === hoy ? 'hoy' : fechaLarga(repasoProgramado)}` : 'Sin repaso programado'}
+                  sub={repasoProgramado ? 'Te avisaremos ese día' : 'Prográmalo en Mi estudio'}
+                  onClick={() => setTab('mi-estudio')}
+                />
+              </Caja>
+            </section>
+
+            <section>
+              <TituloSeccion>Repaso completo</TituloSeccion>
+              <Caja padding={18}>
+                {repasoDesbloqueado ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 42, height: 42, borderRadius: 12, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Target size={21} color="#16A34A" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Listo para el repaso completo</div>
+                        <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Un test de {numRepasoCompleto} preguntas de todo el tema</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => router.push(`/app/test/${oposicionId}?modo=tema&temaId=${tema.id}&n=${numRepasoCompleto}`)}
+                      style={{ width: '100%', padding: 12, background: '#16A34A', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Empezar repaso completo
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 42, height: 42, borderRadius: 12, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Lock size={19} color="#9CA3AF" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Se desbloquea al 80%</div>
+                        <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Lee el material, haz tests y repasa flashcards del tema</div>
+                      </div>
+                    </div>
+                    <div style={{ height: 6, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden' }}>
+                      <div style={{ width: `${Math.min(100, (porcentajeProgreso / 80) * 100)}%`, height: '100%', background: '#D97706', borderRadius: 999 }} />
+                    </div>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED }}>{porcentajeProgreso}% de 80%</div>
+                  </div>
+                )}
+              </Caja>
+            </section>
           </>
         )}
       </div>
-    </div>
-  </>
-)}
-      </div>
-      {modalTest && tema && (
+
+      {modalTest && (
         <ModalHacerTest
           oposicion={{ id: oposicionId }}
           convocatoria={convocatoria}
@@ -1035,7 +839,6 @@ const hoy = new Date().toISOString().split('T')[0];
         />
       )}
       <FooterNavegacion usuario={usuario} oposicionId={oposicionId} activo="estudiar" />
-
     </div>
   );
 }

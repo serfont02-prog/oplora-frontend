@@ -8,7 +8,7 @@ import { useMemo, useState } from 'react';
 // ⭐ Una sola familia de iconos (lucide). Se importan con los nombres que tenían los de
 // heroicons para no tocar cada uso.
 import {
-  Newspaper, FileText, Scale, Sparkles, X, Flame,
+  Newspaper, FileText, Scale, Sparkles, X, Flame, CalendarCheck, ChevronRight, ChevronDown,
   Settings as Cog6ToothIcon, Archive as ArchiveBoxIcon, ClipboardList as ClipboardDocumentListIcon,
   Bell as BellIcon, Landmark as BuildingLibraryIcon, Building2 as BuildingOffice2Icon, Briefcase as BriefcaseIcon,
   Home as HomeIcon, BookOpen as BookOpenIcon, Swords as FireIcon, Layers as ArrowPathIcon,
@@ -379,6 +379,7 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
     <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
+      <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
 
       {/* Hero — CTA principal */}
       <div style={{ background: '#0f172a', borderRadius: 18, padding: '20px 18px', color: 'white', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -461,6 +462,7 @@ export function DashboardActivo({ usuario, oposicionId }: { usuario: any; oposic
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
+      <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
       <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
       <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
       <TarjetaLiga soloSiRelevante />
@@ -492,6 +494,7 @@ export function DashboardInactivo({ usuario, oposicionId }: { usuario: any; opos
       </div>
 
       <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
+      <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
       <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
       <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
       <TarjetaLiga soloSiRelevante />
@@ -617,6 +620,79 @@ function WidgetNoticias({ oposicionId, convocatoriaId, router }: any) {
       <button onClick={marcarVista} aria-label="Descartar noticia" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: TEXT_MUTED, flexShrink: 0 }}>
         <X size={16} />
       </button>
+    </div>
+  );
+}
+
+// ⭐ Repasos de temas programados para hoy (o atrasados, hasta 7 días). No caduca como las
+// noticias: se queda hasta que el tema se marca como repasado (botón "Hecho" en el tema).
+// Con varios repasos se muestra UNA tarjeta con los 2 primeros y "ver todos" para desplegar,
+// así no se llena Inicio de avisos.
+function WidgetRepasosHoy({ oposicionId, router }: any) {
+  const [abierto, setAbierto] = useState(false);
+  const { data: repasos = [] } = useQuery({
+    queryKey: ['repasos-pendientes', oposicionId],
+    queryFn: async () => (await api.get('/normativa/repasos-pendientes', { params: { oposicionId } })).data,
+    enabled: !!oposicionId,
+    staleTime: 60_000,
+  });
+  if (!oposicionId || repasos.length === 0) return null;
+
+  const ir = (r: any) => router.push(`/app/tema/${r.oposicionId ?? oposicionId}/${r.numero}`);
+  const uno = repasos.length === 1;
+  const visibles = abierto ? repasos : repasos.slice(0, 2);
+  const atrasados = repasos.filter((r: any) => r.atrasado).length;
+
+  return (
+    <div style={{ background: BG_WIDGET, borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+      <div
+        onClick={uno ? () => ir(repasos[0]) : undefined}
+        style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '12px 14px', cursor: uno ? 'pointer' : 'default' }}
+      >
+        <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: '#EAF2FE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CalendarCheck size={17} color="#1F7CFF" />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#1F7CFF' }}>
+            {uno ? (repasos[0].atrasado ? 'Repaso pendiente' : 'Repaso de hoy') : `${repasos.length} repasos para hoy`}
+            {!uno && atrasados > 0 && <span style={{ color: TEXT_MUTED, fontWeight: 600 }}> · {atrasados} {atrasados === 1 ? 'atrasado' : 'atrasados'}</span>}
+          </div>
+          {uno ? (
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.35, marginTop: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              Tema {repasos[0].numero}: {repasos[0].titulo}
+            </div>
+          ) : (
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginTop: 2 }}>Tienes temas programados para repasar</div>
+          )}
+        </div>
+        {uno && <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />}
+      </div>
+
+      {!uno && (
+        <>
+          {visibles.map((r: any) => (
+            <button
+              key={r.temaId}
+              onClick={() => ir(r)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid #EEF0F3', cursor: 'pointer', textAlign: 'left' }}
+            >
+              <span style={{ width: 34, textAlign: 'center', fontSize: 12, fontWeight: 800, color: TEXT_SECONDARY, flexShrink: 0 }}>T{r.numero}</span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.titulo}</span>
+              {r.atrasado && <span style={{ fontSize: 10, color: '#B45309', fontWeight: 700, flexShrink: 0 }}>Atrasado</span>}
+              <ChevronRight size={15} color="#C4C9D2" style={{ flexShrink: 0 }} />
+            </button>
+          ))}
+          {repasos.length > 2 && (
+            <button
+              onClick={() => setAbierto((v) => !v)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '9px', background: 'none', border: 'none', borderTop: '1px solid #EEF0F3', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#1F7CFF' }}
+            >
+              {abierto ? 'Ver menos' : `Ver los ${repasos.length}`}
+              <ChevronDown size={14} style={{ transform: abierto ? 'rotate(180deg)' : 'none' }} />
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }
