@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Plus, ChevronRight, Brain, Lock, Swords, ClipboardCheck, Layers, Landmark, Scale, BookOpen, Clock, Handshake } from 'lucide-react';
+import { Plus, ChevronRight, ChevronLeft, ChevronDown, Brain, Lock, Swords, ClipboardCheck, Layers, Landmark, Scale, BookOpen, Clock, Handshake, Crown, X, AlertTriangle, Check, UserX, Ban, RotateCcw, Hourglass } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { IconoModalidad } from '@/components/psicotecnicos/iconos';
@@ -32,6 +32,8 @@ import {
 } from '@/styles/tokens';
 
 const BG_APP = '#FCEEE8';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const COLOR_TEST = '#4D7C0F';
 
 // ⭐ Normaliza un RetoFC (duelo de flashcards, estructura propia con retador/retado/resultados)
 // a la misma forma "participación" que ya usan las derivaciones y los widgets de retos de Test
@@ -210,14 +212,16 @@ const mostrarToast = (mensaje: string) => {
 
 const compartirInvitacion = async () => {
   const url = `https://oplora.app/app/registro?ref=${usuario?.nick ?? ''}`;
-  const texto = `¡Te reto a superarme en OPLORA! Únete y prepara tu oposición conmigo 💪`;
+  const texto = `¡Te reto a superarme en OPLORA! Únete y prepara tu oposición conmigo.`;
 
-  if (navigator.share) {
-    await navigator.share({ title: 'OPLORA', text: texto, url });
-  } else {
-    await navigator.clipboard.writeText(`${texto} ${url}`);
-    mostrarToast('Enlace copiado al portapapeles');
-  }
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'OPLORA', text: texto, url });
+    } else {
+      await navigator.clipboard.writeText(`${texto} ${url}`);
+      mostrarToast('Enlace copiado al portapapeles');
+    }
+  } catch { /* compartir cancelado */ }
   setModalInvitar(false);
 };
 const puedeEnviar = validacion?.encontrado && !validacion?.error && validacion?.mismaOposicion && validacion?.mismaConvocatoria;
@@ -264,7 +268,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
     let ir = false;
     try { ir = new URLSearchParams(window.location.search).get('vista') === 'pendientes'; } catch { /* sin query */ }
     if (!ir) return;
-    const t = setTimeout(() => document.getElementById('retos-en-curso')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
+    const t = setTimeout(() => document.getElementById('retos-te-toca') ?? document.getElementById('retos-en-curso')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
     return () => clearTimeout(t);
   }, [misRetos]);
 
@@ -461,6 +465,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mis-retos'] });
+      queryClient.invalidateQueries({ queryKey: ['retos-pendientes'] });
       setRevanchaAbierta(false);
       setMensajeRevancha('');
       setRetoPreview(data.id);
@@ -500,8 +505,25 @@ const oposicionId = usuario?.oposicionActiva?.id;
     (p: any) => p.reto?.tipo === 'usuario' && p.completado && p.posicion !== null && !retoCaducado(p.reto)
   );
 
-  const retosEnviados = retosUsuarioPendientes.filter((p: any) => p.reto.creador?.id === (usuario as any)?.id);
-  const retosRecibidos = retosUsuarioPendientes.filter((p: any) => p.reto.creador?.id !== (usuario as any)?.id);
+  // ⭐ En curso se divide en lo que te toca jugar (lo importante) y lo que espera a tu rival.
+  const porTiempo = (a: any, b: any) => new Date(a.reto.fechaFin).getTime() - new Date(b.reto.fechaFin).getTime();
+  const teToca = retosUsuarioPendientes.filter((p: any) => !p.completado).sort(porTiempo);
+  const esperandoRival = retosUsuarioPendientes.filter((p: any) => p.completado).sort(porTiempo);
+
+  // ⭐ Estadísticas calculadas con los tres tipos de reto (antes solo contaban los de test, también
+  // los antiguos retos diarios/semanales, y un empate contaba como victoria para los dos).
+  const statsRetos = (() => {
+    let victorias = 0, empates = 0, derrotas = 0;
+    for (const p of retosUsuarioCompletados) {
+      const rivalP = p.reto.participaciones?.find((x: any) => x.usuario?.id !== (usuario as any)?.id);
+      if (!rivalP?.completado) continue;
+      if (rivalP.posicion === p.posicion) empates++;
+      else if (p.posicion === 1) victorias++;
+      else derrotas++;
+    }
+    const total = victorias + empates + derrotas;
+    return { victorias, empates, derrotas, total, pct: total > 0 ? Math.round((victorias / total) * 100) : 0 };
+  })();
 
 
   const cerrarModalPreview = () => {
@@ -531,14 +553,6 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
   const colorPasoActivo = form.categoria === 'fc' ? COLOR_FC : form.categoria === 'psico' ? COLOR_PSICO : COLOR_RETOS;
 
-  const { data: estadisticas } = useQuery({
-    queryKey: ['estadisticas-retos'],
-    queryFn: async () => {
-      const res = await api.get('/retos/estadisticas');
-      return res.data;
-    },
-    enabled: !!usuario,
-  });
 
   if (cargando) return null;
 
@@ -570,98 +584,84 @@ const oposicionId = usuario?.oposicionActiva?.id;
             </button>
           </div>
 
-        {estadisticas && estadisticas.total > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-          {[
-            { label: 'Victorias', value: estadisticas.victorias },
-            { label: 'Retos jugados', value: estadisticas.total },
-            { label: '% victoria', value: `${estadisticas.porcentajeVictoria}%` },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '12px 8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: TEXT_PRIMARY }}>{value}</div>
-              <div style={{ fontSize: '10px', color: TEXT_MUTED, marginTop: '2px' }}>{label}</div>
+        {/* Mis números — círculos flotantes */}
+        {statsRetos.total > 0 && (
+          <section>
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 12, padding: '0 4px' }}>Mis duelos</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, padding: '0 4px' }}>
+              <CirculoReto valor={`${statsRetos.victorias}`} porcentaje={(statsRetos.victorias / statsRetos.total) * 100} color="#16A34A" label="Victorias" sub={`de ${statsRetos.total} duelos`} />
+              <CirculoReto valor={`${statsRetos.pct}%`} porcentaje={statsRetos.pct} color={COLOR_RETOS} label="% victorias" sub={statsRetos.empates > 0 ? `${statsRetos.empates} ${statsRetos.empates === 1 ? 'empate' : 'empates'}` : 'Sin empates'} />
+              <CirculoReto valor={`${teToca.length}`} porcentaje={teToca.length > 0 ? 100 : 0} color="#D97706" label="Te toca" sub={teToca.length === 1 ? 'reto por jugar' : 'retos por jugar'} />
             </div>
-          ))}
-        </div>
-      )}
+          </section>
+        )}
 
-        {/* ⭐ Liga Oplora (sustituye a los antiguos reto diario y semanal) */}
+        {/* Liga Oplora */}
         <TarjetaLiga />
 
-        {/* Botón nuevo reto */}
+        {/* Nuevo reto */}
         <button
           onClick={() => { setModalAbierto(true); setPaso('retado'); }}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            background: '#111827', color: 'white', border: 'none', borderRadius: '12px',
-            padding: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', width: '100%',
-          }}
+          style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', border: 'none', borderRadius: 18, padding: 14, boxShadow: SOMBRA, cursor: 'pointer', width: '100%', textAlign: 'left' }}
         >
-          <Plus size={14} />
-          Nuevo reto
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Swords size={21} color={COLOR_RETOS} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Retar a alguien</div>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Test, flashcards o psicotécnicos contra otro opositor</div>
+          </div>
+          <span style={{ width: 34, height: 34, borderRadius: '50%', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Plus size={18} color="white" />
+          </span>
         </button>
 
- 
-{/* ── Retos en curso (lanzados + recibidos, ordenados por tiempo restante) ── */}
-{(() => {
-  const retosEnCurso = [...retosRecibidos, ...retosEnviados].sort((a, b) => {
-    const tiempoA = new Date(a.reto.fechaFin).getTime() - Date.now();
-    const tiempoB = new Date(b.reto.fechaFin).getTime() - Date.now();
-    return tiempoA - tiempoB;
-  });
-
-  if (retosEnCurso.length === 0) return null;
-
-  return (
-    <div id="retos-en-curso" style={{ scrollMarginTop: 16 }}>
-      <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
-        Retos en curso · {retosEnCurso.length}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-        {retosEnCurso.map((p: any) => {
-          const esCreador = p.reto.creador?.id === (usuario as any)?.id;
-          const esFC = !!p.reto._esFC;
-          const esPsico = !!p.reto._esPsico;
-          const colorCategoria = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : COLOR_RETOS;
-          return (
-            <div key={p.id} style={{ background: 'white', border: '1px solid #F1F5F9', borderLeft: `4px solid ${colorCategoria}`, borderRadius: '14px', padding: '10px 12px', boxSizing: 'border-box' }}>
-              <div
-                onClick={() => esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : esPsico ? router.push(`/app/retos/psico/${p.reto.id}`) : setRetoPreview(p.reto.id)}
-                style={{ cursor: 'pointer' }}
-              >
-                <DueloReto reto={p.reto} usuarioActual={usuario} mostrarBarraTiempo tipo={esFC ? 'fc' : esPsico ? 'psico' : 'test'} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid #F1F5F9' }}>
-                <span style={{ fontSize: '11px', color: TEXT_MUTED }}>
-                  {descripcionReto(p.reto)}
-                </span>
-                {(
-                  <button
-                    onClick={(e) => { e.stopPropagation(); confirmarAccion(p.reto, esCreador ? 'cancelar' : 'rechazar'); }}
-                    style={{ background: 'white', border: '1px solid #FECACA', borderRadius: '999px', padding: '5px 12px', cursor: 'pointer', color: '#B91C1C', fontSize: '12px', fontWeight: 600, flexShrink: 0, lineHeight: 1 }}
-                  >
-                    {esCreador ? 'Cancelar' : 'Rechazar'}
-                  </button>
-                )}
-              </div>
+        {/* Te toca jugar */}
+        <section id="retos-en-curso" style={{ scrollMarginTop: 16 }}>
+          <div id="retos-te-toca" style={{ scrollMarginTop: 16, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Te toca jugar</span>
+            {teToca.length > 0 && <span style={{ fontSize: 11, color: TEXT_MUTED }}>{teToca.length}</span>}
+          </div>
+          {teToca.length === 0 ? (
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: '16px', fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
+              {retosUsuarioPendientes.length === 0 && retosUsuarioCompletados.length === 0
+                ? 'Todavía no tienes duelos. Reta a otro opositor de tu convocatoria y compara quién sabe más.'
+                : 'No tienes ningún reto pendiente de jugar.'}
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-})()}
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {teToca.map((p: any) => (
+                <TarjetaDuelo
+                  key={p.id} p={p} usuario={usuario}
+                  onAbrir={() => p.reto._esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : p.reto._esPsico ? router.push(`/app/retos/psico/${p.reto.id}`) : setRetoPreview(p.reto.id)}
+                  onJugar={() => p.reto._esFC ? router.push(`/app/retos/fc/${p.reto.id}?directo=true`) : p.reto._esPsico ? router.push(`/app/retos/psico/${p.reto.id}?directo=true`) : router.push(`/app/retos/${p.reto.id}?directo=true`)}
+                  onQuitar={() => confirmarAccion(p.reto, p.reto.creador?.id === (usuario as any)?.id ? 'cancelar' : 'rechazar')}
+                />
+              ))}
+            </div>
+          )}
+        </section>
 
-{retosEnviados.length === 0 && retosRecibidos.length === 0 && (
-  <div>
-    <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
-      Retos en curso
-    </div>
-    <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '1.25rem', textAlign: 'center' }}>
-      <div style={{ fontSize: '13px', color: TEXT_MUTED }}>Sin retos entre usuarios todavía</div>
-    </div>
-  </div>
-)}
+        {/* Esperando al rival */}
+        {esperandoRival.length > 0 && (
+          <section>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Esperando a tu rival</span>
+              <span style={{ fontSize: 11, color: TEXT_MUTED }}>{esperandoRival.length}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {esperandoRival.map((p: any) => (
+                <TarjetaDuelo
+                  key={p.id} p={p} usuario={usuario}
+                  onAbrir={() => p.reto._esFC ? router.push(`/app/retos/fc/${p.reto.id}`) : p.reto._esPsico ? router.push(`/app/retos/psico/${p.reto.id}`) : setRetoPreview(p.reto.id)}
+                  // Solo quien lo lanzó puede cancelarlo mientras el rival no lo haya jugado
+                  onQuitar={p.reto.creador?.id === (usuario as any)?.id ? () => confirmarAccion(p.reto, 'cancelar') : undefined}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         {(retosUsuarioCompletados.length > 0 || retosExpirados.length > 0) && (
           <WidgetHistorialRetos
             retosCompletados={[...retosUsuarioCompletados, ...retosExpirados].sort(
@@ -676,8 +676,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
       {/* Modal crear reto — wizard paso a paso, pantalla completa por paso */}
       {modalAbierto && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
-          <div style={{ background: BG_APP, borderRadius: '20px', width: '100%', maxWidth: '400px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div onClick={() => { setModalAbierto(false); setError(''); setPaso('retado'); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px', width: '100%', maxWidth: '400px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
             <style>{`@keyframes oplora-paso-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }`}</style>
 
@@ -687,19 +687,21 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 {paso !== 'retado' ? (
                   <button
                     onClick={() => setPaso(PASOS[PASOS.indexOf(paso) - 1])}
-                    style={{ background: 'white', border: 'none', borderRadius: '10px', width: '32px', height: '32px', fontSize: '15px', cursor: 'pointer', color: TEXT_PRIMARY, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    aria-label="Paso anterior"
+                    style={{ background: 'white', border: 'none', borderRadius: '50%', width: '34px', height: '34px', cursor: 'pointer', color: TEXT_PRIMARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA }}
                   >
-                    ←
+                    <ChevronLeft size={17} />
                   </button>
                 ) : (
-                  <div style={{ width: '32px' }} />
+                  <div style={{ width: '34px' }} />
                 )}
-                <div style={{ fontSize: '15px', fontWeight: 700, color: TEXT_PRIMARY }}>Enviar reto</div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: TEXT_PRIMARY }}>Nuevo reto</div>
                 <button
                   onClick={() => { setModalAbierto(false); setError(''); setPaso('retado'); }}
-                  style={{ background: 'white', border: 'none', borderRadius: '10px', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', color: TEXT_MUTED }}
+                  aria-label="Cerrar"
+                  style={{ background: 'white', border: 'none', borderRadius: '50%', width: '34px', height: '34px', cursor: 'pointer', color: TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA }}
                 >
-                  ✕
+                  <X size={16} />
                 </button>
               </div>
               <div style={{ display: 'flex', gap: '4px' }}>
@@ -727,7 +729,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               <>
               {contactosRecientes.length > 0 && (
                 <div>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Recientes</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_SECONDARY, marginBottom: '8px' }}>Con quién has jugado</div>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {contactosRecientes.map((c: any) => (
                       <button
@@ -743,13 +745,13 @@ const oposicionId = usuario?.oposicionActiva?.id;
               )}
 
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, display: 'block', marginBottom: '4px' }}>Nick o email del retado *</label>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: TEXT_SECONDARY, display: 'block', marginBottom: '6px' }}>¿A quién quieres retar?</label>
                 <input
                   type="text"
                   value={form.retadoNickOEmail}
                   onChange={(e) => setForm({ ...form, retadoNickOEmail: e.target.value })}
-                  placeholder="nick_amigo o email@ejemplo.com"
-                  style={{ width: '100%', padding: '10px 12px', fontSize: '13px', border: 'none', borderRadius: '10px', outline: 'none', boxSizing: 'border-box', background: 'white' }}
+                  placeholder="Su nick o su email"
+                  style={{ width: '100%', padding: '12px 14px', fontSize: '14px', border: 'none', borderRadius: '12px', outline: 'none', boxSizing: 'border-box', background: 'white', boxShadow: SOMBRA }}
                 />
                 {validando && (
                   <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>Comprobando...</div>
@@ -759,7 +761,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <div style={{ marginTop: '6px' }}>
                   {!validacion.encontrado && (
                     <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                      <span>😕 No hemos encontrado a ese usuario</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><UserX size={14} /> No hemos encontrado a ese usuario</span>
                       <button
                         onClick={() => setModalInvitar(true)}
                         style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}
@@ -769,16 +771,16 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     </div>
                   )}
                   {validacion.encontrado && validacion.error && (
-                    <div style={{ fontSize: '12px', color: '#dc2626' }}>⚠ {validacion.error}</div>
+                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.error}</div>
                   )}
                   {validacion.encontrado && !validacion.error && !validacion.mismaOposicion && (
-                    <div style={{ fontSize: '12px', color: '#dc2626' }}>⚠ {validacion.nombre} no está preparando esta oposición</div>
+                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.nombre} no está preparando esta oposición</div>
                   )}
                   {validacion.encontrado && !validacion.error && validacion.mismaOposicion && !validacion.mismaConvocatoria && (
-                    <div style={{ fontSize: '12px', color: '#dc2626' }}>⚠ {validacion.nombre} está en otra convocatoria</div>
+                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.nombre} está en otra convocatoria</div>
                   )}
                   {validacion.encontrado && !validacion.error && validacion.mismaOposicion && validacion.mismaConvocatoria && (
-                    <div style={{ fontSize: '12px', color: '#15803d' }}>✓ {validacion.nombre} — listo para retar</div>
+                    <div style={{ fontSize: '12px', color: '#15803d', display: 'flex', alignItems: 'center', gap: 5 }}><Check size={14} /> {validacion.nombre} — listo para retar</div>
                   )}
                 </div>
               )}
@@ -853,7 +855,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   </div>
                   {form.psicoTipo && psicoDisponibles && psicoDisponibles.total < form.numPsico && (
                     <div style={{ marginTop: '8px', fontSize: '11px', color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '8px 10px' }}>
-                      ⚠ Solo hay {psicoDisponibles.total} preguntas disponibles para esta modalidad (pediste {form.numPsico}). El duelo se creará igualmente con las que haya.
+                      Solo hay {psicoDisponibles.total} preguntas disponibles para esta modalidad (pediste {form.numPsico}). El duelo se creará igualmente con las que haya.
                     </div>
                   )}
                 </div>
@@ -1002,7 +1004,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 {form.categoria === 'psico' ? form.numPsico : form.categoria === 'fc' ? form.numFC : form.numPreguntas}
                 {' '}
                 {form.categoria === 'fc' ? 'flashcards' : 'preguntas'}
-                {` · ${form.horasPlazo}h`}
+                {` · ${form.horasPlazo === 168 ? '1 semana' : `${form.horasPlazo} h`}`}
               </div>
 
               {(
@@ -1028,10 +1030,10 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
               <div style={{ background: 'white', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: TEXT_SECONDARY }}>
                 {form.categoria === 'psico'
-                  ? `🧠 El retado jugará el mismo duelo de ${form.numPsico} preguntas psicotécnicas`
+                  ? `Tu rival jugará las mismas ${form.numPsico} preguntas psicotécnicas y tendrá ${form.horasPlazo === 168 ? '1 semana' : `${form.horasPlazo} h`} para hacerlo.`
                   : form.categoria === 'fc'
-                  ? `🃏 El retado jugará el mismo duelo de ${form.numFC} flashcards`
-                  : `⏱ El retado tiene ${form.horasPlazo}h para completar el mismo test`}
+                  ? `Tu rival jugará las mismas ${form.numFC} flashcards y tendrá ${form.horasPlazo === 168 ? '1 semana' : `${form.horasPlazo} h`} para hacerlo.`
+                  : `Tu rival hará el mismo test y tendrá ${form.horasPlazo === 168 ? '1 semana' : `${form.horasPlazo} h`} para hacerlo.`}
               </div>
               </>
               )}
@@ -1115,7 +1117,9 @@ const oposicionId = usuario?.oposicionActiva?.id;
       {modalInvitar && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '340px', textAlign: 'center' }}>
-            <div style={{ fontSize: '32px', marginBottom: '10px' }}>😕</div>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <UserX size={24} color={COLOR_RETOS} />
+            </div>
             <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', marginBottom: '6px' }}>
               No hemos encontrado a "{form.retadoNickOEmail}"
             </div>
@@ -1154,9 +1158,9 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
                 <div style={{ fontSize: '15px', fontWeight: 700, color: TEXT_PRIMARY }}>
-                  {retoDetalle.tipo === 'diario' ? 'Reto diario ⚡' : retoDetalle.tipo === 'semanal' ? 'Reto semanal 🏆' : 'Reto entre usuarios 🎯'}
+                  {retoDetalle.tipo === 'diario' ? 'Reto diario' : retoDetalle.tipo === 'semanal' ? 'Reto semanal' : 'Duelo de test'}
                 </div>
-                <button onClick={cerrarModalPreview} style={{ background: 'white', border: 'none', borderRadius: '10px', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', color: TEXT_MUTED }}>✕</button>
+                <button onClick={cerrarModalPreview} aria-label="Cerrar" style={{ background: 'white', border: 'none', borderRadius: '50%', width: '34px', height: '34px', cursor: 'pointer', color: TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA }}><X size={16} /></button>
               </div>
 
               {retoDetalle.creador && retoDetalle.creador.id !== (usuario as any)?.id && (
@@ -1197,7 +1201,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   onClick={() => setRevanchaAbierta(true)}
                   style={{ width: '100%', padding: '12px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginBottom: '10px' }}
                 >
-                  🔥 Solicitar revancha
+                  <RotateCcw size={15} style={{ verticalAlign: '-3px', marginRight: 6 }} />Pedir la revancha
                 </button>
               )}
 
@@ -1217,6 +1221,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   >
                     {enviarRevancha.isPending ? 'Enviando...' : 'Enviar revancha'}
                   </button>
+                  {enviarRevancha.isError && (
+                    <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 8 }}>
+                      {(enviarRevancha.error as any)?.response?.data?.message ?? 'No se ha podido enviar la revancha.'}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1253,7 +1262,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
         >
           {errorAccion ? (
             <>
-              <div style={{ fontSize: '32px', marginBottom: '10px' }}>⚠️</div>
+              <div style={{ width: 52, height: 52, borderRadius: 16, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><AlertTriangle size={24} color="#DC2626" /></div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY, marginBottom: '6px' }}>
                 No se puede completar
               </div>
@@ -1269,12 +1278,12 @@ const oposicionId = usuario?.oposicionActiva?.id;
             </>
           ) : (
             <>
-              <div style={{ fontSize: '32px', marginBottom: '10px' }}>{confirmacion.accion === 'cancelar' ? '🚫' : '👋'}</div>
+              <div style={{ width: 52, height: 52, borderRadius: 16, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>{confirmacion.accion === 'cancelar' ? <Ban size={24} color="#DC2626" /> : <UserX size={24} color="#DC2626" />}</div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY, marginBottom: '6px' }}>
                 {confirmacion.accion === 'cancelar' ? '¿Cancelar este reto?' : '¿Rechazar este reto?'}
               </div>
               <div style={{ fontSize: '13px', color: TEXT_SECONDARY, marginBottom: '18px' }}>
-                Esta acción no se puede deshacer
+                {confirmacion.accion === 'cancelar' ? 'Tu rival dejará de verlo. No se puede deshacer.' : 'Avisaremos a quien te retó. No se puede deshacer.'}
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
@@ -1285,7 +1294,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 </button>
                 <button
                   onClick={ejecutarAccion}
-                  style={{ flex: 1, padding: '12px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                  disabled={eliminarReto.isPending}
+                  style={{ flex: 1, padding: '12px', background: '#DC2626', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
                 >
                   {confirmacion.accion === 'cancelar' ? 'Cancelar reto' : 'Rechazar'}
                 </button>
@@ -1384,8 +1394,9 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
   const yoSoyCreador = reto.creador?.id === usuarioActual?.id;
   const rivalEsCreador = reto.creador?.id === rival?.usuario?.id;
   const yoCompletado = yo?.completado;
-  const iconoCategoria = esPsico ? '🧠' : esFC ? '🃏' : '🎯';
-  const colorCategoriaBg = esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : COLOR_RETOS_BG;
+  const IconoCategoria = esPsico ? Brain : esFC ? Layers : ClipboardCheck;
+  const colorCategoria = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : COLOR_TEST;
+  const colorCategoriaBg = esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#F3FAE9';
 
   // ⭐ Diseño compacto: avatares pequeños en horizontal (avatar + nombre/estado a cada lado)
   // y la "línea de tiempo" en vertical entre los dos participantes, para que quepan más retos
@@ -1402,8 +1413,16 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
       boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <AvatarUsuario persona={persona} size={38} />
-      {esGanador && <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', fontSize: '14px' }}>🏆</div>}
-      {esEmpate && <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', fontSize: '14px' }}>🤝</div>}
+      {esGanador && (
+        <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: 18, height: 18, borderRadius: '50%', background: colorGanador, border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Crown size={10} color="white" />
+        </div>
+      )}
+      {esEmpate && (
+        <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: 18, height: 18, borderRadius: '50%', background: '#B45309', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Handshake size={10} color="white" />
+        </div>
+      )}
       {esCreadorDeEste && (
         // ⭐ Identifica quién lanzó el reto: icono de espadas en la esquina de su avatar.
         <div style={{
@@ -1441,7 +1460,7 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
           width: '24px', height: '24px', borderRadius: '50%', background: colorCategoriaBg,
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px',
         }}>
-          {iconoCategoria}
+          <IconoCategoria size={13} color={colorCategoria} />
         </div>
         {mostrarTiempo && (
           <>
@@ -1482,23 +1501,24 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
 
 function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
   const [expandido, setExpandido] = useState(false);
-  const aMostrar = expandido ? retosCompletados : retosCompletados.slice(0, 1);
+  const aMostrar = expandido ? retosCompletados : retosCompletados.slice(0, 3);
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          {expandido ? 'Historial' : 'Último resultado'}
-        </span>
-        <button
-          onClick={() => setExpandido(!expandido)}
-          style={{ fontSize: '11px', color: '#111827', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-        >
-          {expandido ? 'Ver menos' : 'Ver historial'}
-        </button>
+        <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, paddingLeft: 4 }}>Últimos resultados</span>
+        {retosCompletados.length > 3 && (
+          <button
+            onClick={() => setExpandido(!expandido)}
+            style={{ fontSize: 12, color: COLOR_RETOS, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}
+          >
+            {expandido ? 'Ver menos' : `Ver los ${retosCompletados.length}`}
+            <ChevronDown size={14} style={{ transform: expandido ? 'rotate(180deg)' : 'none' }} />
+          </button>
+        )}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        {aMostrar.map((p: any) => {
+      <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+        {aMostrar.map((p: any, idx: number) => {
           const expirado = retoCaducado(p.reto);
           const rival = p.reto.creador?.id === usuario?.id
             ? p.reto.participaciones?.find((x: any) => x.usuario?.id !== usuario?.id)?.usuario
@@ -1509,15 +1529,13 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
           const gane = !empate && p.posicion === 1;
           const esFC = !!p.reto._esFC;
           const esPsico = !!p.reto._esPsico;
-          const colorCategoria = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : COLOR_RETOS;
-
           return (
             <div
               key={p.id}
               onClick={() => onVer(p)}
-              style={{ background: 'white', border: '1px solid #F1F5F9', borderLeft: expirado ? '1px solid #F1F5F9' : `4px solid ${colorCategoria}`, borderRadius: '14px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', minHeight: '52px', boxSizing: 'border-box' }}
+              style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderBottom: idx < aMostrar.length - 1 ? '1px solid #F5EEEA' : 'none' }}
             >
-              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: expirado ? '#F4F5F7' : empate ? '#FEF3C7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: expirado ? '#F4F5F7' : empate ? '#FEF3C7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {(() => {
                   // ⭐ Icono de la actividad (el mismo que en el resto de la app), coloreado por resultado.
                   if (expirado) return <Clock size={17} color="#9CA3AF" />;
@@ -1531,13 +1549,87 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
                   {expirado ? 'Caducado' : empate ? 'Empate' : gane ? 'Victoria' : 'Derrota'} vs {rival?.nick ?? rival?.nombre ?? 'Usuario'}
                 </div>
                 <div style={{ fontSize: '12px', color: TEXT_MUTED, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {expirado ? 'Plazo terminado' : `${p.porcentaje}% — ${rivalParticipacion?.porcentaje ?? '?'}%`} · {descripcionReto(p.reto)}
+                  {expirado ? 'Se acabó el plazo' : `${p.porcentaje ?? 0}% · ${rivalParticipacion?.porcentaje ?? '?'}%`} · {descripcionReto(p.reto)}
                 </div>
               </div>
-              <ChevronRight size={16} color="#D1D5DB" style={{ flexShrink: 0 }} />
+              <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function CirculoReto({ valor, porcentaje, color, label, sub }: { valor: string; porcentaje: number; color: string; label: string; sub: string }) {
+  const D = 78;
+  const g = 6;
+  const r = (D - 12 - g) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width={D - 12} height={D - 12} style={{ position: 'absolute', top: 6, left: 6, transform: 'rotate(-90deg)' }}>
+          <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke="#F3ECE8" strokeWidth={g} />
+          {porcentaje > 0 && (
+            <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke={color} strokeWidth={g} strokeLinecap="round"
+              strokeDasharray={c} strokeDashoffset={c - (Math.min(100, porcentaje) / 100) * c} style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+          )}
+        </svg>
+        <span style={{ position: 'relative', fontSize: 16, fontWeight: 800, color: TEXT_PRIMARY }}>{valor}</span>
+      </div>
+      <span style={{ fontSize: 12, color: TEXT_PRIMARY, fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{label}</span>
+      <span style={{ fontSize: 10, color: TEXT_MUTED, marginTop: -3, textAlign: 'center' }}>{sub}</span>
+    </div>
+  );
+}
+
+/** Tarjeta de un duelo en curso: enfrentamiento, qué es, plazo y acciones. */
+function TarjetaDuelo({ p, usuario, onAbrir, onJugar, onQuitar }: { p: any; usuario: any; onAbrir: () => void; onJugar?: () => void; onQuitar?: () => void }) {
+  const esFC = !!p.reto._esFC;
+  const esPsico = !!p.reto._esPsico;
+  const esCreador = p.reto.creador?.id === usuario?.id;
+  const rival = p.reto.participaciones?.find((x: any) => x.usuario?.id !== usuario?.id)?.usuario ?? p.reto.creador;
+  const restante = p.reto.fechaFin ? tiempoRestante(p.reto.fechaFin).replace(' restantes', '') : null;
+  const urgente = p.reto.fechaFin && new Date(p.reto.fechaFin).getTime() - Date.now() < 6 * 3600 * 1000;
+  return (
+    <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+      <div onClick={onAbrir} style={{ padding: '12px 14px', cursor: 'pointer' }}>
+        <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontWeight: 600, color: TEXT_SECONDARY }}>{esCreador ? `Retaste a ${rival?.nick ?? rival?.nombre ?? 'tu rival'}` : `${p.reto.creador?.nick ?? p.reto.creador?.nombre ?? 'Alguien'} te ha retado`}</span>
+          <span>·</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{descripcionReto(p.reto)}</span>
+        </div>
+        <DueloReto reto={p.reto} usuarioActual={usuario} tipo={esFC ? 'fc' : esPsico ? 'psico' : 'test'} />
+        {p.reto.mensaje && !esCreador && (
+          <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 10, fontStyle: 'italic', background: '#FBF7F5', borderRadius: 10, padding: '7px 10px' }}>
+            “{p.reto.mensaje}”
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderTop: '1px solid #F5EEEA' }}>
+        {restante && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: urgente ? '#DC2626' : TEXT_MUTED, flex: 1 }}>
+            {onJugar ? <Clock size={13} /> : <Hourglass size={13} />}
+            {onJugar ? `Quedan ${restante}` : `Tu rival tiene ${restante}`}
+          </span>
+        )}
+        {onQuitar && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onQuitar(); }}
+            style={{ background: 'none', border: 'none', padding: '6px 8px', cursor: 'pointer', color: '#B91C1C', fontSize: 12, fontWeight: 600 }}
+          >
+            {esCreador ? 'Cancelar' : 'Rechazar'}
+          </button>
+        )}
+        {onJugar && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onJugar(); }}
+            style={{ background: '#0f172a', color: 'white', border: 'none', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+          >
+            Jugar
+          </button>
+        )}
       </div>
     </div>
   );

@@ -141,6 +141,27 @@ export default function TemaPage() {
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<TabTema>('material');
+  // ⭐ Los accesos "Notas" y "Repaso" abren Mi estudio y bajan hasta su sección (antes solo
+  // cambiaban de pestaña y parecía que no hacían nada).
+  const [irA, setIrA] = useState<'notas' | 'repaso' | null>(null);
+  const refNotas = useRef<HTMLElement | null>(null);
+  const refRepaso = useRef<HTMLElement | null>(null);
+  const refTextarea = useRef<HTMLTextAreaElement | null>(null);
+  const abrirSeccion = (s: 'notas' | 'repaso') => { setTab('mi-estudio'); setIrA(s); };
+  useEffect(() => {
+    if (!irA || tab !== 'mi-estudio') return;
+    const t = setTimeout(() => {
+      const el = irA === 'notas' ? refNotas.current : refRepaso.current;
+      if (el) {
+        // Deja sitio para la cabecera fija
+        const y = el.getBoundingClientRect().top + window.scrollY - 70;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+      if (irA === 'notas') refTextarea.current?.focus({ preventScroll: true });
+      setIrA(null);
+    }, 60);
+    return () => clearTimeout(t);
+  }, [irA, tab]);
   const [notaTexto, setNotaTexto] = useState('');
   const [estadoNota, setEstadoNota] = useState<'' | 'guardando' | 'guardado' | 'error'>('');
   const notaTimeoutRef = useRef<any>(null);
@@ -483,10 +504,10 @@ export default function TemaPage() {
             label="Flashcards" sub={totalFC > 0 ? `${totalFC} tarjetas` : 'Repasar'} Icon={Layers} color={COLOR_FC}
             onClick={() => router.push(`/app/flashcards/repasar?temaId=${tema.id}&oposicionId=${oposicionId}&numeroTema=${numeroTema}`)}
           />
-          <Acceso label="Notas" sub={notaTexto ? 'Escritas' : 'Escribir'} Icon={NotebookPen} color="#8B7355" onClick={() => setTab('mi-estudio')} />
+          <Acceso label="Notas" sub={notaTexto ? 'Escritas' : 'Escribir'} Icon={NotebookPen} color="#8B7355" onClick={() => abrirSeccion('notas')} />
           <Acceso
             label="Repaso" sub={repasoProgramado ? (repasoHoy ? 'Hoy' : fechaCorta(repasoProgramado)) : 'Programar'}
-            Icon={CalendarDays} color={COLOR_ESTUDIAR} onClick={() => setTab('mi-estudio')}
+            Icon={CalendarDays} color={COLOR_ESTUDIAR} onClick={() => abrirSeccion('repaso')}
           />
         </div>
 
@@ -631,7 +652,7 @@ export default function TemaPage() {
         {/* ── MI ESTUDIO ── */}
         {tab === 'mi-estudio' && (
           <>
-            <section>
+            <section ref={refRepaso}>
               <TituloSeccion>Programar repaso</TituloSeccion>
               <Caja padding={16}>
                 {repasoProgramado ? (
@@ -711,7 +732,7 @@ export default function TemaPage() {
               </Caja>
             </section>
 
-            <section>
+            <section ref={refNotas}>
               <TituloSeccion derecha={
                 <span style={{ fontSize: 11, fontWeight: 600, color: estadoNota === 'error' ? '#B91C1C' : estadoNota === 'guardado' ? '#16A34A' : TEXT_MUTED }}>
                   {estadoNota === 'guardando' ? 'Guardando…' : estadoNota === 'guardado' ? 'Guardado' : estadoNota === 'error' ? 'No se ha guardado' : 'Se guarda solo'}
@@ -721,6 +742,7 @@ export default function TemaPage() {
               </TituloSeccion>
               <Caja padding={12}>
                 <textarea
+                  ref={refTextarea}
                   value={notaTexto}
                   onChange={(e) => handleNotaChange(e.target.value)}
                   disabled={!notaCargada}
@@ -779,7 +801,7 @@ export default function TemaPage() {
                   ultima Icon={Clock} color={COLOR_ESTUDIAR} bg="#EAF2FE"
                   titulo={repasoProgramado ? `Repaso: ${repasoProgramado === hoy ? 'hoy' : fechaLarga(repasoProgramado)}` : 'Sin repaso programado'}
                   sub={repasoProgramado ? 'Te avisaremos ese día' : 'Prográmalo en Mi estudio'}
-                  onClick={() => setTab('mi-estudio')}
+                  onClick={() => abrirSeccion('repaso')}
                 />
               </Caja>
             </section>
