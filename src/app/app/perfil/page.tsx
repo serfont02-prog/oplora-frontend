@@ -1,28 +1,27 @@
 'use client';
 
+// ⭐ Perfil — mismo sistema que el resto de la app: botón redondo a Inicio, tarjetas blancas con la
+// sombra común, títulos suaves, solo iconos lucide y sin emojis. Nivel, puntos y racha aparecen una
+// sola vez (antes salían en la cabecera y otra vez en la tarjeta de progreso).
+
 import { useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { getOploUrl } from '@/lib/oplo';
 import { useMiLiga } from '@/components/liga/TarjetaLiga';
 import { CopaEnAvatar, CopaBadge, COLOR_LIGA, BG_LIGA, nombreMes } from '@/components/liga/ligaUtils';
-
 import {
-  ArrowRightIcon,
-  BellIcon,
-  Cog6ToothIcon,
-  CreditCardIcon,
-  ShieldCheckIcon,
-  ArrowLeftStartOnRectangleIcon,
-  CameraIcon,
-  PhotoIcon,
-} from '@heroicons/react/24/outline';
+  ArrowLeft, ChevronRight, ChevronDown, Camera, Image as ImageIcon, Bell, Settings, CreditCard, GraduationCap, ShieldCheck,
+  LifeBuoy, LogOut, Flame, Check, Trophy, Lock,
+} from 'lucide-react';
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL } from '@/styles/tokens';
 
-import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
-
-const BG_APP = '#F4F5F7';
+const BG_APP = BG_NEUTRAL;
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const BORDER = '#EEF0F3';
+const AZUL = '#1F7CFF';
 
 const NIVELES = [
   { nivel: 1, nombre: 'Opositor', puntosMin: 0, puntosMax: 100 },
@@ -32,12 +31,47 @@ const NIVELES = [
   { nivel: 5, nombre: 'Élite', puntosMin: 1501, puntosMax: null },
 ];
 
+const PLAN: Record<string, string> = { gratuito: 'Gratuito', esencial: 'Esencial', profesional: 'Profesional' };
+
+function Seccion({ titulo, derecha, children }: { titulo: string; derecha?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', gap: 8 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>{titulo}</span>
+        {derecha}
+      </div>
+      <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>{children}</div>
+    </section>
+  );
+}
+
+function Fila({ Icon, color, bg, titulo, sub, onClick, ultima = false, peligro = false }: {
+  Icon: any; color: string; bg: string; titulo: string; sub?: string; onClick: () => void; ultima?: boolean; peligro?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', borderBottom: ultima ? 'none' : `1px solid ${BORDER}`, cursor: 'pointer', textAlign: 'left' }}
+    >
+      <div style={{ width: 40, height: 40, borderRadius: 12, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={19} color={color} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: peligro ? '#B91C1C' : TEXT_PRIMARY }}>{titulo}</div>
+        {sub && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
+      </div>
+      {!peligro && <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />}
+    </button>
+  );
+}
+
 export default function PerfilPage() {
   const { usuario, logout, actualizarUsuario } = useAuth();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [modalAvatar, setModalAvatar] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
+  const [errorAvatar, setErrorAvatar] = useState('');
+  const [verNiveles, setVerNiveles] = useState(false);
   const inputGaleria = useRef<HTMLInputElement>(null);
   const inputCamara = useRef<HTMLInputElement>(null);
 
@@ -45,26 +79,28 @@ export default function PerfilPage() {
 
   const nivel = usuario.oposicionActiva?.nivel ?? 1;
   const puntos = usuario.oposicionActiva?.puntos ?? 0;
-  const nivelActual = NIVELES.find(n => n.nivel === nivel) ?? NIVELES[0];
-  const nivelSiguiente = NIVELES.find(n => n.nivel === nivel + 1);
-
+  const racha = usuario.rachaActual ?? 0;
+  const nivelActual = NIVELES.find((n) => n.nivel === nivel) ?? NIVELES[0];
+  const nivelSiguiente = NIVELES.find((n) => n.nivel === nivel + 1);
   const porcentaje = nivelSiguiente
-    ? Math.min(100, Math.round(((puntos - nivelActual.puntosMin) / (nivelSiguiente.puntosMin - nivelActual.puntosMin)) * 100))
+    ? Math.max(0, Math.min(100, Math.round(((puntos - nivelActual.puntosMin) / (nivelSiguiente.puntosMin - nivelActual.puntosMin)) * 100)))
     : 100;
-  const puntosParaSiguiente = nivelSiguiente ? nivelSiguiente.puntosMin - puntos : 0;
+  const puntosParaSiguiente = nivelSiguiente ? Math.max(0, nivelSiguiente.puntosMin - puntos) : 0;
+  const plan = PLAN[usuario.suscripcion ?? 'gratuito'] ?? 'Gratuito';
 
   const subirImagen = async (file: File) => {
     setSubiendo(true);
+    setErrorAvatar('');
     try {
       const formData = new FormData();
       formData.append('archivo', file);
-      const res = await api.post('/usuarios/avatar', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await api.post('/usuarios/avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       actualizarUsuario(res.data);
       setModalAvatar(false);
-    } catch (e) {
-      console.error('Error subiendo avatar:', e);
+    } catch (e: any) {
+      // ⭐ Antes el error solo iba a la consola
+      const m = e?.response?.data?.message;
+      setErrorAvatar(typeof m === 'string' ? m : 'No se ha podido subir la foto. Prueba con otra imagen.');
     } finally {
       setSubiendo(false);
     }
@@ -72,246 +108,189 @@ export default function PerfilPage() {
 
   const usarIconoOplo = async () => {
     setSubiendo(true);
+    setErrorAvatar('');
     try {
       const res = await api.patch('/usuarios/avatar/tipo', { tipo: 'oplo' });
       actualizarUsuario(res.data);
       setModalAvatar(false);
+    } catch {
+      setErrorAvatar('No se ha podido cambiar. Inténtalo de nuevo.');
     } finally {
       setSubiendo(false);
     }
   };
 
-  const avatarSrc = usuario.tipoAvatar === 'foto' && usuario.avatarUrl
-    ? usuario.avatarUrl
-    : getOploUrl(nivel);
+  const avatarSrc = usuario.tipoAvatar === 'foto' && usuario.avatarUrl ? usuario.avatarUrl : getOploUrl(nivel);
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-      {/* Header */}
-      <div style={{ background: '#0f172a', padding: '1rem 1.25rem 1.5rem' }}>
-        <button
-          onClick={() => router.back()}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 10, padding: '6px 12px', color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginBottom: 16 }}
-        >
-          ← Volver
-        </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+        {/* Cabecera */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
           <button
-            onClick={() => setModalAvatar(true)}
-            style={{ position: 'relative', width: 64, height: 64, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, overflow: 'hidden', background: 'rgba(255,255,255,0.1)' }}
+            onClick={() => router.push('/app/dashboard')}
+            aria-label="Volver a Inicio"
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
-            <img src={avatarSrc} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <div style={{
-              position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, borderRadius: '50%',
-              background: '#1F7CFF', border: '2px solid #0f172a',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <CameraIcon style={{ width: 11, height: 11, color: 'white' }} />
-            </div>
+            <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
-          <CopaEnAvatar copa={usuario.copaLiga} size={64} />
+          <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>Mi perfil</div>
+        </div>
+
+        {/* Quién eres */}
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={() => { setErrorAvatar(''); setModalAvatar(true); }}
+              aria-label="Cambiar foto de perfil"
+              style={{ position: 'relative', width: 72, height: 72, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer', background: '#F1F5F9', overflow: 'visible' }}
+            >
+              <img src={avatarSrc} alt="" style={{ width: 72, height: 72, borderRadius: '50%', objectFit: usuario.tipoAvatar === 'foto' ? 'cover' : 'contain' }} />
+              <span style={{ position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: '50%', background: AZUL, border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Camera size={12} color="white" />
+              </span>
+            </button>
+            <CopaEnAvatar copa={usuario.copaLiga} size={72} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: 'white' }}>{usuario.nombre}</div>
-            <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{usuario.email}</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 999, padding: '3px 9px', fontSize: 11, fontWeight: 600, color: '#cbd5e1' }}>
-              {nivelActual.nombre}
-            </div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{usuario.nombre}</div>
+            {usuario.nick && <div style={{ fontSize: 13, color: TEXT_SECONDARY, fontWeight: 600 }}>@{usuario.nick}</div>}
+            <div style={{ fontSize: 12, color: TEXT_MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{usuario.email}</div>
+            <span style={{ display: 'inline-block', marginTop: 6, fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 999, background: plan === 'Gratuito' ? '#F1F5F9' : '#EAF0FF', color: plan === 'Gratuito' ? TEXT_SECONDARY : AZUL }}>
+              Plan {plan}
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 16 }}>
-          {[
-            { label: 'Puntos', value: puntos },
-            { label: 'Racha', value: usuario.rachaActual ?? 0 },
-            { label: 'Nivel', value: nivel },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: 'white' }}>{value}</div>
-              <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>{label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-        {/* Progreso de nivel */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Nivel {nivel} · {nivelActual.nombre}</div>
-            <div style={{ fontSize: 12, color: '#1F7CFF', fontWeight: 700 }}>{puntos} pts</div>
+        {/* Mi nivel — un solo sitio para nivel, puntos y racha */}
+        <section>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Mi nivel</span>
+            {usuario.oposicionActiva?.nombre && <span style={{ fontSize: 11, color: TEXT_MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{usuario.oposicionActiva.nombre}</span>}
           </div>
-          <div style={{ height: 7, background: '#F4F5F7', borderRadius: 999, overflow: 'hidden', marginBottom: 6 }}>
-            <div style={{ width: `${porcentaje}%`, height: '100%', background: 'linear-gradient(90deg, #1F7CFF, #60a5fa)', borderRadius: 999, transition: '0.4s' }} />
-          </div>
-          <div style={{ fontSize: 11, color: TEXT_MUTED }}>
-            {nivelSiguiente ? `${puntosParaSiguiente} puntos para ${nivelSiguiente.nombre}` : '🏆 Nivel máximo alcanzado'}
-          </div>
-        </div>
-
-        {/* Mapa de niveles */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 12 }}>Mapa de niveles</div>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-            {NIVELES.map((n) => {
-              const conseguido = nivel >= n.nivel;
-              const esActual = nivel === n.nivel;
-              return (
-                <div
-                  key={n.nivel}
-                  style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                    flexShrink: 0, width: 78, padding: '10px 6px', borderRadius: 12,
-                    background: esActual ? '#EAF0FF' : '#FAFAFA',
-                    border: esActual ? '1px solid #bfdbfe' : '1px solid #F1F5F9',
-                    opacity: conseguido ? 1 : 0.4,
-                  }}
-                >
-                  <img src={getOploUrl(n.nivel)} alt={n.nombre} style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 8 }} />
-                  <div style={{ fontSize: 11, fontWeight: 700, color: esActual ? '#1F7CFF' : TEXT_PRIMARY, textAlign: 'center' }}>{n.nombre}</div>
-                  <div style={{ fontSize: 10, color: TEXT_MUTED }}>{n.puntosMax ? `${n.puntosMin}-${n.puntosMax}` : `${n.puntosMin}+`}</div>
-                  {esActual && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 999, background: '#1F7CFF', color: 'white', fontWeight: 700 }}>Actual</span>}
-                  {conseguido && !esActual && <span style={{ fontSize: 12, color: '#16A34A' }}>✓</span>}
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            <button onClick={() => setVerNiveles((v) => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: 16, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+              <img src={getOploUrl(nivel)} alt="" style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>Nivel {nivel}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>{nivelActual.nombre}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1 }}>{puntos.toLocaleString('es-ES')}</div>
+                    <div style={{ fontSize: 10, color: TEXT_MUTED }}>puntos</div>
+                  </div>
                 </div>
-              );
-            })}
+                <div style={{ height: 7, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden', margin: '8px 0 6px' }}>
+                  <div style={{ width: `${porcentaje}%`, height: '100%', background: `linear-gradient(90deg, ${AZUL}, #60a5fa)`, borderRadius: 999, transition: 'width 0.4s' }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: TEXT_MUTED }}>
+                    {nivelSiguiente ? `${puntosParaSiguiente} puntos para ${nivelSiguiente.nombre}` : 'Nivel máximo alcanzado'}
+                  </span>
+                  {racha > 0 && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: '#C2410C', background: '#FFF1E8', borderRadius: 999, padding: '2px 8px', flexShrink: 0 }}>
+                      <Flame size={11} /> {racha} {racha === 1 ? 'día' : 'días'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => setVerNiveles((v) => !v)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: 10, background: 'none', border: 'none', borderTop: `1px solid ${BORDER}`, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: AZUL }}
+            >
+              {verNiveles ? 'Ocultar niveles' : 'Ver todos los niveles'}
+              <ChevronDown size={14} style={{ transform: verNiveles ? 'rotate(180deg)' : 'none' }} />
+            </button>
+            {verNiveles && (
+              <div style={{ borderTop: `1px solid ${BORDER}` }}>
+                {NIVELES.map((n, i) => {
+                  const conseguido = nivel >= n.nivel;
+                  const esActual = nivel === n.nivel;
+                  return (
+                    <div key={n.nivel} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: i < NIVELES.length - 1 ? `1px solid ${BORDER}` : 'none', background: esActual ? '#F5F8FF' : 'transparent' }}>
+                      <img src={getOploUrl(n.nivel)} alt="" style={{ width: 40, height: 40, objectFit: 'contain', opacity: conseguido ? 1 : 0.35, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: conseguido ? TEXT_PRIMARY : TEXT_MUTED }}>{n.nivel}. {n.nombre}</div>
+                        <div style={{ fontSize: 11, color: TEXT_MUTED }}>{n.puntosMax ? `${n.puntosMin}–${n.puntosMax} puntos` : `Desde ${n.puntosMin} puntos`}</div>
+                      </div>
+                      {esActual
+                        ? <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: AZUL, color: 'white' }}>Actual</span>
+                        : conseguido ? <Check size={16} color="#16A34A" /> : <Lock size={14} color="#C4C9D2" />}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
+        </section>
 
         <SeccionLiga />
 
-        {/* Menú */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, overflow: 'hidden' }}>
-          {[
-            { icon: <ShieldCheckIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Mi oposición', subtitle: usuario.oposicionActiva?.nombre ?? 'Elige tu oposición', href: usuario.oposicionActiva?.id ? `/app/oposicion/${usuario.oposicionActiva.id}/ajustes` : '/app/onboarding/oposicion' },
-            { icon: <CreditCardIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Mi suscripción', subtitle: usuario.suscripcion === 'gratuito' ? 'Descubre OPLORA PRO' : 'Plan Profesional', href: '/app/suscripciones' },
-            { icon: <BellIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Notificaciones', subtitle: 'Alertas y recordatorios', href: '/app/alertas' },
-            { icon: <Cog6ToothIcon style={{ width: 17, height: 17, color: TEXT_SECONDARY }} />, title: 'Preferencias', subtitle: 'Ajustes de la aplicación', href: '/app/preferencias' },
-            // ⭐ Acceso al panel solo para administradores
-            ...(usuario.rol === 'admin'
-              ? [{ icon: <ShieldCheckIcon style={{ width: 17, height: 17, color: '#1F7CFF' }} />, title: 'Panel de administración', subtitle: 'Gestionar oposiciones, usuarios y contenido', href: '/admin' }]
-              : []),
-          ].map(({ icon, title, subtitle, href }, i, arr) => (
-            <button
-              key={title}
-              onClick={() => router.push(href)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none', cursor: 'pointer', textAlign: 'left' }}
-            >
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {icon}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>{title}</div>
-                {subtitle && <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>}
-              </div>
-              <ArrowRightIcon style={{ width: 14, height: 14, color: '#D1D5DB', flexShrink: 0 }} />
-            </button>
-          ))}
+        <Seccion titulo="Tu cuenta">
+          <Fila
+            Icon={GraduationCap} color={AZUL} bg="#EAF0FF"
+            titulo="Mi oposición" sub={usuario.oposicionActiva?.nombre ?? 'Elige tu oposición'}
+            onClick={() => router.push(usuario.oposicionActiva?.id ? `/app/oposicion/${usuario.oposicionActiva.id}/ajustes` : '/app/onboarding/oposicion')}
+          />
+          {/* ⭐ Antes decía "Plan Profesional" para cualquier plan de pago, también el Esencial */}
+          <Fila
+            Icon={CreditCard} color="#4D7C0F" bg="#F3FAE9"
+            titulo="Mi suscripción" sub={plan === 'Gratuito' ? 'Plan gratuito · Ver planes' : `Plan ${plan}`}
+            onClick={() => router.push('/app/suscripciones')}
+          />
+          <Fila Icon={Bell} color="#CA8A04" bg="#FDF8E8" titulo="Alertas" sub="Tus avisos y recordatorios" onClick={() => router.push('/app/alertas')} />
+          <Fila
+            Icon={Settings} color={TEXT_SECONDARY} bg="#F1F5F9"
+            titulo="Preferencias" sub="Qué avisos quieres recibir"
+            onClick={() => router.push('/app/preferencias')}
+            ultima={usuario.rol !== 'admin'}
+          />
+          {usuario.rol === 'admin' && (
+            <Fila Icon={ShieldCheck} color={AZUL} bg="#EAF0FF" titulo="Panel de administración" sub="Oposiciones, usuarios y contenido" onClick={() => router.push('/admin')} ultima />
+          )}
+        </Seccion>
+
+        <Seccion titulo="Ayuda">
+          <Fila Icon={LifeBuoy} color="#0891B2" bg="#E0F7FA" titulo="Contactar con soporte" sub="Estamos contigo durante el proceso" onClick={() => router.push('/app/soporte')} ultima />
+        </Seccion>
+
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <Fila Icon={LogOut} color="#DC2626" bg="#FEF2F2" titulo="Cerrar sesión" onClick={logout} peligro ultima />
         </div>
-
-        {/* Soporte */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>
-            💬
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>¿Necesitas ayuda?</div>
-            <div style={{ fontSize: 11, color: TEXT_MUTED }}>Estamos contigo durante el proceso</div>
-          </div>
-          <button
-            onClick={() => router.push('/app/soporte')}
-            style={{ padding: '8px 13px', background: '#111827', color: 'white', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-          >
-            Contactar
-          </button>
-        </div>
-
-        {/* Logout */}
-        <button
-          onClick={logout}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 13, background: 'white', border: '1px solid #F1F5F9', borderRadius: 14, color: '#dc2626', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
-        >
-          <ArrowLeftStartOnRectangleIcon style={{ width: 17, height: 17 }} />
-          Cerrar sesión
-        </button>
-
       </div>
 
-      {/* Modal selección de avatar */}
+      {/* Foto de perfil */}
       {modalAvatar && (
-        <div
-          onClick={() => !subiendo && setModalAvatar(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.5rem', width: '100%', maxWidth: 420 }}
-          >
-            <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 16, textAlign: 'center' }}>
-              Foto de perfil
-            </div>
+        <div onClick={() => !subiendo && setModalAvatar(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 480 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 14, textAlign: 'center' }}>Foto de perfil</div>
 
-            <input
-              ref={inputCamara}
-              type="file"
-              accept="image/*"
-              capture="user"
-              style={{ display: 'none' }}
-              onChange={(e) => e.target.files?.[0] && subirImagen(e.target.files[0])}
-            />
-            <input
-              ref={inputGaleria}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={(e) => e.target.files?.[0] && subirImagen(e.target.files[0])}
-            />
+            <input ref={inputCamara} type="file" accept="image/*" capture="user" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) subirImagen(f); }} />
+            <input ref={inputGaleria} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) subirImagen(f); }} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ background: 'white', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden' }}>
+              <Fila Icon={Camera} color={AZUL} bg="#EAF0FF" titulo="Hacer un selfie" onClick={() => !subiendo && inputCamara.current?.click()} />
+              <Fila Icon={ImageIcon} color="#7C3AED" bg="#F3F0FC" titulo="Elegir de la galería" onClick={() => !subiendo && inputGaleria.current?.click()} />
               <button
-                onClick={() => inputCamara.current?.click()}
-                disabled={subiendo}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', textAlign: 'left' }}
+                onClick={() => !subiendo && usarIconoOplo()}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
               >
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CameraIcon style={{ width: 17, height: 17, color: '#1F7CFF' }} />
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Hacer un selfie</div>
-              </button>
-
-              <button
-                onClick={() => inputGaleria.current?.click()}
-                disabled={subiendo}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', textAlign: 'left' }}
-              >
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F0FC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <PhotoIcon style={{ width: 17, height: 17, color: '#8B5CF6' }} />
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Elegir de la galería</div>
-              </button>
-
-              <button
-                onClick={usarIconoOplo}
-                disabled={subiendo}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'white', border: 'none', borderRadius: 14, cursor: 'pointer', textAlign: 'left' }}
-              >
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F4F5F7', overflow: 'hidden' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F1F5F9', overflow: 'hidden', flexShrink: 0 }}>
                   <img src={getOploUrl(nivel)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Usar icono OPLORA</div>
+                <div style={{ flex: 1, fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>Usar a OPLO de mi nivel</div>
+                {usuario.tipoAvatar !== 'foto' && <Check size={16} color="#16A34A" />}
               </button>
             </div>
 
-            <button
-              onClick={() => setModalAvatar(false)}
-              disabled={subiendo}
-              style={{ width: '100%', marginTop: 12, padding: 13, background: 'none', border: 'none', color: TEXT_MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-            >
-              {subiendo ? 'Subiendo...' : 'Cancelar'}
+            {errorAvatar && <div style={{ fontSize: 12, color: '#B91C1C', background: '#FEF2F2', borderRadius: 10, padding: '8px 10px', marginTop: 10 }}>{errorAvatar}</div>}
+
+            <button onClick={() => setModalAvatar(false)} disabled={subiendo} style={{ width: '100%', marginTop: 10, padding: 12, background: 'none', border: 'none', color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              {subiendo ? 'Subiendo…' : 'Cancelar'}
             </button>
           </div>
         </div>
@@ -320,9 +299,8 @@ export default function PerfilPage() {
   );
 }
 
-
 /* -------------------------------------------------------
-   ⭐ LIGA OPLORA: división actual y palmarés
+   LIGA OPLORA: división actual y palmarés
 ------------------------------------------------------- */
 
 function SeccionLiga() {
@@ -338,51 +316,45 @@ function SeccionLiga() {
   if (!liga?.liga && !copas.length) return null;
 
   return (
-    <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Liga Oplora</div>
-          {liga?.liga && (
-            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>
-              {liga.nombreDivision} división · Convocatoria {liga.convocatoria?.anyo}
-            </div>
-          )}
-        </div>
-        {liga?.liga && (
-          <button
-            onClick={() => router.push('/app/liga')}
-            style={{ padding: '7px 12px', background: BG_LIGA, color: COLOR_LIGA, border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
-          >
-            Ver liga
-          </button>
-        )}
-      </div>
-
+    <Seccion
+      titulo="Liga Oplora"
+      derecha={copas.length > 0 ? <span style={{ fontSize: 11, color: TEXT_MUTED }}>{copas.length} {copas.length === 1 ? 'copa' : 'copas'}</span> : undefined}
+    >
+      {liga?.liga && (
+        <button
+          onClick={() => router.push('/app/liga')}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', borderBottom: `1px solid ${BORDER}`, cursor: 'pointer', textAlign: 'left' }}
+        >
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: BG_LIGA, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Trophy size={19} color={COLOR_LIGA} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>{liga.nombreDivision} división</div>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Convocatoria {liga.convocatoria?.anyo} · Ver la liga</div>
+          </div>
+          <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+        </button>
+      )}
       {copas.length === 0 ? (
-        <div style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.5, background: '#FAFAFA', borderRadius: 12, padding: '10px 12px' }}>
+        <div style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.5, padding: '12px 14px' }}>
           Aún no tienes copas. Gana tu división un mes y tu copa aparecerá aquí y sobre tu avatar.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Palmarés · {copas.length} {copas.length === 1 ? 'copa' : 'copas'}
-          </div>
-          {copas.map((c: any) => (
-            <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FAFAFA', borderRadius: 12, padding: '8px 10px' }}>
-              <CopaBadge color={c.color} size={26} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY }}>
-                  {c.tipo === 'temporada' ? 'Campeón de la temporada' : `Campeón de ${c.nombreDivision}`}
-                </div>
-                <div style={{ fontSize: 11, color: TEXT_MUTED }}>
-                  {c.tipo === 'temporada' ? 'Clasificación general' : nombreMes(c.mes)}
-                  {c.convocatoria?.anyo ? ` · ${[c.convocatoria.oposicion, c.convocatoria.anyo].filter(Boolean).join(' ')}` : ''}
-                </div>
+        copas.map((c: any, i: number) => (
+          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: i < copas.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+            <CopaBadge color={c.color} size={28} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY }}>
+                {c.tipo === 'temporada' ? 'Campeón de la temporada' : `Campeón de ${c.nombreDivision}`}
+              </div>
+              <div style={{ fontSize: 11, color: TEXT_MUTED }}>
+                {c.tipo === 'temporada' ? 'Clasificación general' : nombreMes(c.mes)}
+                {c.convocatoria?.anyo ? ` · ${[c.convocatoria.oposicion, c.convocatoria.anyo].filter(Boolean).join(' ')}` : ''}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))
       )}
-    </div>
+    </Seccion>
   );
 }

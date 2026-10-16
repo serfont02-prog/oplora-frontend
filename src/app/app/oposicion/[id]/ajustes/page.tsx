@@ -131,8 +131,8 @@ export default function AjustesOposicionPage() {
         {/* Cabecera */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
           <button
-            onClick={() => router.push('/app/perfil')}
-            aria-label="Volver al perfil"
+            onClick={() => router.push('/app/dashboard')}
+            aria-label="Volver a Inicio"
             style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
