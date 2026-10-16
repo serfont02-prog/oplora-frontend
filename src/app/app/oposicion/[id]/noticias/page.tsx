@@ -1,23 +1,20 @@
 'use client';
 
+// ⭐ Noticias — mismo sistema que el resto de la app: botón redondo a Inicio, filtro en píldora,
+// tarjetas blancas con la sombra común, iconos lucide y sin emojis.
+
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, Newspaper, Scale, Sparkles, X } from 'lucide-react';
-import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
+import { ArrowLeft, Newspaper, Scale, Sparkles, X, ExternalLink, ChevronRight } from 'lucide-react';
+import { BG_NEUTRAL as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
 
 type TipoNoticia = 'oficial' | 'legislativa' | 'oplora';
 
-interface Convocatoria {
-  id: string;
-  anyo: number;
-  estado: 'activa' | 'cerrada' | 'borrador';
-}
+interface Convocatoria { id: string; anyo: number; estado: 'activa' | 'cerrada' | 'borrador'; }
 
 interface Noticia {
   id: string;
@@ -31,71 +28,57 @@ interface Noticia {
   creadoEn: string;
 }
 
-function ModalNoticia({ noticia, onClose }: { noticia: Noticia; onClose: () => void }) {
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
-  return (
-    <div
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1.25rem' }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 520, maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box' }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.35 }}>{noticia.titulo}</div>
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 2, display: 'flex' }}
-            aria-label="Cerrar"
-          >
-            <X size={18} color={TEXT_MUTED} />
-          </button>
-        </div>
-        <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-          {noticia.contenido}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 const FILTROS: { key: TipoNoticia | 'todas'; label: string }[] = [
   { key: 'todas', label: 'Todas' },
   { key: 'oficial', label: 'Oficiales' },
-  { key: 'legislativa', label: 'Legislativas' },
+  { key: 'legislativa', label: 'Normativa' },
   { key: 'oplora', label: 'OPLORA' },
 ];
 
-const TIPO_ICONO: Record<TipoNoticia, any> = {
-  oficial: Newspaper,
-  legislativa: Scale,
-  oplora: Sparkles,
+const TIPO: Record<TipoNoticia, { Icon: any; bg: string; color: string; label: string }> = {
+  oficial: { Icon: Newspaper, bg: '#E6F1FB', color: '#185FA5', label: 'Oficial' },
+  legislativa: { Icon: Scale, bg: '#EEEDFE', color: '#3C3489', label: 'Normativa' },
+  oplora: { Icon: Sparkles, bg: '#FDF1DC', color: '#B45309', label: 'OPLORA' },
 };
 
-const TIPO_ICONO_BG: Record<TipoNoticia, string> = {
-  oficial: '#E6F1FB',
-  legislativa: '#EEEDFE',
-  oplora: '#FDF1DC',
-};
+function fecha(f?: string | null): string {
+  if (!f) return '';
+  const d = new Date(f);
+  const hoy = new Date();
+  const mismoAnyo = d.getFullYear() === hoy.getFullYear();
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', ...(mismoAnyo ? {} : { year: 'numeric' }) });
+}
 
-const TIPO_ICONO_COLOR: Record<TipoNoticia, string> = {
-  oficial: '#185FA5',
-  legislativa: '#3C3489',
-  oplora: '#B45309',
-};
+function ModalNoticia({ noticia, onClose }: { noticia: Noticia; onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+  const t = TIPO[noticia.tipo] ?? TIPO.oficial;
 
-function formatearFecha(fecha?: string | null): string {
-  if (!fecha) return '';
-  const d = new Date(fecha);
-  return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getFullYear()).slice(-2)}`;
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 560, maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <t.Icon size={17} color={t.color} />
+          </div>
+          <div style={{ flex: 1, fontSize: 12, color: TEXT_MUTED, fontWeight: 600 }}>{t.label} · {fecha(noticia.fechaPublicacion ?? noticia.creadoEn)}</div>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <X size={16} color={TEXT_SECONDARY} />
+          </button>
+        </div>
+        <div style={{ fontSize: 17, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.35, marginBottom: 12 }}>{noticia.titulo}</div>
+        <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{noticia.contenido}</div>
+        {noticia.urlOrigen && (
+          <a href={noticia.urlOrigen} target="_blank" rel="noopener noreferrer" style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 12, background: '#0f172a', color: 'white', borderRadius: 12, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+            Ver la fuente original <ExternalLink size={15} />
+          </a>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function NoticiasPage() {
@@ -106,129 +89,104 @@ export default function NoticiasPage() {
   const [noticiaAbierta, setNoticiaAbierta] = useState<Noticia | null>(null);
   const queryClient = useQueryClient();
 
-  // ⭐ Al entrar en Noticias se dan por vistas: el Inicio deja de destacar la última
-  // y el contador del círculo "Noticias" vuelve a cero.
+  // Al entrar en Noticias se dan por vistas (Inicio deja de destacar la última y el contador vuelve a cero)
   useEffect(() => {
     api.post('/noticias/marcar-vistas')
       .then(() => queryClient.invalidateQueries({ queryKey: ['noticias-novedades'] }))
       .catch(() => { /* no es crítico */ });
   }, [queryClient]);
 
-  // Misma lógica que usaba WidgetNoticias / ConvocatoriaService.getNoticiasByOposicion:
-  // se elige la convocatoria en estado 'activa', y si no hay ninguna, la más reciente.
-  const { data: convocatorias = [] } = useQuery<Convocatoria[]>({
+  const { data: convocatorias = [], isPending: cargandoConv } = useQuery<Convocatoria[]>({
     queryKey: ['convocatorias-oposicion', oposicionId],
     queryFn: async () => (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data,
     enabled: !!oposicionId,
   });
-
   const convocatoriaRelevante = convocatorias.find((c) => c.estado === 'activa') ?? convocatorias[0];
 
-  const { data: noticias = [], isLoading } = useQuery<Noticia[]>({
+  const { data: noticias = [], isPending: cargandoNoticias } = useQuery<Noticia[]>({
     queryKey: ['noticias-feed', oposicionId, convocatoriaRelevante?.id],
-    queryFn: async () => {
-      const res = await api.get('/noticias/feed', {
-        params: { convocatoriaId: convocatoriaRelevante?.id, oposicionId },
-      });
-      return res.data;
-    },
-    enabled: !!oposicionId && convocatorias.length > 0,
+    queryFn: async () => (await api.get('/noticias/feed', { params: { convocatoriaId: convocatoriaRelevante?.id, oposicionId } })).data,
+    // ⭐ Antes, sin convocatorias no se pedía nada y se quedaba vacío aunque hubiera noticias de OPLORA
+    enabled: !!oposicionId && !cargandoConv,
   });
 
+  const cargando = cargandoConv || cargandoNoticias;
   const lista = filtro === 'todas' ? noticias : noticias.filter((n) => n.tipo === filtro);
+  const cuenta = (k: TipoNoticia | 'todas') => (k === 'todas' ? noticias.length : noticias.filter((n) => n.tipo === k).length);
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem' }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-        <button
-          onClick={() => router.back()}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: TEXT_SECONDARY, fontSize: 13, marginBottom: 16 }}
-        >
-          <ArrowLeft size={15} />
-          Atrás
-        </button>
-
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
-            Noticias
-          </div>
-          <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>
-            Todo lo que necesitas saber
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
+          <button onClick={() => router.push('/app/dashboard')} aria-label="Volver a Inicio" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <ArrowLeft size={18} color={TEXT_PRIMARY} />
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Noticias</div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>Lo último de tu oposición</div>
           </div>
         </div>
 
-        {/* Chips de filtro */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 18, overflowX: 'auto' }}>
-          {FILTROS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setFiltro(key)}
-              style={{
-                padding: '7px 14px', borderRadius: 20, border: filtro === key ? 'none' : '1px solid #E5E7EB',
-                background: filtro === key ? TEXT_PRIMARY : 'white',
-                color: filtro === key ? 'white' : TEXT_SECONDARY,
-                fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-              }}
-            >
-              {label}
-            </button>
-          ))}
+        {/* Filtro */}
+        <div style={{ display: 'flex', background: 'white', borderRadius: 999, padding: 4, gap: 2, boxShadow: SOMBRA, overflowX: 'auto' }}>
+          {FILTROS.map(({ key, label }) => {
+            const activo = filtro === key;
+            const n = cuenta(key);
+            return (
+              <button
+                key={key}
+                onClick={() => setFiltro(key)}
+                style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: 'none', background: activo ? '#0f172a' : 'transparent', color: activo ? 'white' : TEXT_SECONDARY, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                {label}{n > 0 && key !== 'todas' ? ` · ${n}` : ''}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Lista */}
-        {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', fontSize: 13, color: TEXT_MUTED }}>Cargando...</div>
+        {cargando ? (
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, fontSize: 13, color: TEXT_MUTED }}>Cargando noticias…</div>
         ) : lista.length === 0 ? (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 14, padding: '3rem 1.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>📰</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 4 }}>Sin noticias por ahora</div>
-            <div style={{ fontSize: 13, color: TEXT_MUTED }}>Te avisaremos en cuanto haya novedades</div>
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: '24px 18px', textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: '#E6F1FB', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+              <Newspaper size={24} color="#185FA5" />
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4 }}>{filtro === 'todas' ? 'Sin noticias por ahora' : 'No hay noticias de este tipo'}</div>
+            <div style={{ fontSize: 13, color: TEXT_MUTED }}>Te avisaremos en cuanto haya novedades.</div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {lista.map((n) => {
-              const Icon = TIPO_ICONO[n.tipo];
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            {lista.map((n, i) => {
+              const t = TIPO[n.tipo] ?? TIPO.oficial;
               const tieneContenido = !!n.contenido && n.contenido.trim().length > 0;
               const esClicable = tieneContenido || !!n.urlOrigen;
-              const alClicar = () => {
+              const abrir = () => {
                 if (tieneContenido) setNoticiaAbierta(n);
                 else if (n.urlOrigen) window.open(n.urlOrigen, '_blank');
               };
               return (
                 <div
                   key={n.id}
-                  onClick={esClicable ? alClicar : undefined}
-                  style={{
-                    background: 'white', border: n.destacada ? '1px solid #FDE68A' : '1px solid #F1F5F9', borderRadius: 14,
-                    padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
-                    cursor: esClicable ? 'pointer' : 'default', minHeight: 70, boxSizing: 'border-box',
-                    transition: 'border-color 0.15s',
-                  }}
-                  onMouseEnter={(e) => { if (esClicable) e.currentTarget.style.borderColor = '#D1D5DB'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = n.destacada ? '#FDE68A' : '#F1F5F9'; }}
+                  onClick={esClicable ? abrir : undefined}
+                  style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '13px 14px', borderBottom: i < lista.length - 1 ? '1px solid #EEF0F3' : 'none', cursor: esClicable ? 'pointer' : 'default', background: n.destacada ? '#FFFBEB' : 'transparent' }}
                 >
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                    background: TIPO_ICONO_BG[n.tipo], display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Icon size={16} color={TIPO_ICONO_COLOR[n.tipo]} />
+                  <div style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <t.Icon size={17} color={t.color} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 700, flexShrink: 0 }}>
-                        {formatearFecha(n.fechaPublicacion ?? n.creadoEn)}
-                      </span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
-                        {n.titulo}
-                      </span>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>
+                      {t.label} · {fecha(n.fechaPublicacion ?? n.creadoEn)}
+                      {n.destacada && <span style={{ marginLeft: 6, color: '#B45309' }}>· Destacada</span>}
                     </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.35, marginTop: 2 }}>{n.titulo}</div>
                     {n.resumen && (
-                      <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 4, lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 4, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {n.resumen}
                       </div>
                     )}
                   </div>
+                  {esClicable && (tieneContenido ? <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0, marginTop: 10 }} /> : <ExternalLink size={15} color="#C4C9D2" style={{ flexShrink: 0, marginTop: 10 }} />)}
                 </div>
               );
             })}

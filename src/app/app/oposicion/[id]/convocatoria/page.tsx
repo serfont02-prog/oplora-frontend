@@ -4,13 +4,23 @@ import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, Timer, ChevronRight, CalendarClock, X } from 'lucide-react';
 import { useState } from 'react';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
 
 const TEXT_PRIMARY = '#111827';
 const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const TEXT_MUTED = '#6B7280';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const COLOR_SIMULACRO = '#6B5F3E';
+const COLOR_SIMULACRO_BG = '#EDE9DD';
+
+/** Días que faltan hasta una fecha (null si ya pasó o no hay) */
+function diasHasta(f?: string | null): number | null {
+  if (!f) return null;
+  const d = Math.ceil((new Date(f).getTime() - Date.now()) / 86400000);
+  return d >= 0 ? d : null;
+}
 
 const LABEL_TURNO: Record<string, string> = {
   libre: 'Libre',
@@ -64,39 +74,70 @@ const { data: temasModal = [] } = useQuery({
   enabled: !!convocatoria?.id && modalTemas,
 });
 
-if (isLoading) return null;
+const volver = () => router.push(convocatoriaIdParam ? `/app/oposicion/${oposicionId}/historial` : '/app/dashboard');
+
+if (isLoading) {
+  return <div style={{ minHeight: '100vh', background: BG_APP, display: 'grid', placeItems: 'center', fontSize: 13, color: TEXT_MUTED }}>Cargando convocatoria…</div>;
+}
 
 if (!convocatoria) {
   return (
-    <div style={{ minHeight: '100vh', background: BG_APP, padding: '2rem 1.25rem', textAlign: 'center' }}>
-      <div style={{ fontSize: 13, color: TEXT_MUTED }}>No hay convocatoria disponible</div>
+    <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem' }}>
+      <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: '1.5rem', maxWidth: 380, width: '100%', textAlign: 'center' }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>No hay convocatoria disponible</div>
+        <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 16 }}>Todavía no se ha publicado ninguna convocatoria de esta oposición.</div>
+        <button onClick={volver} style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Volver</button>
+      </div>
     </div>
   );
 }
+
+const diasExamen = diasHasta(convocatoria.fechaExamen);
+const inscripcionAbierta = !!convocatoria.plazoInscripcionFin
+  && Date.now() <= new Date(convocatoria.plazoInscripcionFin).getTime() + 86400000
+  && (!convocatoria.plazoInscripcionInicio || Date.now() >= new Date(convocatoria.plazoInscripcionInicio).getTime());
+const esLaMia = convocatoria.id === convocatoriaActivaId;
 
     
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 90 }}>
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem' }}>
 
-        <button onClick={() => router.back()} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: TEXT_SECONDARY, fontSize: 13, marginBottom: 16 }}>
-          <ArrowLeft size={15} />
-          Atrás
-        </button>
-
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
-            Convocatoria
-          </div>
-          <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>
-            {convocatoria.anyo}
-            {convocatoria.estado === 'activa' && (
-              <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#DCFCE7', color: '#15803D' }}>
-                Activa
-              </span>
-            )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0', marginBottom: 16 }}>
+          <button onClick={volver} aria-label="Volver" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <ArrowLeft size={18} color={TEXT_PRIMARY} />
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Convocatoria</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>{convocatoria.anyo}</span>
+              {esLaMia && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#1F7CFF', color: 'white' }}>La tuya</span>}
+              {convocatoria.estado === 'activa' && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#DCFCE7', color: '#15803D' }}>Activa</span>}
+              {convocatoria.estado === 'cerrada' && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#F1F5F9', color: TEXT_SECONDARY }}>Cerrada</span>}
+            </div>
           </div>
         </div>
+
+        {/* Lo importante de un vistazo */}
+        {(diasExamen !== null || inscripcionAbierta) && (
+          <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+            {diasExamen !== null && (
+              <div style={{ flex: 1, background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <CalendarClock size={20} color="#1F7CFF" style={{ flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1 }}>{diasExamen === 0 ? 'Hoy' : `${diasExamen} ${diasExamen === 1 ? 'día' : 'días'}`}</div>
+                  <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{diasExamen === 0 ? 'es el examen' : 'para el examen'}</div>
+                </div>
+              </div>
+            )}
+            {inscripcionAbierta && (
+              <div style={{ flex: 1, background: '#F0FDF4', borderRadius: 18, boxShadow: SOMBRA, padding: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#15803D' }}>Inscripción abierta</div>
+                <div style={{ fontSize: 11, color: '#166534', marginTop: 2 }}>Hasta el {formatearFecha(convocatoria.plazoInscripcionFin)}</div>
+              </div>
+            )}
+          </div>
+        )}
 
         {modalTemas && (
         <div
@@ -107,10 +148,14 @@ if (!convocatoria) {
             onClick={(e) => e.stopPropagation()}
             style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.5rem', width: '100%', maxWidth: 560, maxHeight: '75vh', overflowY: 'auto' }}
             >
-            <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 14 }}>Temas de la convocatoria</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {temasModal.map((t: any) => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'white', borderRadius: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Temas de la convocatoria{temasModal.length ? ` · ${temasModal.length}` : ''}</div>
+              <button onClick={() => setModalTemas(false)} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={16} color={TEXT_SECONDARY} /></button>
+            </div>
+            <div style={{ background: 'white', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden' }}>
+                {temasModal.length === 0 && <div style={{ padding: 14, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
+                {temasModal.map((t: any, i: number) => (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderBottom: i < temasModal.length - 1 ? '1px solid #EEF0F3' : 'none' }}>
                     <div style={{ width: 30, height: 30, borderRadius: 8, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12, color: '#1F7CFF', flexShrink: 0 }}>
                     {t.numero}
                     </div>
@@ -123,9 +168,9 @@ if (!convocatoria) {
         )}
 
         {/* Datos generales */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {convocatoria.plazas && <Fila label="Plazas" valor={convocatoria.plazas} />}
+            {!!convocatoria.plazas && <Fila label="Plazas" valor={convocatoria.plazas} />}
             {convocatoria.turno && <Fila label="Turno" valor={LABEL_TURNO[convocatoria.turno] ?? convocatoria.turno} />}
             {convocatoria.fechaConvocatoria && <Fila label="Fecha de convocatoria" valor={formatearFecha(convocatoria.fechaConvocatoria)} />}
             {convocatoria.fechaExamen && <Fila label="Fecha de examen" valor={formatearFecha(convocatoria.fechaExamen)} />}
@@ -142,7 +187,7 @@ if (!convocatoria) {
 
         {/* Desglose de plazas */}
         {convocatoria.plazasDesglose && Object.values(convocatoria.plazasDesglose).some((v: any) => v) && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Desglose de plazas</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {convocatoria.plazasDesglose.libres && <Fila label="Libres" valor={convocatoria.plazasDesglose.libres} />}
@@ -155,7 +200,7 @@ if (!convocatoria) {
 
             {/* Ejercicios */}
         {convocatoria.ejercicios?.length > 0 && (
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Ejercicios</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {convocatoria.ejercicios.map((ej: any, i: number) => {
@@ -167,12 +212,15 @@ if (!convocatoria) {
                     <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
                         Ejercicio {ej.numero} — {ej.tipo}
                     </div>
+                    {/* ⭐ Antes iba a /app/entrenamiento?modo=simulacro, que no hacía nada. Ahora genera el simulacro de ese ejercicio. */}
+                    {esLaMia && (!ej.tipo || ej.tipo === 'test' || ej.tipo === 'mixto') && (
                     <button
-                        onClick={() => router.push(`/app/entrenamiento?modo=simulacro&ejercicio=${ej.numero}`)}
-                        style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', background: '#F3E8FF', border: 'none', borderRadius: 999, padding: '3px 10px', cursor: 'pointer', flexShrink: 0 }}
+                        onClick={() => router.push(`/app/entrenamiento/simulacro-oplora/${ej.numero}`)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: COLOR_SIMULACRO, background: COLOR_SIMULACRO_BG, border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', flexShrink: 0 }}
                     >
-                        🎯 Simulacro
+                        <Timer size={12} /> Simulacro
                     </button>
+                    )}
                     </div>
                     <div style={{ fontSize: 11, color: TEXT_MUTED }}>
                     {ej.numPreguntas ? `${ej.numPreguntas} preguntas` : ''}
@@ -191,18 +239,18 @@ if (!convocatoria) {
                             {ex.totalPreguntas > 0 && <span style={{ color: TEXT_MUTED }}> · {ex.totalPreguntas} preg.</span>}
                             </div>
                             <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
-                            <a
+                            {ex.urlArchivo && <a
                                 href={ex.urlArchivo}
                                 target="_blank"
                                 rel="noreferrer"
-                                style={{ fontSize: 10, fontWeight: 600, color: '#374151', background: 'white', border: '1px solid #E5E7EB', borderRadius: 7, padding: '4px 8px', textDecoration: 'none' }}
+                                style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: '#374151', background: 'white', border: '1px solid #E5E7EB', borderRadius: 8, padding: '4px 8px', textDecoration: 'none' }}
                             >
-                                📄 PDF
-                            </a>
+                                <FileText size={12} /> PDF
+                            </a>}
                             {ex.totalPreguntas > 0 && (
                                 <button
                                 onClick={() => router.push(`/app/entrenamiento/simulacro/${ex.id}`)}
-                                style={{ fontSize: 10, fontWeight: 700, color: 'white', background: '#7C3AED', border: 'none', borderRadius: 7, padding: '4px 8px', cursor: 'pointer' }}
+                                style={{ fontSize: 11, fontWeight: 700, color: 'white', background: COLOR_SIMULACRO, border: 'none', borderRadius: 8, padding: '4px 8px', cursor: 'pointer' }}
                                 >
                                 Hacer examen
                                 </button>
@@ -231,14 +279,14 @@ if (!convocatoria) {
 
         {/* Bloques del temario */}
         {convocatoria.bloquesTemario?.length > 0 && (
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Bloques del temario</div>
             <button
                 onClick={() => setModalTemas(true)}
                 style={{ fontSize: 12, color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                 >
-                Ver temas →
+                Ver temas
             </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -254,7 +302,7 @@ if (!convocatoria) {
 
         {/* Requisitos */}
         {convocatoria.requisitos && (
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 8 }}>Requisitos</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.7 }}>
             {convocatoria.requisitos.split('\n').filter((l: string) => l.trim()).map((linea: string, i: number) => (
@@ -266,7 +314,7 @@ if (!convocatoria) {
 
             {/* Fases adicionales */}
             {convocatoria.fasesAdicionales?.length > 0 && (
-            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Fases del proceso</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {convocatoria.fasesAdicionales.map((f: any, i: number) => (
@@ -289,7 +337,7 @@ if (!convocatoria) {
 
         {/* Bolsa de empleo */}
         {convocatoria.generaBolsaEmpleo && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>Bolsa de empleo</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.6 }}>{convocatoria.bolsaEmpleoDescripcion}</div>
           </div>
@@ -297,7 +345,7 @@ if (!convocatoria) {
 
         {/* Formación posterior */}
         {convocatoria.formacionPosterior && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>Formación posterior</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.6 }}>{convocatoria.formacionPosterior}</div>
           </div>
@@ -305,7 +353,7 @@ if (!convocatoria) {
 
         {/* Notas adicionales */}
         {convocatoria.descripcionAdicional && (
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>Notas adicionales</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.7 }}>
             {convocatoria.descripcionAdicional.split('\n').filter((l: string) => l.trim()).map((linea: string, i: number) => (
@@ -321,7 +369,7 @@ if (!convocatoria) {
             href={convocatoria.urlOficial}
             target="_blank"
             rel="noreferrer"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16, textDecoration: 'none', marginBottom: 12 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, textDecoration: 'none', marginBottom: 12 }}
           >
             <span style={{ fontSize: 13, fontWeight: 600, color: '#1F7CFF' }}>Ver documentación oficial</span>
             <ExternalLink size={16} color="#1F7CFF" />
@@ -329,13 +377,13 @@ if (!convocatoria) {
         )}
 
         {convocatoria.documentos?.length > 0 && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16 }}>
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Documentos ({convocatoria.documentos.length})</div>
             <button
               onClick={() => router.push(`/app/oposicion/${oposicionId}/noticias`)}
               style={{ fontSize: 12, color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             >
-              Ver en Noticias →
+              Ver en Noticias
             </button>
           </div>
         )}
