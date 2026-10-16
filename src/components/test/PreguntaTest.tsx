@@ -5,7 +5,7 @@
 // para salir y color verde de "Test".
 
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, XCircle, X, Clock, Lightbulb } from 'lucide-react';
+import { CheckCircle2, XCircle, X, Lightbulb } from 'lucide-react';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
 const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
@@ -89,8 +89,8 @@ export default function PreguntaTest({
 
   const pctTiempo = tiempoTotal && tiempoRestante !== null ? (tiempoRestante / tiempoTotal) * 100 : null;
   const colorTiempo = tiempoRestante !== null
-    ? tiempoRestante > 10 ? COLOR_TEST : tiempoRestante > 5 ? '#D97706' : '#DC2626'
-    : COLOR_TEST;
+    ? tiempoRestante > 10 ? '#1F7CFF' : tiempoRestante > 5 ? '#D97706' : '#DC2626'
+    : '#1F7CFF';
 
   // Penalización por dejar en blanco: solo si la convocatoria no permite blancos "gratis"
   const restaBlanco = convocatoria?.permiteBlancos === false && convocatoria?.fraccionPenalizacionBlanco
@@ -133,21 +133,16 @@ export default function PreguntaTest({
                 <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY }}>
                   {titulo} · <span style={{ color: TEXT_SECONDARY, fontWeight: 600 }}>Pregunta {preguntaActual + 1} de {preguntas.length}</span>
                 </span>
-                {tiempoTotal && tiempoRestante !== null && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 800, color: colorTiempo }}>
-                    <Clock size={13} /> {tiempoRestante}s
-                  </span>
-                )}
               </div>
               <div style={{ height: 6, background: 'rgba(255,255,255,0.85)', borderRadius: 999, overflow: 'hidden' }}>
                 <div style={{ width: `${((preguntaActual + 1) / preguntas.length) * 100}%`, height: '100%', background: COLOR_TEST, borderRadius: 999, transition: 'width .25s' }} />
               </div>
-              {pctTiempo !== null && (
-                <div style={{ height: 3, background: 'rgba(255,255,255,0.85)', borderRadius: 999, overflow: 'hidden', marginTop: 4 }}>
-                  <div style={{ width: `${pctTiempo}%`, height: '100%', background: colorTiempo, borderRadius: 999, transition: 'width 1s linear, background 0.3s' }} />
-                </div>
-              )}
             </div>
+            {/* ⭐ Cuenta atrás en un reloj circular aparte: antes era otra barra justo debajo de la
+                de progreso, con el mismo formato, y se confundían. */}
+            {pctTiempo !== null && tiempoRestante !== null && (
+              <RelojPregunta segundos={tiempoRestante} pct={pctTiempo} color={colorTiempo} />
+            )}
           </div>
         </div>
       </div>
@@ -288,6 +283,32 @@ export default function PreguntaTest({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Reloj circular de la cuenta atrás por pregunta (segundos dentro, aro que se vacía). */
+function RelojPregunta({ segundos, pct, color }: { segundos: number; pct: number; color: string }) {
+  const D = 46;
+  const g = 4;
+  const r = (D - g) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div
+      aria-label={`Quedan ${segundos} segundos`}
+      style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <svg width={D} height={D} style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+        <circle cx={D / 2} cy={D / 2} r={r - 2} fill="none" stroke="#EEF0F3" strokeWidth={g} />
+        <circle
+          cx={D / 2} cy={D / 2} r={r - 2} fill="none" stroke={color} strokeWidth={g} strokeLinecap="round"
+          strokeDasharray={c} strokeDashoffset={c - (pct / 100) * c}
+          style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
+        />
+      </svg>
+      <span style={{ position: 'relative', fontSize: 14, fontWeight: 800, color, lineHeight: 1 }}>
+        {segundos}<span style={{ fontSize: 9, fontWeight: 700 }}>s</span>
+      </span>
     </div>
   );
 }

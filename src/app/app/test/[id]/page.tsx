@@ -388,7 +388,7 @@ export default function TestPage({ params }: TestPageProps) {
         </div>
       )}
       {guardando ? (
-        <CargandoTest total={preguntas.length} />
+        <CargandoTest total={preguntas.length} texto="Corrigiendo test…" subtexto="Calculando tu resultado" />
       ) : (
         <PreguntaTest
           preguntas={preguntas}
