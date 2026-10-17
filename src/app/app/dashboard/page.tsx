@@ -644,13 +644,15 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
   const atrasados = repasos.filter((r: any) => r.atrasado).length;
 
   return (
-    <div style={{ background: BG_WIDGET, borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+    // ⭐ Es una tarea del día: borde azul, fondo azul muy suave e icono sólido para que no se
+    // confunda con "Continúa donde lo dejaste", que va justo debajo.
+    <div style={{ background: '#F4F8FF', borderRadius: 18, boxShadow: '0 6px 18px rgba(31, 124, 255, 0.14)', border: '1.5px solid #1F7CFF', overflow: 'hidden', marginBottom: 6 }}>
       <div
         onClick={uno ? () => ir(repasos[0]) : undefined}
-        style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '12px 14px', cursor: uno ? 'pointer' : 'default' }}
+        style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 14px', cursor: uno ? 'pointer' : 'default' }}
       >
-        <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: '#EAF2FE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <CalendarCheck size={17} color="#1F7CFF" />
+        <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: '#1F7CFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CalendarCheck size={20} color="white" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#1F7CFF' }}>
@@ -665,7 +667,11 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginTop: 2 }}>Tienes temas programados para repasar</div>
           )}
         </div>
-        {uno && <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />}
+        {uno && (
+          <span style={{ flexShrink: 0, background: '#1F7CFF', color: 'white', fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '7px 12px' }}>
+            Repasar
+          </span>
+        )}
       </div>
 
       {!uno && (
@@ -674,7 +680,7 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
             <button
               key={r.temaId}
               onClick={() => ir(r)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid #EEF0F3', cursor: 'pointer', textAlign: 'left' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid #DCE8FB', cursor: 'pointer', textAlign: 'left' }}
             >
               <span style={{ width: 34, textAlign: 'center', fontSize: 12, fontWeight: 800, color: TEXT_SECONDARY, flexShrink: 0 }}>T{r.numero}</span>
               <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.titulo}</span>
@@ -685,7 +691,7 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
           {repasos.length > 2 && (
             <button
               onClick={() => setAbierto((v) => !v)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '9px', background: 'none', border: 'none', borderTop: '1px solid #EEF0F3', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#1F7CFF' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '9px', background: 'none', border: 'none', borderTop: '1px solid #DCE8FB', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#1F7CFF' }}
             >
               {abierto ? 'Ver menos' : `Ver los ${repasos.length}`}
               <ChevronDown size={14} style={{ transform: abierto ? 'rotate(180deg)' : 'none' }} />
