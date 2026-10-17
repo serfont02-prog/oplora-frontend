@@ -17,6 +17,7 @@ export type InformeExamen = {
   noVigentes: number;
   conError: number;
   conAvisos: number;
+  reutilizadas?: number;
   temario: { convocatoriaId: string; anyo: number } | null;
   filas: {
     n: number;
@@ -26,6 +27,7 @@ export type InformeExamen = {
     estado: string;
     avisos: string[];
     error: string | null;
+    reutilizada?: boolean;
   }[];
 };
 
@@ -277,6 +279,11 @@ export default function ImportarPreguntasExamen({ modo, convocatoriaId, examenId
                     ? 'Todo correcto.'
                     : `${informe.conError} con error · ${informe.conAvisos} con avisos (se importan igualmente, sin la clasificación que falla)`}
                 </span>
+                {(informe.reutilizadas ?? 0) > 0 && (
+                  <span style={{ fontSize: 12, color: '#15803d', marginLeft: 8, flex: 1 }}>
+                    · {informe.reutilizadas} ya estaban en el banco y se vuelven a vincular (no se duplican)
+                  </span>
+                )}
                 <button onClick={() => setVerTodas((v) => !v)} style={{ ...estiloBotonSecundario, fontSize: 11 }}>{verTodas ? 'Ver solo problemas' : `Ver las ${informe.total}`}</button>
               </div>
               {filasVisibles.length > 0 && (
@@ -294,6 +301,7 @@ export default function ImportarPreguntasExamen({ modo, convocatoriaId, examenId
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 3 }}>
                             {!f.error && <Chip texto={f.etiqueta} color={f.clasificacion === 'ninguna' ? '#6b7280' : f.clasificacion === 'ley' ? '#1d4ed8' : '#7c3aed'} bg={f.clasificacion === 'ninguna' ? '#f3f4f6' : f.clasificacion === 'ley' ? '#eff6ff' : '#f5f3ff'} />}
                             {!f.error && f.estado !== 'vigente' && <Chip texto={est.label} color={est.color} bg={est.bg} />}
+                            {!f.error && f.reutilizada && <Chip texto="Ya en el banco · se reutiliza" color="#15803d" bg="#f0fdf4" />}
                           </div>
                           {f.error && <div style={{ color: '#dc2626', marginTop: 3 }}>{f.error}</div>}
                           {f.avisos.map((a, i) => <div key={i} style={{ color: '#b45309', marginTop: 3 }}>{a}</div>)}

@@ -118,6 +118,21 @@ const [formEditarConv, setFormEditarConv] = useState({
     },
   });
 
+  // ⭐ Exámenes oficiales de todas las convocatorias, para indicar en cada una si tiene examen metido.
+  const { data: examenesOposicion = [] } = useQuery({
+    queryKey: ['examenes-oposicion-admin', id],
+    queryFn: async () => (await api.get(`/temas/examenes/oposicion/${id}`)).data as any[],
+  });
+  const examenesPorConvocatoria = (examenesOposicion as any[]).reduce((m: Record<string, { examenes: number; preguntas: number }>, ex: any) => {
+    const cid = ex.convocatoria?.id;
+    if (!cid) return m;
+    const acc = m[cid] ?? { examenes: 0, preguntas: 0 };
+    acc.examenes += 1;
+    acc.preguntas += ex.totalPreguntas ?? 0;
+    m[cid] = acc;
+    return m;
+  }, {});
+
  useEffect(() => {
   if (oposicion) {
     setFormEditarOpo({
@@ -571,6 +586,27 @@ const crearConv = useMutation({
                     {c.numeroPresentados && <span>🙋 {c.numeroPresentados} presentados</span>}
                     {c.fechaExamen && <span>📅 Examen: {new Date(c.fechaExamen).toLocaleDateString('es-ES')}</span>}
                     <span>📎 {c.documentos?.length ?? 0} documentos</span>
+                    {(() => {
+                      const ex = examenesPorConvocatoria[c.id];
+                      const conPreguntas = ex && ex.preguntas > 0;
+                      return (
+                        <button
+                          onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/examenes`)}
+                          title="Ir a los exámenes de esta convocatoria"
+                          style={{
+                            border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 500, borderRadius: '20px', padding: '1px 8px',
+                            background: conPreguntas ? '#f0fdf4' : ex ? '#fffbeb' : '#f3f4f6',
+                            color: conPreguntas ? '#15803d' : ex ? '#92400e' : '#6b7280',
+                          }}
+                        >
+                          {conPreguntas
+                            ? `✓ Examen: ${ex.examenes > 1 ? `${ex.examenes} exámenes · ` : ''}${ex.preguntas} preguntas`
+                            : ex
+                              ? 'Examen sin preguntas'
+                              : 'Sin examen'}
+                        </button>
+                      );
+                    })()}
                   </div>
 
                   {c.urlOficial && (
