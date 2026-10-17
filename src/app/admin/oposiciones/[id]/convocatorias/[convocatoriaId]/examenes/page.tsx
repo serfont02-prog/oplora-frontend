@@ -26,6 +26,7 @@
     const [modalAbierto, setModalAbierto] = useState(false);
     const [subiendo, setSubiendo] = useState(false);
     const [archivo, setArchivo] = useState<File | null>(null);
+    const [errorSubida, setErrorSubida] = useState<string | null>(null);
     const [form, setForm] = useState({
       nombre: '',
       parte: '', // se autocompleta cuando sepamos los ejercicios
@@ -69,6 +70,7 @@ const mesDerivado = fechaExamen ? MESES[fechaExamen.getMonth()] : '';
     const subirExamen = async () => {
       if (!archivo) return;
       setSubiendo(true);
+      setErrorSubida(null);
       try {
         const parteFinal = soloUnEjercicio ? ejercicios[0].numero : Number(form.parte);
 
@@ -87,8 +89,10 @@ const mesDerivado = fechaExamen ? MESES[fechaExamen.getMonth()] : '';
         setModalAbierto(false);
         setArchivo(null);
         setForm({ nombre: '', parte: '' });
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error subiendo examen:', e);
+        const msg = e?.response?.data?.message;
+        setErrorSubida(Array.isArray(msg) ? msg.join(' · ') : msg || 'No se pudo subir el examen. Inténtalo de nuevo.');
       } finally {
         setSubiendo(false);
       }
@@ -265,6 +269,12 @@ const mesDerivado = fechaExamen ? MESES[fechaExamen.getMonth()] : '';
                 </div>
               </div>
 
+              {errorSubida && (
+                <div style={{ marginTop: '12px', fontSize: '12px', color: '#b91c1c', background: '#fef2f2', borderRadius: '8px', padding: '8px 10px' }}>
+                  {errorSubida}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
                 <button
                   onClick={subirExamen}
@@ -274,7 +284,7 @@ const mesDerivado = fechaExamen ? MESES[fechaExamen.getMonth()] : '';
                   {subiendo ? 'Subiendo...' : 'Subir examen'}
                 </button>
                 <button
-                  onClick={() => { setModalAbierto(false); setArchivo(null); }}
+                  onClick={() => { setModalAbierto(false); setArchivo(null); setErrorSubida(null); }}
                   style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '9px', fontSize: '13px', cursor: 'pointer' }}
                 >
                   Cancelar

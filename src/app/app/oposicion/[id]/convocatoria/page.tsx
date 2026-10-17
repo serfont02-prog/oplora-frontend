@@ -4,7 +4,7 @@ import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { ArrowLeft, ExternalLink, FileText, Timer, ChevronRight, CalendarClock, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, ChevronRight, CalendarClock, X } from 'lucide-react';
 import { useState } from 'react';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
 
@@ -212,15 +212,6 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
                     <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
                         Ejercicio {ej.numero} — {ej.tipo}
                     </div>
-                    {/* ⭐ Antes iba a /app/entrenamiento?modo=simulacro, que no hacía nada. Ahora genera el simulacro de ese ejercicio. */}
-                    {esLaMia && (!ej.tipo || ej.tipo === 'test' || ej.tipo === 'mixto') && (
-                    <button
-                        onClick={() => router.push(`/app/entrenamiento/simulacro-oplora/${ej.numero}`)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: COLOR_SIMULACRO, background: COLOR_SIMULACRO_BG, border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', flexShrink: 0 }}
-                    >
-                        <Timer size={12} /> Simulacro
-                    </button>
-                    )}
                     </div>
                     <div style={{ fontSize: 11, color: TEXT_MUTED }}>
                     {ej.numPreguntas ? `${ej.numPreguntas} preguntas` : ''}
