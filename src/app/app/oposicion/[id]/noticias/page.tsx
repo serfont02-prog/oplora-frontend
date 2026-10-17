@@ -111,7 +111,10 @@ export default function NoticiasPage() {
   });
 
   const cargando = cargandoConv || cargandoNoticias;
-  const lista = filtro === 'todas' ? noticias : noticias.filter((n) => n.tipo === filtro);
+  // ⭐ Las más recientes primero (antes había que bajar hasta el final para ver las últimas)
+  const fechaDe = (n: Noticia) => new Date(n.fechaPublicacion ?? n.creadoEn).getTime() || 0;
+  const ordenadas = [...noticias].sort((a, b) => fechaDe(b) - fechaDe(a));
+  const lista = filtro === 'todas' ? ordenadas : ordenadas.filter((n) => n.tipo === filtro);
   const cuenta = (k: TipoNoticia | 'todas') => (k === 'todas' ? noticias.length : noticias.filter((n) => n.tipo === k).length);
 
   return (

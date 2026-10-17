@@ -378,8 +378,8 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-    <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
-      <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
+    <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
+      <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
 
       {/* Hero — CTA principal */}
       <div style={{ background: '#0f172a', borderRadius: 18, padding: '20px 18px', color: 'white', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -461,8 +461,8 @@ export function DashboardActivo({ usuario, oposicionId }: { usuario: any; oposic
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
       <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
+      <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
       <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
       <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
       <TarjetaLiga soloSiRelevante />
@@ -493,8 +493,8 @@ export function DashboardInactivo({ usuario, oposicionId }: { usuario: any; opos
         </button>
       </div>
 
-      <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
       <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
+      <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
       <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
       <WidgetAccionesRapidas usuario={usuario} oposicionId={oposicionId} router={router} />
       <TarjetaLiga soloSiRelevante />
@@ -558,11 +558,10 @@ const ICONO_TIPO_NOTICIA: Record<Noticia['tipo'], any> = {
 };
 
 function formatearFecha(fecha: string | Date): string {
+  // "17 oct" (con año solo si no es el actual), igual que en la pantalla de Noticias
   const d = new Date(fecha);
-  const dia = String(d.getDate()).padStart(2, '0');
-  const mes = String(d.getMonth() + 1).padStart(2, '0');
-  const anyo = String(d.getFullYear()).slice(-2);
-  return `${dia}-${mes}-${anyo}`;
+  const mismoAnyo = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', ...(mismoAnyo ? {} : { year: 'numeric' }) });
 }
 
 /** Novedades del usuario: nº de noticias sin ver y la última (si tiene menos de 2 días). */
@@ -602,7 +601,7 @@ function WidgetNoticias({ oposicionId, convocatoriaId, router }: any) {
         <Icono size={16} color={tipoIconoColor[n.tipo] ?? TEXT_MUTED} />
       </div>
       <div onClick={abrir} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#1F7CFF' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: tipoIconoColor[n.tipo] ?? TEXT_SECONDARY }}>
           Nueva · {formatearFecha(n.fechaPublicacion ?? n.creadoEn)}
         </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.35, marginTop: 2 }}>{n.titulo}</div>
@@ -644,9 +643,9 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
   const atrasados = repasos.filter((r: any) => r.atrasado).length;
 
   return (
-    // ⭐ Es una tarea del día: borde azul, fondo azul muy suave e icono sólido para que no se
-    // confunda con "Continúa donde lo dejaste", que va justo debajo.
-    <div style={{ background: '#F4F8FF', borderRadius: 18, boxShadow: '0 6px 18px rgba(31, 124, 255, 0.14)', border: '1.5px solid #1F7CFF', overflow: 'hidden', marginBottom: 6 }}>
+    // ⭐ Tarea del día: tarjeta blanca como las demás; la distinguen el icono azul sólido y el
+    // botón "Repasar" (con fondo y borde azules sobre el fondo azul de Inicio había demasiado azul).
+    <div style={{ background: BG_WIDGET, borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
       <div
         onClick={uno ? () => ir(repasos[0]) : undefined}
         style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 14px', cursor: uno ? 'pointer' : 'default' }}
@@ -680,7 +679,7 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
             <button
               key={r.temaId}
               onClick={() => ir(r)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid #DCE8FB', cursor: 'pointer', textAlign: 'left' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid #EEF0F3', cursor: 'pointer', textAlign: 'left' }}
             >
               <span style={{ width: 34, textAlign: 'center', fontSize: 12, fontWeight: 800, color: TEXT_SECONDARY, flexShrink: 0 }}>T{r.numero}</span>
               <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.titulo}</span>
@@ -691,7 +690,7 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
           {repasos.length > 2 && (
             <button
               onClick={() => setAbierto((v) => !v)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '9px', background: 'none', border: 'none', borderTop: '1px solid #DCE8FB', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#1F7CFF' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '9px', background: 'none', border: 'none', borderTop: '1px solid #EEF0F3', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#1F7CFF' }}
             >
               {abierto ? 'Ver menos' : `Ver los ${repasos.length}`}
               <ChevronDown size={14} style={{ transform: abierto ? 'rotate(180deg)' : 'none' }} />
