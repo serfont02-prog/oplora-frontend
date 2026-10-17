@@ -527,7 +527,7 @@ const crearConv = useMutation({
                       <button
                           onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/examenes`)}
                           style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }}
-                          title="Exámenes (subir examen y sus preguntas)"
+                          title="Exámenes oficiales (crear examen con sus preguntas)"
                         >
                           <ClipboardCheck size={12} />
                         </button>

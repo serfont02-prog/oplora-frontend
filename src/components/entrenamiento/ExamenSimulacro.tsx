@@ -5,7 +5,7 @@
 // sombra, botones redondos, iconos lucide y el color de "Simulacro" (Timer, marrón).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, X, Clock, Timer, CheckCircle2, XCircle, MinusCircle, ChevronDown, Lightbulb, Grid3x3, Send } from 'lucide-react';
+import { ArrowLeft, X, Clock, Timer, CheckCircle2, XCircle, MinusCircle, ChevronDown, Lightbulb, Grid3x3, Send, Ban, AlertTriangle, BookX } from 'lucide-react';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
 export const COLOR_SIMULACRO = '#6B5F3E';
@@ -13,7 +13,8 @@ export const COLOR_SIMULACRO_BG = '#EDE9DD';
 const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-export type PreguntaSimulacro = { id: string; enunciado: string; opciones: string[] };
+// `anulada`: pregunta anulada por el tribunal (se muestra pero no puntúa). Solo en el simulacro oficial.
+export type PreguntaSimulacro = { id: string; enunciado: string; opciones: string[]; anulada?: boolean };
 export type RespuestaSimulacro = { preguntaId: string; opcionElegida: number | null };
 
 type Props = {
@@ -264,7 +265,14 @@ export default function ExamenSimulacro({
           {p && (
             <>
               <div style={{ background: 'white', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED, marginBottom: 6 }}>Pregunta {indice + 1}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED }}>Pregunta {indice + 1}</span>
+                  {p.anulada && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#475569', background: '#F1F5F9', borderRadius: 999, padding: '2px 8px' }}>
+                      <Ban size={11} /> Anulada por el tribunal · no puntúa
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.55, overflowWrap: 'break-word' }}>{p.enunciado}</div>
               </div>
 
@@ -349,7 +357,9 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
   const filas = preguntas.map((p: PreguntaSimulacro, i: number) => {
     const d = revisionPorId.get(p.id);
     const sel = typeof respuestas[p.id] === 'number' ? respuestas[p.id] : null;
-    const estado: 'correcta' | 'incorrecta' | 'blanco' = d ? (d.enBlanco ? 'blanco' : d.correcta ? 'correcta' : 'incorrecta') : (sel === null ? 'blanco' : 'incorrecta');
+    const estado: 'correcta' | 'incorrecta' | 'blanco' | 'anulada' =
+      d?.estadoPregunta === 'anulada' || (!d && p.anulada) ? 'anulada'
+        : d ? (d.enBlanco ? 'blanco' : d.correcta ? 'correcta' : 'incorrecta') : (sel === null ? 'blanco' : 'incorrecta');
     return { p, i, d, sel, estado };
   });
   const visibles = filas.filter((f: any) => filtro === 'todas' || (filtro === 'falladas' ? f.estado === 'incorrecta' : f.estado === 'blanco'));
@@ -387,6 +397,15 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
           </div>
         </div>
 
+        {Number(resultado?.anuladas ?? 0) > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: TEXT_SECONDARY, background: 'white', borderRadius: 14, boxShadow: SOMBRA, padding: '10px 12px' }}>
+            <Ban size={15} color="#64748B" style={{ flexShrink: 0 }} />
+            <span>
+              {resultado.anuladas === 1 ? '1 pregunta fue anulada' : `${resultado.anuladas} preguntas fueron anuladas`} por el tribunal y no cuenta{resultado.anuladas === 1 ? '' : 'n'} en la nota, como en el examen real.
+            </span>
+          </div>
+        )}
+
         <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '14px 4px' }}>
           {[
             { v: resultado?.correctas ?? 0, l: 'Aciertos', c: '#16A34A' },
@@ -416,8 +435,9 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
             <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
               {visibles.length === 0 && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>No hay preguntas en este filtro.</div>}
               {visibles.map((f: any, k: number) => {
-                const Icono = f.estado === 'correcta' ? CheckCircle2 : f.estado === 'incorrecta' ? XCircle : MinusCircle;
+                const Icono = f.estado === 'correcta' ? CheckCircle2 : f.estado === 'incorrecta' ? XCircle : f.estado === 'anulada' ? Ban : MinusCircle;
                 const colorEst = f.estado === 'correcta' ? '#16A34A' : f.estado === 'incorrecta' ? '#DC2626' : '#94A3B8';
+                const estadoPregunta = f.d?.estadoPregunta;
                 const abiertaEsta = abierta === f.p.id;
                 const idxCorrecta = f.d?.indiceCorrecta;
                 return (
@@ -452,6 +472,20 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
                           );
                         })}
                         {f.estado === 'blanco' && <div style={{ fontSize: 12, color: TEXT_MUTED }}>La dejaste en blanco.</div>}
+                        {estadoPregunta === 'anulada' && (
+                          <AvisoPregunta Icono={Ban} color="#475569" fondo="#F1F5F9" texto="El tribunal anuló esta pregunta: no cuenta en la nota." />
+                        )}
+                        {estadoPregunta === 'fuera_temario' && (
+                          <AvisoPregunta Icono={BookX} color="#92400E" fondo="#FFFBEB" texto="Esta pregunta ya no entra en el temario actual." />
+                        )}
+                        {estadoPregunta === 'desactualizada' && (
+                          <AvisoPregunta
+                            Icono={AlertTriangle}
+                            color="#B45309"
+                            fondo="#FFF7ED"
+                            texto={`La normativa ha cambiado desde este examen: la respuesta marcada es la oficial de entonces.${f.d?.notaActualizacion ? ` ${f.d.notaActualizacion}` : ''}`}
+                          />
+                        )}
                         {f.d?.explicacion && (
                           <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.5, background: '#F8F9FA', borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
                             <Lightbulb size={14} color={COLOR_SIMULACRO} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -478,6 +512,15 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function AvisoPregunta({ Icono, color, fondo, texto }: { Icono: any; color: string; fondo: string; texto: string }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, fontSize: 12, color, lineHeight: 1.5, background: fondo, borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
+      <Icono size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+      <span>{texto}</span>
     </div>
   );
 }
