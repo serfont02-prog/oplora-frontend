@@ -1,128 +1,73 @@
 'use client';
 
-import { useState } from 'react';
+// ⭐ Onboarding · paso 3: nivel de partida en la oposición elegida.
+// Antes el nivel elegido no se guardaba en ningún sitio; ahora se guarda en la oposición
+// activa (nivelExperiencia) y el mini reto del paso siguiente se adapta a él.
+
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { Sprout, BookOpen, Award } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { ChevronRight, Check } from 'lucide-react';
-
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
-
-function Logo() {
-  return (
-    <Image src="/prueba.svg" alt="Oplora" width={200} height={68} priority style={{ marginBottom: 2 }} />
-  );
-}
+import { PantallaOnboarding, OpcionOnboarding, ListaOpciones } from '@/components/onboarding/PantallaOnboarding';
+import { AvisoAuth } from '@/components/auth/PantallaAuth';
 
 const OPCIONES = [
-  { nivel: 1, icon: '🌱', title: 'Principiante', subtitle: 'Estoy empezando o llevo poco tiempo' },
-  { nivel: 2, icon: '📚', title: 'Intermedio', subtitle: 'Ya conozco algo del temario' },
-  { nivel: 3, icon: '🔥', title: 'Avanzado', subtitle: 'Ya domino buena parte del temario' },
+  { nivel: 1, icono: Sprout, color: '#4D7C0F', fondo: '#ECFCCB', titulo: 'Empiezo de cero', subtitulo: 'Estoy empezando o llevo muy poco tiempo' },
+  { nivel: 2, icono: BookOpen, color: '#1F7CFF', fondo: '#EAF0FF', titulo: 'Ya llevo un tiempo', subtitulo: 'Conozco parte del temario' },
+  { nivel: 3, icono: Award, color: '#C2410C', fondo: '#FCEEE8', titulo: 'Voy avanzado', subtitulo: 'Domino buena parte del temario' },
 ];
 
 export default function ExperienciaPage() {
   const router = useRouter();
   const { usuario, actualizarUsuario } = useAuth();
   const [seleccionado, setSeleccionado] = useState<number | null>(null);
+  const [error, setError] = useState('');
+  const oposicionId = usuario?.oposicionActiva?.id;
 
-const handleSelect = async (nivel: number) => {
-  setSeleccionado(nivel);
-  setTimeout(() => {
-    router.push('/app/onboarding/minireto');
-  }, 350);
-};;
+  // Sin oposición elegida no hay dónde guardar el nivel: de vuelta al paso 2.
+  useEffect(() => {
+    if (usuario && !oposicionId) router.replace('/app/onboarding/oposicion');
+  }, [usuario, oposicionId, router]);
+
+  const elegir = async (nivel: number) => {
+    if (!oposicionId) return;
+    setSeleccionado(nivel);
+    setError('');
+    try {
+      const res = await api.patch('/usuarios/nivel-experiencia', { nivelExperiencia: nivel, oposicionId });
+      actualizarUsuario(res.data);
+      setTimeout(() => router.push('/app/onboarding/minireto'), 300);
+    } catch {
+      setSeleccionado(null);
+      setError('No se ha podido guardar. Comprueba la conexión e inténtalo de nuevo.');
+    }
+  };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', padding: '1.5rem' }}>
-      <main style={{ background: 'white', borderRadius: 20, padding: '2.25rem 2rem', width: '100%', maxWidth: 420 }}>
-
-        <header style={{ marginBottom: 22, textAlign: 'center' }}>
-          <Logo />
-
-          <div style={{ marginTop: 12, marginBottom: 14 }}>
-            <div style={{ height: 4, width: '100%', background: '#E5E7EB', borderRadius: 999, overflow: 'hidden' }}>
-              <div style={{ width: '60%', height: '100%', background: '#1F7CFF', borderRadius: 999 }} />
-            </div>
-            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 6 }}>
-              Paso 3 de 5
-            </div>
-          </div>
-
-          <h1 style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, margin: '0 0 4px' }}>
-            ¿Desde dónde empiezas?
-          </h1>
-          <p style={{ fontSize: 13, color: TEXT_SECONDARY, margin: 0 }}>
-            Así nos adaptaremos a tu nivel
-          </p>
-        </header>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {OPCIONES.map(({ nivel, icon, title, subtitle }) => {
-            const activo = seleccionado === nivel;
-            const atenuado = seleccionado !== null && !activo;
-
-            return (
-              <button
-                key={nivel}
-                onClick={() => !seleccionado && handleSelect(nivel)}
-                disabled={seleccionado !== null}
-                style={{
-                  width: '100%', textAlign: 'left', padding: '13px 14px',
-                  borderRadius: 12,
-                  border: activo ? '2px solid #1F7CFF' : '1px solid #F1F5F9',
-                  background: activo ? '#EAF0FF' : 'white',
-                  cursor: seleccionado ? 'default' : 'pointer',
-                  display: 'flex', gap: 12, alignItems: 'center',
-                  transform: activo ? 'scale(1.015)' : 'scale(1)',
-                  opacity: atenuado ? 0.4 : 1,
-                  transition: 'transform 0.2s ease, opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease',
-                }}
-                onMouseEnter={(e) => { if (!seleccionado) e.currentTarget.style.background = '#FAFAFA'; }}
-                onMouseLeave={(e) => { if (!seleccionado) e.currentTarget.style.background = 'white'; }}
-              >
-                <div style={{
-                  width: 38, height: 38, borderRadius: 10,
-                  background: activo ? '#DCE9FF' : '#F4F5F7',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0,
-                  transition: 'background 0.2s ease',
-                }}>
-                  {icon}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: activo ? '#1F7CFF' : TEXT_PRIMARY }}>{title}</div>
-                  <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>{subtitle}</div>
-                </div>
-
-                <div style={{ width: 15, height: 15, flexShrink: 0, position: 'relative' }}>
-                  <ChevronRight
-                    size={15}
-                    color="#D1D5DB"
-                    style={{
-                      position: 'absolute', inset: 0,
-                      opacity: activo ? 0 : 1,
-                      transform: activo ? 'scale(0.5)' : 'scale(1)',
-                      transition: 'opacity 0.15s ease, transform 0.15s ease',
-                    }}
-                  />
-                  <Check
-                    size={15}
-                    color="#1F7CFF"
-                    style={{
-                      position: 'absolute', inset: 0,
-                      opacity: activo ? 1 : 0,
-                      transform: activo ? 'scale(1)' : 'scale(0.5)',
-                      transition: 'opacity 0.15s ease 0.05s, transform 0.15s ease 0.05s',
-                    }}
-                  />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </main>
-    </div>
+    <PantallaOnboarding
+      paso={3}
+      atras="/app/onboarding/oposicion"
+      titulo="¿Desde dónde empiezas?"
+      subtitulo={usuario?.oposicionActiva?.nombre ? <>En <strong>{usuario.oposicionActiva.nombre}</strong>. Así nos adaptamos a tu nivel.</> : 'Así nos adaptamos a tu nivel.'}
+    >
+      <ListaOpciones>
+        {OPCIONES.map((o) => (
+          <OpcionOnboarding
+            key={o.nivel}
+            icono={o.icono}
+            color={o.color}
+            fondo={o.fondo}
+            titulo={o.titulo}
+            subtitulo={o.subtitulo}
+            seleccionada={seleccionado === o.nivel}
+            atenuada={seleccionado !== null && seleccionado !== o.nivel}
+            disabled={seleccionado !== null || !oposicionId}
+            onClick={() => elegir(o.nivel)}
+          />
+        ))}
+      </ListaOpciones>
+      {error && <div style={{ marginTop: 12 }}><AvisoAuth>{error}</AvisoAuth></div>}
+    </PantallaOnboarding>
   );
 }

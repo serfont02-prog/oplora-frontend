@@ -17,6 +17,7 @@ import {
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import TarjetaLiga from '@/components/liga/TarjetaLiga';
+import LogoOplora from '@/components/marca/LogoOplora';
 import { getOploUrl } from '@/lib/oplo';
 
 
@@ -167,7 +168,9 @@ const countNoLeidas = countData?.count ?? 0;
     >
       {/* Fila superior simple */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+          <LogoOplora alto={20} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY }}>
             Hola, {usuario.nombre?.split(' ')[0] || 'Opositor'}
           </span>
@@ -180,6 +183,7 @@ const countNoLeidas = countData?.count ?? 0;
               <Flame size={13} /> {usuario.rachaActual} {usuario.rachaActual === 1 ? 'día' : 'días'}
             </span>
           )}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>

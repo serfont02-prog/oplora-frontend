@@ -30,7 +30,7 @@
           try {
             sessionStorage.setItem(
               'oplora-aviso-login',
-              typeof m === 'string' && /desactivada/i.test(m) ? m : 'Tu sesión ha caducado. Vuelve a entrar.',
+              typeof m === 'string' && /desactivada|contraseña ha cambiado/i.test(m) ? m : 'Tu sesión ha caducado. Vuelve a entrar.',
             );
           } catch { /* sin sessionStorage */ }
           if (!window.location.pathname.startsWith('/app/login')) {

@@ -1,18 +1,21 @@
 'use client';
 
-import { useEffect, useMemo, useState, Suspense } from 'react';
+// ⭐ Onboarding · paso 2: elegir oposición (Estado / Comunidad / Empresa pública → área → subgrupo).
+// Se reutiliza desde Ajustes > Cambiar de oposición (?modo=cambiar) sin el resto del embudo.
+// - Solo se ofrecen oposiciones publicadas (antes salían también las que estaban en preparación).
+// - Cada opción muestra cuántas oposiciones hay y las que no tienen ninguna salen desactivadas,
+//   para no llevar al usuario a un "no hay oposiciones" al final.
+// - El "mapa" de comunidades era una nube de puntos difícil de tocar en móvil: ahora es una lista.
+
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Landmark, MapPinned, Building2, FileText, Shield, Scale, HeartPulse, GraduationCap, X, ArrowLeft, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { ChevronRight, X, Check, ArrowLeft } from 'lucide-react';
-
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
-
-/* ================= TYPES ================= */
+import { PantallaOnboarding, OpcionOnboarding, ListaOpciones } from '@/components/onboarding/PantallaOnboarding';
+import { AvisoAuth, BotonAuth, SOMBRA } from '@/components/auth/PantallaAuth';
+import { COLOR_MARCA } from '@/components/marca/LogoOplora';
+import { BG_DASHBOARD, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
 type Tipo = 'estado' | 'ccaa' | 'empresa_publica';
 type Categoria = 'administracion_general' | 'seguridad' | 'justicia' | 'sanidad';
@@ -27,417 +30,285 @@ type Oposicion = {
   subgrupo?: Subgrupo;
 };
 
-/* ================= CONFIG ================= */
-
-const TIPOS = [
-  { id: 'estado', label: 'Estado', icon: '🏛️' },
-  { id: 'ccaa', label: 'Comunidad Autónoma', icon: '🌎' },
-  { id: 'empresa_publica', label: 'Empresa pública', icon: '🏢' },
+const TIPOS: { id: Tipo; label: string; sub: string; icono: any; color: string; fondo: string }[] = [
+  { id: 'estado', label: 'Estado', sub: 'Policía Nacional, Guardia Civil, AGE…', icono: Landmark, color: '#1F7CFF', fondo: '#EAF0FF' },
+  { id: 'ccaa', label: 'Comunidad Autónoma', sub: 'Oposiciones de tu comunidad', icono: MapPinned, color: '#4D7C0F', fondo: '#ECFCCB' },
+  { id: 'empresa_publica', label: 'Empresa pública', sub: 'Correos, Renfe, Adif…', icono: Building2, color: '#6B5F3E', fondo: '#EDE9DD' },
 ];
 
-const CATEGORIAS = [
-  { id: 'administracion_general', label: 'Administración', icon: '📄' },
-  { id: 'seguridad', label: 'Seguridad', icon: '👮' },
-  { id: 'justicia', label: 'Justicia', icon: '⚖️' },
-  { id: 'sanidad', label: 'Sanidad', icon: '🏥' },
+const CATEGORIAS: { id: Categoria; label: string; icono: any; color: string; fondo: string }[] = [
+  { id: 'administracion_general', label: 'Administración', icono: FileText, color: '#4F46E5', fondo: '#E0E7FF' },
+  { id: 'seguridad', label: 'Seguridad', icono: Shield, color: '#1F7CFF', fondo: '#EAF0FF' },
+  { id: 'justicia', label: 'Justicia', icono: Scale, color: '#6B5F3E', fondo: '#EDE9DD' },
+  { id: 'sanidad', label: 'Sanidad', icono: HeartPulse, color: '#BE123C', fondo: '#FFE4E6' },
 ];
+const ICONO_CATEGORIA: Record<string, any> = Object.fromEntries(CATEGORIAS.map((c) => [c.id, c.icono]));
 
 const SUBGRUPOS_POR_CATEGORIA: Record<string, Subgrupo[]> = {
   administracion_general: ['A1', 'A2', 'C1', 'C2'],
   sanidad: ['A1', 'A2', 'B', 'C1', 'C2'],
-  justicia: ['A1', 'A2', 'C1', 'C2'], // sin B
+  justicia: ['A1', 'A2', 'C1', 'C2'],
 };
 
-const iconosCategoria: Record<string, string> = {
-  administracion_general: '📄',
-  seguridad: '👮',
-  justicia: '⚖️',
-  sanidad: '🏥',
-};
-
-const LABEL_TIPO: Record<string, string> = {
-  estado: 'Estado',
-  ccaa: 'Comunidad Autónoma',
-  empresa_publica: 'Empresa pública',
-};
-const LABEL_CATEGORIA: Record<string, string> = {
-  administracion_general: 'Administración',
-  seguridad: 'Seguridad',
-  justicia: 'Justicia',
-  sanidad: 'Sanidad',
-};
-
-const normalizar = (v: any) => (v || '').toLowerCase().trim();
-
-/* ================= MAPA CCAA ================= */
-
-const REGIONES = [
-  { name: 'Galicia', x: 80, y: 140 },
-  { name: 'Asturias', x: 160, y: 100 },
-  { name: 'Cantabria', x: 220, y: 100 },
-  { name: 'País Vasco', x: 280, y: 100 },
-  { name: 'Navarra', x: 320, y: 130 },
-  { name: 'La Rioja', x: 260, y: 150 },
-  { name: 'Aragón', x: 360, y: 190 },
-  { name: 'Cataluña', x: 440, y: 170 },
-  { name: 'Castilla y León', x: 220, y: 200 },
-  { name: 'Madrid', x: 260, y: 260 },
-  { name: 'Castilla-La Mancha', x: 300, y: 320 },
-  { name: 'Extremadura', x: 180, y: 320 },
-  { name: 'Comunidad Valenciana', x: 400, y: 280 },
-  { name: 'Murcia', x: 380, y: 350 },
-  { name: 'Andalucía', x: 260, y: 420 },
-  { name: 'Baleares', x: 480, y: 260 },
-  { name: 'Canarias', x: 100, y: 470 },
+const COMUNIDADES = [
+  'Andalucía', 'Aragón', 'Asturias', 'Baleares', 'Canarias', 'Cantabria', 'Castilla y León', 'Castilla-La Mancha',
+  'Cataluña', 'Comunidad Valenciana', 'Extremadura', 'Galicia', 'La Rioja', 'Madrid', 'Murcia', 'Navarra', 'País Vasco',
 ];
 
-const MapaCCAA = ({ selected, onSelect }: { selected: string | null; onSelect: (c: string) => void }) => (
-  <div style={{ width: '100%', textAlign: 'center', marginTop: 6 }}>
-    <svg viewBox="0 0 500 500" style={{ width: '100%' }}>
-      {REGIONES.map((r) => (
-        <motion.g key={r.name} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}>
-          <circle
-            cx={r.x} cy={r.y}
-            r={selected === r.name ? 18 : 12}
-            fill={selected === r.name ? '#1F7CFF' : '#BFDBFE'}
-            onClick={() => onSelect(r.name)}
-            style={{ cursor: 'pointer' }}
-          />
-          <text x={r.x} y={r.y - 20} textAnchor="middle" fontSize="10" fill={TEXT_PRIMARY}>
-            {r.name}
-          </text>
-        </motion.g>
-      ))}
-    </svg>
-  </div>
-);
+const LABEL_TIPO: Record<string, string> = { estado: 'Estado', ccaa: 'Comunidad Autónoma', empresa_publica: 'Empresa pública' };
+const LABEL_CATEGORIA: Record<string, string> = Object.fromEntries(CATEGORIAS.map((c) => [c.id, c.label]));
 
-/* ================= PAGE ================= */
+const normalizar = (v: any) => String(v ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const textoNum = (n: number) => (n === 0 ? 'Sin oposiciones todavía' : n === 1 ? '1 oposición' : `${n} oposiciones`);
 
 function OnboardingOposicionPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  // ⭐ Reutilizamos esta misma pantalla de selección desde Ajustes > Cambiar de oposición
-  // (modo=cambiar), pero sin arrastrar al usuario por el resto del embudo de onboarding.
-  const modoCambio = searchParams.get('modo') === 'cambiar';
+  const modoCambio = useSearchParams().get('modo') === 'cambiar';
   const { actualizarUsuario } = useAuth();
 
-  const [oposiciones, setOposiciones] = useState<Oposicion[]>([]);
+  const [oposiciones, setOposiciones] = useState<Oposicion[] | null>(null);
+  const [errorCarga, setErrorCarga] = useState(false);
   const [tipo, setTipo] = useState<Tipo | null>(null);
   const [categoria, setCategoria] = useState<Categoria | null>(null);
   const [subgrupo, setSubgrupo] = useState<Subgrupo | null>(null);
   const [ccaa, setCcaa] = useState<string | null>(null);
-  const [seleccionando, setSeleccionando] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    api.get('/oposiciones').then((res) => setOposiciones(res.data));
-  }, []);
+  const cargar = () => {
+    setErrorCarga(false);
+    setOposiciones(null);
+    api.get('/oposiciones', { params: { publicadas: 1 } })
+      .then((res) => setOposiciones(res.data ?? []))
+      .catch(() => setErrorCarga(true));
+  };
+  useEffect(cargar, []);
 
-  const clearTipo = () => { setTipo(null); setCategoria(null); setCcaa(null); setSubgrupo(null); };
-  const clearCategoria = () => { setCategoria(null); setCcaa(null); setSubgrupo(null); };
-  const clearCcaa = () => { setCcaa(null); setSubgrupo(null); };
-  const clearSubgrupo = () => { setSubgrupo(null); };
-
+  const lista = oposiciones ?? [];
   const necesitaSubgrupo = categoria ? !!SUBGRUPOS_POR_CATEGORIA[categoria] : false;
+
+  // Oposiciones que encajan con lo elegido hasta ahora (sin aplicar el paso que se está mostrando)
+  const base = useMemo(() => {
+    let l = lista;
+    if (tipo) l = l.filter((o) => o.tipoAdministracion === tipo);
+    if (tipo === 'ccaa' && ccaa) l = l.filter((o) => normalizar(o.administracion) === normalizar(ccaa));
+    if (categoria) l = l.filter((o) => o.categoria === categoria);
+    if (subgrupo) l = l.filter((o) => o.subgrupo === subgrupo);
+    return l;
+  }, [lista, tipo, ccaa, categoria, subgrupo]);
 
   const filtroCompleto = !tipo
     ? false
     : tipo === 'empresa_publica'
       ? true
       : tipo === 'estado'
-        ? (!!categoria && (!necesitaSubgrupo || !!subgrupo))
-        : (!!ccaa && !!categoria && (!necesitaSubgrupo || !!subgrupo)); // ccaa
+        ? !!categoria && (!necesitaSubgrupo || !!subgrupo)
+        : !!ccaa && !!categoria && (!necesitaSubgrupo || !!subgrupo);
 
-  const filtradas = useMemo(() => {
-    if (!filtroCompleto) return [];
-    let lista = oposiciones;
-    if (tipo) lista = lista.filter((op) => op.tipoAdministracion === tipo);
-    if (categoria) lista = lista.filter((op) => op.categoria === categoria);
-    if (tipo === 'ccaa' && ccaa) lista = lista.filter((op) => normalizar(op.administracion) === normalizar(ccaa));
-    if (subgrupo) lista = lista.filter((op) => op.subgrupo === subgrupo);
-    return lista;
-  }, [oposiciones, tipo, categoria, subgrupo, ccaa, filtroCompleto]);
+  const pasoActual: 'tipo' | 'ccaa' | 'categoria' | 'subgrupo' | 'resultado' =
+    !tipo ? 'tipo'
+      : tipo === 'ccaa' && !ccaa ? 'ccaa'
+        : tipo !== 'empresa_publica' && !categoria ? 'categoria'
+          : necesitaSubgrupo && !subgrupo ? 'subgrupo'
+            : 'resultado';
 
-const seleccionar = async (idOpo: string) => {
-  await api.post(`/usuarios/activar-oposicion/${idOpo}`);
-  const me = await api.get('/usuarios/me');
-  actualizarUsuario(me.data);
-  // Al cambiar de oposición desde Ajustes, el usuario ya pasó por onboarding — no tiene
-  // sentido volver a preguntarle experiencia/objetivo/compromiso, así que va directo al dashboard.
-  router.push(modoCambio ? '/app/dashboard' : '/app/onboarding/experiencia');
-};
-
-  const seleccionarConAnimacion = (id: string, callback: () => void) => {
-    setSeleccionando(id);
-    setTimeout(() => {
-      callback();
-      setSeleccionando(null);
-    }, 250);
+  const tituloPaso: Record<typeof pasoActual, string> = {
+    tipo: '¿Dónde quieres trabajar?',
+    ccaa: '¿En qué comunidad?',
+    categoria: '¿En qué área?',
+    subgrupo: '¿Qué subgrupo?',
+    resultado: base.length === 1 ? 'Hemos encontrado tu oposición' : base.length > 1 ? 'Elige tu oposición' : 'Sin resultados',
   };
 
-  const tituloPaso = !tipo ? '¿Dónde quieres trabajar?'
-    : (tipo === 'estado' && !categoria) ? '¿Qué área?'
-    : (tipo === 'ccaa' && !ccaa) ? '¿En qué comunidad?'
-    : (tipo === 'ccaa' && ccaa && !categoria) ? '¿Qué área?'
-    : (necesitaSubgrupo && !subgrupo) ? '¿Qué subgrupo?'
-    : null;
+  const seleccionar = async (id: string) => {
+    setGuardando(id);
+    setError('');
+    try {
+      await api.post(`/usuarios/activar-oposicion/${id}`);
+      const me = await api.get('/usuarios/me');
+      actualizarUsuario(me.data);
+      router.push(modoCambio ? '/app/dashboard' : '/app/onboarding/experiencia');
+    } catch (e: any) {
+      const msg = e?.response?.data?.message;
+      setError(Array.isArray(msg) ? msg[0] : msg || 'No se ha podido guardar tu oposición. Inténtalo de nuevo.');
+      setGuardando(null);
+    }
+  };
 
-  /* ================= UI HELPERS ================= */
+  const limpiar = (desde: 'tipo' | 'ccaa' | 'categoria' | 'subgrupo') => {
+    setError('');
+    if (desde === 'tipo') { setTipo(null); setCcaa(null); setCategoria(null); setSubgrupo(null); }
+    if (desde === 'ccaa') { setCcaa(null); setCategoria(null); setSubgrupo(null); }
+    if (desde === 'categoria') { setCategoria(null); setSubgrupo(null); }
+    if (desde === 'subgrupo') setSubgrupo(null);
+  };
 
-  const Card = ({ children, onClick, activo, atenuado }: any) => (
-    <motion.button
-      whileTap={!activo && !atenuado ? { scale: 0.98 } : {}}
-      onClick={onClick}
-      disabled={!!seleccionando}
-      style={{
-        width: '100%', textAlign: 'left', padding: '13px 14px',
-        borderRadius: 12,
-        border: activo ? '2px solid #1F7CFF' : '1px solid #F1F5F9',
-        background: activo ? '#EAF0FF' : 'white',
-        cursor: seleccionando ? 'default' : 'pointer',
-        display: 'flex', alignItems: 'center', gap: 12,
-        transform: activo ? 'scale(1.015)' : 'scale(1)',
-        opacity: atenuado ? 0.4 : 1,
-        transition: 'transform 0.2s ease, opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease',
-      }}
-    >
-      {children}
-    </motion.button>
-  );
+  const contenido = (
+    <>
+      {(tipo || ccaa || categoria || subgrupo) && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+          {tipo && <Chip label={LABEL_TIPO[tipo]} onClick={() => limpiar('tipo')} />}
+          {ccaa && <Chip label={ccaa} onClick={() => limpiar('ccaa')} />}
+          {categoria && <Chip label={LABEL_CATEGORIA[categoria]} onClick={() => limpiar('categoria')} />}
+          {subgrupo && <Chip label={subgrupo} onClick={() => limpiar('subgrupo')} />}
+        </div>
+      )}
 
-  const Chip = ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <motion.button
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      onClick={onClick}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 5,
-        padding: '5px 10px 5px 12px', borderRadius: 999,
-        background: '#EAF0FF', color: '#1F7CFF',
-        fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer',
-      }}
-    >
-      {label}
-      <X size={12} />
-    </motion.button>
-  );
+      {errorCarga ? (
+        <>
+          <AvisoAuth>No se han podido cargar las oposiciones. Comprueba la conexión.</AvisoAuth>
+          <div style={{ marginTop: 12 }}><BotonAuth type="button" onClick={cargar}>Reintentar</BotonAuth></div>
+        </>
+      ) : !oposiciones ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '28px 0', fontSize: 13, color: TEXT_SECONDARY }}>
+          <Loader2 size={18} color={COLOR_MARCA} style={{ animation: 'oplora-girar 0.8s linear infinite' }} /> Cargando oposiciones…
+        </div>
+      ) : (
+        <>
+          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 10 }}>{tituloPaso[pasoActual]}</div>
 
-  const IconoCaja = ({ children, activo }: { children: React.ReactNode; activo?: boolean }) => (
-    <div style={{
-      width: 38, height: 38, borderRadius: 10,
-      background: activo ? '#DCE9FF' : '#F4F5F7',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 17, flexShrink: 0, transition: 'background 0.2s',
-    }}>
-      {children}
-    </div>
-  );
+          {pasoActual === 'tipo' && (
+            <ListaOpciones>
+              {TIPOS.map((t) => {
+                const n = lista.filter((o) => o.tipoAdministracion === t.id).length;
+                return (
+                  <OpcionOnboarding key={t.id} icono={t.icono} color={t.color} fondo={t.fondo} titulo={t.label} subtitulo={n ? t.sub : textoNum(0)} atenuada={!n} disabled={!n} onClick={() => setTipo(t.id)} />
+                );
+              })}
+            </ListaOpciones>
+          )}
 
-  /* ================= RENDER ================= */
+          {pasoActual === 'ccaa' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {COMUNIDADES.map((c) => {
+                const n = base.filter((o) => normalizar(o.administracion) === normalizar(c)).length;
+                return (
+                  <button
+                    key={c}
+                    onClick={() => setCcaa(c)}
+                    disabled={!n}
+                    style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 12, border: '2px solid #EEF0F3', background: 'white', cursor: n ? 'pointer' : 'default', opacity: n ? 1 : 0.45 }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3 }}>{c}</div>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{n ? textoNum(n) : 'Próximamente'}</div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: modoCambio ? '#F4F5F7' : '#0f172a',
-      padding: '1.5rem',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: modoCambio ? 'flex-start' : 'center',
-    }}>
-      <main style={{
-        background: modoCambio ? 'transparent' : 'white',
-        borderRadius: 20,
-        padding: modoCambio ? 0 : '2.25rem 2rem',
-        width: '100%',
-        maxWidth: modoCambio ? 560 : 440,
-        marginTop: modoCambio ? '0.5rem' : 0,
-      }}>
+          {pasoActual === 'categoria' && (
+            <ListaOpciones>
+              {CATEGORIAS.map((c) => {
+                const n = base.filter((o) => o.categoria === c.id).length;
+                return <OpcionOnboarding key={c.id} icono={c.icono} color={c.color} fondo={c.fondo} titulo={c.label} subtitulo={textoNum(n)} atenuada={!n} disabled={!n} onClick={() => setCategoria(c.id)} />;
+              })}
+            </ListaOpciones>
+          )}
 
-        <header style={{ marginBottom: 20, textAlign: modoCambio ? 'left' : 'center', position: 'relative' }}>
-          {modoCambio ? (
-            <button
-              onClick={() => router.back()}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: TEXT_SECONDARY, fontSize: 13, marginBottom: 16, padding: 0 }}
-            >
-              <ArrowLeft size={15} />
-              Atrás
-            </button>
-          ) : (
-            <>
-              <Image src="/prueba.svg" alt="Oplora" width={200} height={68} priority style={{ marginBottom: 2 }} />
+          {pasoActual === 'subgrupo' && categoria && (
+            <ListaOpciones>
+              {(SUBGRUPOS_POR_CATEGORIA[categoria] ?? []).map((s) => {
+                const n = base.filter((o) => o.subgrupo === s).length;
+                return <OpcionOnboarding key={s} etiquetaCaja={s} titulo={`Subgrupo ${s}`} subtitulo={textoNum(n)} atenuada={!n} disabled={!n} onClick={() => setSubgrupo(s)} />;
+              })}
+            </ListaOpciones>
+          )}
 
-              <div style={{ marginTop: 12, marginBottom: 14 }}>
-                <div style={{ height: 4, width: '100%', background: '#E5E7EB', borderRadius: 999, overflow: 'hidden' }}>
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: '40%' }}
-                    transition={{ duration: 0.4 }}
-                    style={{ height: '100%', background: '#1F7CFF', borderRadius: 999 }}
-                  />
+          {pasoActual === 'resultado' && filtroCompleto && base.length === 1 && (
+            <div style={{ animation: 'oplora-aparecer 0.3s ease' }}>
+              <div style={{ background: '#0f172a', borderRadius: 18, padding: '18px 16px', color: 'white', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(31,124,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {(() => { const I = (base[0].categoria && ICONO_CATEGORIA[base[0].categoria]) || GraduationCap; return <I size={22} color="#93C5FD" />; })()}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>{base[0].nombre}</div>
+                  {(base[0].subgrupo || base[0].administracion) && (
+                    <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 3 }}>
+                      {[base[0].administracion, base[0].subgrupo && `Subgrupo ${base[0].subgrupo}`].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 6 }}>Paso 2 de 5</div>
               </div>
+              {error && <div style={{ marginTop: 12 }}><AvisoAuth>{error}</AvisoAuth></div>}
+              <div style={{ marginTop: 12 }}>
+                <BotonAuth type="button" onClick={() => seleccionar(base[0].id)} cargando={guardando === base[0].id} textoCargando="Guardando…">
+                  Esta es mi oposición
+                </BotonAuth>
+              </div>
+            </div>
+          )}
+
+          {pasoActual === 'resultado' && filtroCompleto && base.length > 1 && (
+            <>
+              <ListaOpciones>
+                {base.map((o) => (
+                  <OpcionOnboarding
+                    key={o.id}
+                    icono={(o.categoria && ICONO_CATEGORIA[o.categoria]) || GraduationCap}
+                    titulo={o.nombre}
+                    subtitulo={[o.administracion, o.subgrupo && `Subgrupo ${o.subgrupo}`].filter(Boolean).join(' · ') || undefined}
+                    seleccionada={guardando === o.id}
+                    atenuada={!!guardando && guardando !== o.id}
+                    disabled={!!guardando}
+                    onClick={() => seleccionar(o.id)}
+                  />
+                ))}
+              </ListaOpciones>
+              {error && <div style={{ marginTop: 12 }}><AvisoAuth>{error}</AvisoAuth></div>}
             </>
           )}
 
-          <h1 style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, margin: '0 0 4px' }}>
-            {modoCambio ? 'Cambiar de oposición' : 'Elige tu oposición'}
-          </h1>
-          <p style={{ fontSize: 13, color: TEXT_SECONDARY, margin: 0 }}>
-            {modoCambio ? 'Selecciona tu nueva oposición' : 'Te ayudaremos a encontrar la adecuada'}
-          </p>
-        </header>
+          {pasoActual === 'resultado' && filtroCompleto && base.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 14, lineHeight: 1.5 }}>
+                Todavía no tenemos oposiciones con estos criterios. Prueba con otra combinación o pídenos la tuya desde Soporte.
+              </div>
+              <BotonAuth type="button" variante="secundario" onClick={() => limpiar('tipo')}>Empezar de nuevo</BotonAuth>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
 
-        {(tipo || categoria || ccaa || subgrupo) && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {tipo && <Chip label={LABEL_TIPO[tipo]} onClick={clearTipo} />}
-            {ccaa && <Chip label={ccaa} onClick={clearCcaa} />}
-            {categoria && <Chip label={LABEL_CATEGORIA[categoria]} onClick={clearCategoria} />}
-            {subgrupo && <Chip label={subgrupo} onClick={clearSubgrupo} />}
+  if (modoCambio) {
+    return (
+      <div style={{ minHeight: '100vh', background: BG_DASHBOARD, padding: '1.25rem' }}>
+        <style>{`@keyframes oplora-girar { to { transform: rotate(360deg); } } @keyframes oplora-aparecer { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
+        <div style={{ maxWidth: 560, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+            <button onClick={() => router.back()} aria-label="Volver" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+              <ArrowLeft size={18} color={TEXT_PRIMARY} />
+            </button>
+            <div>
+              <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>Cambiar de oposición</div>
+              <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 1 }}>Tu progreso en la actual se conserva por si vuelves</div>
+            </div>
           </div>
-        )}
-
-        {tituloPaso && (
-          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 10 }}>
-            {tituloPaso}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <AnimatePresence mode="wait">
-
-            {!tipo && (
-              <motion.div key="tipos" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {TIPOS.map((t) => {
-                  const activo = seleccionando === t.id;
-                  const atenuado = seleccionando !== null && !activo;
-                  return (
-                    <Card key={t.id} activo={activo} atenuado={atenuado} onClick={() => seleccionarConAnimacion(t.id, () => setTipo(t.id as Tipo))}>
-                      <IconoCaja activo={activo}>{t.icon}</IconoCaja>
-                      <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: activo ? '#1F7CFF' : TEXT_PRIMARY }}>{t.label}</div>
-                      {activo ? <Check size={15} color="#1F7CFF" /> : <ChevronRight size={15} color="#D1D5DB" />}
-                    </Card>
-                  );
-                })}
-              </motion.div>
-            )}
-
-            {/* CCAA: primero elegir comunidad */}
-            {tipo === 'ccaa' && !ccaa && (
-              <motion.div key="mapa">
-                <MapaCCAA selected={ccaa} onSelect={(c) => seleccionarConAnimacion(c, () => setCcaa(c))} />
-              </motion.div>
-            )}
-
-            {/* Categoría: para Estado directo, o CCAA tras elegir comunidad */}
-            {((tipo === 'estado') || (tipo === 'ccaa' && ccaa)) && !categoria && (
-              <motion.div key="categorias" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {CATEGORIAS.map((c) => {
-                  const activo = seleccionando === c.id;
-                  const atenuado = seleccionando !== null && !activo;
-                  return (
-                    <Card key={c.id} activo={activo} atenuado={atenuado} onClick={() => seleccionarConAnimacion(c.id, () => setCategoria(c.id as Categoria))}>
-                      <IconoCaja activo={activo}>{c.icon}</IconoCaja>
-                      <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: activo ? '#1F7CFF' : TEXT_PRIMARY }}>{c.label}</div>
-                      {activo ? <Check size={15} color="#1F7CFF" /> : <ChevronRight size={15} color="#D1D5DB" />}
-                    </Card>
-                  );
-                })}
-              </motion.div>
-            )}
-
-            {/* Subgrupo: solo si la categoría lo requiere */}
-            {categoria && necesitaSubgrupo && !subgrupo && (
-              <motion.div key="subgrupos" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {(SUBGRUPOS_POR_CATEGORIA[categoria] ?? []).map((s) => {
-                  const activo = seleccionando === s;
-                  const atenuado = seleccionando !== null && !activo;
-                  return (
-                    <Card key={s} activo={activo} atenuado={atenuado} onClick={() => seleccionarConAnimacion(s, () => setSubgrupo(s))}>
-                      <div style={{ width: 38, height: 38, borderRadius: 10, background: activo ? '#DCE9FF' : '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#1F7CFF', flexShrink: 0, transition: 'background 0.2s' }}>{s}</div>
-                      <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: activo ? '#1F7CFF' : TEXT_PRIMARY }}>Subgrupo {s}</div>
-                      {activo ? <Check size={15} color="#1F7CFF" /> : <ChevronRight size={15} color="#D1D5DB" />}
-                    </Card>
-                  );
-                })}
-              </motion.div>
-            )}
-
-            {/* RESULTADO ÚNICO */}
-            {filtroCompleto && !seleccionando && filtradas.length === 1 && (
-              <motion.div key="resultado" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  style={{ fontSize: 13, fontWeight: 600, color: '#16A34A', textAlign: 'center', marginBottom: 12 }}
-                >
-                  ✓ Oposicion encontrada
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: 0.25 }}
-                  style={{ background: '#0f172a', borderRadius: 16, padding: '20px 18px', color: 'white', textAlign: 'center' }}
-                >
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>
-                    {filtradas[0].categoria ? iconosCategoria[filtradas[0].categoria] : '📘'}
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.3, marginBottom: 6 }}>
-                    {filtradas[0].nombre}
-                  </div>
-                  {filtradas[0].subgrupo && (
-                    <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                      {filtradas[0].subgrupo}
-                    </div>
-                  )}
-                </motion.div>
-
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.25, delay: 0.6 }}
-                  onClick={() => seleccionar(filtradas[0].id)}
-                  style={{ width: '100%', marginTop: 12, padding: 13, background: '#1F7CFF', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Esta es mi oposición →
-                </motion.button>
-              </motion.div>
-            )}
-
-            {filtroCompleto && !seleccionando && filtradas.length > 1 && (
-              <motion.div key="lista-multiple" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 2 }}>
-                  Hemos encontrado {filtradas.length} oposiciones
-                </div>
-                {filtradas.map((op) => (
-                  <Card key={op.id} onClick={() => seleccionar(op.id)}>
-                    <IconoCaja>{op.categoria ? iconosCategoria[op.categoria] : '📘'}</IconoCaja>
-                    <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>{op.nombre}</div>
-                    <ChevronRight size={15} color="#D1D5DB" />
-                  </Card>
-                ))}
-              </motion.div>
-            )}
-
-            {filtroCompleto && !seleccionando && filtradas.length === 0 && (
-              <motion.div key="vacio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 14 }}>
-                  No hay oposiciones disponibles con estos criterios
-                </div>
-                <button
-                  onClick={() => { setCategoria(null); setCcaa(null); setSubgrupo(null); }}
-                  style={{ padding: '10px 18px', background: '#111827', color: 'white', borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-                >
-                  Reiniciar filtros
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: 16 }}>{contenido}</div>
         </div>
-      </main>
-    </div>
+      </div>
+    );
+  }
+
+  return (
+    <PantallaOnboarding paso={2} atras="/app/onboarding/objetivo" titulo="Elige tu oposición" subtitulo="Te ayudamos a encontrarla en unos pocos toques.">
+      {contenido}
+    </PantallaOnboarding>
+  );
+}
+
+function Chip({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={`Quitar ${label}`}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px 5px 12px', borderRadius: 999, background: '#EAF0FF', color: COLOR_MARCA, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+    >
+      {label}
+      <X size={12} />
+    </button>
   );
 }
 
