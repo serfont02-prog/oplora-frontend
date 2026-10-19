@@ -166,33 +166,18 @@ const countNoLeidas = countData?.count ?? 0;
         gap: 14,
       }}
     >
-      {/* Fila superior simple */}
+      {/* ⭐ Fila 1: logo a la izquierda, campana y avatar a la derecha */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
-          <LogoOplora alto={20} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY }}>
-            Hola, {usuario.nombre?.split(' ')[0] || 'Opositor'}
-          </span>
-
-          {(usuario.rachaActual ?? 0) > 0 && (
-            <span
-              title="Días seguidos estudiando"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999, background: 'white', color: '#C2410C', fontSize: 12, fontWeight: 700, boxShadow: SOMBRA }}
-            >
-              <Flame size={13} /> {usuario.rachaActual} {usuario.rachaActual === 1 ? 'día' : 'días'}
-            </span>
-          )}
-          </div>
-        </div>
+        <LogoOplora alto={22} />
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button
             onClick={() => router.push('/app/alertas')}
+            aria-label="Alertas"
             style={{
               position: 'relative', width: 38, height: 38, borderRadius: '50%', border: 'none',
               background: 'white', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+              justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: SOMBRA,
             }}
           >
             <BellIcon style={{ width: 19, height: 19, color: COLOR_ALERTAS_AMARILLO }} />
@@ -207,6 +192,7 @@ const countNoLeidas = countData?.count ?? 0;
 
           <button
             onClick={() => router.push('/app/perfil')}
+            aria-label="Mi perfil"
             style={{
               width: 44, height: 44, borderRadius: '50%',
               border: 'none', background: 'transparent',
@@ -218,10 +204,24 @@ const countNoLeidas = countData?.count ?? 0;
         </div>
       </div>
 
-     
+      {/* ⭐ Fila 2: saludo con la racha */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: -2 }}>
+        <span style={{ fontSize: 20, fontWeight: 700, color: TEXT_PRIMARY }}>
+          Hola, {usuario.nombre?.split(' ')[0] || 'Opositor'}
+        </span>
+        {(usuario.rachaActual ?? 0) > 0 && (
+          <span
+            title="Días seguidos estudiando"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999, background: 'white', color: '#C2410C', fontSize: 12, fontWeight: 700, boxShadow: SOMBRA }}
+          >
+            <Flame size={13} /> {usuario.rachaActual} {usuario.rachaActual === 1 ? 'día' : 'días'}
+          </span>
+        )}
+      </div>
+
       {/* Hero oscuro de la oposición */}
       {oposicion && (
-        <div style={{ position: 'relative', marginBottom: '30px' }}>
+        <div style={{ position: 'relative', marginBottom: '50px' }}>
           <div style={{
             background: '#0f172a', borderRadius: '16px', padding: '18px 16px 40px', // ⭐ padding inferior aumentado de 18px a 34px
             color: 'white', display: 'flex', flexDirection: 'column', gap: '10px',
