@@ -1,19 +1,74 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+// ⭐ Duelo de test (pantalla a la que lleva la alerta "X te reta"): mismo diseño que el resto de la app.
+// - Iconos lucide en vez de emojis; tarjetas blancas con sombra; botón de volver redondo.
+// - La intro dice contra quién juegas, el mensaje del retador, de qué va y el tiempo que queda.
+// - El tiempo del resultado sale de lo guardado (antes, al volver a entrar, mostraba un número enorme).
+// - Revancha con aviso de error en pantalla (antes usaba un alert del navegador).
+
+import { useEffect, useRef, useState } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowLeft, Swords, Clock, ListChecks, BookOpen, CheckCircle2, XCircle, Timer, RotateCcw,
+  Ban, Loader2, Hourglass, Crown, Handshake,
+} from 'lucide-react';
 import { api } from '@/lib/api';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
 import { DueloReto } from '@/app/app/retos/page';
-import { useEffect, useState, useRef } from 'react';
 import { PuntosGanadosCard, GamificacionInfo } from '@/components/gamificacion/PuntosGanadosCard';
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_RETOS, COLOR_RETOS_BG } from '@/styles/tokens';
 
 const BG_APP = '#FCEEE8';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+const limpiarOpcion = (t: string) => String(t ?? '').replace(/^[a-fA-F]\)\s*/, '');
+
+function tiempoRestante(fechaFin?: string | null): string {
+  if (!fechaFin) return '';
+  const restante = new Date(fechaFin).getTime() - Date.now();
+  if (restante <= 0) return 'Caducado';
+  const horas = Math.floor(restante / 3_600_000);
+  if (horas < 1) return `Quedan ${Math.max(1, Math.floor(restante / 60_000))} min`;
+  if (horas < 24) return `Quedan ${horas} h`;
+  return `Quedan ${Math.floor(horas / 24)} d`;
+}
+
+function formatoTiempo(seg?: number | null): string {
+  if (seg == null || !Number.isFinite(seg) || seg < 0) return '—';
+  const m = Math.floor(seg / 60);
+  const s = Math.round(seg % 60);
+  return m > 0 ? `${m} min ${s.toString().padStart(2, '0')} s` : `${s} s`;
+}
+
+function Cabecera({ titulo, sub, derecha, onVolver }: { titulo: string; sub?: string; derecha?: React.ReactNode; onVolver: () => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+      <button
+        onClick={onVolver}
+        aria-label="Volver a retos"
+        style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+      >
+        <ArrowLeft size={18} color={TEXT_PRIMARY} />
+      </button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY }}>{titulo}</div>
+        {sub && <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
+      </div>
+      {derecha}
+    </div>
+  );
+}
+
+function Contenedor({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>
+      <style>{`@keyframes oplora-girar { to { transform: rotate(360deg); } } @keyframes oplora-aparecer { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }`}</style>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem' }}>{children}</div>
+    </div>
+  );
+}
 
 export default function RetoDetallePage() {
   const router = useRouter();
@@ -21,12 +76,12 @@ export default function RetoDetallePage() {
   const id = params.id as string;
   const { usuario, cargando } = useAuth();
   const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
-  const directo = searchParams.get('directo') === 'true';
+  const directo = useSearchParams().get('directo') === 'true';
+  const volver = () => router.push('/app/retos');
+
   const [estado, setEstado] = useState<'intro' | 'jugando' | 'resultado'>(directo ? 'jugando' : 'intro');
   const [preguntaActual, setPreguntaActual] = useState(0);
   const [seleccionada, setSeleccionada] = useState<number | null>(null);
-  const [respondida, setRespondida] = useState(false);
   const [respuestas, setRespuestas] = useState<{ seleccionada: number }[]>([]);
   const [tiempoInicio, setTiempoInicio] = useState(0);
   const [resultadoFinal, setResultadoFinal] = useState<{
@@ -34,59 +89,45 @@ export default function RetoDetallePage() {
     respuestas: { seleccionada: number; correcta: boolean }[];
     gamificacion?: GamificacionInfo | null;
   } | null>(null);
+  const [tiempoFinal, setTiempoFinal] = useState<number | null>(null);
+  const yaEnviado = useRef(false);
 
-  
   useEffect(() => {
-    if (directo && estado === 'jugando' && tiempoInicio === 0) {
-      setTiempoInicio(Date.now());
-    }
+    if (directo && estado === 'jugando' && tiempoInicio === 0) setTiempoInicio(Date.now());
   }, [directo, estado, tiempoInicio]);
-  
+
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
 
-  const { data: reto, isLoading } = useQuery({
+  const { data: reto, isLoading, isError, refetch } = useQuery({
     queryKey: ['reto', id],
-    queryFn: async () => {
-      const res = await api.get(`/retos/${id}`);
-      return res.data;
-    },
+    queryFn: async () => (await api.get(`/retos/${id}`)).data,
     enabled: !!usuario,
   });
 
-  const miParticipacion = reto?.participaciones?.find(
-    (p: any) => p.usuario?.id === (usuario as any)?.id
-  );
+  const yoId = (usuario as any)?.id;
+  const miParticipacion = reto?.participaciones?.find((p: any) => p.usuario?.id === yoId);
+  const rivalParticipacion = reto?.participaciones?.find((p: any) => p.usuario?.id !== yoId);
+  const rival = rivalParticipacion?.usuario;
+  const nombreRival = rival?.nick ?? rival?.nombre ?? 'tu rival';
+  const meRetaron = !!reto?.creador && reto.creador.id !== yoId;
 
   useEffect(() => {
-    if (reto && miParticipacion?.completado) {
-      setEstado('resultado');
-    }
-  }, [reto, miParticipacion]);
+    if (reto && miParticipacion?.completado) setEstado('resultado');
+  }, [reto, miParticipacion?.completado]);
 
-  // ⭐ Un reto entre usuarios caducado no se puede jugar (ni entrando por una alerta con ?directo=true).
+  // Un reto caducado no se puede jugar (ni entrando por la alerta con ?directo=true).
   const caducado = !!reto && reto.tipo === 'usuario' && !miParticipacion?.completado
     && (reto.estado === 'expirado' || (!!reto.fechaFin && new Date(reto.fechaFin).getTime() < Date.now()));
   useEffect(() => {
     if (caducado && estado === 'jugando') setEstado('intro');
   }, [caducado, estado]);
 
-  const { data: ranking = [] } = useQuery({
-    queryKey: ['ranking-reto', id],
-    queryFn: async () => {
-      const res = await api.get(`/retos/${id}/ranking`);
-      return res.data;
-    },
-    enabled: estado === 'resultado',
-  });
-
   const completar = useMutation({
-    // ⭐ Recibe la lista final como argumento: antes leía `respuestas` del render anterior
-    // y se enviaba sin la última respuesta, así que el servidor lo rechazaba siempre
-    // ("El número de respuestas no coincide") y el duelo no se podía terminar.
     mutationFn: async (respuestasFinal: { seleccionada: number }[]) => {
       const tiempoTotal = Math.round((Date.now() - tiempoInicio) / 1000);
+      setTiempoFinal(tiempoTotal);
       const res = await api.post(`/retos/${id}/completar`, {
         respuestas: respuestasFinal.map((r) => r.seleccionada),
         tiempoSegundos: tiempoTotal,
@@ -96,282 +137,333 @@ export default function RetoDetallePage() {
     onSuccess: (data) => {
       setResultadoFinal(data);
       queryClient.invalidateQueries({ queryKey: ['mis-retos'] });
-      queryClient.invalidateQueries({ queryKey: ['ranking-reto', id] });
+      queryClient.invalidateQueries({ queryKey: ['retos-pendientes'] });
       queryClient.invalidateQueries({ queryKey: ['reto', id] });
       setEstado('resultado');
     },
   });
 
-  const preguntas = reto?.preguntas ?? [];
+  const revancha = useMutation({
+    mutationFn: async () => {
+      const horas = Math.round((new Date(reto.fechaFin).getTime() - new Date(reto.creadoEn).getTime()) / 3_600_000);
+      await api.post('/retos/usuario', {
+        retadoNickOEmail: rival?.nick ?? rival?.email,
+        oposicionId: reto.oposicion?.id,
+        numPreguntas: reto.preguntas?.length ?? 10,
+        temaId: reto.tema?.id ?? undefined,
+        horasPlazo: horas > 0 ? horas : 48,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mis-retos'] });
+      router.push('/app/retos');
+    },
+  });
+
+  const preguntas: any[] = reto?.preguntas ?? [];
   const pregunta = preguntas[preguntaActual];
-  const yaCompleto = miParticipacion?.completado;
-  // El % y los aciertos mostrados siempre vienen del servidor (nunca de un cálculo local
-  // que pudiera manipularse), ya sea de la respuesta recién recibida o de la participación guardada.
-  const porcentajeMostrado = resultadoFinal?.porcentaje ?? miParticipacion?.porcentaje ?? 0;
+
+  const porcentaje = resultadoFinal?.porcentaje ?? miParticipacion?.porcentaje ?? 0;
   const correctas = resultadoFinal
     ? resultadoFinal.respuestas.filter((r) => r.correcta).length
-    : Math.round((porcentajeMostrado / 100) * preguntas.length);
-  const porcentaje = porcentajeMostrado;
+    : Math.round((porcentaje / 100) * preguntas.length);
+  const segundos = tiempoFinal ?? miParticipacion?.tiempoSegundos ?? null;
 
-    const yaEnviado = useRef(false);
+  const ambosCompletados = !!(miParticipacion?.completado && rivalParticipacion?.completado);
+  const empate = ambosCompletados && miParticipacion.posicion === rivalParticipacion.posicion;
+  const yoGane = ambosCompletados && !empate && miParticipacion.posicion === 1;
 
-    const seleccionarYSiguiente = (idx: number) => {
-      // ⭐ Bloquea el doble toque durante la transición (antes metía dos respuestas).
-      if (seleccionada !== null || yaEnviado.current) return;
-      setSeleccionada(idx);
-      const nuevas = [...respuestas, { seleccionada: idx }];
-      setRespuestas(nuevas);
-
-      if (preguntaActual + 1 >= preguntas.length) {
-        yaEnviado.current = true; // ⭐ bloqueo inmediato
-        completar.mutate(nuevas, {
-          onError: () => {
-            // Permite reintentar el envío desde la última pregunta.
-            yaEnviado.current = false;
-            setRespuestas(respuestas);
-            setSeleccionada(null);
-          },
-        });
-      } else {
-        setTimeout(() => {
-          setPreguntaActual((p) => p + 1);
+  const responder = (idx: number) => {
+    if (seleccionada !== null || yaEnviado.current) return;
+    setSeleccionada(idx);
+    const nuevas = [...respuestas, { seleccionada: idx }];
+    setRespuestas(nuevas);
+    if (preguntaActual + 1 >= preguntas.length) {
+      yaEnviado.current = true;
+      completar.mutate(nuevas, {
+        onError: () => {
+          yaEnviado.current = false;
+          setRespuestas(respuestas);
           setSeleccionada(null);
-        }, 200);
-      }
-    };
-
-  
-
-  const tipoLabel: Record<string, string> = {
-    diario: 'Reto diario ⚡',
-    semanal: 'Reto semanal 🏆',
-    usuario: 'Reto entre usuarios 🎯',
+        },
+      });
+    } else {
+      setTimeout(() => {
+        setPreguntaActual((p) => p + 1);
+        setSeleccionada(null);
+      }, 220);
+    }
   };
 
-  if (cargando || isLoading) return null;
+  const empezar = () => {
+    setEstado('jugando');
+    setTiempoInicio(Date.now());
+  };
 
-  return (
-    <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: '40px' }}>
+  if (cargando || !usuario) return null;
 
-      {/* Header simple */}
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.25rem 1.25rem 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button
-          onClick={() => router.push('/app/retos')}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          <ArrowLeft size={14} />
-          Retos
-        </button>
-        {estado === 'jugando' && (
-          <span style={{ fontSize: '12px', color: TEXT_MUTED, fontWeight: 600 }}>
-            {preguntaActual + 1}/{preguntas.length}
+  if (isLoading) {
+    return (
+      <Contenedor>
+        <Cabecera titulo="Duelo de test" onVolver={volver} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '3rem 0', fontSize: 13, color: TEXT_SECONDARY }}>
+          <Loader2 size={18} color={COLOR_RETOS} style={{ animation: 'oplora-girar 0.8s linear infinite' }} /> Cargando duelo…
+        </div>
+      </Contenedor>
+    );
+  }
+
+  if (isError || !reto) {
+    return (
+      <Contenedor>
+        <Cabecera titulo="Duelo de test" onVolver={volver} />
+        <div style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '2rem 1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>No hemos encontrado este duelo</div>
+          <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 16, lineHeight: 1.5 }}>Puede que lo hayan cancelado o que el enlace no sea correcto.</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => refetch()} style={{ flex: 1, padding: 12, background: '#F1F5F9', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Reintentar</button>
+            <button onClick={volver} style={{ flex: 1, padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Ir a retos</button>
+          </div>
+        </div>
+      </Contenedor>
+    );
+  }
+
+  const ambito = reto.tema ? `Tema ${reto.tema.numero}${reto.tema.titulo ? ` · ${reto.tema.titulo}` : ''}` : 'Toda la oposición';
+
+  /* ─────────────── INTRO ─────────────── */
+  if (estado === 'intro') {
+    const filas = [
+      { icono: BookOpen, label: 'Contenido', valor: ambito },
+      { icono: ListChecks, label: 'Preguntas', valor: String(preguntas.length) },
+      ...(!caducado && reto.fechaFin && !miParticipacion?.completado ? [{ icono: Clock, label: 'Plazo', valor: tiempoRestante(reto.fechaFin) }] : []),
+    ];
+    return (
+      <Contenedor>
+        <Cabecera titulo="Duelo de test" sub={`Contra ${nombreRival}`} onVolver={volver} />
+
+        <div style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '22px 18px 18px', textAlign: 'center', animation: 'oplora-aparecer 0.25s ease' }}>
+          <span style={{ width: 60, height: 60, borderRadius: 18, background: COLOR_RETOS_BG, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+            <Swords size={28} color={COLOR_RETOS} />
           </span>
-        )}
-      </div>
-
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.25rem' }}>
-
-        {/* INTRO */}
-        {estado === 'intro' && (
-          <div>
-            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '16px', padding: '1.5rem', marginBottom: '10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>
-                {reto?.tipo === 'diario' ? '⚡' : reto?.tipo === 'semanal' ? '🏆' : '🎯'}
-              </div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT_PRIMARY, marginBottom: '4px' }}>
-                {tipoLabel[reto?.tipo]}
-              </div>
-              {reto?.tema && (
-                <div style={{ fontSize: '12px', color: TEXT_SECONDARY, marginBottom: '4px' }}>
-                  Tema: {reto.tema.titulo}
-                </div>
-              )}
-              <div style={{ fontSize: '13px', color: TEXT_MUTED, marginBottom: '1.25rem' }}>
-                {preguntas.length} preguntas · Nivel {reto?.nivelRequerido}
-              </div>
-
-              {reto?.participaciones?.length > 0 && (
-                <div style={{ background: BG_APP, borderRadius: '12px', padding: '10px', marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '11px', color: TEXT_MUTED, marginBottom: '6px' }}>Participantes</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {reto.participaciones.map((p: any) => (
-                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                        <span style={{ color: '#374151' }}>
-                          {p.usuario?.nick ?? p.usuario?.nombre ?? 'Usuario'}
-                          {p.usuario?.id === (usuario as any)?.id && ' (tú)'}
-                        </span>
-                        {p.completado
-                          ? <CheckCircle size={14} color="#15803d" />
-                          : <span style={{ color: TEXT_MUTED, fontSize: '11px' }}>Pendiente</span>
-                        }
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {yaCompleto ? (
-                <div>
-                  <div style={{ fontSize: '13px', color: '#15803d', fontWeight: 600, marginBottom: '8px' }}>
-                    ✓ Ya completaste este reto — {miParticipacion?.porcentaje}% acierto
-                  </div>
-                  <button
-                    onClick={() => setEstado('resultado')}
-                    style={{ width: '100%', padding: '12px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    Ver resultado y ranking
-                  </button>
-                </div>
-              ) : caducado ? (
-                <div style={{ fontSize: '13px', color: '#DC2626', fontWeight: 600 }}>
-                  Este reto caducó, ya no se puede completar
-                </div>
-              ) : (
-                <button
-                  onClick={() => { setEstado('jugando'); setTiempoInicio(Date.now()); }}
-                  style={{ width: '100%', padding: '13px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  ▶ Empezar reto
-                </button>
-              )}
-            </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
+            {meRetaron ? `${reto.creador.nick ?? reto.creador.nombre} te ha retado` : `Has retado a ${nombreRival}`}
           </div>
-        )}
+          <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginTop: 4 }}>Gana quien acierte más. Si empatáis, el más rápido.</div>
 
-        {/* JUGANDO */}
-        {estado === 'jugando' && pregunta && (
-          <div>
-            <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1.5rem' }}>
-              <div style={{ width: `${((preguntaActual + (respondida ? 1 : 0)) / preguntas.length) * 100}%`, height: '100%', background: '#3b82f6', borderRadius: '2px', transition: 'width 0.3s' }} />
-            </div>
-
-            <div style={{ fontSize: '15px', fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.6, marginBottom: '1.5rem' }}>
-              {pregunta.enunciado}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.25rem' }}>
-            {pregunta.opciones?.map((opcion: string, idx: number) => (
-              <button
-                key={idx}
-                onClick={() => seleccionarYSiguiente(idx)}
-                disabled={seleccionada !== null || completar.isPending}
-                style={{
-                  padding: '12px 14px', borderRadius: '12px',
-                  border: seleccionada === idx ? '1.5px solid #3b82f6' : '1.5px solid #e5e7eb',
-                  background: seleccionada === idx ? '#eff6ff' : 'white',
-                  color: '#111827', fontSize: '13px', textAlign: 'left', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                }}
-              >
-                <span style={{ fontWeight: 700, minWidth: '20px' }}>{['A', 'B', 'C', 'D'][idx]}</span>
-                <span style={{ flex: 1 }}>{opcion.replace(/^[a-dA-D]\)\s*/, '')}</span>
-              </button>
-            ))}
-          </div>
-          {completar.isError && (
-            <div style={{ fontSize: '12px', color: '#DC2626', textAlign: 'center' }}>
-              {(completar.error as any)?.response?.data?.message ?? 'No se pudo enviar el reto. Elige de nuevo la respuesta para reintentar.'}
+          {meRetaron && reto.mensaje && (
+            <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '10px 14px', fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.5, marginTop: 14, textAlign: 'left' }}>
+              “{reto.mensaje}”
             </div>
           )}
 
-         </div>
-        )}
-
-        {/* RESULTADO */}
-        {estado === 'resultado' && (
-          <div>
-            <div style={{ textAlign: 'center', padding: '0.5rem 0 1rem' }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
-                🏆 Resultado
+          <div style={{ display: 'flex', flexDirection: 'column', marginTop: 14, textAlign: 'left' }}>
+            {filas.map((f, i) => (
+              <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 2px', borderTop: i ? '1px solid #EEF0F3' : 'none' }}>
+                <f.icono size={16} color={COLOR_RETOS} />
+                <span style={{ flex: 1, fontSize: 13, color: TEXT_SECONDARY }}>{f.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, textAlign: 'right', maxWidth: '60%' }}>{f.valor}</span>
               </div>
-              <div style={{ fontSize: '44px', fontWeight: 800, color: TEXT_PRIMARY }}>
-                {porcentaje}%
+            ))}
+          </div>
+
+          <div style={{ background: '#F8FAFC', borderRadius: 16, padding: 14, marginTop: 10 }}>
+            <DueloReto reto={reto} usuarioActual={usuario} />
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            {caducado ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, color: '#B91C1C', fontWeight: 600 }}>
+                <Ban size={15} /> Este duelo caducó, ya no se puede jugar
               </div>
-            </div>
-
-            {/* Estadísticas rápidas */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '13px', color: '#15803d' }}>✔️ {correctas} aciertos</span>
-              <span style={{ fontSize: '13px', color: '#dc2626' }}>❌ {preguntas.length - correctas} errores</span>
-              <span style={{ fontSize: '13px', color: TEXT_MUTED }}>⏱️ {Math.round((Date.now() - tiempoInicio) / 1000)}s</span>
-            </div>
-
-            {/* Feedback de puntos ganados — OPLO reacciona al resultado (solo disponible justo tras completar) */}
-            {resultadoFinal?.gamificacion && (
-              <div style={{ marginBottom: '10px' }}>
-                <PuntosGanadosCard gamificacion={resultadoFinal.gamificacion} porcentaje={porcentaje} />
-              </div>
-            )}
-
-            {/* Duelo */}
-            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '16px', marginBottom: '10px' }}>
-              <DueloReto reto={{ ...reto, participaciones: reto.participaciones }} usuarioActual={usuario} />
-            </div>
-
-            {/* Desglose de preguntas (solo disponible justo tras completar el reto en esta sesión) */}
-            {(() => {
-              const desglose = resultadoFinal?.respuestas ?? [];
-              if (desglose.length === 0) return null;
-              return (
-              <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '14px', overflow: 'hidden', marginBottom: '10px' }}>
-                <div style={{ padding: '14px 16px', borderBottom: '1px solid #F1F5F9' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>Desglose de preguntas</div>
-                </div>
-                {desglose.map((r, i) => {
-                  const p = preguntas[i];
-                  return (
-                    <div key={i} style={{ padding: '12px 16px', borderBottom: i < desglose.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '12px' }}>{r.correcta ? '✅' : '❌'}</span>
-                        <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{p?.enunciado}</span>
-                      </div>
-                      {!r.correcta && p?.correcta !== undefined && p?.opciones?.[p.correcta] && (
-                        <div style={{ fontSize: '11px', color: '#15803d', marginLeft: '20px', marginBottom: '2px' }}>
-                          Correcta: {p.opciones[p.correcta]?.replace(/^[a-dA-D]\)\s*/, '')}
-                        </div>
-                      )}
-                      {p?.explicacion && (
-                        <div style={{ fontSize: '11px', color: TEXT_MUTED, marginLeft: '20px', lineHeight: 1.5 }}>{p.explicacion}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              );
-            })()}
-
-            {/* Botones */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {miParticipacion?.posicion > 1 && reto?.tipo === 'usuario' && (
-                <button
-                  onClick={async () => {
-                    const oponente = reto.participaciones.find((p: any) => p.usuario?.id !== (usuario as any)?.id);
-                    if (oponente) {
-                      try {
-                        const res = await api.post('/retos/usuario', {
-                          retadoNickOEmail: oponente.usuario?.nick ?? oponente.usuario?.email,
-                          oposicionId: reto.oposicion?.id,
-                          numPreguntas: reto.preguntas?.length ?? 10,
-                        });
-                        router.push(`/app/retos/${res.data.id}`);
-                      } catch (e) {
-                        alert('Error enviando revancha');
-                      }
-                    }
-                  }}
-                  style={{ width: '100%', padding: '13px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  🔥 Pedir revancha
-                </button>
-              )}
-              <button onClick={() => router.push('/app/retos')} style={{ width: '100%', padding: '13px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>
-                Volver a retos
+            ) : (
+              <button
+                onClick={empezar}
+                style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+              >
+                <Swords size={16} /> Empezar duelo
               </button>
-            </div>
+            )}
+          </div>
+        </div>
+      </Contenedor>
+    );
+  }
+
+  /* ─────────────── JUGANDO ─────────────── */
+  if (estado === 'jugando' && pregunta) {
+    const progreso = (preguntaActual / Math.max(1, preguntas.length)) * 100;
+    return (
+      <Contenedor>
+        <Cabecera
+          titulo="Duelo de test"
+          sub={`Contra ${nombreRival}`}
+          onVolver={volver}
+          derecha={
+            <span style={{ fontSize: 12, fontWeight: 700, color: COLOR_RETOS, background: 'white', borderRadius: 999, padding: '6px 12px', boxShadow: SOMBRA, flexShrink: 0 }}>
+              {preguntaActual + 1}/{preguntas.length}
+            </span>
+          }
+        />
+
+        <div style={{ height: 6, background: 'rgba(194,65,12,0.12)', borderRadius: 999, overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{ width: `${progreso}%`, height: '100%', background: COLOR_RETOS, borderRadius: 999, transition: 'width 0.3s' }} />
+        </div>
+
+        <div key={preguntaActual} style={{ animation: 'oplora-aparecer 0.22s ease' }}>
+          <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: 18, marginBottom: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.55 }}>{pregunta.enunciado}</div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {pregunta.opciones?.map((opcion: string, idx: number) => {
+              const elegida = seleccionada === idx;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => responder(idx)}
+                  disabled={seleccionada !== null || completar.isPending}
+                  style={{
+                    padding: '13px 14px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
+                    border: `2px solid ${elegida ? COLOR_RETOS : 'transparent'}`,
+                    background: elegida ? COLOR_RETOS_BG : 'white', boxShadow: SOMBRA,
+                    color: TEXT_PRIMARY, fontSize: 13.5, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit',
+                  }}
+                >
+                  <span style={{ width: 28, height: 28, borderRadius: 9, background: elegida ? COLOR_RETOS : '#F1F5F9', color: elegida ? 'white' : TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                    {LETRAS[idx]}
+                  </span>
+                  <span style={{ flex: 1, lineHeight: 1.45 }}>{limpiarOpcion(opcion)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {completar.isPending && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16, fontSize: 13, color: TEXT_SECONDARY }}>
+            <Loader2 size={16} color={COLOR_RETOS} style={{ animation: 'oplora-girar 0.8s linear infinite' }} /> Corrigiendo…
           </div>
         )}
+        {completar.isError && (
+          <div style={{ fontSize: 12, color: '#B91C1C', textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
+            {(completar.error as any)?.response?.data?.message ?? 'No se ha podido enviar el duelo. Elige de nuevo la respuesta para reintentar.'}
+          </div>
+        )}
+      </Contenedor>
+    );
+  }
 
+  /* ─────────────── RESULTADO ─────────────── */
+  const desglose = resultadoFinal?.respuestas ?? [];
+  const estadoDuelo = ambosCompletados
+    ? (empate
+      ? { texto: 'Empate', icono: Handshake, color: '#B45309', fondo: '#FEF3C7' }
+      : yoGane
+        ? { texto: '¡Has ganado!', icono: Crown, color: '#15803D', fondo: '#DCFCE7' }
+        : { texto: `Ha ganado ${nombreRival}`, icono: Crown, color: '#B91C1C', fondo: '#FEE2E2' })
+    : { texto: `Esperando a ${nombreRival}`, icono: Hourglass, color: TEXT_SECONDARY, fondo: '#F1F5F9' };
+  const IconoEstado = estadoDuelo.icono;
+  const radio = 46;
+  const circ = 2 * Math.PI * radio;
+  const stats = [
+    { icono: CheckCircle2, color: '#15803D', fondo: '#DCFCE7', valor: String(correctas), label: 'Aciertos' },
+    { icono: XCircle, color: '#B91C1C', fondo: '#FEE2E2', valor: String(Math.max(0, preguntas.length - correctas)), label: 'Fallos' },
+    { icono: Timer, color: '#4F46E5', fondo: '#E0E7FF', valor: formatoTiempo(segundos), label: 'Tiempo' },
+  ];
+
+  return (
+    <Contenedor>
+      <Cabecera titulo="Resultado del duelo" sub={`Contra ${nombreRival}`} onVolver={volver} />
+
+      <div style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '20px 18px', textAlign: 'center', marginBottom: 12, animation: 'oplora-aparecer 0.25s ease' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 999, background: estadoDuelo.fondo, color: estadoDuelo.color, marginBottom: 14 }}>
+          <IconoEstado size={13} /> {estadoDuelo.texto}
+        </span>
+
+        <div style={{ position: 'relative', width: 116, height: 116, margin: '0 auto 14px' }}>
+          <svg width="116" height="116" viewBox="0 0 116 116" style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx="58" cy="58" r={radio} fill="none" stroke="#F1F5F9" strokeWidth="10" />
+            <circle cx="58" cy="58" r={radio} fill="none" stroke={COLOR_RETOS} strokeWidth="10" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - Math.min(100, Math.max(0, porcentaje)) / 100)} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1 }}>{Math.round(porcentaje)}%</div>
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 3 }}>aciertos</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          {stats.map((e) => (
+            <div key={e.label} style={{ background: '#F8FAFC', borderRadius: 14, padding: '10px 6px' }}>
+              <span style={{ width: 28, height: 28, borderRadius: 9, background: e.fondo, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
+                <e.icono size={15} color={e.color} />
+              </span>
+              <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>{e.valor}</div>
+              <div style={{ fontSize: 11, color: TEXT_MUTED }}>{e.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+
+      {resultadoFinal?.gamificacion && (
+        <div style={{ marginBottom: 12 }}>
+          <PuntosGanadosCard gamificacion={resultadoFinal.gamificacion} porcentaje={porcentaje} />
+        </div>
+      )}
+
+      <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+        <DueloReto reto={reto} usuarioActual={usuario} />
+      </div>
+
+      {desglose.length > 0 && (
+        <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, overflow: 'hidden', marginBottom: 12 }}>
+          <div style={{ padding: '14px 16px 10px', fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Tus respuestas</div>
+          {desglose.map((r, i) => {
+            const p = preguntas[i];
+            const textoCorrecta = p?.correcta !== undefined ? p?.opciones?.[p.correcta] : undefined;
+            return (
+              <div key={i} style={{ padding: '12px 16px', borderTop: '1px solid #EEF0F3', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                {r.correcta ? <CheckCircle2 size={17} color="#15803D" style={{ flexShrink: 0, marginTop: 1 }} /> : <XCircle size={17} color="#DC2626" style={{ flexShrink: 0, marginTop: 1 }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.5 }}>{p?.enunciado}</div>
+                  {!r.correcta && p?.opciones?.[r.seleccionada] && (
+                    <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 4 }}>Tu respuesta: {limpiarOpcion(p.opciones[r.seleccionada])}</div>
+                  )}
+                  {!r.correcta && textoCorrecta && (
+                    <div style={{ fontSize: 12, color: '#15803D', marginTop: 2 }}>Correcta: {limpiarOpcion(textoCorrecta)}</div>
+                  )}
+                  {p?.explicacion && (
+                    <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 6, lineHeight: 1.5, background: '#F8FAFC', borderRadius: 10, padding: '8px 10px' }}>{p.explicacion}</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {ambosCompletados && !empate && !yoGane && reto.tipo === 'usuario' && (
+          <button
+            onClick={() => revancha.mutate()}
+            disabled={revancha.isPending}
+            style={{ width: '100%', padding: 14, background: COLOR_RETOS, color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: revancha.isPending ? 0.7 : 1 }}
+          >
+            <RotateCcw size={16} /> {revancha.isPending ? 'Enviando…' : 'Pedir la revancha'}
+          </button>
+        )}
+        {revancha.isError && (
+          <div style={{ fontSize: 12, color: '#B91C1C', textAlign: 'center' }}>
+            {(revancha.error as any)?.response?.data?.message ?? 'No se ha podido enviar la revancha.'}
+          </div>
+        )}
+        <button
+          onClick={volver}
+          style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+        >
+          Volver a retos
+        </button>
+      </div>
+    </Contenedor>
   );
-} 
+}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Plus, ChevronRight, ChevronLeft, ChevronDown, Brain, Lock, Swords, ClipboardCheck, Layers, Landmark, Scale, BookOpen, Clock, Handshake, Crown, X, AlertTriangle, Check, UserX, Ban, RotateCcw, Hourglass } from 'lucide-react';
+import { Plus, ChevronRight, ChevronLeft, ChevronDown, Brain, Lock, Swords, Shuffle, Loader2, ClipboardCheck, Layers, Landmark, Scale, BookOpen, Clock, Handshake, Crown, X, AlertTriangle, Check, UserX, Ban, RotateCcw, Hourglass } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { IconoModalidad } from '@/components/psicotecnicos/iconos';
@@ -203,6 +203,10 @@ export default function RetosPage() {
 
 const [validacion, setValidacion] = useState<any>(null);
 const [validando, setValidando] = useState(false);
+// ⭐ Reto al azar: rival sorteado entre quienes aceptan retos de desconocidos en tu convocatoria.
+const [rivalAzar, setRivalAzar] = useState<any>(null);
+const [sorteando, setSorteando] = useState(false);
+const [errorAzar, setErrorAzar] = useState('');
 const [modalInvitar, setModalInvitar] = useState(false);
 const [toast, setToast] = useState<string | null>(null);
 
@@ -211,6 +215,33 @@ const mostrarToast = (mensaje: string) => {
   setTimeout(() => setToast(null), 2500);
 };
 
+
+const sortearRival = async () => {
+  if (sorteando) return;
+  setSorteando(true);
+  setErrorAzar('');
+  try {
+    const res = await api.post('/retos/sortear-rival', { oposicionId: usuario?.oposicionActiva?.id });
+    setRivalAzar(res.data);
+    setForm((f) => ({ ...f, retadoNickOEmail: res.data.nick }));
+  } catch (e: any) {
+    const m = e?.response?.data?.message;
+    setErrorAzar(Array.isArray(m) ? m[0] : m || 'No se ha podido buscar rival. Inténtalo de nuevo.');
+  } finally {
+    setSorteando(false);
+  }
+};
+
+const quitarRivalAzar = () => {
+  setRivalAzar(null);
+  setErrorAzar('');
+  setForm((f) => ({ ...f, retadoNickOEmail: '' }));
+};
+
+// Al cerrar el asistente se olvida el rival sorteado.
+useEffect(() => {
+  if (!modalAbierto) { setRivalAzar(null); setErrorAzar(''); }
+}, [modalAbierto]);
 
 const puedeEnviar = validacion?.encontrado && !validacion?.error && validacion?.mismaOposicion && validacion?.mismaConvocatoria;
 const oposicionId = usuario?.oposicionActiva?.id;
@@ -667,7 +698,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
         <div onClick={() => { setModalAbierto(false); setError(''); setPaso('retado'); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px', width: '100%', maxWidth: '400px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-            <style>{`@keyframes oplora-paso-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }`}</style>
+            <style>{`@keyframes oplora-paso-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } } @keyframes oplora-girar { to { transform: rotate(360deg); } }`}</style>
 
             {/* Header: volver + título + cerrar + barra de progreso */}
             <div style={{ padding: '1.5rem 1.5rem 0.9rem', flexShrink: 0 }}>
@@ -715,6 +746,58 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
               {paso === 'retado' && (
               <>
+              {/* ⭐ Reto al azar */}
+              {rivalAzar ? (
+                <div style={{ background: 'white', borderRadius: 16, boxShadow: SOMBRA, padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <AvatarUsuario persona={rivalAzar} size={44} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>Te ha tocado</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{rivalAzar.nick}</div>
+                    <div style={{ fontSize: 11, color: TEXT_SECONDARY }}>Nivel {rivalAzar.nivel ?? 1} · tu convocatoria</div>
+                  </div>
+                  <button
+                    onClick={sortearRival}
+                    disabled={sorteando}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: COLOR_RETOS, background: COLOR_RETOS_BG, border: 'none', borderRadius: 999, padding: '7px 12px', cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    {sorteando ? <Loader2 size={13} style={{ animation: 'oplora-girar 0.8s linear infinite' }} /> : <Shuffle size={13} />} Otro
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={sortearRival}
+                  disabled={sorteando || !oposicionId}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', border: 'none', borderRadius: 16, padding: 12, boxShadow: SOMBRA, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                >
+                  <span style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {sorteando ? <Loader2 size={19} color={COLOR_RETOS} style={{ animation: 'oplora-girar 0.8s linear infinite' }} /> : <Shuffle size={19} color={COLOR_RETOS} />}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Reto al azar</span>
+                    <span style={{ display: 'block', fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Te emparejamos con otro opositor de tu convocatoria</span>
+                  </span>
+                  <ChevronRight size={16} color="#C4C9D2" />
+                </button>
+              )}
+              {errorAzar && (
+                <div style={{ fontSize: 12, color: '#B91C1C', display: 'flex', alignItems: 'flex-start', gap: 6, lineHeight: 1.45 }}>
+                  <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} /> {errorAzar}
+                </div>
+              )}
+
+              {rivalAzar && (
+                <button onClick={quitarRivalAzar} style={{ alignSelf: 'center', fontSize: 12, fontWeight: 600, color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                  Prefiero elegir yo a quién retar
+                </button>
+              )}
+
+              {!rivalAzar && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>
+                <span style={{ flex: 1, height: 1, background: '#E8DCD2' }} /> o reta a alguien que conozcas <span style={{ flex: 1, height: 1, background: '#E8DCD2' }} />
+              </div>
+              )}
+
+              {!rivalAzar && (<>
               {contactosRecientes.length > 0 && (
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 600, color: TEXT_SECONDARY, marginBottom: '8px' }}>Con quién has jugado</div>
@@ -779,6 +862,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 </div>
               )}
               </div>
+              </>)}
               </>
               )}
 
@@ -1128,100 +1212,137 @@ const oposicionId = usuario?.oposicionActiva?.id;
         const empate = ambosCompletados && miParticipacion.posicion === otraParticipacion.posicion;
         const yoGane = ambosCompletados && !empate && miParticipacion.posicion === 1;
 
-        return (
-          <div onClick={cerrarModalPreview} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '420px', maxHeight: '85vh', overflowY: 'auto' }}>
+        const rival = otraParticipacion?.usuario;
+        const meRetaron = !!retoDetalle.creador && retoDetalle.creador.id !== (usuario as any)?.id;
+        const caducadoPreview = retoCaducado(retoDetalle) && !ambosCompletados;
+        const ambito = retoDetalle.tema
+          ? `Tema ${retoDetalle.tema.numero}`
+          : 'Toda la oposición';
+        const estadoTexto = ambosCompletados
+          ? (empate ? 'Empate' : yoGane ? 'Has ganado' : `Ha ganado ${rival?.nick ?? rival?.nombre ?? 'tu rival'}`)
+          : caducadoPreview ? 'Caducado'
+            : !miParticipacion?.completado ? 'Te toca jugar' : 'Esperando a tu rival';
+        const colorEstado = ambosCompletados
+          ? (empate ? '#B45309' : yoGane ? '#15803D' : '#B91C1C')
+          : caducadoPreview ? '#B91C1C' : !miParticipacion?.completado ? COLOR_RETOS : TEXT_SECONDARY;
+        const fondoEstado = ambosCompletados
+          ? (empate ? '#FEF3C7' : yoGane ? '#DCFCE7' : '#FEE2E2')
+          : caducadoPreview ? '#FEE2E2' : !miParticipacion?.completado ? COLOR_RETOS_BG : '#F1F5F9';
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: TEXT_PRIMARY }}>
-                  {retoDetalle.tipo === 'diario' ? 'Reto diario' : retoDetalle.tipo === 'semanal' ? 'Reto semanal' : 'Duelo de test'}
+        return (
+          <div onClick={cerrarModalPreview} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: 24, width: '100%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 20px 50px rgba(15,23,42,0.25)' }}>
+
+              {/* Cabecera */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 14px' }}>
+                <span style={{ width: 42, height: 42, borderRadius: 12, background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: SOMBRA }}>
+                  <Swords size={20} color={COLOR_RETOS} />
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: TEXT_PRIMARY }}>Duelo de test</div>
+                  <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 1 }}>
+                    {ambito} · {retoDetalle.preguntas?.length ?? 0} preguntas
+                  </div>
                 </div>
-                <button onClick={cerrarModalPreview} aria-label="Cerrar" style={{ background: 'white', border: 'none', borderRadius: '50%', width: '34px', height: '34px', cursor: 'pointer', color: TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA }}><X size={16} /></button>
+                <button onClick={cerrarModalPreview} aria-label="Cerrar" style={{ background: 'white', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA, flexShrink: 0 }}><X size={17} /></button>
               </div>
 
-              {retoDetalle.creador && retoDetalle.creador.id !== (usuario as any)?.id && (
-                <div style={{ background: 'white', borderRadius: '12px', padding: '12px 14px', marginBottom: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#EFE9E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: TEXT_PRIMARY, flexShrink: 0 }}>
-                    {(retoDetalle.creador.nick ?? retoDetalle.creador.nombre ?? '?')[0].toUpperCase()}
+              <div style={{ padding: '0 18px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                {/* Marcador */}
+                <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: fondoEstado, color: colorEstado }}>
+                      {ambosCompletados ? (empate ? <Handshake size={12} /> : <Crown size={12} />) : <Hourglass size={12} />}
+                      {estadoTexto}
+                    </span>
+                    {!ambosCompletados && !caducadoPreview && retoDetalle.fechaFin && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: TEXT_SECONDARY }}>
+                        <Clock size={12} /> {tiempoRestante(retoDetalle.fechaFin)}
+                      </span>
+                    )}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '11px', color: TEXT_MUTED }}>Te ha retado</div>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY }}>{retoDetalle.creador.nick ?? retoDetalle.creador.nombre}</div>
-                    {retoDetalle.mensaje && (
-                      <div style={{ fontSize: '12px', color: '#374151', marginTop: '6px', fontStyle: 'italic', borderLeft: '2px solid #e5e7eb', paddingLeft: '8px' }}>
-                        "{retoDetalle.mensaje}"
+                  <DueloReto reto={retoDetalle} usuarioActual={usuario} />
+                </div>
+
+                {/* Mensaje del retador */}
+                {meRetaron && retoDetalle.mensaje && (
+                  <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600, marginBottom: 4 }}>
+                      Mensaje de {retoDetalle.creador.nick ?? retoDetalle.creador.nombre}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.5 }}>“{retoDetalle.mensaje}”</div>
+                  </div>
+                )}
+
+                {/* Revancha */}
+                {ambosCompletados && !empate && !yoGane && !revanchaAbierta && (
+                  <button
+                    onClick={() => setRevanchaAbierta(true)}
+                    style={{ width: '100%', padding: 13, background: COLOR_RETOS, color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+                  >
+                    <RotateCcw size={16} /> Pedir la revancha
+                  </button>
+                )}
+
+                {revanchaAbierta && (
+                  <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 8 }}>Revancha</div>
+                    <textarea
+                      value={mensajeRevancha}
+                      onChange={(e) => setMensajeRevancha(e.target.value)}
+                      placeholder="Añade un mensaje (opcional)"
+                      maxLength={140}
+                      style={{ width: '100%', minHeight: 60, padding: '10px 12px', fontSize: 13, border: '2px solid #EEF0F3', borderRadius: 12, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', marginBottom: 10 }}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => { setRevanchaAbierta(false); setMensajeRevancha(''); }}
+                        style={{ flex: 1, padding: 12, background: '#F1F5F9', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => enviarRevancha.mutate()}
+                        disabled={enviarRevancha.isPending}
+                        style={{ flex: 2, padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: enviarRevancha.isPending ? 0.7 : 1 }}
+                      >
+                        {enviarRevancha.isPending ? 'Enviando…' : 'Enviar revancha'}
+                      </button>
+                    </div>
+                    {enviarRevancha.isError && (
+                      <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 8 }}>
+                        {(enviarRevancha.error as any)?.response?.data?.message ?? 'No se ha podido enviar la revancha.'}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
 
-              <div style={{ background: 'white', borderRadius: '12px', padding: '14px', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: TEXT_MUTED }}>Contenido</span>
-                  <span style={{ color: TEXT_PRIMARY, fontWeight: 500 }}>{retoDetalle.tema ? `Tema ${retoDetalle.tema.numero}` : 'Oposición'}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: TEXT_MUTED }}>Preguntas</span>
-                  <span style={{ color: TEXT_PRIMARY, fontWeight: 500 }}>{retoDetalle.preguntas?.length}</span>
-                </div>
-                
-              </div>
-
-              <div style={{ background: 'white', borderRadius: '14px', padding: '16px', marginBottom: '16px' }}>
-                <DueloReto reto={retoDetalle} usuarioActual={usuario} mostrarBarraTiempo />
-              </div>
-
-              {ambosCompletados && !empate && !yoGane && !revanchaAbierta && (
-                <button
-                  onClick={() => setRevanchaAbierta(true)}
-                  style={{ width: '100%', padding: '12px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginBottom: '10px' }}
-                >
-                  <RotateCcw size={15} style={{ verticalAlign: '-3px', marginRight: 6 }} />Pedir la revancha
-                </button>
-              )}
-
-              {revanchaAbierta && (
-                <div style={{ background: 'white', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
-                  <textarea
-                    value={mensajeRevancha}
-                    onChange={(e) => setMensajeRevancha(e.target.value)}
-                    placeholder="Escribe un mensaje para la revancha..."
-                    maxLength={140}
-                    style={{ width: '100%', minHeight: '50px', padding: '8px', fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', marginBottom: '8px' }}
-                  />
+                {/* Acción principal */}
+                {caducadoPreview ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, color: TEXT_SECONDARY, padding: '6px 0' }}>
+                    <Ban size={14} /> Este duelo caducó sin que jugarais los dos
+                  </div>
+                ) : !miParticipacion?.completado ? (
                   <button
-                    onClick={() => enviarRevancha.mutate()}
-                    disabled={enviarRevancha.isPending}
-                    style={{ width: '100%', padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                    onClick={() => router.push(`/app/retos/${retoPreview}?directo=true`)}
+                    style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
                   >
-                    {enviarRevancha.isPending ? 'Enviando...' : 'Enviar revancha'}
+                    <Swords size={16} /> Jugar el duelo
                   </button>
-                  {enviarRevancha.isError && (
-                    <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 8 }}>
-                      {(enviarRevancha.error as any)?.response?.data?.message ?? 'No se ha podido enviar la revancha.'}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {retoDetalle.estado === 'expirado' ? (
-                <div style={{ textAlign: 'center', fontSize: '12px', color: TEXT_MUTED, padding: '10px' }}>
-                  Este reto caducó sin completarse por ambos participantes
-                </div>
-              ) : !miParticipacion?.completado ? (
-                <button
-                  onClick={() => router.push(`/app/retos/${retoPreview}?directo=true`)}
-                  style={{ width: '100%', padding: '13px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Empezar reto
-                </button>
-              ) : !ambosCompletados ? (
-                <div style={{ textAlign: 'center', fontSize: '12px', color: TEXT_MUTED, padding: '10px' }}>
-                  Esperando a que tu rival complete el reto
-                </div>
-              ) : null}
-
+                ) : !ambosCompletados ? (
+                  <div style={{ textAlign: 'center', fontSize: 13, color: TEXT_SECONDARY, padding: '4px 0', lineHeight: 1.5 }}>
+                    Ya has jugado. Te avisaremos cuando {rival?.nick ?? rival?.nombre ?? 'tu rival'} termine.
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => router.push(`/app/retos/${retoPreview}`)}
+                    style={{ width: '100%', padding: 13, background: 'white', color: TEXT_PRIMARY, border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  >
+                    Ver resultado completo <ChevronRight size={15} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         );

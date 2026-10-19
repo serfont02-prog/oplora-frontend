@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
-  ArrowLeft, ChevronRight, Bell, RefreshCw, Download, LogOut, RotateCcw, CalendarRange, Repeat, UserPlus, AlertTriangle, Check,
+  ArrowLeft, ChevronRight, RefreshCw, Download, LogOut, RotateCcw, CalendarRange, Repeat, UserPlus, AlertTriangle, Check,
 } from 'lucide-react';
 import { BG_NEUTRAL as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
@@ -163,15 +163,7 @@ export default function AjustesOposicionPage() {
           />
         </Seccion>
 
-        <Seccion titulo="Avisos">
-          {/* ⭐ Antes había aquí un interruptor que no guardaba nada. Los avisos reales están en Preferencias. */}
-          <Fila
-            Icon={Bell} color="#CA8A04" bg="#FDF8E8"
-            titulo="Notificaciones y avisos" sub="Elige qué avisos quieres recibir"
-            onClick={() => router.push('/app/preferencias')}
-            ultima
-          />
-        </Seccion>
+        {/* ⭐ "Notificaciones y avisos" se ha movido a Perfil: es de la cuenta, no de la convocatoria. */}
 
         <Seccion titulo="Comparte">
           <Fila

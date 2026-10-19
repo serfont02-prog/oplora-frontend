@@ -5,6 +5,7 @@
 // - Solo se ofrecen oposiciones publicadas (antes salían también las que estaban en preparación).
 // - Cada opción muestra cuántas oposiciones hay y las que no tienen ninguna salen desactivadas,
 //   para no llevar al usuario a un "no hay oposiciones" al final.
+// - Al cambiar de oposición (Ajustes) no se ofrece la que ya tienes: antes se podía "cambiar" a la misma.
 // - El "mapa" de comunidades era una nube de puntos difícil de tocar en móvil: ahora es una lista.
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
@@ -64,7 +65,8 @@ const textoNum = (n: number) => (n === 0 ? 'Sin oposiciones todavía' : n === 1 
 function OnboardingOposicionPage() {
   const router = useRouter();
   const modoCambio = useSearchParams().get('modo') === 'cambiar';
-  const { actualizarUsuario } = useAuth();
+  const { usuario, actualizarUsuario } = useAuth();
+  const actual = modoCambio ? usuario?.oposicionActiva : null;
 
   const [oposiciones, setOposiciones] = useState<Oposicion[] | null>(null);
   const [errorCarga, setErrorCarga] = useState(false);
@@ -84,7 +86,11 @@ function OnboardingOposicionPage() {
   };
   useEffect(cargar, []);
 
-  const lista = oposiciones ?? [];
+  const lista = useMemo(
+    () => (oposiciones ?? []).filter((o) => !actual?.id || o.id !== actual.id),
+    [oposiciones, actual?.id],
+  );
+  const sinAlternativas = modoCambio && !!oposiciones && lista.length === 0;
   const necesitaSubgrupo = categoria ? !!SUBGRUPOS_POR_CATEGORIA[categoria] : false;
 
   // Oposiciones que encajan con lo elegido hasta ahora (sin aplicar el paso que se está mostrando)
@@ -165,9 +171,15 @@ function OnboardingOposicionPage() {
         </div>
       ) : (
         <>
+          {sinAlternativas ? (
+            <div style={{ textAlign: 'center', padding: '10px 4px', fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.5 }}>
+              Por ahora no hay otras oposiciones disponibles. Si la tuya no está, pídenosla desde Soporte.
+            </div>
+          ) : (
           <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 10 }}>{tituloPaso[pasoActual]}</div>
+          )}
 
-          {pasoActual === 'tipo' && (
+          {!sinAlternativas && pasoActual === 'tipo' && (
             <ListaOpciones>
               {TIPOS.map((t) => {
                 const n = lista.filter((o) => o.tipoAdministracion === t.id).length;
@@ -286,6 +298,15 @@ function OnboardingOposicionPage() {
               <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 1 }}>Tu progreso en la actual se conserva por si vuelves</div>
             </div>
           </div>
+          {actual?.nombre && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0f172a', color: 'white', borderRadius: 16, padding: '12px 14px', marginBottom: 12 }}>
+              {(() => { const I = ((actual as any).categoria && ICONO_CATEGORIA[(actual as any).categoria]) || GraduationCap; return <I size={18} color="#93C5FD" />; })()}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ahora preparas</div>
+                <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3 }}>{actual.nombre}</div>
+              </div>
+            </div>
+          )}
           <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: 16 }}>{contenido}</div>
         </div>
       </div>

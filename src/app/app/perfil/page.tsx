@@ -245,7 +245,7 @@ export default function PerfilPage() {
           <Fila Icon={Bell} color="#CA8A04" bg="#FDF8E8" titulo="Alertas" sub="Tus avisos y recordatorios" onClick={() => router.push('/app/alertas')} />
           <Fila
             Icon={Settings} color={TEXT_SECONDARY} bg="#F1F5F9"
-            titulo="Preferencias" sub="Qué avisos quieres recibir"
+            titulo="Notificaciones y avisos" sub="Retos al azar y avisos de la Liga"
             onClick={() => router.push('/app/preferencias')}
             ultima={usuario.rol !== 'admin'}
           />
