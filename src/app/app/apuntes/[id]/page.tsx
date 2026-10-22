@@ -39,6 +39,51 @@ function filtroDeTitulo(titulo: string): FiltroCaja | null {
   return FILTROS_CAJA.find((f) => f.titulos.includes(titulo))?.key ?? null;
 }
 
+/** ⭐ Trocea el texto en fragmentos cortos (≤ 220 caracteres) por frases, con su posición en el texto. */
+function trocearTexto(texto: string, max = 220): { texto: string; inicio: number }[] {
+  const res: { texto: string; inicio: number }[] = [];
+  if (!texto) return res;
+  const frases = texto.match(/[^.!?;:\n]+[.!?;:]*\s*|\n+/g) ?? [texto];
+  let actual = '';
+  let inicioActual = 0;
+  let cursor = 0;
+  const empujar = () => {
+    const t = actual.trim();
+    if (t) res.push({ texto: t, inicio: inicioActual });
+    actual = '';
+  };
+  for (const frase of frases) {
+    const pos = cursor;
+    cursor += frase.length;
+    if (!frase.trim()) continue;
+    if (frase.length > max) {
+      // Frase muy larga: se corta por comas o espacios.
+      empujar();
+      let resto = frase;
+      let off = pos;
+      while (resto.length > max) {
+        let corte = resto.lastIndexOf(', ', max);
+        if (corte < max * 0.4) corte = resto.lastIndexOf(' ', max);
+        if (corte <= 0) corte = max;
+        res.push({ texto: resto.slice(0, corte + 1).trim(), inicio: off });
+        off += corte + 1;
+        resto = resto.slice(corte + 1);
+      }
+      actual = resto;
+      inicioActual = off;
+      continue;
+    }
+    if (!actual) inicioActual = pos;
+    if ((actual + frase).length > max) {
+      empujar();
+      inicioActual = pos;
+    }
+    actual += frase;
+  }
+  empujar();
+  return res;
+}
+
 export default function ApunteOploraPage() {
   const router = useRouter();
   const params = useParams();
@@ -169,6 +214,7 @@ const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leye
   // Guardar progreso final al salir
   useEffect(() => {
     return () => {
+      sesionAudio.current++;
       window.speechSynthesis?.cancel();
       if (progreso > 0) {
         api.post(`/apuntes-oplora/${id}/progreso`, { porcentaje: progreso }).catch(() => {});
@@ -264,24 +310,56 @@ const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leye
     return voces.find((v) => keysHombre.some((k) => v.name.toLowerCase().includes(k))) ?? voces[voces.length > 1 ? 1 : 0];
   };
 
-  const reproducir = () => {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(textoCompleto);
-    utterance.lang = 'es-ES';
-    utterance.rate = velocidad;
-    const voz = getVoz(vozGenero);
-    if (voz) utterance.voice = voz;
-    utterance.onboundary = (e) => {
-      const pct = Math.round((e.charIndex / textoCompleto.length) * 100);
-      setAudioProgress(pct);
+  // ⭐ Audio por frases: antes se mandaba el apunte entero en una sola locución y Chrome en
+  // Android la corta o no la reproduce (según el altavoz no sonaba nada). Ahora se trocea en
+  // fragmentos cortos y se leen uno tras otro, como en Artículos (que son textos cortos).
+  const fragmentos = useMemo(() => trocearTexto(textoCompleto), [textoCompleto]);
+  const fragmentoActual = useRef(0);
+  const sesionAudio = useRef(0);
+
+  const hablarDesde = (inicio: number, genero: 'mujer' | 'hombre' = vozGenero, rate: number = velocidad) => {
+    const synth = window.speechSynthesis;
+    if (!synth || fragmentos.length === 0) return;
+    synth.cancel();
+    const sesion = ++sesionAudio.current;
+    const total = Math.max(1, textoCompleto.length);
+    const decir = (j: number) => {
+      if (sesion !== sesionAudio.current) return;
+      if (j >= fragmentos.length) {
+        fragmentoActual.current = 0;
+        setAudioPlaying(false);
+        setAudioProgress(0);
+        return;
+      }
+      fragmentoActual.current = j;
+      const f = fragmentos[j];
+      setAudioProgress(Math.round((f.inicio / total) * 100));
+      const u = new SpeechSynthesisUtterance(f.texto);
+      u.lang = 'es-ES';
+      u.rate = rate;
+      const voz = getVoz(genero);
+      if (voz) u.voice = voz;
+      u.onboundary = (e) => {
+        if (sesion === sesionAudio.current) setAudioProgress(Math.round(((f.inicio + e.charIndex) / total) * 100));
+      };
+      u.onend = () => decir(j + 1);
+      u.onerror = (e: any) => {
+        if (e?.error === 'interrupted' || e?.error === 'canceled') return;
+        decir(j + 1);
+      };
+      synth.speak(u);
     };
-    utterance.onend = () => { setAudioPlaying(false); setAudioProgress(0); };
-    window.speechSynthesis.speak(utterance);
     setAudioPlaying(true);
+    // Pequeña pausa tras cancel(): algunos Chrome ignoran un speak() inmediato.
+    setTimeout(() => decir(inicio), 60);
   };
 
+  // Reanuda desde el fragmento en el que se pausó.
+  const reproducir = () => hablarDesde(fragmentoActual.current);
+
   const pararAudio = () => {
-    window.speechSynthesis.cancel();
+    sesionAudio.current++;
+    window.speechSynthesis?.cancel();
     setAudioPlaying(false);
   };
 
@@ -290,29 +368,13 @@ const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leye
     const i = velocidades.indexOf(velocidad);
     const nueva = velocidades[(i + 1) % velocidades.length];
     setVelocidad(nueva);
-    if (audioPlaying) { window.speechSynthesis.cancel(); setTimeout(reproducir, 100); }
+    if (audioPlaying) hablarDesde(fragmentoActual.current, vozGenero, nueva);
   };
 
   const cambiarVoz = () => {
     const nuevo = vozGenero === 'mujer' ? 'hombre' : 'mujer';
     setVozGenero(nuevo);
-    if (audioPlaying) {
-      window.speechSynthesis.cancel();
-      setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(textoCompleto);
-        utterance.lang = 'es-ES';
-        utterance.rate = velocidad;
-        const voz = getVoz(nuevo);
-        if (voz) utterance.voice = voz;
-        utterance.onboundary = (e) => {
-          const pct = Math.round((e.charIndex / textoCompleto.length) * 100);
-          setAudioProgress(pct);
-        };
-        utterance.onend = () => { setAudioPlaying(false); setAudioProgress(0); };
-        window.speechSynthesis.speak(utterance);
-        setAudioPlaying(true);
-      }, 100);
-    }
+    if (audioPlaying) hablarDesde(fragmentoActual.current, nuevo, velocidad);
   };
 
 const tiempoInicioLectura = useRef(Date.now());
@@ -483,7 +545,7 @@ const updateProgreso = () => {
         {/* Barra de audio — siempre visible arriba del contenido, igual que en Artículo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '14px', marginBottom: '18px', borderBottom: '1px solid #f3f4f6' }}>
           <button
-            onClick={() => { if (audioPlaying) { window.speechSynthesis.cancel(); setAudioPlaying(false); } else reproducir(); }}
+            onClick={() => { if (audioPlaying) pararAudio(); else reproducir(); }}
             style={{ width: '36px', height: '36px', borderRadius: '50%', background: audioPlaying ? '#111827' : '#F4F5F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
             {audioPlaying ? <Pause size={14} color="white" /> : <Play size={14} color="#374151" />}

@@ -6,6 +6,40 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 
+// ⭐ Orden natural de artículos: 2 < 10 < 14 < 14 bis < 14 ter < 15 (y los que no son número, al final).
+const SUFIJOS = ['', 'bis', 'ter', 'quater', 'quinquies', 'sexies', 'septies', 'octies', 'nonies', 'decies'];
+function claveArticulo(numero: any): [number, number, string] {
+  const t = String(numero ?? '').trim().toLowerCase();
+  const m = t.match(/^(\d+)\s*([a-záéíóú]*)/);
+  if (!m) return [Number.MAX_SAFE_INTEGER, 0, t];
+  const suf = SUFIJOS.indexOf(m[2]);
+  return [parseInt(m[1], 10), suf >= 0 ? suf : 50, t];
+}
+function compararArticulos(a: any, b: any) {
+  const ka = claveArticulo(a?.numero ?? a?.articulo?.numero);
+  const kb = claveArticulo(b?.numero ?? b?.articulo?.numero);
+  return ka[0] - kb[0] || ka[1] - kb[1] || ka[2].localeCompare(kb[2], 'es');
+}
+function nombreLeyDe(tn: any): string {
+  const a = tn?.articulo;
+  return a?.capitulo?.tituloRef?.versionLey?.ley?.nombre
+    ?? a?.tituloRef?.versionLey?.ley?.nombre
+    ?? a?.seccion?.capitulo?.tituloRef?.versionLey?.ley?.nombre
+    ?? a?.versionLey?.ley?.nombre
+    ?? 'Sin norma identificada';
+}
+function agruparPorNorma(normativas: any[]) {
+  const grupos = new Map<string, any[]>();
+  for (const tn of normativas ?? []) {
+    const ley = nombreLeyDe(tn);
+    if (!grupos.has(ley)) grupos.set(ley, []);
+    grupos.get(ley)!.push(tn);
+  }
+  return [...grupos.entries()]
+    .sort(([a], [b]) => (a === 'Sin norma identificada' ? 1 : b === 'Sin norma identificada' ? -1 : a.localeCompare(b, 'es')))
+    .map(([ley, items]) => ({ ley, items: items.sort(compararArticulos) }));
+}
+
 const TIPOS = [
   { value: 'con_normativa', label: 'Con normativa' },
   { value: 'conceptual', label: 'Conceptual' },
@@ -656,30 +690,28 @@ const importarTemario = async () => {
             Ya vinculado
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {temaVinculando.normativas.map((tn: any) => {
-              const ley = tn.articulo?.capitulo?.tituloRef?.versionLey?.ley?.nombre
-                ?? tn.articulo?.tituloRef?.versionLey?.ley?.nombre
-                ?? tn.articulo?.seccion?.capitulo?.tituloRef?.versionLey?.ley?.nombre
-                ?? '—';
-              return (
-                <div key={tn.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px' }}>
-                  <div>
-                    <span style={{ fontSize: '12px', color: '#15803d', fontWeight: 600 }}>
-                      Art. {tn.articulo?.numero ?? '—'}
-                    </span>
-                    <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '6px' }}>
-                      {ley}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => desvincularArticulo.mutate(tn.id)}
-                    style={{ fontSize: '11px', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
-                  >
-                    ✕
-                  </button>
+            {/* ⭐ Agrupado por norma y ordenado por número de artículo (antes salía todo mezclado) */}
+            {agruparPorNorma(temaVinculando.normativas).map(({ ley, items }) => (
+              <div key={ley} style={{ marginBottom: '6px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', margin: '4px 2px 4px' }}>
+                  {ley} <span style={{ fontWeight: 400, color: '#9ca3af' }}>· {items.length} {items.length === 1 ? 'artículo' : 'artículos'}</span>
                 </div>
-              );
-            })}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {items.map((tn: any) => (
+                    <span key={tn.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 6px 5px 10px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '999px' }}>
+                      <span style={{ fontSize: '12px', color: '#15803d', fontWeight: 600 }}>Art. {tn.articulo?.numero ?? '—'}</span>
+                      <button
+                        onClick={() => desvincularArticulo.mutate(tn.id)}
+                        title="Desvincular"
+                        style={{ fontSize: '11px', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -720,7 +752,7 @@ const importarTemario = async () => {
           />
           {articulosBusqueda.length > 0 && (
             <div style={{ marginTop: '6px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '200px', overflowY: 'auto' }}>
-              {articulosBusqueda.map((art: any) => (
+              {[...articulosBusqueda].sort(compararArticulos).map((art: any) => (
                 <div
                   key={art.id}
                   onClick={() => vincularArticulo.mutate(art)}
@@ -785,7 +817,7 @@ const importarTemario = async () => {
             <div style={{ marginBottom: '12px' }}>
               <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Artículos</label>
               <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '200px', overflowY: 'auto' }}>
-                {articulos.map((art: any) => (
+                {[...articulos].sort(compararArticulos).map((art: any) => (
                   <div
                     key={art.id}
                     onClick={() => vincularArticulo.mutate(art)}
@@ -806,7 +838,7 @@ const importarTemario = async () => {
             <div style={{ marginBottom: '12px' }}>
               <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Artículos</label>
               <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '200px', overflowY: 'auto' }}>
-                {articulosTitulo.map((art: any) => (
+                {[...articulosTitulo].sort(compararArticulos).map((art: any) => (
                   <div
                     key={art.id}
                     onClick={() => vincularArticulo.mutate(art)}

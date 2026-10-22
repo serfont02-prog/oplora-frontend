@@ -6,7 +6,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Shuffle, Bell, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Shuffle, Bell } from 'lucide-react';
+import Interruptor from '@/components/ui/Interruptor';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useMiLiga } from '@/components/liga/TarjetaLiga';
@@ -24,20 +25,6 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
   );
 }
 
-function Interruptor({ activo, onClick, etiqueta }: { activo: boolean; onClick: () => void; etiqueta: string }) {
-  return (
-    <button
-      role="switch"
-      aria-checked={activo}
-      aria-label={etiqueta}
-      onClick={onClick}
-      style={{ width: 46, height: 28, borderRadius: 999, border: 'none', padding: 3, background: activo ? '#16A34A' : '#CBD5E1', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}
-    >
-      <span style={{ display: 'block', width: 22, height: 22, borderRadius: '50%', background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transform: activo ? 'translateX(18px)' : 'none', transition: 'transform 0.2s' }} />
-    </button>
-  );
-}
-
 export default function PreferenciasPage() {
   const router = useRouter();
   const { usuario, actualizarUsuario } = useAuth();
@@ -49,8 +36,7 @@ export default function PreferenciasPage() {
 
   const retosAzar = (usuario as any).recibirRetosAleatorios !== false;
 
-  const cambiarRetosAzar = async () => {
-    const nuevo = !retosAzar;
+  const cambiarRetosAzar = async (nuevo: boolean) => {
     setGuardando(true);
     setError('');
     actualizarUsuario({ recibirRetosAleatorios: nuevo } as any);
@@ -67,8 +53,7 @@ export default function PreferenciasPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: 40 }}>
-      <style>{`@keyframes oplora-girar { to { transform: rotate(360deg); } }`}</style>
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
           <button
             onClick={() => router.push('/app/perfil')}
@@ -81,7 +66,7 @@ export default function PreferenciasPage() {
         </div>
 
         <Seccion titulo="Retos">
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Shuffle size={19} color={COLOR_RETOS} />
             </span>
@@ -92,23 +77,24 @@ export default function PreferenciasPage() {
               </div>
               {error && <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 6 }}>{error}</div>}
             </div>
-            {guardando
-              ? <Loader2 size={20} color={TEXT_MUTED} style={{ animation: 'oplora-girar 0.8s linear infinite', marginTop: 4 }} />
-              : <Interruptor activo={retosAzar} onClick={cambiarRetosAzar} etiqueta="Recibir retos al azar" />}
+            <Interruptor activo={retosAzar} onCambiar={cambiarRetosAzar} etiqueta="Recibir retos al azar" deshabilitado={guardando} />
           </div>
         </Seccion>
 
-        <Seccion titulo="Liga Oplora">
+        <section>
+          {(isLoading || (data && !data.liga)) && (
+            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Liga Oplora</div>
+          )}
           {isLoading && (
             <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>
           )}
-          {data?.liga && <AvisosLiga avisos={data.avisos} titulo={null} />}
+          {data?.liga && <AvisosLiga avisos={data.avisos} titulo="Liga Oplora" />}
           {data && !data.liga && (
             <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
               Podrás configurar los avisos de la Liga cuando entres en la liga de tu convocatoria.
             </div>
           )}
-        </Seccion>
+        </section>
 
         <button
           onClick={() => router.push('/app/alertas')}

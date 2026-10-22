@@ -3,19 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import LogoOplora from '@/components/marca/LogoOplora';
-import { BG_DASHBOARD } from '@/styles/tokens';
+import CargaOplora from '@/components/marca/CargaOplora';
 
-// ⭐ Mientras se comprueba la sesión (o se redirige) se muestra el logo en vez de una pantalla en blanco.
+// ⭐ Mientras se comprueba la sesión (o se redirige) se muestra el logo completo cargando, no una pantalla en blanco.
 function PantallaCarga() {
-  return (
-    <div style={{ minHeight: '100vh', background: BG_DASHBOARD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <style>{`@keyframes oplora-latir { 0%, 100% { opacity: 0.55; transform: scale(0.96); } 50% { opacity: 1; transform: scale(1); } }`}</style>
-      <div style={{ animation: 'oplora-latir 1.4s ease-in-out infinite' }}>
-        <LogoOplora variante="icono" alto={46} />
-      </div>
-    </div>
-  );
+  return <CargaOplora />;
 }
 
 export default function AppLayout({
