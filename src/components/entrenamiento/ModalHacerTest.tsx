@@ -234,11 +234,12 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
           {paso === 'tipo' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
-                { tipo: 'general' as TipoTest, label: 'Test general', desc: 'Preguntas de todo el temario', Icon: ClipboardCheck },
-                { tipo: 'tema' as TipoTest, label: 'Test por temas', desc: 'Elige uno o varios temas', Icon: BookOpen },
-                { tipo: 'bloque' as any, label: 'Test por bloque', desc: 'Elige un bloque completo del temario', esBloque: true, Icon: FolderOpen },
-                { tipo: 'ley' as TipoTest, label: 'Test por ley', desc: 'Elige una ley concreta', Icon: Scale },
-              ].filter(op => !(op as any).esBloque || bloquesDisponibles.length > 0).map(({ tipo, label, desc, Icon }) => (
+                // ⭐ Cada tipo con su color (antes todos verdes sobre el fondo verde del modal)
+                { tipo: 'general' as TipoTest, label: 'Test general', desc: 'Preguntas de todo el temario', Icon: ClipboardCheck, color: '#1F7CFF', fondo: '#EAF0FF' },
+                { tipo: 'tema' as TipoTest, label: 'Test por temas', desc: 'Elige uno o varios temas', Icon: BookOpen, color: '#B7791F', fondo: '#FEF6E4' },
+                { tipo: 'bloque' as any, label: 'Test por bloque', desc: 'Elige un bloque completo del temario', esBloque: true, Icon: FolderOpen, color: '#4F46E5', fondo: '#E0E7FF' },
+                { tipo: 'ley' as TipoTest, label: 'Test por ley', desc: 'Elige una ley concreta', Icon: Scale, color: '#7C3AED', fondo: '#F3F0FC' },
+              ].filter(op => !(op as any).esBloque || bloquesDisponibles.length > 0).map(({ tipo, label, desc, Icon, color, fondo }) => (
                 <button
                   key={tipo}
                   onClick={() => {
@@ -255,8 +256,8 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                     border: 'none', background: 'white', cursor: 'pointer', boxShadow: SOMBRA,
                   }}
                 >
-                  <span style={{ width: 40, height: 40, borderRadius: 12, background: '#F3FAE9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={20} color={COLOR_TEST} />
+                  <span style={{ width: 40, height: 40, borderRadius: 12, background: fondo, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={20} color={color} />
                   </span>
                   <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <span style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY }}>{label}</span>

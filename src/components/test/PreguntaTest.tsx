@@ -15,9 +15,10 @@ const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 interface Pregunta {
   enunciado: string;
   opciones: string[];
-  correcta: number;
+  correcta?: number;
   explicacion?: string;
   articulo?: string;
+  imagenUrl?: string | null; // psicotécnicos
 }
 
 type Props = {
@@ -36,6 +37,10 @@ type Props = {
   dejarEnBlanco?: (mostrarCorreccion?: boolean) => void;
   titulo?: string;
   onSalir?: () => void;
+  // ⭐ Duelos (retos): color de acento y texto del aviso al salir
+  color?: string;
+  avisoSalir?: string;
+  enviando?: boolean;
 };
 
 export default function PreguntaTest({
@@ -53,6 +58,9 @@ export default function PreguntaTest({
   dejarEnBlanco,
   titulo = 'Test',
   onSalir,
+  color = COLOR_TEST,
+  avisoSalir = 'Perderás el progreso de este test.',
+  enviando = false,
 }: Props) {
   const pregunta = preguntas[preguntaActual];
   const [confirmarSalir, setConfirmarSalir] = useState(false);
@@ -135,7 +143,7 @@ export default function PreguntaTest({
                 </span>
               </div>
               <div style={{ height: 6, background: 'rgba(255,255,255,0.85)', borderRadius: 999, overflow: 'hidden' }}>
-                <div style={{ width: `${((preguntaActual + 1) / preguntas.length) * 100}%`, height: '100%', background: COLOR_TEST, borderRadius: 999, transition: 'width .25s' }} />
+                <div style={{ width: `${((preguntaActual + 1) / preguntas.length) * 100}%`, height: '100%', background: color, borderRadius: 999, transition: 'width .25s' }} />
               </div>
             </div>
             {/* ⭐ Cuenta atrás en un reloj circular aparte: antes era otra barra justo debajo de la
@@ -152,7 +160,7 @@ export default function PreguntaTest({
         {confirmarSalir && (
           <div style={{ background: 'white', borderRadius: 16, padding: 14, boxShadow: SOMBRA, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>¿Salir del test?</div>
-            <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 3 }}>Perderás el progreso de este test.</div>
+            <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 3 }}>{avisoSalir}</div>
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button onClick={() => setConfirmarSalir(false)} style={{ flex: 1, border: 'none', background: '#F3F4F6', color: TEXT_SECONDARY, borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                 Seguir
@@ -166,6 +174,10 @@ export default function PreguntaTest({
 
         {/* Enunciado */}
         <div style={{ background: 'white', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 12 }}>
+          {pregunta.imagenUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={pregunta.imagenUrl} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: 14, display: 'block' }} />
+          )}
           <div style={{
             fontSize: 'clamp(16px, 4.4vw, 19px)', lineHeight: 1.45, fontWeight: 700, color: TEXT_PRIMARY,
             overflowWrap: 'break-word', wordBreak: 'break-word',
@@ -238,7 +250,7 @@ export default function PreguntaTest({
                   }
                   comprobar();
                 }}
-                disabled={seleccionada === null}
+                disabled={seleccionada === null || enviando}
                 style={{
                   width: '100%', height: 52, borderRadius: 14, border: 'none',
                   background: seleccionada !== null ? '#0f172a' : '#DDE3EE',
@@ -253,6 +265,7 @@ export default function PreguntaTest({
 
               {permitirBlancos && dejarEnBlanco && (
                 <button
+                  disabled={enviando}
                   onClick={() => {
                     if (!mostrarExplicaciones) {
                       dejarEnBlanco(false);
