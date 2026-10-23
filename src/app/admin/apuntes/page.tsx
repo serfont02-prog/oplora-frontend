@@ -69,7 +69,12 @@ export default function ApuntesAdminPage() {
     enabled: !!oposicionId && vinculacion === 'tema',
   });
 
-  const convocatoria = convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0];
+  // ⭐ Por defecto la convocatoria activa, pero se puede elegir otra: los apuntes van ligados a
+  // los temas de cada convocatoria, y quien siga en una anterior ve los de esa.
+  const [convocatoriaElegidaId, setConvocatoriaElegidaId] = useState<string | null>(null);
+  const convocatoriasOrdenadas = [...convocatorias].sort((a: any, b: any) => (b.anyo ?? 0) - (a.anyo ?? 0));
+  const convocatoria = (convocatoriaElegidaId && convocatorias.find((c: any) => c.id === convocatoriaElegidaId))
+    || convocatorias.find((c: any) => c.estado === 'activa') || convocatoriasOrdenadas[0];
 
   const { data: temas = [] } = useQuery({
     queryKey: ['temas-apuntes', convocatoria?.id],
@@ -212,7 +217,7 @@ export default function ApuntesAdminPage() {
             <PasoHeader numero={1} titulo="¿Para qué oposición es?" activo />
             <select
               value={oposicionId}
-              onChange={(e) => { setOposicionId(e.target.value); setTemaId(''); setResultado(null); }}
+              onChange={(e) => { setOposicionId(e.target.value); setTemaId(''); setResultado(null); setConvocatoriaElegidaId(null); }}
               style={inputStyle}
             >
               <option value="">Selecciona oposición</option>
@@ -249,6 +254,23 @@ export default function ApuntesAdminPage() {
           {pasoOposicionListo && vinculacion === 'tema' && (
             <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <PasoHeader numero={2} titulo="¿Qué tema?" activo={temas.length > 0} />
+              {convocatoriasOrdenadas.length > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '12px', color: '#6b7280' }}>Convocatoria:</span>
+                  {convocatoriasOrdenadas.map((c: any) => {
+                    const activa = convocatoria?.id === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => { setConvocatoriaElegidaId(c.id); setTemaId(''); setTemaExpandido(null); }}
+                        style={{ padding: '5px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: activa ? '1px solid #111827' : '1px solid #e5e7eb', background: activa ? '#111827' : 'white', color: activa ? 'white' : '#374151' }}
+                      >
+                        {c.anyo ?? 'Sin año'}{c.estado === 'activa' ? ' · activa' : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               {temas.length === 0 ? (
                 <div style={{ fontSize: '12px', color: '#9ca3af' }}>
                   {convocatoria ? 'Esta convocatoria todavía no tiene temas creados.' : 'Cargando temas de la convocatoria activa…'}

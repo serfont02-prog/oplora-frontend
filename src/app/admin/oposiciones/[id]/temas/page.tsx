@@ -40,6 +40,29 @@ function agruparPorNorma(normativas: any[]) {
     .map(([ley, items]) => ({ ley, items: items.sort(compararArticulos) }));
 }
 
+function normalizarTexto(t: any): string {
+  return String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[\s.\-/]+/g, '');
+}
+function etiquetaLey(ol: any): string {
+  const s = ol?.ley?.siglas?.trim();
+  if (s) return s;
+  const n = String(ol?.ley?.nombre ?? 'Ley');
+  return n.length > 40 ? n.slice(0, 38) + '…' : n;
+}
+function FilaArticuloVincular({ art, vinculado, onVincular }: { art: any; vinculado: boolean; onVincular: () => void }) {
+  return (
+    <div
+      onClick={vinculado ? undefined : onVincular}
+      style={{ padding: '10px 12px', fontSize: '13px', cursor: vinculado ? 'default' : 'pointer', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', background: vinculado ? '#f9fafb' : 'white' }}
+      onMouseEnter={(e) => { if (!vinculado) e.currentTarget.style.background = '#f5f8ff'; }}
+      onMouseLeave={(e) => { if (!vinculado) e.currentTarget.style.background = 'white'; }}
+    >
+      <span style={{ minWidth: 0, color: vinculado ? '#9ca3af' : '#111827' }}><strong>Art. {art.numero}</strong> {art.titulo ? `— ${art.titulo}` : ''}</span>
+      <span style={{ fontSize: '11px', fontWeight: 600, color: vinculado ? '#15803d' : '#1F7CFF', flexShrink: 0 }}>{vinculado ? 'Vinculado ✓' : 'Vincular'}</span>
+    </div>
+  );
+}
+
 const TIPOS = [
   { value: 'con_normativa', label: 'Con normativa' },
   { value: 'conceptual', label: 'Conceptual' },
@@ -79,6 +102,9 @@ export default function TemasAdminPage() {
   const [capituloSeleccionado, setCapituloSeleccionado] = useState<any>(null);
   const [busquedaArticulo, setBusquedaArticulo] = useState('');
   const [vinculando, setVinculando] = useState(false);
+  const [filtroLey, setFiltroLey] = useState('');
+  const [vinculandoVarios, setVinculandoVarios] = useState(false);
+  const [resultadoVarios, setResultadoVarios] = useState('');
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [temaExpandido, setTemaExpandido] = useState<string | null>(null);
@@ -272,13 +298,86 @@ mutationFn: async (articulo: any) => {
       ],
     }));
   },
-  onError: (error: any) => {
-    if (error.message === 'Este artículo ya está vinculado') {
-      alert('Este artículo ya está vinculado a este tema');
-    }
-  },
+  // El duplicado ya no se puede pulsar (sale como "Vinculado"); no hace falta avisar con alert.
+  onError: () => {},
 });
 
+
+const idsVinculados = new Set<string>((temaVinculando?.normativas ?? []).map((tn: any) => tn.articulo?.id).filter(Boolean));
+
+const leyesOrdenadas = [...leyesOposicion].sort((a: any, b: any) => etiquetaLey(a).localeCompare(etiquetaLey(b), 'es'));
+const leyesFiltradas = filtroLey.trim()
+  ? leyesOrdenadas.filter((ol: any) => normalizarTexto(`${ol.ley?.siglas ?? ''} ${ol.ley?.nombre ?? ''}`).includes(normalizarTexto(filtroLey)))
+  : leyesOrdenadas;
+
+const elegirLey = (ol: any) => {
+  setLeySeleccionada(ol);
+  setTituloSeleccionado(null);
+  setCapituloSeleccionado(null);
+  setBusquedaArticulo('');
+  setResultadoVarios('');
+};
+
+// "CE 14" → elige la ley con siglas CE y deja "14" en la búsqueda.
+const cambiarBusqueda = (valor: string) => {
+  setResultadoVarios('');
+  const palabras = valor.trimStart().split(/\s+/);
+  if (palabras.length >= 2) {
+    for (let k = palabras.length - 1; k >= 1; k--) {
+      const prefijo = normalizarTexto(palabras.slice(0, k).join(''));
+      const ley = leyesOposicion.find((ol: any) => ol.ley?.siglas && normalizarTexto(ol.ley.siglas) === prefijo);
+      if (ley) {
+        if (leySeleccionada?.ley?.id !== ley.ley?.id) {
+          setLeySeleccionada(ley);
+          setTituloSeleccionado(null);
+          setCapituloSeleccionado(null);
+        }
+        setBusquedaArticulo(palabras.slice(k).join(' '));
+        return;
+      }
+    }
+  }
+  setBusquedaArticulo(valor);
+};
+
+const rango = (() => {
+  const m = busquedaArticulo.trim().match(/^(\d+)\s*(?:-|–|a|al)\s*(\d+)$/i);
+  if (!m) return null;
+  const desde = parseInt(m[1], 10), hasta = parseInt(m[2], 10);
+  if (hasta < desde || hasta - desde > 100) return null;
+  return { desde, hasta };
+})();
+
+// Vincula varios artículos seguidos (salta los que ya estaban).
+const vincularVarios = async (lista: any[]) => {
+  const pendientes = lista.filter((a: any) => a?.id && !idsVinculados.has(a.id));
+  if (pendientes.length === 0) { setResultadoVarios('Ya estaban todos vinculados.'); return; }
+  setVinculandoVarios(true);
+  setResultadoVarios('');
+  let ok = 0;
+  for (const art of [...pendientes].sort(compararArticulos)) {
+    try { await vincularArticulo.mutateAsync(art); ok++; } catch { /* sigue con el resto */ }
+  }
+  setVinculandoVarios(false);
+  setResultadoVarios(`${ok} ${ok === 1 ? 'artículo vinculado' : 'artículos vinculados'}${ok < pendientes.length ? ` (${pendientes.length - ok} con error)` : ''}.`);
+};
+
+const vincularRango = async (desde: number, hasta: number) => {
+  const vId = leySeleccionada?.versionLey?.id;
+  if (!vId) return;
+  setVinculandoVarios(true);
+  setResultadoVarios('');
+  const encontrados: any[] = [];
+  for (let n = desde; n <= hasta; n++) {
+    try {
+      const res = await api.get(`/normativa/articulo-por-numero/${vId}/${n}`);
+      if (res.data?.id) encontrados.push(res.data);
+    } catch { /* no existe */ }
+  }
+  setVinculandoVarios(false);
+  if (encontrados.length === 0) { setResultadoVarios('No se ha encontrado ningún artículo en ese rango.'); return; }
+  await vincularVarios(encontrados);
+};
 
 const desvincularArticulo = useMutation({
   mutationFn: async (temaNormativaId: string) => {
@@ -716,58 +815,79 @@ const importarTemario = async () => {
         </div>
       )}
 
-      {/* Selector de ley */}
+      {/* ⭐ Elegir ley: chips con siglas en vez de un desplegable largo, con filtro si hay muchas */}
       <div style={{ marginBottom: '12px' }}>
-        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Ley</label>
-        <select
-          value={leySeleccionada?.ley?.id ?? ''}
-          onChange={(e) => {
-            const ley = leyesOposicion.find((l: any) => l.ley?.id === e.target.value);
-            setLeySeleccionada(ley);
-            setTituloSeleccionado(null);
-            setCapituloSeleccionado(null);
-            setBusquedaArticulo('');
-          }}
-          style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
-        >
-          <option value="">Selecciona una ley...</option>
-          {leyesOposicion.map((ol: any) => (
-            <option key={ol.ley?.id} value={ol.ley?.id}>
-              {ol.ley?.nombre} {ol.versionLey ? `(v${ol.versionLey.version})` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Búsqueda directa */}
-      {leySeleccionada && (
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Buscar artículo</label>
+        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Ley</label>
+        {leyesOposicion.length > 6 && (
           <input
             type="text"
-            value={busquedaArticulo}
-            onChange={(e) => setBusquedaArticulo(e.target.value)}
-            placeholder="Número o texto del artículo..."
-            style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+            value={filtroLey}
+            onChange={(e) => setFiltroLey(e.target.value)}
+            placeholder="Filtrar leyes por siglas o nombre…"
+            style={{ width: '100%', padding: '8px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }}
           />
-          {articulosBusqueda.length > 0 && (
-            <div style={{ marginTop: '6px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '200px', overflowY: 'auto' }}>
-              {[...articulosBusqueda].sort(compararArticulos).map((art: any) => (
-                <div
-                  key={art.id}
-                  onClick={() => vincularArticulo.mutate(art)}
-                  style={{ padding: '10px 12px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
-                >
-                  <span><strong>Art. {art.numero}</strong> {art.titulo ? `— ${art.titulo}` : ''}</span>
-                  <span style={{ fontSize: '11px', color: '#1F7CFF' }}>Vincular</span>
-                </div>
-              ))}
-            </div>
-          )}
+        )}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '132px', overflowY: 'auto' }}>
+          {leyesFiltradas.map((ol: any) => {
+            const activa = leySeleccionada?.ley?.id === ol.ley?.id;
+            return (
+              <button
+                key={ol.ley?.id}
+                title={ol.ley?.nombre}
+                onClick={() => elegirLey(activa ? null : ol)}
+                style={{ padding: '6px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: activa ? '1px solid #1F7CFF' : '1px solid #e5e7eb', background: activa ? '#1F7CFF' : 'white', color: activa ? 'white' : '#374151', maxWidth: '100%', textAlign: 'left' }}
+              >
+                {etiquetaLey(ol)}
+              </button>
+            );
+          })}
+          {leyesFiltradas.length === 0 && <span style={{ fontSize: '12px', color: '#9ca3af' }}>Ninguna ley coincide.</span>}
         </div>
-      )}
+        {leySeleccionada && (
+          <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '6px', lineHeight: 1.4 }}>
+            {leySeleccionada.ley?.nombre} {leySeleccionada.versionLey ? `(v${leySeleccionada.versionLey.version})` : ''}
+          </div>
+        )}
+      </div>
+
+      {/* ⭐ Búsqueda rápida: "CE 14", "CE 14-20" (rango) o una palabra del artículo */}
+      <div style={{ marginBottom: '12px' }}>
+        <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Buscar artículo</label>
+        <input
+          type="text"
+          value={busquedaArticulo}
+          onChange={(e) => cambiarBusqueda(e.target.value)}
+          placeholder={leySeleccionada ? 'Número (14), rango (14-20) o una palabra…' : 'Ej.: CE 14 · CE 14-20 · o elige una ley arriba'}
+          style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+        />
+        {!leySeleccionada && busquedaArticulo.trim() && (
+          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px' }}>Elige una ley o empieza por sus siglas seguidas de un espacio (por ejemplo «CE 14»).</div>
+        )}
+
+        {leySeleccionada && rango && (
+          <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => vincularRango(rango.desde, rango.hasta)}
+              disabled={vinculandoVarios}
+              style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', background: '#111827', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', opacity: vinculandoVarios ? 0.6 : 1 }}
+            >
+              {vinculandoVarios ? 'Vinculando…' : `Vincular arts. ${rango.desde} a ${rango.hasta} (${rango.hasta - rango.desde + 1})`}
+            </button>
+            {resultadoVarios && <span style={{ fontSize: '12px', color: '#15803d' }}>{resultadoVarios}</span>}
+          </div>
+        )}
+
+        {leySeleccionada && !rango && articulosBusqueda.length > 0 && (
+          <div style={{ marginTop: '6px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '220px', overflowY: 'auto' }}>
+            {[...articulosBusqueda].sort(compararArticulos).map((art: any) => (
+              <FilaArticuloVincular key={art.id} art={art} vinculado={idsVinculados.has(art.id)} onVincular={() => vincularArticulo.mutate(art)} />
+            ))}
+          </div>
+        )}
+        {leySeleccionada && !rango && busquedaArticulo.trim() && articulosBusqueda.length === 0 && (
+          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>Sin resultados en {etiquetaLey(leySeleccionada)}.</div>
+        )}
+      </div>
 
       {/* Navegación por título/capítulo */}
       {leySeleccionada && !busquedaArticulo && (
@@ -815,19 +935,20 @@ const importarTemario = async () => {
           {/* Artículos de capítulo */}
           {capituloSeleccionado && articulos.length > 0 && (
             <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Artículos</label>
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '200px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280' }}>Artículos</label>
+                <button
+                  onClick={() => vincularVarios(articulos)}
+                  disabled={vinculandoVarios || articulos.every((a: any) => idsVinculados.has(a.id))}
+                  style={{ fontSize: '11px', fontWeight: 600, color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', opacity: articulos.every((a: any) => idsVinculados.has(a.id)) ? 0.4 : 1 }}
+                >
+                  {vinculandoVarios ? 'Vinculando…' : `Vincular todos (${articulos.filter((a: any) => !idsVinculados.has(a.id)).length})`}
+                </button>
+              </div>
+              {resultadoVarios && <div style={{ fontSize: '12px', color: '#15803d', marginBottom: '4px' }}>{resultadoVarios}</div>}
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '220px', overflowY: 'auto' }}>
                 {[...articulos].sort(compararArticulos).map((art: any) => (
-                  <div
-                    key={art.id}
-                    onClick={() => vincularArticulo.mutate(art)}
-                    style={{ padding: '10px 12px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
-                  >
-                    <span><strong>Art. {art.numero}</strong> {art.titulo ? `— ${art.titulo}` : ''}</span>
-                    <span style={{ fontSize: '11px', color: '#1F7CFF' }}>Vincular</span>
-                  </div>
+                  <FilaArticuloVincular key={art.id} art={art} vinculado={idsVinculados.has(art.id)} onVincular={() => vincularArticulo.mutate(art)} />
                 ))}
               </div>
             </div>
@@ -836,19 +957,20 @@ const importarTemario = async () => {
           {/* Artículos directos del título sin capítulo */}
           {tituloSeleccionado && capitulos.length === 0 && articulosTitulo.length > 0 && (
             <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Artículos</label>
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '200px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280' }}>Artículos</label>
+                <button
+                  onClick={() => vincularVarios(articulosTitulo)}
+                  disabled={vinculandoVarios || articulosTitulo.every((a: any) => idsVinculados.has(a.id))}
+                  style={{ fontSize: '11px', fontWeight: 600, color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', opacity: articulosTitulo.every((a: any) => idsVinculados.has(a.id)) ? 0.4 : 1 }}
+                >
+                  {vinculandoVarios ? 'Vinculando…' : `Vincular todos (${articulosTitulo.filter((a: any) => !idsVinculados.has(a.id)).length})`}
+                </button>
+              </div>
+              {resultadoVarios && <div style={{ fontSize: '12px', color: '#15803d', marginBottom: '4px' }}>{resultadoVarios}</div>}
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', maxHeight: '220px', overflowY: 'auto' }}>
                 {[...articulosTitulo].sort(compararArticulos).map((art: any) => (
-                  <div
-                    key={art.id}
-                    onClick={() => vincularArticulo.mutate(art)}
-                    style={{ padding: '10px 12px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
-                  >
-                    <span><strong>Art. {art.numero}</strong> {art.titulo ? `— ${art.titulo}` : ''}</span>
-                    <span style={{ fontSize: '11px', color: '#1F7CFF' }}>Vincular</span>
-                  </div>
+                  <FilaArticuloVincular key={art.id} art={art} vinculado={idsVinculados.has(art.id)} onVincular={() => vincularArticulo.mutate(art)} />
                 ))}
               </div>
             </div>

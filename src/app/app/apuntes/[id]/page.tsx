@@ -812,11 +812,12 @@ const updateProgreso = () => {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '1rem' }}>
         <div style={{ minWidth: 0 }}>
           {mapaNombresLey[articuloModal.versionLeyId] && (
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '2px', lineHeight: 1.4 }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '8px', lineHeight: 1.45 }}>
               {mapaNombresLey[articuloModal.versionLeyId]}
             </div>
           )}
-          <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>
+          {/* ⭐ Más aire entre el nombre de la ley y el número de artículo (antes iban pegados) */}
+          <div style={{ fontSize: '16px', fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>
             Artículo {articuloModal.numero}
           </div>
         </div>
