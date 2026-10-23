@@ -6,6 +6,7 @@
 // Formatos admitidos (la palabra "artículo"/"art." es opcional):
 //  - "[CC articulo 17.2]", "[CC art. 14]", "[CC 17.2]"           → siglas de una palabra
 //  - "[CP Artículo 31 bis]", "[CP Artículo 140 bis]"              → sufijos bis, ter, quater…
+//  - "[LECrim Artículo 588 sexies a]", "[LECrim Artículo 588 ter k]" → letra final de la LECrim
 //  - "[LO 4/2015 Artículo 16]", "[Ley 5/2014 Artículo 18]",
 //    "[RD 704/2011 Artículo 7]", "[RDL 12/2018 Artículo 1]"       → tipo de norma + número/año
 //
@@ -22,10 +23,11 @@ const SUFIJOS = '(?:bis|ter|qu[aá]ter|quinquies|sexies|septies|octies|nonies|de
 
 // Grupo 1: siglas → una palabra (CP, LOPSC, LECrim…) opcionalmente seguida de un
 // número/año (LO 4/2015, Ley 5/2014, RD 704/2011).
-// Grupo 2: número del artículo, con apartado opcional (17.2) y sufijo opcional (31 bis).
+// Grupo 2: número del artículo, con sufijo opcional (31 bis), letra final opcional de la
+// LECrim (588 sexies a) y apartado opcional (17.2).
 const REGEX_REFERENCIA_ARTICULO = new RegExp(
   '\\[([A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\\s+\\d+\\/\\d{4})?)\\s+(?:art[ií]culo\\s+|art\\.?\\s+)?' +
-    `(\\d+(?:\\s+${SUFIJOS})?(?:\\.\\d+)*)\\]`,
+    `(\\d+(?:\\s+${SUFIJOS}(?:\\s+[a-z])?)?(?:\\.\\d+)*)\\]`,
   'gi',
 );
 
@@ -88,8 +90,10 @@ export function renderReferencias(
       return <span key={key}>{parte}</span>;
     }
     const versionLeyId = mapaSiglas[normalizarSiglas(parte.siglas)];
+    // Detrás del número se muestran las siglas tal como vienen en la cita
+    // ("Artículo 12 CC", "Artículo 16 LO 4/2015"), para que se sepa de qué ley es.
     if (!versionLeyId) {
-      return <span key={key}>{parte.siglas} art. {parte.numero}</span>;
+      return <span key={key}>Artículo {parte.numero} {parte.siglas}</span>;
     }
     return (
       <button
@@ -103,7 +107,7 @@ export function renderReferencias(
           fontSize: 'inherit', fontFamily: 'inherit',
         }}
       >
-        Artículo {parte.numero}
+        Artículo {parte.numero} {parte.siglas}
       </button>
     );
   });
