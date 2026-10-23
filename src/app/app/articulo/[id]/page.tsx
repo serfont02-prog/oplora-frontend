@@ -353,7 +353,7 @@ export default function ArticuloPage() {
           <ArrowLeft size={14} />
           Volver
         </button>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ flex: 1, minWidth: 0, margin: '0 10px', textAlign: 'center', fontSize: '12.5px', fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {leyNombre}
         </span>
         <span style={{ width: '60px' }} />

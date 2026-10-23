@@ -168,10 +168,10 @@ const toggleSeccion = async (seccionId: string) => {
           <ArrowLeft size={14} />
           Volver
         </button>
-        <span style={{ fontSize: '12px', fontWeight: 500, color: '#111827', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ flex: 1, minWidth: 0, margin: '0 10px', textAlign: 'center', fontSize: '12px', fontWeight: 500, color: '#111827', lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {ley.nombre}
         </span>
-        <span />
+        <span style={{ width: '56px', flexShrink: 0 }} />
       </div>
 
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.25rem' }}>

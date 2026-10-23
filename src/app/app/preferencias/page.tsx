@@ -1,12 +1,14 @@
 'use client';
 
 // ⭐ Notificaciones y avisos (desde Perfil: son de la cuenta, no de la convocatoria).
-// - Retos al azar: si otros opositores de tu convocatoria pueden retarte sin conocerte (activado por defecto).
+// - Qué avisos quieres recibir: retos, repasos, noticias, convocatoria y normativa (todos activados por defecto).
+// - Retos al azar: si otros opositores de tu convocatoria pueden retarte sin conocerte.
 // - Avisos de la Liga Oplora.
+// Las respuestas de soporte llegan siempre.
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Shuffle, Bell } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Shuffle, Bell, Swords, CalendarClock, Newspaper, Megaphone, Scale } from 'lucide-react';
 import Interruptor from '@/components/ui/Interruptor';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -16,12 +18,40 @@ import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL, COLOR_RETOS, COLO
 
 const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
 
-function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+type Categoria = 'retos' | 'repasos' | 'noticias' | 'convocatoria' | 'normativa';
+
+const CATEGORIAS: { clave: Categoria; titulo: string; sub: string; icono: any; color: string; fondo: string }[] = [
+  { clave: 'retos', titulo: 'Retos y duelos', sub: 'Cuando te retan y cuando termina un duelo', icono: Swords, color: COLOR_RETOS, fondo: COLOR_RETOS_BG },
+  { clave: 'repasos', titulo: 'Recordatorios de repaso', sub: 'Temas y flashcards que te toca repasar hoy', icono: CalendarClock, color: '#4D7C0F', fondo: '#ECFCCB' },
+  { clave: 'noticias', titulo: 'Noticias', sub: 'Nuevas noticias de tu oposición', icono: Newspaper, color: '#1F7CFF', fondo: '#EAF0FF' },
+  { clave: 'convocatoria', titulo: 'Tu convocatoria', sub: 'Nuevas convocatorias, documentos y listas', icono: Megaphone, color: '#4F46E5', fondo: '#E0E7FF' },
+  { clave: 'normativa', titulo: 'Cambios en la normativa', sub: 'Cuando cambia una ley de tu temario', icono: Scale, color: '#6B5F3E', fondo: '#EDE9DD' },
+];
+
+function Seccion({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
   return (
     <section>
       <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>{titulo}</div>
       {children}
+      {nota && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 6, lineHeight: 1.45, padding: '0 4px' }}>{nota}</div>}
     </section>
+  );
+}
+
+function FilaAviso({ icono: Icono, color, fondo, titulo, sub, activo, onCambiar, borde }: {
+  icono: any; color: string; fondo: string; titulo: string; sub: string; activo: boolean; onCambiar: (v: boolean) => void; borde?: boolean;
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderTop: borde ? '1px solid #EEF0F3' : 'none' }}>
+      <span style={{ width: 40, height: 40, borderRadius: 12, background: fondo, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icono size={19} color={color} />
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>{titulo}</div>
+        <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1, lineHeight: 1.4 }}>{sub}</div>
+      </div>
+      <Interruptor activo={activo} onCambiar={onCambiar} etiqueta={titulo} />
+    </div>
   );
 }
 
@@ -29,31 +59,36 @@ export default function PreferenciasPage() {
   const router = useRouter();
   const { usuario, actualizarUsuario } = useAuth();
   const { data, isLoading } = useMiLiga(!!usuario);
-  const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
   if (!usuario) return null;
 
-  const retosAzar = (usuario as any).recibirRetosAleatorios !== false;
+  const u = usuario as any;
+  const retosAzar = u.recibirRetosAleatorios !== false;
+  const avisos: Record<Categoria, boolean> = Object.fromEntries(
+    CATEGORIAS.map((c) => [c.clave, u.preferenciasAvisos?.[c.clave] !== false]),
+  ) as Record<Categoria, boolean>;
 
-  const cambiarRetosAzar = async (nuevo: boolean) => {
-    setGuardando(true);
+  // Cambio inmediato en pantalla; si el servidor falla se deshace y se avisa.
+  const guardar = async (cambio: { recibirRetosAleatorios?: boolean; avisos?: Partial<Record<Categoria, boolean>> }) => {
     setError('');
-    actualizarUsuario({ recibirRetosAleatorios: nuevo } as any);
+    const anterior = { recibirRetosAleatorios: u.recibirRetosAleatorios, preferenciasAvisos: u.preferenciasAvisos ?? null };
+    actualizarUsuario({
+      ...(cambio.recibirRetosAleatorios !== undefined ? { recibirRetosAleatorios: cambio.recibirRetosAleatorios } : {}),
+      ...(cambio.avisos ? { preferenciasAvisos: { ...avisos, ...cambio.avisos } } : {}),
+    } as any);
     try {
-      const res = await api.patch('/usuarios/preferencias', { recibirRetosAleatorios: nuevo });
-      actualizarUsuario({ recibirRetosAleatorios: res.data?.recibirRetosAleatorios ?? nuevo } as any);
+      const res = await api.patch('/usuarios/preferencias', cambio);
+      actualizarUsuario({ recibirRetosAleatorios: res.data?.recibirRetosAleatorios, preferenciasAvisos: res.data?.avisos } as any);
     } catch {
-      actualizarUsuario({ recibirRetosAleatorios: !nuevo } as any);
-      setError('No se ha podido guardar. Inténtalo de nuevo.');
-    } finally {
-      setGuardando(false);
+      actualizarUsuario(anterior as any);
+      setError('No se ha podido guardar el cambio. Comprueba la conexión e inténtalo de nuevo.');
     }
   };
 
   return (
     <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: 40 }}>
-            <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
           <button
             onClick={() => router.push('/app/perfil')}
@@ -65,19 +100,39 @@ export default function PreferenciasPage() {
           <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>Notificaciones y avisos</div>
         </div>
 
-        <Seccion titulo="Retos">
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Shuffle size={19} color={COLOR_RETOS} />
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>Recibir retos al azar</div>
-              <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.45 }}>
-                Otros opositores de tu convocatoria podrán retarte aunque no te conozcan. Como mucho 3 al día.
-              </div>
-              {error && <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 6 }}>{error}</div>}
-            </div>
-            <Interruptor activo={retosAzar} onCambiar={cambiarRetosAzar} etiqueta="Recibir retos al azar" deshabilitado={guardando} />
+        {error && (
+          <div style={{ background: '#FEF2F2', color: '#B91C1C', borderRadius: 14, padding: '10px 12px', fontSize: 13, lineHeight: 1.45 }}>{error}</div>
+        )}
+
+        <Seccion titulo="Qué avisos quieres recibir" nota="Las respuestas de soporte te llegarán siempre.">
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            {CATEGORIAS.map((c, i) => (
+              <FilaAviso
+                key={c.clave}
+                icono={c.icono}
+                color={c.color}
+                fondo={c.fondo}
+                titulo={c.titulo}
+                sub={c.sub}
+                activo={avisos[c.clave]}
+                onCambiar={(v) => guardar({ avisos: { [c.clave]: v } })}
+                borde={i > 0}
+              />
+            ))}
+          </div>
+        </Seccion>
+
+        <Seccion titulo="Retos al azar">
+          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            <FilaAviso
+              icono={Shuffle}
+              color={COLOR_RETOS}
+              fondo={COLOR_RETOS_BG}
+              titulo="Recibir retos al azar"
+              sub="Otros opositores de tu convocatoria podrán retarte aunque no te conozcan. Como mucho 3 al día."
+              activo={retosAzar}
+              onCambiar={(v) => guardar({ recibirRetosAleatorios: v })}
+            />
           </div>
         </Seccion>
 
@@ -105,7 +160,7 @@ export default function PreferenciasPage() {
           </span>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>Tus alertas</div>
-            <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Retos, liga y avisos recibidos</div>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Todo lo que te ha llegado</div>
           </div>
           <ChevronRight size={16} color="#C4C9D2" />
         </button>

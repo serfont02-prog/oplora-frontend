@@ -494,8 +494,9 @@ function FilaMaterial({ Icon, color, bg, titulo, sub, onClick, href, ultima }: {
         <Icon size={19} color={color} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titulo}</div>
-        {sub && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
+        {/* ⭐ Hasta 3 líneas: antes se cortaba en una y de "RD 45/2004, de…" solo se veía el número */}
+        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>{titulo}</div>
+        {sub && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{sub}</div>}
       </div>
       <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
     </>
