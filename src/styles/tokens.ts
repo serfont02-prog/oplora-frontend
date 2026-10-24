@@ -32,9 +32,28 @@
  * `page.tsx` existentes vía `style={{ color: TEXT_MUTED }}`, etc.
  */
 
+// ⭐ TEMA CLARO/OSCURO: los valores son variables CSS (definidas en app/globals.css con su
+// versión clara y oscura). En claro se ven exactamente igual que antes. El modo oscuro solo
+// se aplica dentro de las pantallas preparadas (contenedor con la clase `op-tema`).
+
+// Superficies y elementos comunes
+export const SUPERFICIE = 'var(--c-superficie)';
+export const SUPERFICIE_2 = 'var(--c-superficie-2)';
+export const BORDE = 'var(--c-borde)';
+export const PISTA = 'var(--c-pista)';
+export const CHEVRON = 'var(--c-chevron)';
+export const SOMBRA = 'var(--c-sombra)';
+export const PRIMARIO = 'var(--c-primario)';
+export const PRIMARIO_TEXTO = 'var(--c-primario-texto)';
+export const HERO = 'var(--c-hero)';
+export const AZUL = 'var(--c-azul)';
+export const AZUL_BG = 'var(--c-azul-bg)';
+export const VERDE = 'var(--c-verde)';
+export const VERDE_BG = 'var(--c-verde-bg)';
+
 // Texto semántico (compartido por casi todas las pantallas)
-export const TEXT_PRIMARY = '#111827';
-export const TEXT_SECONDARY = '#6B7280';
+export const TEXT_PRIMARY = 'var(--c-texto)';
+export const TEXT_SECONDARY = 'var(--c-texto-2)';
 
 /**
  * TEXT_MUTED — corregido por auditoría de accesibilidad (WCAG AA).
@@ -47,35 +66,35 @@ export const TEXT_SECONDARY = '#6B7280';
  * la app. Se prioriza shipear el fix de contraste sobre mantener dos tonos
  * de gris distintos.
  */
-export const TEXT_MUTED = '#6B7280';
+export const TEXT_MUTED = 'var(--c-texto-3)';
 
 // Colores de categoría (retos, flashcards, psicotécnicos, reto semanal)
-export const COLOR_RETOS = '#C2410C';
-export const COLOR_RETOS_BG = '#FACCC0';
+export const COLOR_RETOS = 'var(--c-retos)';
+export const COLOR_RETOS_BG = 'var(--c-retos-bg)';
 
-export const COLOR_FC = '#9333EA';
-export const COLOR_FC_BG = '#F3E8FF';
+export const COLOR_FC = 'var(--c-fc)';
+export const COLOR_FC_BG = 'var(--c-fc-bg)';
 
-export const COLOR_PSICO = '#4F46E5';
-export const COLOR_PSICO_BG = '#E0E7FF';
+export const COLOR_PSICO = 'var(--c-psico)';
+export const COLOR_PSICO_BG = 'var(--c-psico-bg)';
 
-export const COLOR_SEMANAL = '#7C3AED';
-export const COLOR_SEMANAL_BG = '#F3F0FC';
+export const COLOR_SEMANAL = 'var(--c-semanal)';
+export const COLOR_SEMANAL_BG = 'var(--c-semanal-bg)';
 
-export const COLOR_ALERTAS = '#CA8A04';
-export const COLOR_ALERTAS_BG = '#FDF8E8';
+export const COLOR_ALERTAS = 'var(--c-alertas)';
+export const COLOR_ALERTAS_BG = 'var(--c-alertas-bg)';
 
 // Fondos de pantalla ("BG_APP") por familia de actividad — las 5 familias
 // documentadas arriba. Usar el que corresponda a la sección, no un gris
 // suelto inventado en cada page.tsx.
-export const BG_DASHBOARD = '#EAF0FF';
-export const BG_RETOS = '#FCEEE8';
-export const BG_FLASHCARDS = '#FDF4FE';
-export const BG_TEMA = '#F5F1EB';
-export const BG_ALERTAS = '#FDF8E8';
+export const BG_DASHBOARD = 'var(--c-bg-dashboard)';
+export const BG_RETOS = 'var(--c-bg-retos)';
+export const BG_FLASHCARDS = 'var(--c-bg-flashcards)';
+export const BG_TEMA = 'var(--c-bg-tema)';
+export const BG_ALERTAS = 'var(--c-bg-alertas)';
 
 // Fondo neutro compartido para pantallas que no pertenecen a ninguna de las
 // 5 familias de actividad (listados, configuración, resultados, catálogos...).
 // Sustituye a los literales casi-duplicados '#f9fafb' / '#FAF9F6' / '#f8fafc'
 // / '#F4F5F7' que estaban repartidos sin ninguna diferencia intencional.
-export const BG_NEUTRAL = '#F8F9FA';
+export const BG_NEUTRAL = 'var(--c-bg-neutral)';

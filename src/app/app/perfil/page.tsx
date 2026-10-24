@@ -17,6 +17,7 @@ import {
   LifeBuoy, LogOut, Flame, Check, Trophy, Lock,
 } from 'lucide-react';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL } from '@/styles/tokens';
+import SelectorApariencia from '@/components/ui/SelectorApariencia';
 
 const BG_APP = BG_NEUTRAL;
 const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
@@ -253,6 +254,16 @@ export default function PerfilPage() {
             <Fila Icon={ShieldCheck} color={AZUL} bg="#EAF0FF" titulo="Panel de administración" sub="Oposiciones, usuarios y contenido" onClick={() => router.push('/admin')} ultima />
           )}
         </Seccion>
+
+        {/* ⭐ Apariencia: de momento solo para admin, mientras se pasan las pantallas al modo oscuro */}
+        {usuario.rol === 'admin' && (
+          <Seccion titulo="Apariencia">
+            <SelectorApariencia />
+            <div style={{ fontSize: 12, color: TEXT_MUTED, padding: '0 14px 12px', lineHeight: 1.45 }}>
+              En pruebas: por ahora solo Inicio cambia a oscuro. Se guarda en este dispositivo.
+            </div>
+          </Seccion>
+        )}
 
         <Seccion titulo="Ayuda">
           <Fila Icon={LifeBuoy} color="#0891B2" bg="#E0F7FA" titulo="Contactar con soporte" sub="Estamos contigo durante el proceso" onClick={() => router.push('/app/soporte')} ultima />

@@ -6,7 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Trophy, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
-import { COLOR_LIGA, BG_LIGA, CopaBadge, estadoJornada } from './ligaUtils';
+import { CopaBadge, estadoJornada } from './ligaUtils';
+
+// Colores con variables para que la tarjeta siga el modo claro/oscuro.
+const COLOR_LIGA = 'var(--c-liga)';
+const BG_LIGA = 'var(--c-liga-bg)';
 
 export function useMiLiga(enabled = true) {
   return useQuery({
@@ -37,11 +41,11 @@ export default function TarjetaLiga({ soloSiRelevante = false }: { soloSiRelevan
     <div
       onClick={() => router.push('/app/liga')}
       style={{
-        background: 'white',
+        background: 'var(--c-superficie)',
         borderRadius: 18,
         padding: 14,
         border: estado.destacado ? `1.5px solid ${COLOR_LIGA}` : 'none',
-        boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)',
+        boxShadow: 'var(--c-sombra)',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
@@ -53,19 +57,19 @@ export default function TarjetaLiga({ soloSiRelevante = false }: { soloSiRelevan
           <Trophy size={19} color={COLOR_LIGA} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Liga Oplora</div>
-          <div style={{ fontSize: 11, color: '#6B7280' }}>{data.nombreDivision} división · Convocatoria {data.convocatoria?.anyo}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-texto)' }}>Liga Oplora</div>
+          <div style={{ fontSize: 11, color: 'var(--c-texto-2)' }}>{data.nombreDivision} división · Convocatoria {data.convocatoria?.anyo}</div>
         </div>
         <CopaBadge color={data.copas?.color ?? null} veces={data.copas?.veces} />
-        <ChevronRight size={16} color="#9CA3AF" />
+        <ChevronRight size={16} color="var(--c-chevron)" />
       </div>
 
-      <div style={{ background: estado.destacado ? BG_LIGA : '#F8F9FA', borderRadius: 12, padding: '10px 12px' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: estado.destacado ? COLOR_LIGA : '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ background: estado.destacado ? BG_LIGA : 'var(--c-superficie-2)', borderRadius: 12, padding: '10px 12px' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: estado.destacado ? COLOR_LIGA : 'var(--c-texto-2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           {estado.etiqueta}
         </div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginTop: 2 }}>{estado.titulo}</div>
-        <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{estado.detalle}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-texto)', marginTop: 2 }}>{estado.titulo}</div>
+        <div style={{ fontSize: 11, color: 'var(--c-texto-2)', marginTop: 2 }}>{estado.detalle}</div>
       </div>
 
       {estado.accion && (
@@ -73,7 +77,7 @@ export default function TarjetaLiga({ soloSiRelevante = false }: { soloSiRelevan
           onClick={(e) => { e.stopPropagation(); router.push(estado.accion!.href); }}
           style={{
             width: '100%', border: 'none', borderRadius: 12, padding: '11px',
-            background: estado.destacado ? COLOR_LIGA : '#111827', color: 'white',
+            background: estado.destacado ? COLOR_LIGA : 'var(--c-primario)', color: 'var(--c-primario-texto)',
             fontSize: 13, fontWeight: 700, cursor: 'pointer',
           }}
         >

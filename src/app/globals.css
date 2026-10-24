@@ -113,3 +113,139 @@ textarea {
     padding: var(--op-space-5) var(--op-space-4);
   }
 }
+
+/* ==========================================================================
+   ⭐ TEMA CLARO / OSCURO
+   Colores de la app como variables. Claro por defecto (:root y .op-claro).
+   El oscuro solo se aplica DENTRO de las pantallas ya preparadas (las que
+   llevan la clase .op-tema en su contenedor), para poder pasar la app poco a
+   poco: una pantalla sin preparar se sigue viendo en claro.
+   Un componente aún sin preparar dentro de una pantalla preparada puede
+   llevar .op-claro para quedarse en claro.
+   ========================================================================== */
+:root,
+.op-claro {
+  --c-bg-dashboard: #EAF0FF;
+  --c-bg-retos: #FCEEE8;
+  --c-bg-flashcards: #FDF4FE;
+  --c-bg-tema: #F5F1EB;
+  --c-bg-alertas: #FDF8E8;
+  --c-bg-neutral: #F8F9FA;
+
+  --c-superficie: #FFFFFF;        /* tarjetas */
+  --c-superficie-2: #F4F5F7;      /* cajas suaves dentro de tarjetas */
+  --c-borde: #EEF0F3;
+  --c-pista: #E9EAEC;             /* fondo de barras de progreso */
+  --c-chevron: #C4C9D2;
+  --c-icono-inactivo: #D1D5DB;
+  --c-sombra: 0 6px 18px rgba(15, 23, 42, 0.08);
+
+  --c-texto: #111827;
+  --c-texto-2: #6B7280;
+  --c-texto-3: #6B7280;
+
+  --c-primario: #0f172a;          /* botón principal */
+  --c-primario-texto: #FFFFFF;
+  --c-boton-claro: #FFFFFF;       /* botón claro sobre la tarjeta oscura */
+  --c-hero: #0f172a;              /* tarjeta oscura destacada (Mi oposición…) */
+  --c-overlay: rgba(0, 0, 0, 0.5);
+
+  --c-azul: #1F7CFF;
+  --c-azul-bg: #EAF0FF;
+  --c-verde: #4D7C0F;
+  --c-verde-bg: #F3FAE9;
+  --c-retos: #C2410C;
+  --c-retos-bg: #FACCC0;
+  --c-retos-suave: #FFF1E8;
+  --c-liga: #C2410C;
+  --c-liga-bg: #FCEEE8;
+  --c-segmento: rgba(255, 255, 255, 0.7);
+  --c-fc: #9333EA;
+  --c-fc-bg: #F3E8FF;
+  --c-psico: #4F46E5;
+  --c-psico-bg: #E0E7FF;
+  --c-semanal: #7C3AED;
+  --c-semanal-bg: #F3F0FC;
+  --c-alertas: #CA8A04;
+  --c-alertas-bg: #FDF8E8;
+  --c-campana: #D4A017;
+  --c-marron: #8B7355;
+  --c-ambar: #B45309;
+
+  /* chips de tipos (noticias, documentos…) */
+  --c-chip-naranja-bg: #FAEEDA; --c-chip-naranja: #854F0B;
+  --c-chip-verde-bg: #EAF3DE;   --c-chip-verde: #3B6D11;
+  --c-chip-rojo-bg: #FCEBEB;    --c-chip-rojo: #A32D2D;
+  --c-chip-azul-bg: #E6F1FB;    --c-chip-azul: #185FA5;
+  --c-chip-gris-bg: #F1EFE8;    --c-chip-gris: #5F5E5A;
+  --c-chip-morado-bg: #EEEDFE;  --c-chip-morado: #3C3489;
+  --c-chip-ambar-bg: #FDF1DC;   --c-chip-ambar: #B45309;
+
+  --c-logo-texto: #0f172a;
+}
+
+html[data-tema='oscuro'] .op-tema {
+  --c-bg-dashboard: #0E1626;
+  --c-bg-retos: #17110F;
+  --c-bg-flashcards: #160F1C;
+  --c-bg-tema: #15120E;
+  --c-bg-alertas: #16130B;
+  --c-bg-neutral: #0F141C;
+
+  --c-superficie: #172033;
+  --c-superficie-2: #1F2A40;
+  --c-borde: #26324A;
+  --c-pista: #26324A;
+  --c-chevron: #4B5772;
+  --c-icono-inactivo: #4B5772;
+  --c-sombra: 0 6px 18px rgba(0, 0, 0, 0.35);
+
+  --c-texto: #E8ECF3;
+  --c-texto-2: #A4AEC0;
+  --c-texto-3: #8C97AA;
+
+  --c-primario: #E8ECF3;
+  --c-primario-texto: #0B1220;
+  --c-boton-claro: #E8ECF3;
+  --c-hero: #1B2A47;
+  --c-overlay: rgba(0, 0, 0, 0.65);
+
+  --c-azul: #5A9CFF;
+  --c-azul-bg: rgba(90, 156, 255, 0.16);
+  --c-verde: #A3D65C;
+  --c-verde-bg: rgba(163, 214, 92, 0.14);
+  --c-retos: #FB8B5B;
+  --c-retos-bg: rgba(251, 139, 91, 0.18);
+  --c-retos-suave: rgba(251, 139, 91, 0.14);
+  --c-liga: #FB8B5B;
+  --c-liga-bg: rgba(251, 139, 91, 0.14);
+  --c-segmento: rgba(255, 255, 255, 0.06);
+  --c-fc: #C08BFA;
+  --c-fc-bg: rgba(192, 139, 250, 0.16);
+  --c-psico: #8E96FA;
+  --c-psico-bg: rgba(142, 150, 250, 0.16);
+  --c-semanal: #A78BFA;
+  --c-semanal-bg: rgba(167, 139, 250, 0.16);
+  --c-alertas: #F5C542;
+  --c-alertas-bg: rgba(245, 197, 66, 0.14);
+  --c-campana: #F5C542;
+  --c-marron: #C9A97E;
+  --c-ambar: #F0A44B;
+
+  --c-chip-naranja-bg: rgba(240, 164, 75, 0.16); --c-chip-naranja: #F0B46B;
+  --c-chip-verde-bg: rgba(163, 214, 92, 0.14);   --c-chip-verde: #A3D65C;
+  --c-chip-rojo-bg: rgba(248, 113, 113, 0.16);   --c-chip-rojo: #F59A9A;
+  --c-chip-azul-bg: rgba(90, 156, 255, 0.16);    --c-chip-azul: #8AB8FF;
+  --c-chip-gris-bg: rgba(164, 174, 192, 0.14);   --c-chip-gris: #B8C0CE;
+  --c-chip-morado-bg: rgba(167, 139, 250, 0.16); --c-chip-morado: #B9A6FB;
+  --c-chip-ambar-bg: rgba(240, 164, 75, 0.16);   --c-chip-ambar: #F0B46B;
+
+  --c-logo-texto: #E8ECF3;
+
+  color-scheme: dark;
+}
+
+/* Fondo de la página (zona de rebote al hacer scroll) acorde a la pantalla preparada */
+html[data-tema='oscuro'] body:has(.op-tema) {
+  background: #0B1220;
+}

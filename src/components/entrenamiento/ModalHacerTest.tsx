@@ -206,7 +206,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
   : tipoTest === 'tema' ? `Test — ${formatearListaTemas(numerosTemasSeleccionados)}`
   : 'Ajustes del test';
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
+    <div className="op-claro" onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: BG_MODAL_TEST, borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '560px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 -4px 20px rgba(0,0,0,0.15)' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>

@@ -26,14 +26,14 @@ import { getOploUrl } from '@/lib/oplo';
 ------------------------------------------------------- */
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_RETOS } from '@/styles/tokens';
 
-const BG_APP = '#EAF0FF';
-const BG_WIDGET = '#FFFFFF';
+const BG_APP = 'var(--c-bg-dashboard)';
+const BG_WIDGET = 'var(--c-superficie)';
 // ⭐ Una sola sombra para todo lo que "flota" (círculos, accesos y tarjetas)
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const SOMBRA = 'var(--c-sombra)';
 
 // Colores de actividad (los mismos que en Entrenamiento)
-const COLOR_ESTUDIAR = '#1F7CFF';
-const COLOR_PRACTICAR = '#4D7C0F';
+const COLOR_ESTUDIAR = 'var(--c-azul)';
+const COLOR_PRACTICAR = 'var(--c-verde)';
 
 /* -------------------------------------------------------
    HELPERS
@@ -95,7 +95,7 @@ const ultimaConvocatoria = useMemo(() => {
   if (!usuario) return null;
 
   return (
-    <div style={{ background: BG_APP, minHeight: '100vh', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+    <div className="op-tema" style={{ background: BG_APP, minHeight: '100vh', overflowX: 'hidden', width: '100%', boxSizing: 'border-box', color: 'var(--c-texto)' }}>
 
       <HeaderDashboard
         usuario={usuario}
@@ -176,7 +176,7 @@ const countNoLeidas = countData?.count ?? 0;
             aria-label="Alertas"
             style={{
               position: 'relative', width: 38, height: 38, borderRadius: '50%', border: 'none',
-              background: 'white', display: 'flex', alignItems: 'center',
+              background: 'var(--c-superficie)', display: 'flex', alignItems: 'center',
               justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: SOMBRA,
             }}
           >
@@ -185,7 +185,7 @@ const countNoLeidas = countData?.count ?? 0;
               <span style={{
                 position: 'absolute', top: '2px', right: '2px',
                 width: '9px', height: '9px', borderRadius: '50%',
-                background: '#DC2626', border: '2px solid white',
+                background: '#DC2626', border: '2px solid var(--c-superficie)',
               }} />
             )}
           </button>
@@ -212,7 +212,7 @@ const countNoLeidas = countData?.count ?? 0;
         {(usuario.rachaActual ?? 0) > 0 && (
           <span
             title="Días seguidos estudiando"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999, background: 'white', color: '#C2410C', fontSize: 12, fontWeight: 700, boxShadow: SOMBRA }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999, background: 'var(--c-superficie)', color: 'var(--c-retos)', fontSize: 12, fontWeight: 700, boxShadow: SOMBRA }}
           >
             <Flame size={13} /> {usuario.rachaActual} {usuario.rachaActual === 1 ? 'día' : 'días'}
           </span>
@@ -223,7 +223,7 @@ const countNoLeidas = countData?.count ?? 0;
       {oposicion && (
         <div style={{ position: 'relative', marginBottom: '50px' }}>
           <div style={{
-            background: '#0f172a', borderRadius: '16px', padding: '18px 16px 40px', // ⭐ padding inferior aumentado de 18px a 34px
+            background: 'var(--c-hero)', borderRadius: '16px', padding: '18px 16px 40px', // ⭐ padding inferior aumentado de 18px a 34px
             color: 'white', display: 'flex', flexDirection: 'column', gap: '10px',
           }}>
             <div>
@@ -269,9 +269,9 @@ const countNoLeidas = countData?.count ?? 0;
 /* -------------------------------------------------------
    FOOTER (neutro, color solo en activo)
 ------------------------------------------------------- */
-const COLOR_ESTUDIO_MARRON = '#8B7355';
-const COLOR_RETOS_FOOTER = '#C2410C';
-const COLOR_ALERTAS_AMARILLO = '#D4A017'; // ⭐ confírmame el tono
+const COLOR_ESTUDIO_MARRON = 'var(--c-marron)';
+const COLOR_RETOS_FOOTER = 'var(--c-retos)';
+const COLOR_ALERTAS_AMARILLO = 'var(--c-campana)';
 
 export function FooterNavegacion({ usuario, oposicionId, activo = 'inicio' }: any) {
   const router = useRouter();
@@ -296,10 +296,10 @@ export function FooterNavegacion({ usuario, oposicionId, activo = 'inicio' }: an
   };
 
   const items = [
-    { key: 'inicio', label: 'Inicio', icon: HomeIcon, onClick: () => router.push('/app/dashboard'), color: '#1F7CFF' },
+    { key: 'inicio', label: 'Inicio', icon: HomeIcon, onClick: () => router.push('/app/dashboard'), color: 'var(--c-azul)' },
     { key: 'estudiar', label: 'Estudiar', icon: BookOpenIcon, onClick: () => oposicionId ? router.push(`/app/tema/${oposicionId}?modo=estudiar`) : router.push('/app/onboarding/oposicion'), color: COLOR_ESTUDIO_MARRON },
     { key: 'retos', label: 'Retos', icon: FireIcon, onClick: () => router.push('/app/retos'), color: COLOR_RETOS_FOOTER },
-    { key: 'practicar', label: 'Practicar', icon: ClipboardDocumentCheckIcon, onClick: irAPracticar, color: '#1F7CFF' },
+    { key: 'practicar', label: 'Practicar', icon: ClipboardDocumentCheckIcon, onClick: irAPracticar, color: 'var(--c-azul)' },
     { key: 'alertas', label: 'Alertas', icon: BellIcon, onClick: () => router.push('/app/alertas'), color: COLOR_ALERTAS_AMARILLO },
   ];
 
@@ -307,7 +307,7 @@ export function FooterNavegacion({ usuario, oposicionId, activo = 'inicio' }: an
     <footer
       style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, height: 64,
-        background: 'white', borderTop: '1px solid #EEF0F2',
+        background: 'var(--c-superficie)', borderTop: '1px solid var(--c-borde)',
         display: 'flex', justifyContent: 'space-around', alignItems: 'center',
         paddingBottom: 'env(safe-area-inset-bottom)', zIndex: 50,
       }}
@@ -324,16 +324,16 @@ export function FooterNavegacion({ usuario, oposicionId, activo = 'inicio' }: an
               <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 20, height: 3, borderRadius: '0 0 3px 3px', background: color }} />
             )}
             <div style={{ position: 'relative' }}>
-              <Icon style={{ width: 23, height: 23, color: esActivo ? color : '#D1D5DB' }} />
+              <Icon style={{ width: 23, height: 23, color: esActivo ? color : 'var(--c-icono-inactivo)' }} />
               {key === 'alertas' && countNoLeidas > 0 && ( // ⭐ nuevo: indicador
                 <span style={{
                   position: 'absolute', top: '-2px', right: '-2px',
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: '#DC2626', border: '1.5px solid white',
+                  background: '#DC2626', border: '1.5px solid var(--c-superficie)',
                 }} />
               )}
             </div>
-            <span style={{ fontSize: 10, fontWeight: 600, color: esActivo ? color : '#D1D5DB' }}>{label}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: esActivo ? color : 'var(--c-icono-inactivo)' }}>{label}</span>
           </button>
         );
       })}
@@ -354,7 +354,7 @@ function Widget({ titulo, accion, children, sinCaja = false }: { titulo?: string
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
           {titulo && <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>{titulo}</span>}
           {accion && (
-            <button onClick={accion.onClick} style={{ fontSize: 12, color: '#1F7CFF', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
+            <button onClick={accion.onClick} style={{ fontSize: 12, color: 'var(--c-azul)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
               {accion.label}
             </button>
           )}
@@ -386,14 +386,14 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
       <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
 
       {/* Hero — CTA principal */}
-      <div style={{ background: '#0f172a', borderRadius: 18, padding: '20px 18px', color: 'white', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ background: 'var(--c-hero)', borderRadius: 18, padding: '20px 18px', color: 'white', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={{ fontSize: 17, fontWeight: 700 }}>Vamos a empezar</span>
         <span style={{ fontSize: 13, color: '#94a3b8' }}>Hoy comienza tu camino al éxito</span>
         <button
           onClick={irAPrimerEntrenamiento}
           style={{
             marginTop: 8, width: '100%', borderRadius: 999, border: 'none',
-            padding: '13px 16px', background: 'white', color: '#0f172a',
+            padding: '13px 16px', background: 'var(--c-boton-claro)', color: '#0f172a',
             fontSize: 14, fontWeight: 700, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
@@ -410,9 +410,9 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button
             onClick={() => oposicionId ? router.push(`/app/tema/${oposicionId}`) : router.push('/app/onboarding/oposicion')}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 14, border: 'none', background: '#F8F9FA', cursor: 'pointer', textAlign: 'left' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 14, border: 'none', background: 'var(--c-superficie-2)', cursor: 'pointer', textAlign: 'left' }}
           >
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--c-azul-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <BookOpenIcon style={{ width: 18, height: 18, color: COLOR_ESTUDIAR }} />
             </div>
             <div style={{ flex: 1 }}>
@@ -423,10 +423,10 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
 
           <button
             onClick={() => router.push(`/app/oposicion/${oposicionId}/historial`)}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 14, border: 'none', background: '#F8F9FA', cursor: 'pointer', textAlign: 'left' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 14, border: 'none', background: 'var(--c-superficie-2)', cursor: 'pointer', textAlign: 'left' }}
           >
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: '#F3FAE9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <FileText size={17} color="#3B6D11" />
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--c-verde-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <FileText size={17} color="var(--c-verde)" />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Convocatorias y exámenes</div>
@@ -441,7 +441,7 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {['Empieza un reto', 'Explora el temario', 'Practica con exámenes'].map((paso, i) => (
             <div key={paso} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#F4F5F7', color: TEXT_MUTED, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--c-superficie-2)', color: TEXT_MUTED, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {i + 1}
               </div>
               <span style={{ fontSize: 13, color: TEXT_SECONDARY }}>{paso}</span>
@@ -486,12 +486,12 @@ export function DashboardInactivo({ usuario, oposicionId }: { usuario: any; opos
   // "Mi progreso general", que mostraba un 32 % inventado.
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ background: '#0f172a', borderRadius: 18, padding: '18px 16px', color: 'white', display: 'flex', flexDirection: 'column', gap: 6, boxShadow: SOMBRA }}>
+      <div style={{ background: 'var(--c-hero)', borderRadius: 18, padding: '18px 16px', color: 'white', display: 'flex', flexDirection: 'column', gap: 6, boxShadow: SOMBRA }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 700 }}><Flame size={17} color="#FB923C" /> Has perdido tu racha</span>
         <span style={{ fontSize: 13, color: '#94a3b8' }}>No pasa nada: hoy es un buen día para volver.</span>
         <button
           onClick={() => router.push('/app/entrenamiento')}
-          style={{ marginTop: 8, width: '100%', borderRadius: 12, border: 'none', padding: '12px 16px', background: 'white', color: '#0f172a', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+          style={{ marginTop: 8, width: '100%', borderRadius: 12, border: 'none', padding: '12px 16px', background: 'var(--c-boton-claro)', color: '#0f172a', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
         >
           Empezar un test rápido
         </button>
@@ -511,37 +511,37 @@ export function DashboardInactivo({ usuario, oposicionId }: { usuario: any; opos
    WIDGET ULTIMAS NOTICIAS
 ------------------------------------------------------- */
 const tipoIconoBg: Record<string, string> = {
-  resolucion_convocatoria: '#FAEEDA',
-  lista_admitidos_provisional: '#EAF3DE',
-  lista_admitidos_definitiva: '#EAF3DE',
-  lista_excluidos_provisional: '#FCEBEB',
-  lista_excluidos_definitiva: '#FCEBEB',
-  cronograma: '#E6F1FB',
-  nota_informativa: '#F1EFE8',
-  normas_especificas: '#FAEEDA',
-  guia_inscripcion: '#F1EFE8',
-  otro: '#F1EFE8',
+  resolucion_convocatoria: 'var(--c-chip-naranja-bg)',
+  lista_admitidos_provisional: 'var(--c-chip-verde-bg)',
+  lista_admitidos_definitiva: 'var(--c-chip-verde-bg)',
+  lista_excluidos_provisional: 'var(--c-chip-rojo-bg)',
+  lista_excluidos_definitiva: 'var(--c-chip-rojo-bg)',
+  cronograma: 'var(--c-chip-azul-bg)',
+  nota_informativa: 'var(--c-chip-gris-bg)',
+  normas_especificas: 'var(--c-chip-naranja-bg)',
+  guia_inscripcion: 'var(--c-chip-gris-bg)',
+  otro: 'var(--c-chip-gris-bg)',
   // Tipos de Noticia (feed unificado): oficial / legislativa / oplora
-  oficial: '#E6F1FB',
-  legislativa: '#EEEDFE',
-  oplora: '#FDF1DC',
+  oficial: 'var(--c-chip-azul-bg)',
+  legislativa: 'var(--c-chip-morado-bg)',
+  oplora: 'var(--c-chip-ambar-bg)',
 };
 
 const tipoIconoColor: Record<string, string> = {
-  resolucion_convocatoria: '#854F0B',
-  lista_admitidos_provisional: '#3B6D11',
-  lista_admitidos_definitiva: '#3B6D11',
-  lista_excluidos_provisional: '#A32D2D',
-  lista_excluidos_definitiva: '#A32D2D',
-  cronograma: '#185FA5',
-  nota_informativa: '#5F5E5A',
-  normas_especificas: '#854F0B',
-  guia_inscripcion: '#5F5E5A',
-  otro: '#5F5E5A',
+  resolucion_convocatoria: 'var(--c-chip-naranja)',
+  lista_admitidos_provisional: 'var(--c-chip-verde)',
+  lista_admitidos_definitiva: 'var(--c-chip-verde)',
+  lista_excluidos_provisional: 'var(--c-chip-rojo)',
+  lista_excluidos_definitiva: 'var(--c-chip-rojo)',
+  cronograma: 'var(--c-chip-azul)',
+  nota_informativa: 'var(--c-chip-gris)',
+  normas_especificas: 'var(--c-chip-naranja)',
+  guia_inscripcion: 'var(--c-chip-gris)',
+  otro: 'var(--c-chip-gris)',
   // Tipos de Noticia (feed unificado): oficial / legislativa / oplora
-  oficial: '#185FA5',
-  legislativa: '#3C3489',
-  oplora: '#B45309',
+  oficial: 'var(--c-chip-azul)',
+  legislativa: 'var(--c-chip-morado)',
+  oplora: 'var(--c-chip-ambar)',
 };
 
 interface Noticia {
@@ -601,7 +601,7 @@ function WidgetNoticias({ oposicionId, convocatoriaId, router }: any) {
 
   return (
     <div style={{ background: BG_WIDGET, borderRadius: 18, padding: '12px 12px 12px 14px', boxShadow: SOMBRA, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-      <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: tipoIconoBg[n.tipo] ?? '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: tipoIconoBg[n.tipo] ?? 'var(--c-superficie-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Icono size={16} color={tipoIconoColor[n.tipo] ?? TEXT_MUTED} />
       </div>
       <div onClick={abrir} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
@@ -654,11 +654,11 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
         onClick={uno ? () => ir(repasos[0]) : undefined}
         style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 14px', cursor: uno ? 'pointer' : 'default' }}
       >
-        <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: '#1F7CFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: 'var(--c-azul)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <CalendarCheck size={20} color="white" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#1F7CFF' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-azul)' }}>
             {uno ? (repasos[0].atrasado ? 'Repaso pendiente' : 'Repaso de hoy') : `${repasos.length} repasos para hoy`}
             {!uno && atrasados > 0 && <span style={{ color: TEXT_MUTED, fontWeight: 600 }}> · {atrasados} {atrasados === 1 ? 'atrasado' : 'atrasados'}</span>}
           </div>
@@ -671,7 +671,7 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
           )}
         </div>
         {uno && (
-          <span style={{ flexShrink: 0, background: '#1F7CFF', color: 'white', fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '7px 12px' }}>
+          <span style={{ flexShrink: 0, background: 'var(--c-azul)', color: 'white', fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '7px 12px' }}>
             Repasar
           </span>
         )}
@@ -683,18 +683,18 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
             <button
               key={r.temaId}
               onClick={() => ir(r)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid #EEF0F3', cursor: 'pointer', textAlign: 'left' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid var(--c-borde)', cursor: 'pointer', textAlign: 'left' }}
             >
               <span style={{ width: 34, textAlign: 'center', fontSize: 12, fontWeight: 800, color: TEXT_SECONDARY, flexShrink: 0 }}>T{r.numero}</span>
               <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.titulo}</span>
-              {r.atrasado && <span style={{ fontSize: 10, color: '#B45309', fontWeight: 700, flexShrink: 0 }}>Atrasado</span>}
-              <ChevronRight size={15} color="#C4C9D2" style={{ flexShrink: 0 }} />
+              {r.atrasado && <span style={{ fontSize: 10, color: 'var(--c-ambar)', fontWeight: 700, flexShrink: 0 }}>Atrasado</span>}
+              <ChevronRight size={15} color="var(--c-chevron)" style={{ flexShrink: 0 }} />
             </button>
           ))}
           {repasos.length > 2 && (
             <button
               onClick={() => setAbierto((v) => !v)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '9px', background: 'none', border: 'none', borderTop: '1px solid #EEF0F3', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#1F7CFF' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '9px', background: 'none', border: 'none', borderTop: '1px solid var(--c-borde)', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--c-azul)' }}
             >
               {abierto ? 'Ver menos' : `Ver los ${repasos.length}`}
               <ChevronDown size={14} style={{ transform: abierto ? 'rotate(180deg)' : 'none' }} />
@@ -746,7 +746,7 @@ function WidgetSeguirEstudiando({ oposicionId, router }: any) {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 11, background: '#EAF0FF',
+            width: 40, height: 40, borderRadius: 11, background: 'var(--c-azul-bg)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 15, fontWeight: 800, color: COLOR_ESTUDIAR, flexShrink: 0,
           }}>
@@ -770,7 +770,7 @@ function WidgetSeguirEstudiando({ oposicionId, router }: any) {
               {porcentaje}%
             </span>
           </div>
-          <div style={{ height: 7, background: '#E9EAEC', borderRadius: 999, overflow: 'hidden' }}>
+          <div style={{ height: 7, background: 'var(--c-pista)', borderRadius: 999, overflow: 'hidden' }}>
             <div style={{
               width: `${porcentaje}%`, height: '100%',
               background: porcentaje > 0 ? `linear-gradient(90deg, ${COLOR_ESTUDIAR}, #60a5fa)` : 'transparent',
@@ -782,7 +782,7 @@ function WidgetSeguirEstudiando({ oposicionId, router }: any) {
         <button
           style={{
             width: '100%', padding: '12px', borderRadius: 12, border: 'none',
-            background: '#0f172a', color: 'white', fontSize: 13, fontWeight: 700,
+            background: 'var(--c-primario)', color: 'var(--c-primario-texto)', fontSize: 13, fontWeight: 700,
             cursor: 'pointer',
           }}
         >
@@ -838,7 +838,7 @@ function WidgetAccionesRapidas({ usuario, oposicionId, router }: any) {
   const acciones = [
     { label: 'Test', sub: 'Empezar ya', Icon: ClipboardDocumentCheckIcon, color: COLOR_PRACTICAR, badge: 0, onClick: () => setModalTest(true) },
     {
-      label: 'Flashcards', sub: nFC > 0 ? `${nFC} pendientes` : 'Al día', Icon: ArrowPathIcon, color: '#9333EA', badge: nFC,
+      label: 'Flashcards', sub: nFC > 0 ? `${nFC} pendientes` : 'Al día', Icon: ArrowPathIcon, color: 'var(--c-fc)', badge: nFC,
       onClick: () => router.push(nFC > 0 ? `/app/flashcards/repasar?oposicionId=${oposicionId}` : '/app/flashcards'),
     },
     {
@@ -912,8 +912,8 @@ function SeccionOplo({ usuario }: { usuario: any }) {
           {racha > 0 && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: '3px',
-              background: '#FFF1E8', borderRadius: '999px',
-              padding: '2px 8px', fontSize: '10px', fontWeight: 700, color: '#C2410C',
+              background: 'var(--c-retos-suave)', borderRadius: '999px',
+              padding: '2px 8px', fontSize: '10px', fontWeight: 700, color: 'var(--c-retos)',
             }}>
               <Flame size={11} /> {racha} {racha === 1 ? 'día' : 'días'}
             </div>
@@ -933,10 +933,10 @@ function SeccionOplo({ usuario }: { usuario: any }) {
             </div>
 
             {/* Barra unificada con el resto de la app (azul OPLORA con gradiente) */}
-            <div style={{ height: '6px', background: '#F4F5F7', borderRadius: '999px', overflow: 'hidden', marginBottom: '4px' }}>
+            <div style={{ height: '6px', background: 'var(--c-superficie-2)', borderRadius: '999px', overflow: 'hidden', marginBottom: '4px' }}>
               <div style={{
                 width: `${porcentajeProgreso}%`, height: '100%',
-                background: 'linear-gradient(90deg, #1F7CFF, #60a5fa)',
+                background: 'linear-gradient(90deg, var(--c-azul), #60a5fa)',
                 borderRadius: '999px', transition: 'width 0.5s ease',
               }} />
             </div>
@@ -951,7 +951,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
       {modalAbierto && (
         <div
           onClick={() => setModalAbierto(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}
+          style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -964,13 +964,13 @@ function SeccionOplo({ usuario }: { usuario: any }) {
               </div>
               <button
                 onClick={() => setModalAbierto(false)}
-                style={{ background: 'white', border: 'none', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ background: 'var(--c-superficie)', border: 'none', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <span style={{ fontSize: '18px', color: TEXT_MUTED, lineHeight: 1 }}>×</span>
               </button>
             </div>
 
-            <div style={{ textAlign: 'center', marginBottom: '1.25rem', padding: '1rem', background: 'white', borderRadius: '14px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.25rem', padding: '1rem', background: 'var(--c-superficie)', borderRadius: '14px' }}>
               <img
                 src={getOploUrl(nivel)}
                 alt={nivelActual.nombre}
@@ -978,8 +978,8 @@ function SeccionOplo({ usuario }: { usuario: any }) {
               />
               <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT_PRIMARY }}>{nivelActual.nombre}</div>
               <div style={{ fontSize: '12px', color: TEXT_MUTED, marginTop: '2px', marginBottom: '10px' }}>Nivel {nivel} de 5</div>
-              <div style={{ height: '8px', background: '#F4F5F7', borderRadius: '999px', overflow: 'hidden' }}>
-                <div style={{ width: `${porcentajeProgreso}%`, height: '100%', background: '#0f172a', borderRadius: '999px' }} />
+              <div style={{ height: '8px', background: 'var(--c-superficie-2)', borderRadius: '999px', overflow: 'hidden' }}>
+                <div style={{ width: `${porcentajeProgreso}%`, height: '100%', background: 'var(--c-primario)', borderRadius: '999px' }} />
               </div>
               <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '6px' }}>
                 {nivelSiguiente ? `${puntosParaSiguiente} puntos para ${nivelSiguiente.nombre}` : 'Nivel máximo alcanzado'}
@@ -999,8 +999,8 @@ function SeccionOplo({ usuario }: { usuario: any }) {
                     style={{
                       display: 'flex', alignItems: 'center', gap: '12px',
                       padding: '10px 12px', borderRadius: '12px',
-                      background: 'white',
-                      border: esActual ? '2px solid #0f172a' : 'none',
+                      background: 'var(--c-superficie)',
+                      border: esActual ? '2px solid var(--c-primario)' : 'none',
                       opacity: conseguido ? 1 : 0.4,
                     }}
                   >
@@ -1013,7 +1013,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>{n.nombre}</span>
                         {esActual && (
-                          <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '999px', background: '#0f172a', color: 'white', fontWeight: 600 }}>
+                          <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '999px', background: 'var(--c-primario)', color: 'var(--c-primario-texto)', fontWeight: 600 }}>
                             Actual
                           </span>
                         )}
@@ -1030,7 +1030,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
 
             <button
               onClick={() => { setModalAbierto(false); router.push('/app/perfil'); }}
-              style={{ width: '100%', padding: '12px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+              style={{ width: '100%', padding: '12px', background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
             >
               Ver perfil completo →
             </button>
@@ -1042,7 +1042,7 @@ function SeccionOplo({ usuario }: { usuario: any }) {
   );
 }
 
-function AccesoCirculo({ label, Icon, size = 19, onClick, badge = 0, sub, color = '#111827' }: any) {
+function AccesoCirculo({ label, Icon, size = 19, onClick, badge = 0, sub, color = 'var(--c-texto)' }: any) {
   const [pulsado, setPulsado] = useState(false);
 
   return (
@@ -1063,7 +1063,7 @@ function AccesoCirculo({ label, Icon, size = 19, onClick, badge = 0, sub, color 
     >
       <div style={{
         width: 48, height: 48, borderRadius: '50%',
-        background: pulsado ? '#1F7CFF' : 'white', // ⭐ relleno azul completo al pulsar
+        background: pulsado ? 'var(--c-azul)' : 'var(--c-superficie)', // ⭐ relleno azul completo al pulsar
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: pulsado ? '0 2px 8px rgba(31,124,255,0.35)' : SOMBRA,
         transition: 'background 0.15s ease, box-shadow 0.15s ease',
@@ -1071,12 +1071,12 @@ function AccesoCirculo({ label, Icon, size = 19, onClick, badge = 0, sub, color 
       }}>
        <Icon style={{ width: size, height: size, transition: 'color 0.15s ease' }} color={pulsado ? 'white' : color} />
        {badge > 0 && (
-         <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, background: '#DC2626', color: 'white', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white', boxSizing: 'border-box' }}>
+         <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, background: '#DC2626', color: 'white', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--c-superficie)', boxSizing: 'border-box' }}>
            {badge > 9 ? '9+' : badge}
          </span>
        )}
       </div>
-      <span style={{ fontSize: 11, color: pulsado ? '#1F7CFF' : TEXT_PRIMARY, fontWeight: 600, transition: 'color 0.15s ease' }}>{label}</span>
+      <span style={{ fontSize: 11, color: pulsado ? 'var(--c-azul)' : TEXT_PRIMARY, fontWeight: 600, transition: 'color 0.15s ease' }}>{label}</span>
       {sub && <span style={{ fontSize: 10, color: TEXT_MUTED, marginTop: -4 }}>{sub}</span>}
     </button>
   );

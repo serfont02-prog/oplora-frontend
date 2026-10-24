@@ -8,8 +8,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_PSICO } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const COLOR_TEST = '#4D7C0F';
+const SOMBRA = 'var(--c-sombra)';
+const COLOR_TEST = 'var(--c-verde)';
 
 const VARIANTES: { clave: 'dia' | 'semana' | 'mes' | 'total'; corto: string }[] = [
   { clave: 'dia', corto: 'Hoy' },
@@ -25,7 +25,7 @@ function Donut({ porcentaje, color, size, grosor }: { porcentaje: number; color:
 
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', position: 'absolute', inset: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="#EEF0F3" strokeWidth={grosor} />
+      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="var(--c-pista)" strokeWidth={grosor} />
       {porcentaje > 0 && (
         <circle
           cx={size / 2} cy={size / 2} r={radio} fill="none"
@@ -42,7 +42,7 @@ function CirculoDato({ porcentaje, color, label, sub, sinDatos }: { porcentaje: 
   const D = 78;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ position: 'absolute', inset: 6 }}>
           <Donut porcentaje={sinDatos ? 0 : porcentaje} color={color} size={D - 12} grosor={6} />
         </div>
@@ -146,7 +146,7 @@ export default function WidgetProgreso({
     <section>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, padding: '0 4px', gap: 8 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Mi progreso</span>
-        <div role="tablist" aria-label="Periodo" style={{ display: 'flex', background: 'rgba(255,255,255,0.7)', borderRadius: 999, padding: 3, gap: 2 }}>
+        <div role="tablist" aria-label="Periodo" style={{ display: 'flex', background: 'var(--c-segmento)', borderRadius: 999, padding: 3, gap: 2 }}>
           {VARIANTES.map((v) => {
             const activo = v.clave === clave;
             return (
@@ -158,8 +158,8 @@ export default function WidgetProgreso({
                 style={{
                   border: 'none', borderRadius: 999, padding: '5px 10px', cursor: 'pointer',
                   fontSize: 11, fontWeight: 700,
-                  background: activo ? '#0f172a' : 'transparent',
-                  color: activo ? 'white' : TEXT_SECONDARY,
+                  background: activo ? 'var(--c-primario)' : 'transparent',
+                  color: activo ? 'var(--c-primario-texto)' : TEXT_SECONDARY,
                   transition: 'background 0.15s ease, color 0.15s ease',
                 }}
               >

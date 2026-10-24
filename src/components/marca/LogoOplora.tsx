@@ -38,7 +38,7 @@ export default function LogoOplora({
   variante = 'completo',
   alto = 40,
   colorIcono = COLOR_MARCA,
-  colorTexto = COLOR_MARCA_TEXTO,
+  colorTexto = 'var(--c-logo-texto)',
   style,
 }: Props) {
   return (
