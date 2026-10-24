@@ -117,11 +117,10 @@ textarea {
 /* ==========================================================================
    ⭐ TEMA CLARO / OSCURO
    Colores de la app como variables. Claro por defecto (:root y .op-claro).
-   El oscuro solo se aplica DENTRO de las pantallas ya preparadas (las que
-   llevan la clase .op-tema en su contenedor), para poder pasar la app poco a
-   poco: una pantalla sin preparar se sigue viendo en claro.
-   Un componente aún sin preparar dentro de una pantalla preparada puede
-   llevar .op-claro para quedarse en claro.
+   El oscuro se aplica a toda la app con html[data-tema='oscuro'].
+   Lo que deba seguir en claro (panel de administración) lleva la clase .op-claro.
+   Las variables --hx-RRGGBB son los colores fijos que usaban las pantallas:
+   en claro valen lo mismo que antes; en oscuro, su equivalente.
    ========================================================================== */
 :root,
 .op-claro {
@@ -131,6 +130,7 @@ textarea {
   --c-bg-tema: #F5F1EB;
   --c-bg-alertas: #FDF8E8;
   --c-bg-neutral: #F8F9FA;
+  --c-bg-modal-test: #F3FAE9;
 
   --c-superficie: #FFFFFF;        /* tarjetas */
   --c-superficie-2: #F4F5F7;      /* cajas suaves dentro de tarjetas */
@@ -182,15 +182,166 @@ textarea {
   --c-chip-ambar-bg: #FDF1DC;   --c-chip-ambar: #B45309;
 
   --c-logo-texto: #0f172a;
+
+  /* colores fijos de cada pantalla (mismo valor en claro; su versión oscura abajo) */
+  --hx-0891b2: #0891B2;
+  --hx-0ea5e9: #0EA5E9;
+  --hx-0f172a: #0F172A;
+  --hx-111827: #111827;
+  --hx-14532d: #14532D;
+  --hx-15803d: #15803D;
+  --hx-166534: #166534;
+  --hx-16a34a: #16A34A;
+  --hx-185fa5: #185FA5;
+  --hx-1a1a1a: #1A1A1A;
+  --hx-1e3a5f: #1E3A5F;
+  --hx-1e40af: #1E40AF;
+  --hx-1f5fd1: #1F5FD1;
+  --hx-1f7cff: #1F7CFF;
+  --hx-2563eb: #2563EB;
+  --hx-2d2d2d: #2D2D2D;
+  --hx-334155: #334155;
+  --hx-374151: #374151;
+  --hx-3b6d11: #3B6D11;
+  --hx-3b82f6: #3B82F6;
+  --hx-3c3489: #3C3489;
+  --hx-4338ca: #4338CA;
+  --hx-475569: #475569;
+  --hx-4b5563: #4B5563;
+  --hx-4d7c0f: #4D7C0F;
+  --hx-4f46e5: #4F46E5;
+  --hx-5f5e5a: #5F5E5A;
+  --hx-64748b: #64748B;
+  --hx-6b5f3e: #6B5F3E;
+  --hx-6b7280: #6B7280;
+  --hx-7c3aed: #7C3AED;
+  --hx-7f1d1d: #7F1D1D;
+  --hx-854f0b: #854F0B;
+  --hx-86efac: #86EFAC;
+  --hx-8b7355: #8B7355;
+  --hx-92400e: #92400E;
+  --hx-9333ea: #9333EA;
+  --hx-93c5fd: #93C5FD;
+  --hx-94a3b8: #94A3B8;
+  --hx-991b1b: #991B1B;
+  --hx-9a3412: #9A3412;
+  --hx-9ca3af: #9CA3AF;
+  --hx-a32d2d: #A32D2D;
+  --hx-a9691f: #A9691F;
+  --hx-b45309: #B45309;
+  --hx-b7791f: #B7791F;
+  --hx-b91c1c: #B91C1C;
+  --hx-bbf0cb: #BBF0CB;
+  --hx-bbf7d0: #BBF7D0;
+  --hx-be123c: #BE123C;
+  --hx-bfdbfe: #BFDBFE;
+  --hx-c0c0c0: #C0C0C0;
+  --hx-c2410c: #C2410C;
+  --hx-c24135: #C24135;
+  --hx-c4c9d2: #C4C9D2;
+  --hx-ca8a04: #CA8A04;
+  --hx-cbd5e1: #CBD5E1;
+  --hx-d1d5db: #D1D5DB;
+  --hx-d6e4ff: #D6E4FF;
+  --hx-d97706: #D97706;
+  --hx-dbeafe: #DBEAFE;
+  --hx-dc2626: #DC2626;
+  --hx-dcfce7: #DCFCE7;
+  --hx-dde3ee: #DDE3EE;
+  --hx-e0e7ff: #E0E7FF;
+  --hx-e0f7fa: #E0F7FA;
+  --hx-e5e7eb: #E5E7EB;
+  --hx-e6f1fb: #E6F1FB;
+  --hx-e8dcd2: #E8DCD2;
+  --hx-e9eaec: #E9EAEC;
+  --hx-eaf0ff: #EAF0FF;
+  --hx-eaf2fe: #EAF2FE;
+  --hx-eaf3de: #EAF3DE;
+  --hx-ecfccb: #ECFCCB;
+  --hx-ede9dd: #EDE9DD;
+  --hx-eedcf0: #EEDCF0;
+  --hx-eeedfe: #EEEDFE;
+  --hx-eef0f3: #EEF0F3;
+  --hx-eef2ff: #EEF2FF;
+  --hx-eef4ff: #EEF4FF;
+  --hx-efe9e0: #EFE9E0;
+  --hx-eff6ff: #EFF6FF;
+  --hx-f0ece6: #F0ECE6;
+  --hx-f0f0f0: #F0F0F0;
+  --hx-f0f7ff: #F0F7FF;
+  --hx-f0fdf4: #F0FDF4;
+  --hx-f1ede6: #F1EDE6;
+  --hx-f1efe8: #F1EFE8;
+  --hx-f1f5f9: #F1F5F9;
+  --hx-f3e8ff: #F3E8FF;
+  --hx-f3ece8: #F3ECE8;
+  --hx-f3ede4: #F3EDE4;
+  --hx-f3eef5: #F3EEF5;
+  --hx-f3f0fc: #F3F0FC;
+  --hx-f3f4f6: #F3F4F6;
+  --hx-f3fae9: #F3FAE9;
+  --hx-f3fbf5: #F3FBF5;
+  --hx-f4f5f7: #F4F5F7;
+  --hx-f5eeea: #F5EEEA;
+  --hx-f5f8ff: #F5F8FF;
+  --hx-f7f4ec: #F7F4EC;
+  --hx-f8f9fa: #F8F9FA;
+  --hx-f8fafc: #F8FAFC;
+  --hx-f9fafb: #F9FAFB;
+  --hx-faeeda: #FAEEDA;
+  --hx-faf5fb: #FAF5FB;
+  --hx-fbf7f5: #FBF7F5;
+  --hx-fca5a5: #FCA5A5;
+  --hx-fcebeb: #FCEBEB;
+  --hx-fceee8: #FCEEE8;
+  --hx-fdba74: #FDBA74;
+  --hx-fde68a: #FDE68A;
+  --hx-fdf1dc: #FDF1DC;
+  --hx-fdf4fe: #FDF4FE;
+  --hx-fdf8e8: #FDF8E8;
+  --hx-fecaca: #FECACA;
+  --hx-fed7aa: #FED7AA;
+  --hx-fee2e2: #FEE2E2;
+  --hx-fef08a: #FEF08A;
+  --hx-fef2f2: #FEF2F2;
+  --hx-fef3c7: #FEF3C7;
+  --hx-fef6e4: #FEF6E4;
+  --hx-fef9e7: #FEF9E7;
+  --hx-ffe4e6: #FFE4E6;
+  --hx-fff1e8: #FFF1E8;
+  --hx-fff7ed: #FFF7ED;
+  --hx-fffbeb: #FFFBEB;
+  --hx-ffffff: #FFFFFF;
+  --hxbg-0f172a: #0F172A;
+  --hxbg-111827: #111827;
+  --hxhero-0f172a: #0F172A;
+  --hxhero-111827: #111827;
 }
 
-html[data-tema='oscuro'] .op-tema {
+/* Zonas que siguen siempre en claro (panel de administración) */
+.op-claro {
+  --op-color-bg: #f7f4ee;
+  --op-color-surface: #fffdf8;
+  --op-color-surface-raised: #ffffff;
+  --op-color-ink: #0d1b2a;
+  --op-color-ink-soft: #39465a;
+  --op-color-muted: #667085;
+  --op-color-border: #e5dfd4;
+  --op-color-border-strong: #d4c8b8;
+  --op-color-primary: #1f7cff;
+  --op-color-primary-strong: #155bd4;
+  --op-color-primary-soft: #e7f0ff;
+  color-scheme: light;
+}
+
+html[data-tema='oscuro'] {
   --c-bg-dashboard: #0E1626;
   --c-bg-retos: #17110F;
   --c-bg-flashcards: #160F1C;
   --c-bg-tema: #15120E;
   --c-bg-alertas: #16130B;
   --c-bg-neutral: #0F141C;
+  --c-bg-modal-test: #152016;
 
   --c-superficie: #172033;
   --c-superficie-2: #1F2A40;
@@ -242,10 +393,153 @@ html[data-tema='oscuro'] .op-tema {
 
   --c-logo-texto: #E8ECF3;
 
+  --op-color-bg: #0B1220;
+  --op-color-surface: #172033;
+  --op-color-surface-raised: #1F2A40;
+  --op-color-ink: #E8ECF3;
+  --op-color-ink-soft: #C3CBD8;
+  --op-color-muted: #A4AEC0;
+  --op-color-border: #26324A;
+  --op-color-border-strong: #33415E;
+  --op-color-primary: #5A9CFF;
+  --op-color-primary-strong: #8AB8FF;
+  --op-color-primary-soft: rgba(90, 156, 255, 0.16);
+
+  --hx-0891b2: #22D3EE;
+  --hx-0ea5e9: #22D3EE;
+  --hx-0f172a: #E8ECF3;
+  --hx-111827: #E8ECF3;
+  --hx-14532d: #86EFAC;
+  --hx-15803d: #86EFAC;
+  --hx-166534: #86EFAC;
+  --hx-16a34a: #4ADE80;
+  --hx-185fa5: #8AB8FF;
+  --hx-1a1a1a: #E8ECF3;
+  --hx-1e3a5f: #D5E0F0;
+  --hx-1e40af: #8AB8FF;
+  --hx-1f5fd1: #8AB8FF;
+  --hx-1f7cff: #5A9CFF;
+  --hx-2563eb: #5A9CFF;
+  --hx-2d2d2d: #E8ECF3;
+  --hx-334155: #E8ECF3;
+  --hx-374151: #A4AEC0;
+  --hx-3b6d11: #86EFAC;
+  --hx-3b82f6: #5A9CFF;
+  --hx-3c3489: #B9A6FB;
+  --hx-4338ca: #8E96FA;
+  --hx-475569: #A4AEC0;
+  --hx-4b5563: #A4AEC0;
+  --hx-4d7c0f: #A3D65C;
+  --hx-4f46e5: #8E96FA;
+  --hx-5f5e5a: #B8C0CE;
+  --hx-64748b: #A4AEC0;
+  --hx-6b5f3e: #C9B98F;
+  --hx-6b7280: #A4AEC0;
+  --hx-7c3aed: #A78BFA;
+  --hx-7f1d1d: #FCA5A5;
+  --hx-854f0b: #F0B46B;
+  --hx-86efac: rgba(74, 222, 128, 0.35);
+  --hx-8b7355: #C9A97E;
+  --hx-92400e: #F0B46B;
+  --hx-9333ea: #C08BFA;
+  --hx-93c5fd: rgba(90, 156, 255, 0.4);
+  --hx-94a3b8: #8C97AA;
+  --hx-991b1b: #FCA5A5;
+  --hx-9a3412: #FB8B5B;
+  --hx-9ca3af: #8C97AA;
+  --hx-a32d2d: #FCA5A5;
+  --hx-a9691f: #F0B46B;
+  --hx-b45309: #F0B46B;
+  --hx-b7791f: #F0B46B;
+  --hx-b91c1c: #FCA5A5;
+  --hx-bbf0cb: rgba(74, 222, 128, 0.35);
+  --hx-bbf7d0: rgba(74, 222, 128, 0.35);
+  --hx-be123c: #FCA5A5;
+  --hx-bfdbfe: rgba(90, 156, 255, 0.4);
+  --hx-c0c0c0: #4B5772;
+  --hx-c2410c: #FB8B5B;
+  --hx-c24135: #FCA5A5;
+  --hx-c4c9d2: #4B5772;
+  --hx-ca8a04: #FBBF24;
+  --hx-cbd5e1: #4B5772;
+  --hx-d1d5db: #4B5772;
+  --hx-d6e4ff: rgba(90, 156, 255, 0.16);
+  --hx-d97706: #FBBF24;
+  --hx-dbeafe: rgba(90, 156, 255, 0.16);
+  --hx-dc2626: #F87171;
+  --hx-dcfce7: rgba(74, 222, 128, 0.13);
+  --hx-dde3ee: #26324A;
+  --hx-e0e7ff: rgba(142, 150, 250, 0.16);
+  --hx-e0f7fa: rgba(34, 211, 238, 0.14);
+  --hx-e5e7eb: #26324A;
+  --hx-e6f1fb: rgba(90, 156, 255, 0.16);
+  --hx-e8dcd2: rgba(201, 169, 126, 0.14);
+  --hx-e9eaec: #26324A;
+  --hx-eaf0ff: rgba(90, 156, 255, 0.16);
+  --hx-eaf2fe: rgba(90, 156, 255, 0.16);
+  --hx-eaf3de: rgba(74, 222, 128, 0.13);
+  --hx-ecfccb: rgba(74, 222, 128, 0.13);
+  --hx-ede9dd: rgba(201, 169, 126, 0.14);
+  --hx-eedcf0: rgba(192, 139, 250, 0.16);
+  --hx-eeedfe: rgba(167, 139, 250, 0.16);
+  --hx-eef0f3: #26324A;
+  --hx-eef2ff: rgba(142, 150, 250, 0.16);
+  --hx-eef4ff: rgba(90, 156, 255, 0.16);
+  --hx-efe9e0: rgba(201, 169, 126, 0.14);
+  --hx-eff6ff: rgba(90, 156, 255, 0.16);
+  --hx-f0ece6: rgba(201, 169, 126, 0.14);
+  --hx-f0f0f0: #1F2A40;
+  --hx-f0f7ff: rgba(90, 156, 255, 0.16);
+  --hx-f0fdf4: rgba(74, 222, 128, 0.13);
+  --hx-f1ede6: rgba(201, 169, 126, 0.14);
+  --hx-f1efe8: rgba(201, 169, 126, 0.14);
+  --hx-f1f5f9: #1F2A40;
+  --hx-f3e8ff: rgba(192, 139, 250, 0.16);
+  --hx-f3ece8: rgba(251, 139, 91, 0.14);
+  --hx-f3ede4: rgba(201, 169, 126, 0.14);
+  --hx-f3eef5: rgba(192, 139, 250, 0.16);
+  --hx-f3f0fc: rgba(167, 139, 250, 0.16);
+  --hx-f3f4f6: #1F2A40;
+  --hx-f3fae9: rgba(74, 222, 128, 0.13);
+  --hx-f3fbf5: rgba(74, 222, 128, 0.13);
+  --hx-f4f5f7: #1F2A40;
+  --hx-f5eeea: rgba(251, 139, 91, 0.14);
+  --hx-f5f8ff: rgba(90, 156, 255, 0.16);
+  --hx-f7f4ec: rgba(201, 169, 126, 0.14);
+  --hx-f8f9fa: #1F2A40;
+  --hx-f8fafc: #1F2A40;
+  --hx-f9fafb: #1F2A40;
+  --hx-faeeda: rgba(245, 197, 66, 0.13);
+  --hx-faf5fb: rgba(192, 139, 250, 0.16);
+  --hx-fbf7f5: rgba(251, 139, 91, 0.14);
+  --hx-fca5a5: rgba(248, 113, 113, 0.4);
+  --hx-fcebeb: rgba(248, 113, 113, 0.14);
+  --hx-fceee8: rgba(251, 139, 91, 0.14);
+  --hx-fdba74: rgba(251, 139, 91, 0.4);
+  --hx-fde68a: rgba(245, 197, 66, 0.35);
+  --hx-fdf1dc: rgba(245, 197, 66, 0.13);
+  --hx-fdf4fe: rgba(192, 139, 250, 0.16);
+  --hx-fdf8e8: rgba(245, 197, 66, 0.13);
+  --hx-fecaca: rgba(248, 113, 113, 0.4);
+  --hx-fed7aa: rgba(251, 139, 91, 0.4);
+  --hx-fee2e2: rgba(248, 113, 113, 0.14);
+  --hx-fef08a: rgba(245, 197, 66, 0.35);
+  --hx-fef2f2: rgba(248, 113, 113, 0.14);
+  --hx-fef3c7: rgba(245, 197, 66, 0.13);
+  --hx-fef6e4: rgba(245, 197, 66, 0.13);
+  --hx-fef9e7: rgba(245, 197, 66, 0.13);
+  --hx-ffe4e6: rgba(248, 113, 113, 0.14);
+  --hx-fff1e8: rgba(251, 139, 91, 0.14);
+  --hx-fff7ed: rgba(251, 139, 91, 0.14);
+  --hx-fffbeb: rgba(245, 197, 66, 0.13);
+  --hx-ffffff: #172033;
+  --hxbg-0f172a: #E8ECF3;
+  --hxbg-111827: #E8ECF3;
+  --hxhero-0f172a: #1B2A47;
+  --hxhero-111827: #1B2A47;
+
+
   color-scheme: dark;
 }
 
-/* Fondo de la página (zona de rebote al hacer scroll) acorde a la pantalla preparada */
-html[data-tema='oscuro'] body:has(.op-tema) {
-  background: #0B1220;
-}
+

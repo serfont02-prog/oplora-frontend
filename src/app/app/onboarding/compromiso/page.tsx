@@ -31,7 +31,7 @@ export default function CompromisoPage() {
   return (
     <PantallaOnboarding titulo="¿Te ayudamos a mantener el ritmo?" subtitulo="Te enviaremos recordatorios suaves para que no pierdas la constancia.">
       <ListaOpciones>
-        <OpcionOnboarding icono={Flame} color="#C2410C" fondo="#FCEEE8" titulo="Sí, quiero aprobar" subtitulo="Recordatorios activados" seleccionada={elegido === true} atenuada={elegido === false} disabled={elegido !== null} onClick={() => elegir(true)} />
+        <OpcionOnboarding icono={Flame} color="var(--hx-c2410c)" fondo="var(--hx-fceee8)" titulo="Sí, quiero aprobar" subtitulo="Recordatorios activados" seleccionada={elegido === true} atenuada={elegido === false} disabled={elegido !== null} onClick={() => elegir(true)} />
         <OpcionOnboarding icono={Clock} titulo="Ahora no" subtitulo="Podrás activarlos en Avisos" seleccionada={elegido === false} atenuada={elegido === true} disabled={elegido !== null} onClick={() => elegir(false)} />
       </ListaOpciones>
       {error && <div style={{ marginTop: 12 }}><AvisoAuth>{error}</AvisoAuth></div>}

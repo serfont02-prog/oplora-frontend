@@ -9,7 +9,7 @@ import { X, CheckCircle2, XCircle, MinusCircle, ChevronDown, Lightbulb } from 'l
 import { PuntosGanadosCard, GamificacionInfo } from '@/components/gamificacion/PuntosGanadosCard';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const SOMBRA = 'var(--c-sombra)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const limpiar = (op?: string) => (op ?? '').replace(/^[a-fA-F]\)\s*/, '');
 
@@ -65,7 +65,7 @@ export default function ResultadoDuelo({
   const t = Math.max(0, Math.round(tiempoSegundos ?? 0));
   const tiempoTexto = tiempoSegundos == null ? '—' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   const medio = total > 0 && tiempoSegundos != null ? Math.round(t / total) : null;
-  const colorNota = pct >= 80 ? '#16A34A' : pct >= 60 ? '#1F7CFF' : pct >= 40 ? '#D97706' : '#DC2626';
+  const colorNota = pct >= 80 ? 'var(--hx-16a34a)' : pct >= 60 ? 'var(--hx-1f7cff)' : pct >= 40 ? 'var(--hx-d97706)' : 'var(--hx-dc2626)';
   const mensaje = pct >= 80 ? 'Excelente' : pct >= 60 ? 'Bien hecho' : pct >= 40 ? 'Sigue practicando' : 'Toca repasar';
   const IconoEstado = estado.icono;
 
@@ -91,7 +91,7 @@ export default function ResultadoDuelo({
           <button
             onClick={onCerrar}
             aria-label="Cerrar"
-            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <X size={18} color={TEXT_PRIMARY} />
           </button>
@@ -99,9 +99,9 @@ export default function ResultadoDuelo({
 
         {/* Acierto */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width={D - 24} height={D - 24} style={{ position: 'absolute', top: 12, left: 12, transform: 'rotate(-90deg)' }}>
-              <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke="#EEF0F3" strokeWidth={10} />
+              <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={10} />
               {pct > 0 && (
                 <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke={colorNota} strokeWidth={10} strokeLinecap="round"
                   strokeDasharray={circ} strokeDashoffset={circ - (pct / 100) * circ} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
@@ -121,14 +121,14 @@ export default function ResultadoDuelo({
         </div>
 
         {/* Cifras */}
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '14px 4px' }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '14px 4px' }}>
           {[
-            { v: correctas, l: 'Aciertos', c: '#16A34A' },
-            { v: fallos, l: 'Fallos', c: '#DC2626' },
+            { v: correctas, l: 'Aciertos', c: 'var(--hx-16a34a)' },
+            { v: fallos, l: 'Fallos', c: 'var(--hx-dc2626)' },
             { v: blancos, l: 'En blanco', c: TEXT_SECONDARY },
             { v: tiempoTexto, l: medio != null ? `${medio}s / pregunta` : 'Tiempo', c: TEXT_PRIMARY },
           ].map((d, i) => (
-            <div key={d.l} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid #EEF0F3' : 'none' }}>
+            <div key={d.l} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: d.c }}>{d.v}</div>
               <div style={{ fontSize: 10, color: TEXT_MUTED, marginTop: 2 }}>{d.l}</div>
             </div>
@@ -145,7 +145,7 @@ export default function ResultadoDuelo({
               <IconoEstado size={12} /> {estado.texto}
             </span>
           </div>
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16 }}>{duelo}</div>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16 }}>{duelo}</div>
         </section>
 
         {/* Revisión */}
@@ -153,22 +153,22 @@ export default function ResultadoDuelo({
           <section>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', gap: 8 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Revisa tus respuestas</span>
-              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.7)', borderRadius: 999, padding: 3, gap: 2 }}>
+              <div style={{ display: 'flex', background: 'color-mix(in srgb, var(--c-superficie) 70%, transparent)', borderRadius: 999, padding: 3, gap: 2 }}>
                 {([['todas', 'Todas'], ['falladas', 'Fallos'], ['blanco', 'En blanco']] as const).map(([k, l]) => (
-                  <button key={k} onClick={() => setFiltro(k)} style={{ border: 'none', borderRadius: 999, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', background: filtro === k ? '#0f172a' : 'transparent', color: filtro === k ? 'white' : TEXT_SECONDARY }}>
+                  <button key={k} onClick={() => setFiltro(k)} style={{ border: 'none', borderRadius: 999, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', background: filtro === k ? 'var(--hxbg-0f172a)' : 'transparent', color: filtro === k ? 'var(--c-primario-texto)' : TEXT_SECONDARY }}>
                     {l}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
               {visibles.length === 0 && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>No hay preguntas en este filtro.</div>}
               {visibles.map(({ d, i }, k) => {
                 const Icono = d.enBlanco ? MinusCircle : d.correcta ? CheckCircle2 : XCircle;
-                const colorEst = d.enBlanco ? '#94A3B8' : d.correcta ? '#16A34A' : '#DC2626';
+                const colorEst = d.enBlanco ? 'var(--hx-94a3b8)' : d.correcta ? 'var(--hx-16a34a)' : 'var(--hx-dc2626)';
                 const esta = abierta === i;
                 return (
-                  <div key={i} style={{ borderBottom: k < visibles.length - 1 ? '1px solid #EEF0F3' : 'none' }}>
+                  <div key={i} style={{ borderBottom: k < visibles.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
                     <button
                       onClick={() => setAbierta(esta ? null : i)}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
@@ -178,7 +178,7 @@ export default function ResultadoDuelo({
                       <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.4, ...(esta ? {} : { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }) }}>
                         {d.enunciado}
                       </span>
-                      <ChevronDown size={15} color="#C4C9D2" style={{ flexShrink: 0, transform: esta ? 'rotate(180deg)' : 'none' }} />
+                      <ChevronDown size={15} color="var(--hx-c4c9d2)" style={{ flexShrink: 0, transform: esta ? 'rotate(180deg)' : 'none' }} />
                     </button>
                     {esta && (
                       <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -186,18 +186,18 @@ export default function ResultadoDuelo({
                           const esCorrecta = j === d.indiceCorrecta;
                           const esTuya = j === d.indiceSeleccionada;
                           return (
-                            <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 10, fontSize: 13, color: TEXT_PRIMARY, background: esCorrecta ? '#F0FDF4' : esTuya ? '#FEF2F2' : '#F8F9FA' }}>
-                              <span style={{ fontSize: 11, fontWeight: 800, color: esCorrecta ? '#16A34A' : esTuya ? '#DC2626' : TEXT_MUTED }}>{LETRAS[j] ?? j + 1}</span>
+                            <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 10, fontSize: 13, color: TEXT_PRIMARY, background: esCorrecta ? 'var(--hx-f0fdf4)' : esTuya ? 'var(--hx-fef2f2)' : 'var(--hx-f8f9fa)' }}>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: esCorrecta ? 'var(--hx-16a34a)' : esTuya ? 'var(--hx-dc2626)' : TEXT_MUTED }}>{LETRAS[j] ?? j + 1}</span>
                               <span style={{ flex: 1, lineHeight: 1.4 }}>{limpiar(op)}</span>
-                              {esCorrecta && <CheckCircle2 size={15} color="#16A34A" />}
-                              {esTuya && !esCorrecta && <XCircle size={15} color="#DC2626" />}
+                              {esCorrecta && <CheckCircle2 size={15} color="var(--hx-16a34a)" />}
+                              {esTuya && !esCorrecta && <XCircle size={15} color="var(--hx-dc2626)" />}
                             </div>
                           );
                         })}
                         {d.enBlanco && <div style={{ fontSize: 12, color: TEXT_MUTED }}>La dejaste en blanco.</div>}
                         {d.explicacion && (
-                          <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.5, background: '#F8F9FA', borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
-                            <Lightbulb size={14} color="#4D7C0F" style={{ flexShrink: 0, marginTop: 2 }} />
+                          <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.5, background: 'var(--hx-f8f9fa)', borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
+                            <Lightbulb size={14} color="var(--hx-4d7c0f)" style={{ flexShrink: 0, marginTop: 2 }} />
                             <span>{d.explicacion}</span>
                           </div>
                         )}

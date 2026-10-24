@@ -46,8 +46,8 @@ export function ConfiguracionTest({
       {/* Tipo de test */}
       <div
         style={{
-          background: 'white',
-          border: '1px solid #f3f4f6',
+          background: 'var(--c-superficie)',
+          border: '1px solid var(--hx-f3f4f6)',
           borderRadius: '20px',
           padding: '1rem',
           marginBottom: '14px',
@@ -57,7 +57,7 @@ export function ConfiguracionTest({
           style={{
             fontSize: '11px',
             fontWeight: 600,
-            color: '#9ca3af',
+            color: 'var(--hx-9ca3af)',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             marginBottom: '12px',
@@ -94,12 +94,12 @@ export function ConfiguracionTest({
                 cursor: 'pointer',
                 border:
                   tipoTest === key
-                    ? '2px solid #111827'
-                    : '1px solid #e5e7eb',
+                    ? '2px solid var(--hx-111827)'
+                    : '1px solid var(--hx-e5e7eb)',
                 background:
                   tipoTest === key
-                    ? '#f9fafb'
-                    : 'white',
+                    ? 'var(--hx-f9fafb)'
+                    : 'var(--c-superficie)',
                 transition: '0.2s',
               }}
             >
@@ -116,7 +116,7 @@ export function ConfiguracionTest({
                 style={{
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: '#111827',
+                  color: 'var(--hx-111827)',
                 }}
               >
                 {label}
@@ -129,8 +129,8 @@ export function ConfiguracionTest({
       {/* Número preguntas */}
       <div
         style={{
-          background: 'white',
-          border: '1px solid #f3f4f6',
+          background: 'var(--c-superficie)',
+          border: '1px solid var(--hx-f3f4f6)',
           borderRadius: '20px',
           padding: '1rem',
           marginBottom: '14px',
@@ -140,7 +140,7 @@ export function ConfiguracionTest({
           style={{
             fontSize: '11px',
             fontWeight: 600,
-            color: '#9ca3af',
+            color: 'var(--hx-9ca3af)',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             marginBottom: '12px',
@@ -173,15 +173,15 @@ export function ConfiguracionTest({
                 border:
                   !mostrarCustom && numPreguntas === n
                     ? 'none'
-                    : '1px solid #e5e7eb',
+                    : '1px solid var(--hx-e5e7eb)',
                 background:
                   !mostrarCustom && numPreguntas === n
-                    ? '#111827'
-                    : 'white',
+                    ? 'var(--hxbg-111827)'
+                    : 'var(--c-superficie)',
                 color:
                   !mostrarCustom && numPreguntas === n
-                    ? 'white'
-                    : '#6b7280',
+                    ? 'var(--c-primario-texto)'
+                    : 'var(--hx-6b7280)',
               }}
             >
               {n}
@@ -201,13 +201,13 @@ export function ConfiguracionTest({
               cursor: 'pointer',
               border: mostrarCustom
                 ? 'none'
-                : '1px solid #e5e7eb',
+                : '1px solid var(--hx-e5e7eb)',
               background: mostrarCustom
-                ? '#111827'
-                : 'white',
+                ? 'var(--hxbg-111827)'
+                : 'var(--c-superficie)',
               color: mostrarCustom
-                ? 'white'
-                : '#6b7280',
+                ? 'var(--c-primario-texto)'
+                : 'var(--hx-6b7280)',
             }}
           >
             Otro
@@ -227,7 +227,7 @@ export function ConfiguracionTest({
             style={{
               width: '100%',
               padding: '12px 14px',
-              border: '1px solid #e5e7eb',
+              border: '1px solid var(--hx-e5e7eb)',
               borderRadius: '14px',
               fontSize: '14px',
               outline: 'none',
@@ -240,8 +240,8 @@ export function ConfiguracionTest({
       {/* Info */}
       <div
         style={{
-          background: '#f9fafb',
-          border: '1px solid #f3f4f6',
+          background: 'var(--hx-f9fafb)',
+          border: '1px solid var(--hx-f3f4f6)',
           borderRadius: '16px',
           padding: '12px 14px',
           marginBottom: '16px',
@@ -256,7 +256,7 @@ export function ConfiguracionTest({
         <div
           style={{
             fontSize: '12px',
-            color: '#6b7280',
+            color: 'var(--hx-6b7280)',
             lineHeight: 1.5,
           }}
         >
@@ -271,8 +271,8 @@ export function ConfiguracionTest({
         style={{
           width: '100%',
           padding: '16px',
-          background: '#111827',
-          color: 'white',
+          background: 'var(--hxbg-111827)',
+          color: 'var(--c-primario-texto)',
           border: 'none',
           borderRadius: '18px',
           fontSize: '15px',

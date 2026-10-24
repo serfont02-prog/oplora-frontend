@@ -3,8 +3,8 @@
 // ⭐ Interruptor único de la app (avisos, retos al azar, Liga…): mismo tamaño y colores en todas partes.
 // Activado = azul de la marca; desactivado = gris.
 
-export const INTERRUPTOR_ON = '#1F7CFF';
-export const INTERRUPTOR_OFF = '#CBD5E1';
+export const INTERRUPTOR_ON = 'var(--hx-1f7cff)';
+export const INTERRUPTOR_OFF = 'var(--hx-cbd5e1)';
 
 export default function Interruptor({
   activo,
@@ -34,7 +34,7 @@ export default function Interruptor({
     >
       <span
         style={{
-          display: 'block', width: 22, height: 22, borderRadius: '50%', background: 'white',
+          display: 'block', width: 22, height: 22, borderRadius: '50%', background: '#FFFFFF', // el botón siempre blanco, también en oscuro
           boxShadow: '0 1px 3px rgba(15,23,42,0.25)',
           transform: activo ? 'translateX(18px)' : 'translateX(0)', transition: 'transform 0.2s ease',
         }}

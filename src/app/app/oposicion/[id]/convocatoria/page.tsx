@@ -8,12 +8,12 @@ import { ArrowLeft, ExternalLink, FileText, ChevronRight, CalendarClock, X } fro
 import { useState } from 'react';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#6B7280';
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const COLOR_SIMULACRO = '#6B5F3E';
-const COLOR_SIMULACRO_BG = '#EDE9DD';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_SECONDARY = 'var(--hx-6b7280)';
+const TEXT_MUTED = 'var(--hx-6b7280)';
+const SOMBRA = 'var(--c-sombra)';
+const COLOR_SIMULACRO = 'var(--hx-6b5f3e)';
+const COLOR_SIMULACRO_BG = 'var(--hx-ede9dd)';
 
 /** Días que faltan hasta una fecha (null si ya pasó o no hay) */
 function diasHasta(f?: string | null): number | null {
@@ -83,10 +83,10 @@ if (isLoading) {
 if (!convocatoria) {
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem' }}>
-      <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: '1.5rem', maxWidth: 380, width: '100%', textAlign: 'center' }}>
+      <div style={{ background: 'var(--c-superficie)', borderRadius: 20, boxShadow: SOMBRA, padding: '1.5rem', maxWidth: 380, width: '100%', textAlign: 'center' }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>No hay convocatoria disponible</div>
         <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 16 }}>Todavía no se ha publicado ninguna convocatoria de esta oposición.</div>
-        <button onClick={volver} style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Volver</button>
+        <button onClick={volver} style={{ width: '100%', padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Volver</button>
       </div>
     </div>
   );
@@ -104,7 +104,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0', marginBottom: 16 }}>
-          <button onClick={volver} aria-label="Volver" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+          <button onClick={volver} aria-label="Volver" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -112,8 +112,8 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY }}>{convocatoria.anyo}</span>
               {esLaMia && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#1F7CFF', color: 'white' }}>La tuya</span>}
-              {convocatoria.estado === 'activa' && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#DCFCE7', color: '#15803D' }}>Activa</span>}
-              {convocatoria.estado === 'cerrada' && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#F1F5F9', color: TEXT_SECONDARY }}>Cerrada</span>}
+              {convocatoria.estado === 'activa' && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--hx-dcfce7)', color: 'var(--hx-15803d)' }}>Activa</span>}
+              {convocatoria.estado === 'cerrada' && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--hx-f1f5f9)', color: TEXT_SECONDARY }}>Cerrada</span>}
             </div>
           </div>
         </div>
@@ -122,8 +122,8 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
         {(diasExamen !== null || inscripcionAbierta) && (
           <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
             {diasExamen !== null && (
-              <div style={{ flex: 1, background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <CalendarClock size={20} color="#1F7CFF" style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1, background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <CalendarClock size={20} color="var(--hx-1f7cff)" style={{ flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1 }}>{diasExamen === 0 ? 'Hoy' : `${diasExamen} ${diasExamen === 1 ? 'día' : 'días'}`}</div>
                   <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{diasExamen === 0 ? 'es el examen' : 'para el examen'}</div>
@@ -131,9 +131,9 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
               </div>
             )}
             {inscripcionAbierta && (
-              <div style={{ flex: 1, background: '#F0FDF4', borderRadius: 18, boxShadow: SOMBRA, padding: 14 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#15803D' }}>Inscripción abierta</div>
-                <div style={{ fontSize: 11, color: '#166534', marginTop: 2 }}>Hasta el {formatearFecha(convocatoria.plazoInscripcionFin)}</div>
+              <div style={{ flex: 1, background: 'var(--hx-f0fdf4)', borderRadius: 18, boxShadow: SOMBRA, padding: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--hx-15803d)' }}>Inscripción abierta</div>
+                <div style={{ fontSize: 11, color: 'var(--hx-166534)', marginTop: 2 }}>Hasta el {formatearFecha(convocatoria.plazoInscripcionFin)}</div>
               </div>
             )}
           </div>
@@ -150,13 +150,13 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
             >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Temas de la convocatoria{temasModal.length ? ` · ${temasModal.length}` : ''}</div>
-              <button onClick={() => setModalTemas(false)} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={16} color={TEXT_SECONDARY} /></button>
+              <button onClick={() => setModalTemas(false)} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={16} color={TEXT_SECONDARY} /></button>
             </div>
-            <div style={{ background: 'white', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden' }}>
                 {temasModal.length === 0 && <div style={{ padding: 14, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
                 {temasModal.map((t: any, i: number) => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderBottom: i < temasModal.length - 1 ? '1px solid #EEF0F3' : 'none' }}>
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: '#EAF0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12, color: '#1F7CFF', flexShrink: 0 }}>
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderBottom: i < temasModal.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--hx-eaf0ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12, color: 'var(--hx-1f7cff)', flexShrink: 0 }}>
                     {t.numero}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT_PRIMARY }}>{t.titulo}</div>
@@ -168,7 +168,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
         )}
 
         {/* Datos generales */}
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {!!convocatoria.plazas && <Fila label="Plazas" valor={convocatoria.plazas} />}
             {convocatoria.turno && <Fila label="Turno" valor={LABEL_TURNO[convocatoria.turno] ?? convocatoria.turno} />}
@@ -187,7 +187,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
         {/* Desglose de plazas */}
         {convocatoria.plazasDesglose && Object.values(convocatoria.plazasDesglose).some((v: any) => v) && (
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Desglose de plazas</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {convocatoria.plazasDesglose.libres && <Fila label="Libres" valor={convocatoria.plazasDesglose.libres} />}
@@ -200,14 +200,14 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
             {/* Ejercicios */}
         {convocatoria.ejercicios?.length > 0 && (
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Ejercicios</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {convocatoria.ejercicios.map((ej: any, i: number) => {
                 const examenesDelEjercicio = examenes.filter((ex: any) => ex.parte === ej.numero);
 
                 return (
-                <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
+                <div key={i} style={{ padding: '10px 12px', background: 'var(--hx-f9fafb)', borderRadius: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>
                         Ejercicio {ej.numero} — {ej.tipo}
@@ -222,7 +222,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
                     {/* ⭐ Exámenes reales de este ejercicio concreto */}
                     {examenesDelEjercicio.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, paddingTop: 8, borderTop: '1px solid #F1F5F9' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--hx-f1f5f9)' }}>
                         {examenesDelEjercicio.map((ex: any) => (
                         <div key={ex.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                             <div style={{ fontSize: 10, color: TEXT_SECONDARY, minWidth: 0 }}>
@@ -234,7 +234,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
                                 href={ex.urlArchivo}
                                 target="_blank"
                                 rel="noreferrer"
-                                style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: '#374151', background: 'white', border: '1px solid #E5E7EB', borderRadius: 8, padding: '4px 8px', textDecoration: 'none' }}
+                                style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: 'var(--hx-374151)', background: 'var(--c-superficie)', border: '1px solid var(--hx-e5e7eb)', borderRadius: 8, padding: '4px 8px', textDecoration: 'none' }}
                             >
                                 <FileText size={12} /> PDF
                             </a>}
@@ -270,12 +270,12 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
         {/* Bloques del temario */}
         {convocatoria.bloquesTemario?.length > 0 && (
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>Bloques del temario</div>
             <button
                 onClick={() => setModalTemas(true)}
-                style={{ fontSize: 12, color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                style={{ fontSize: 12, color: 'var(--hx-1f7cff)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                 >
                 Ver temas
             </button>
@@ -293,7 +293,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
         {/* Requisitos */}
         {convocatoria.requisitos && (
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 8 }}>Requisitos</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.7 }}>
             {convocatoria.requisitos.split('\n').filter((l: string) => l.trim()).map((linea: string, i: number) => (
@@ -305,18 +305,18 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
             {/* Fases adicionales */}
             {convocatoria.fasesAdicionales?.length > 0 && (
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Fases del proceso</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {convocatoria.fasesAdicionales.map((f: any, i: number) => (
-                    <div key={i} style={{ padding: '10px 12px', background: '#F9FAFB', borderRadius: 10 }}>
+                    <div key={i} style={{ padding: '10px 12px', background: 'var(--hx-f9fafb)', borderRadius: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                         <div style={{ fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY, textTransform: 'capitalize' }}>{f.tipo}</div>
                         {f.nombre && <div style={{ fontSize: 11, fontWeight: 400, color: TEXT_MUTED, marginTop: 1 }}>{f.nombre}</div>}
                         </div>
                         {f.eliminatoria && (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: '#DC2626', flexShrink: 0 }}>Eliminatoria</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--hx-dc2626)', flexShrink: 0 }}>Eliminatoria</span>
                         )}
                     </div>
                     {f.descripcion && <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginTop: 6 }}>{f.descripcion}</div>}
@@ -328,7 +328,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
         {/* Bolsa de empleo */}
         {convocatoria.generaBolsaEmpleo && (
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>Bolsa de empleo</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.6 }}>{convocatoria.bolsaEmpleoDescripcion}</div>
           </div>
@@ -336,7 +336,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
         {/* Formación posterior */}
         {convocatoria.formacionPosterior && (
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>Formación posterior</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.6 }}>{convocatoria.formacionPosterior}</div>
           </div>
@@ -344,7 +344,7 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
 
         {/* Notas adicionales */}
         {convocatoria.descripcionAdicional && (
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 6 }}>Notas adicionales</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.7 }}>
             {convocatoria.descripcionAdicional.split('\n').filter((l: string) => l.trim()).map((linea: string, i: number) => (
@@ -360,19 +360,19 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
             href={convocatoria.urlOficial}
             target="_blank"
             rel="noreferrer"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, textDecoration: 'none', marginBottom: 12 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, textDecoration: 'none', marginBottom: 12 }}
           >
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#1F7CFF' }}>Ver documentación oficial</span>
-            <ExternalLink size={16} color="#1F7CFF" />
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--hx-1f7cff)' }}>Ver documentación oficial</span>
+            <ExternalLink size={16} color="var(--hx-1f7cff)" />
           </a>
         )}
 
         {convocatoria.documentos?.length > 0 && (
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 10 }}>Documentos ({convocatoria.documentos.length})</div>
             <button
               onClick={() => router.push(`/app/oposicion/${oposicionId}/noticias`)}
-              style={{ fontSize: 12, color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+              style={{ fontSize: 12, color: 'var(--hx-1f7cff)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             >
               Ver en Noticias
             </button>

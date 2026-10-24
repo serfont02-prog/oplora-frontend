@@ -8,11 +8,11 @@ type AppFooterProps = {
 };
 
 const items = [
-  { label: 'Inicio', path: '/app/dashboard', icon: Home, color: '#1f7cff' },
-  { label: 'Estudiar', path: '/app/catalogo', icon: BookOpen, color: '#a9691f' },
-  { label: 'Retos', path: '/app/retos', icon: Flame, color: '#c24135' },
-  { label: 'Practicar', path: '/app/entrenamiento', icon: ClipboardCheck, color: '#0ea5e9' },
-  { label: 'Alertas', path: '/app/alertas', icon: Bell, color: '#b45309' },
+  { label: 'Inicio', path: '/app/dashboard', icon: Home, color: 'var(--hx-1f7cff)' },
+  { label: 'Estudiar', path: '/app/catalogo', icon: BookOpen, color: 'var(--hx-a9691f)' },
+  { label: 'Retos', path: '/app/retos', icon: Flame, color: 'var(--hx-c24135)' },
+  { label: 'Practicar', path: '/app/entrenamiento', icon: ClipboardCheck, color: 'var(--hx-0ea5e9)' },
+  { label: 'Alertas', path: '/app/alertas', icon: Bell, color: 'var(--hx-b45309)' },
 ];
 
 export default function AppFooter({ oposicionId }: AppFooterProps) {

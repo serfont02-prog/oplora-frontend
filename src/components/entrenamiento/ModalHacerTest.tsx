@@ -5,13 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { X, ChevronLeft, ChevronRight, Lock, AlertTriangle, Check, ClipboardCheck, BookOpen, FolderOpen, Scale, Info } from 'lucide-react';
 
-const BG_MODAL_TEST = '#F3FAE9';
-const BORDER = '#E9EAEC';
+const BG_MODAL_TEST = 'var(--c-bg-modal-test)';
+const BORDER = 'var(--hx-e9eaec)';
 const SOMBRA = '0 4px 14px rgba(15, 23, 42, 0.06)';
-const COLOR_TEST = '#4D7C0F';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const COLOR_TEST = 'var(--hx-4d7c0f)';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_SECONDARY = 'var(--hx-6b7280)';
+const TEXT_MUTED = 'var(--hx-9ca3af)';
 
 type TipoTest = 'general' | 'tema' | 'ley' | null;
 type Paso = 'tipo' | 'seleccion' | 'ajustes';
@@ -206,13 +206,13 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
   : tipoTest === 'tema' ? `Test — ${formatearListaTemas(numerosTemasSeleccionados)}`
   : 'Ajustes del test';
   return (
-    <div className="op-claro" onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: BG_MODAL_TEST, borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '560px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 -4px 20px rgba(0,0,0,0.15)' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {paso !== 'tipo' && !temaPreseleccionado && (
-              <button onClick={volver} style={{ background: 'white', border: 'none', borderRadius: '8px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <button onClick={volver} style={{ background: 'var(--c-superficie)', border: 'none', borderRadius: '8px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <ChevronLeft size={16} color={TEXT_PRIMARY} />
               </button>
             )}
@@ -221,7 +221,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
           <button
             onClick={onClose}
             style={{
-                background: 'white', border: 'none', cursor: 'pointer', color: TEXT_SECONDARY,
+                background: 'var(--c-superficie)', border: 'none', cursor: 'pointer', color: TEXT_SECONDARY,
                 width: '32px', height: '32px', borderRadius: '10px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}
@@ -235,10 +235,10 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
                 // ⭐ Cada tipo con su color (antes todos verdes sobre el fondo verde del modal)
-                { tipo: 'general' as TipoTest, label: 'Test general', desc: 'Preguntas de todo el temario', Icon: ClipboardCheck, color: '#1F7CFF', fondo: '#EAF0FF' },
-                { tipo: 'tema' as TipoTest, label: 'Test por temas', desc: 'Elige uno o varios temas', Icon: BookOpen, color: '#B7791F', fondo: '#FEF6E4' },
-                { tipo: 'bloque' as any, label: 'Test por bloque', desc: 'Elige un bloque completo del temario', esBloque: true, Icon: FolderOpen, color: '#4F46E5', fondo: '#E0E7FF' },
-                { tipo: 'ley' as TipoTest, label: 'Test por ley', desc: 'Elige una ley concreta', Icon: Scale, color: '#7C3AED', fondo: '#F3F0FC' },
+                { tipo: 'general' as TipoTest, label: 'Test general', desc: 'Preguntas de todo el temario', Icon: ClipboardCheck, color: 'var(--hx-1f7cff)', fondo: 'var(--hx-eaf0ff)' },
+                { tipo: 'tema' as TipoTest, label: 'Test por temas', desc: 'Elige uno o varios temas', Icon: BookOpen, color: 'var(--hx-b7791f)', fondo: 'var(--hx-fef6e4)' },
+                { tipo: 'bloque' as any, label: 'Test por bloque', desc: 'Elige un bloque completo del temario', esBloque: true, Icon: FolderOpen, color: 'var(--hx-4f46e5)', fondo: 'var(--hx-e0e7ff)' },
+                { tipo: 'ley' as TipoTest, label: 'Test por ley', desc: 'Elige una ley concreta', Icon: Scale, color: 'var(--hx-7c3aed)', fondo: 'var(--hx-f3f0fc)' },
               ].filter(op => !(op as any).esBloque || bloquesDisponibles.length > 0).map(({ tipo, label, desc, Icon, color, fondo }) => (
                 <button
                   key={tipo}
@@ -253,7 +253,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                   style={{
                     display: 'flex', alignItems: 'center', gap: '12px',
                     padding: '13px 14px', borderRadius: '14px', textAlign: 'left',
-                    border: 'none', background: 'white', cursor: 'pointer', boxShadow: SOMBRA,
+                    border: 'none', background: 'var(--c-superficie)', cursor: 'pointer', boxShadow: SOMBRA,
                   }}
                 >
                   <span style={{ width: 40, height: 40, borderRadius: 12, background: fondo, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -263,7 +263,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                     <span style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY }}>{label}</span>
                     <span style={{ fontSize: '12px', color: TEXT_MUTED }}>{desc}</span>
                   </span>
-                  <ChevronRight size={16} color="#C4C9D2" />
+                  <ChevronRight size={16} color="var(--hx-c4c9d2)" />
                 </button>
               ))}
             </div>
@@ -288,26 +288,26 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                     style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
                       padding: '11px 13px', borderRadius: '12px', textAlign: 'left',
-                      border: seleccionado ? '2px solid #111827' : 'none',
-                      background: 'white',
+                      border: seleccionado ? '2px solid var(--hx-111827)' : 'none',
+                      background: 'var(--c-superficie)',
                       cursor: 'pointer',
                     }}
                   >
                     <div style={{
                       width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0,
-                      border: seleccionado ? 'none' : '2px solid #d1d5db',
-                      background: seleccionado ? '#111827' : 'white',
+                      border: seleccionado ? 'none' : '2px solid var(--hx-d1d5db)',
+                      background: seleccionado ? 'var(--hxbg-111827)' : 'var(--c-superficie)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      {seleccionado && <Check size={12} color="white" strokeWidth={3} />}
+                      {seleccionado && <Check size={12} color="var(--c-primario-texto)" strokeWidth={3} />}
                     </div>
                     <span style={{ fontSize: '13px', color: TEXT_PRIMARY, fontWeight: 500, flex: 1 }}>
                       T{t.numero} — {t.titulo}
                     </span>
                     {sinPreguntas && (
                       <span style={{
-                        fontSize: '10px', fontWeight: 700, color: '#C2410C',
-                        background: '#FFF7ED', border: '1px solid #FDBA74',
+                        fontSize: '10px', fontWeight: 700, color: 'var(--hx-c2410c)',
+                        background: 'var(--hx-fff7ed)', border: '1px solid var(--hx-fdba74)',
                         borderRadius: '999px', padding: '2px 8px', flexShrink: 0,
                       }}>
                         Sin preguntas
@@ -326,7 +326,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
             <button
               onClick={continuarASeleccion}
               disabled={temasSeleccionados.length === 0 || comprobandoDesglose || ningunTemaConPreguntas}
-              style={{ width: '100%', padding: '13px', background: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? '#0f172a' : '#e5e7eb', color: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
+              style={{ width: '100%', padding: '13px', background: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? 'var(--hxbg-0f172a)' : 'var(--hx-e5e7eb)', color: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? 'var(--c-primario-texto)' : 'var(--hx-9ca3af)', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: temasSeleccionados.length > 0 && !comprobandoDesglose && !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
             >
               {comprobandoDesglose ? 'Comprobando…' : `Continuar (${temasSeleccionados.length} seleccionados)`}
             </button>
@@ -355,8 +355,8 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                       style={{
                         display: 'flex', flexDirection: 'column', gap: '2px',
                         padding: '13px 14px', borderRadius: '12px', textAlign: 'left',
-                        border: seleccionado ? '2px solid #111827' : 'none',
-                        background: 'white', cursor: 'pointer',
+                        border: seleccionado ? '2px solid var(--hx-111827)' : 'none',
+                        background: 'var(--c-superficie)', cursor: 'pointer',
                       }}
                     >
                       <span style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>{b.nombre}</span>
@@ -383,7 +383,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                       setPaso('ajustes');
                     }}
                     disabled={comprobandoDesglose || ningunTemaConPreguntas}
-                    style={{ width: '100%', padding: '13px', background: !comprobandoDesglose && !ningunTemaConPreguntas ? '#0f172a' : '#e5e7eb', color: !comprobandoDesglose && !ningunTemaConPreguntas ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: !comprobandoDesglose && !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
+                    style={{ width: '100%', padding: '13px', background: !comprobandoDesglose && !ningunTemaConPreguntas ? 'var(--hxbg-0f172a)' : 'var(--hx-e5e7eb)', color: !comprobandoDesglose && !ningunTemaConPreguntas ? 'var(--c-primario-texto)' : 'var(--hx-9ca3af)', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: !comprobandoDesglose && !ningunTemaConPreguntas ? 'pointer' : 'not-allowed' }}
                   >
                     {comprobandoDesglose ? 'Comprobando…' : 'Continuar'}
                   </button>
@@ -405,18 +405,18 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                     style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
                       padding: '11px 13px', borderRadius: '12px', textAlign: 'left',
-                      border: seleccionado ? '2px solid #111827' : 'none',
-                      background: 'white',
+                      border: seleccionado ? '2px solid var(--hx-111827)' : 'none',
+                      background: 'var(--c-superficie)',
                       cursor: 'pointer',
                     }}
                   >
                     <div style={{
                       width: '18px', height: '18px', borderRadius: '999px', flexShrink: 0,
-                      border: seleccionado ? 'none' : '2px solid #d1d5db',
-                      background: seleccionado ? '#111827' : 'white',
+                      border: seleccionado ? 'none' : '2px solid var(--hx-d1d5db)',
+                      background: seleccionado ? 'var(--hxbg-111827)' : 'var(--c-superficie)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      {seleccionado && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />}
+                      {seleccionado && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--c-superficie)' }} />}
                     </div>
                     <span style={{ fontSize: '13px', color: TEXT_PRIMARY, fontWeight: 500 }}>
                       {ol.ley?.nombre}
@@ -435,7 +435,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
             <button
               onClick={continuarASeleccion}
               disabled={!leySeleccionada || comprobandoDisponibilidad || sinPreguntasDisponibles}
-              style={{ width: '100%', padding: '13px', background: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? '#0f172a' : '#e5e7eb', color: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? 'white' : '#9ca3af', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? 'pointer' : 'not-allowed' }}
+              style={{ width: '100%', padding: '13px', background: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? 'var(--hxbg-0f172a)' : 'var(--hx-e5e7eb)', color: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? 'var(--c-primario-texto)' : 'var(--hx-9ca3af)', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: leySeleccionada && !comprobandoDisponibilidad && !sinPreguntasDisponibles ? 'pointer' : 'not-allowed' }}
             >
               {leySeleccionada && comprobandoDisponibilidad ? 'Comprobando…' : 'Continuar'}
             </button>
@@ -459,7 +459,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
 )}
 
 {tipoTest === 'tema' && temasSeleccionados.length > 1 && (
-  <div style={{ marginBottom: '12px', padding: '10px 12px', background: 'white', borderRadius: '10px', fontSize: '11px', color: TEXT_MUTED }}>
+  <div style={{ marginBottom: '12px', padding: '10px 12px', background: 'var(--c-superficie)', borderRadius: '10px', fontSize: '11px', color: TEXT_MUTED }}>
     Al combinar varios temas, se aplica el límite de test general ({maxPorTest} preguntas)
   </div>
 )}
@@ -480,8 +480,8 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
           }}
           style={{
             padding: '8px 16px', borderRadius: '999px', border: 'none',
-            background: numPreguntas === n && !inputManual ? '#0f172a' : disponible ? 'white' : '#f0f0f0',
-            color: numPreguntas === n && !inputManual ? 'white' : disponible ? TEXT_SECONDARY : '#c0c0c0',
+            background: numPreguntas === n && !inputManual ? 'var(--hxbg-0f172a)' : disponible ? 'var(--c-superficie)' : 'var(--hx-f0f0f0)',
+            color: numPreguntas === n && !inputManual ? 'var(--c-primario-texto)' : disponible ? TEXT_SECONDARY : 'var(--hx-c0c0c0)',
             fontSize: '13px', fontWeight: numPreguntas === n && !inputManual ? 600 : 400,
             cursor: disponible ? 'pointer' : 'not-allowed',
             display: 'flex', alignItems: 'center', gap: '4px',
@@ -508,20 +508,20 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
       }}
       style={{
         width: '70px', padding: '8px 10px', borderRadius: '999px',
-        border: inputManual ? '2px solid #0f172a' : `1px solid ${BORDER}`,
+        border: inputManual ? '2px solid var(--hx-0f172a)' : `1px solid ${BORDER}`,
         fontSize: '13px', color: TEXT_PRIMARY, outline: 'none', textAlign: 'center',
       }}
     />
   </div>
 
   {excedeMaxPorTest && (
-    <div style={{ marginTop: '10px', padding: '12px', background: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+    <div style={{ marginTop: '10px', padding: '12px', background: 'var(--c-superficie)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
       <div style={{ fontSize: '12px', color: TEXT_SECONDARY }}>
         Ese número supera el máximo de tu plan ({maxPorTest} preguntas por test)
       </div>
       <button
         onClick={() => router.push('/app/suscripciones')}
-        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none', background: '#111827', color: 'white', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
       >
         Cambiar plan
       </button>
@@ -529,7 +529,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
   )}
 
   {disponibles !== null && disponibles > 0 && (
-    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: pideMasDeLasQueHay ? '#B45309' : TEXT_MUTED }}>
+    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: pideMasDeLasQueHay ? 'var(--hx-b45309)' : TEXT_MUTED }}>
       <Info size={13} style={{ flexShrink: 0 }} />
       {pideMasDeLasQueHay
         ? `Solo hay ${disponibles} preguntas para esta selección: el test tendrá ${disponibles}.`
@@ -538,13 +538,13 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
   )}
 
   {!excedeMaxPorTest && excedeRestante && (
-    <div style={{ marginTop: '10px', padding: '12px', background: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+    <div style={{ marginTop: '10px', padding: '12px', background: 'var(--c-superficie)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
       <div style={{ fontSize: '12px', color: TEXT_SECONDARY }}>
         Solo te quedan {restantesDia} preguntas hoy
       </div>
       <button
         onClick={() => router.push('/app/suscripciones')}
-        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none', background: '#111827', color: 'white', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
       >
         Cambiar plan
       </button>
@@ -566,8 +566,8 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                     style={{
                       display: 'flex', alignItems: 'center', gap: '12px',
                       padding: '12px 14px', borderRadius: '12px', textAlign: 'left',
-                      border: modoTiempo === value ? '2px solid #0f172a' : 'none',
-                      background: 'white',
+                      border: modoTiempo === value ? '2px solid var(--hx-0f172a)' : 'none',
+                      background: 'var(--c-superficie)',
                       cursor: 'pointer',
                     }}
                   >
@@ -577,11 +577,11 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                     </div>
                     <div style={{
                         width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
-                        border: modoTiempo === value ? 'none' : '2px solid #d1d5db',
-                        background: modoTiempo === value ? '#0f172a' : 'white',
+                        border: modoTiempo === value ? 'none' : '2px solid var(--hx-d1d5db)',
+                        background: modoTiempo === value ? 'var(--hxbg-0f172a)' : 'var(--c-superficie)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
-                        {modoTiempo === value && <Check size={12} color="white" strokeWidth={3} />}
+                        {modoTiempo === value && <Check size={12} color="var(--c-primario-texto)" strokeWidth={3} />}
                     </div>
                   </button>
                 ))}
@@ -592,14 +592,14 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
               <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Explicaciones</div>
               <button
                 onClick={() => setMostrarExplicaciones(!mostrarExplicaciones)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 14px', borderRadius: '12px', border: 'none', background: 'white', cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 14px', borderRadius: '12px', border: 'none', background: 'var(--c-superficie)', cursor: 'pointer' }}
               >
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>Mostrar explicación tras cada pregunta</div>
                   <div style={{ fontSize: '11px', color: TEXT_MUTED, marginTop: '1px' }}>Aprende mientras practicas</div>
                 </div>
-                <div style={{ width: '40px', height: '22px', borderRadius: '999px', flexShrink: 0, background: mostrarExplicaciones ? '#0f172a' : '#e5e7eb', position: 'relative', transition: 'background 0.2s' }}>
-                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'white', position: 'absolute', top: '3px', left: mostrarExplicaciones ? '21px' : '3px', transition: 'left 0.2s' }} />
+                <div style={{ width: '40px', height: '22px', borderRadius: '999px', flexShrink: 0, background: mostrarExplicaciones ? 'var(--hxbg-0f172a)' : 'var(--hx-e5e7eb)', position: 'relative', transition: 'background 0.2s' }}>
+                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'var(--c-superficie)', position: 'absolute', top: '3px', left: mostrarExplicaciones ? '21px' : '3px', transition: 'left 0.2s' }} />
                 </div>
               </button>
             </div>
@@ -608,7 +608,7 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
               <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Respuestas en blanco</div>
               <button
                 onClick={() => setPermitirBlancos(!permitirBlancos)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 14px', borderRadius: '12px', border: 'none', background: 'white', cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 14px', borderRadius: '12px', border: 'none', background: 'var(--c-superficie)', cursor: 'pointer' }}
               >
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY }}>Permitir dejar en blanco</div>
@@ -618,8 +618,8 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
                       : 'En tu convocatoria los fallos no restan'}
                   </div>
                 </div>
-                <div style={{ width: '40px', height: '22px', borderRadius: '999px', flexShrink: 0, background: permitirBlancos ? '#0f172a' : '#e5e7eb', position: 'relative', transition: 'background 0.2s' }}>
-                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'white', position: 'absolute', top: '3px', left: permitirBlancos ? '21px' : '3px', transition: 'left 0.2s' }} />
+                <div style={{ width: '40px', height: '22px', borderRadius: '999px', flexShrink: 0, background: permitirBlancos ? 'var(--hxbg-0f172a)' : 'var(--hx-e5e7eb)', position: 'relative', transition: 'background 0.2s' }}>
+                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'var(--c-superficie)', position: 'absolute', top: '3px', left: permitirBlancos ? '21px' : '3px', transition: 'left 0.2s' }} />
                 </div>
               </button>
             </div>
@@ -629,8 +629,8 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
             disabled={numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas}
             style={{
                 width: '100%', padding: '13px',
-                background: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas) ? '#e5e7eb' : '#0f172a',
-                color: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas) ? '#9ca3af' : 'white',
+                background: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas) ? 'var(--hx-e5e7eb)' : 'var(--hxbg-0f172a)',
+                color: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas) ? 'var(--hx-9ca3af)' : 'var(--c-primario-texto)',
                 border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
                 cursor: (numeroInvalido || numPreguntas < 1 || sinPreguntasDisponibles || ningunTemaConPreguntas) ? 'not-allowed' : 'pointer',
             }}
@@ -666,15 +666,15 @@ function AvisoSinPreguntas({
       style={{
         display: 'flex', alignItems: 'flex-start', gap: '10px',
         padding: '12px 14px', borderRadius: '12px', marginBottom: '14px',
-        background: '#FFF7ED', border: '1px solid #FDBA74',
+        background: 'var(--hx-fff7ed)', border: '1px solid var(--hx-fdba74)',
       }}
     >
-      <AlertTriangle size={18} color="#C2410C" style={{ flexShrink: 0, marginTop: '1px' }} />
+      <AlertTriangle size={18} color="var(--hx-c2410c)" style={{ flexShrink: 0, marginTop: '1px' }} />
       <div>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: '#9A3412' }}>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--hx-9a3412)' }}>
           Aún no hay preguntas para esta selección
         </div>
-        <div style={{ fontSize: '12px', color: '#C2410C', marginTop: '2px', lineHeight: 1.4 }}>
+        <div style={{ fontSize: '12px', color: 'var(--hx-c2410c)', marginTop: '2px', lineHeight: 1.4 }}>
           {mensaje ?? 'OPLORA todavía no tiene preguntas cargadas para lo que has elegido. Prueba con otra opción.'}
         </div>
       </div>
@@ -721,15 +721,15 @@ function AvisoTemasSinPreguntas({
       style={{
         display: 'flex', alignItems: 'flex-start', gap: '10px',
         padding: '12px 14px', borderRadius: '12px', marginBottom: '14px',
-        background: '#FFF7ED', border: '1px solid #FDBA74',
+        background: 'var(--hx-fff7ed)', border: '1px solid var(--hx-fdba74)',
       }}
     >
-      <AlertTriangle size={18} color="#C2410C" style={{ flexShrink: 0, marginTop: '1px' }} />
+      <AlertTriangle size={18} color="var(--hx-c2410c)" style={{ flexShrink: 0, marginTop: '1px' }} />
       <div>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: '#9A3412' }}>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--hx-9a3412)' }}>
           {todosSinPreguntas ? 'Ninguno de los temas elegidos tiene preguntas' : `${listaTemas} que has seleccionado ${verbo} preguntas todavía`}
         </div>
-        <div style={{ fontSize: '12px', color: '#C2410C', marginTop: '2px', lineHeight: 1.4 }}>
+        <div style={{ fontSize: '12px', color: 'var(--hx-c2410c)', marginTop: '2px', lineHeight: 1.4 }}>
           {todosSinPreguntas
             ? 'Elige otro tema para poder continuar.'
             : 'Puedes continuar: el test se generará solo con los temas que sí tienen preguntas.'}

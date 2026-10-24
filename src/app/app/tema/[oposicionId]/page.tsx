@@ -18,11 +18,11 @@ import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA } from '@/styles/toke
 type Tab = 'programa' | 'material';
 
 const BG_APP = BG_TEMA; // marrón pastel muy claro (familia Estudiar)
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const BORDER = '#F0ECE6';
-const COLOR_ESTUDIAR = '#1F7CFF';
-const COLOR_MARRON = '#8B7355';
-const COLOR_MARRON_BG = '#F3EDE4';
+const SOMBRA = 'var(--c-sombra)';
+const BORDER = 'var(--hx-f0ece6)';
+const COLOR_ESTUDIAR = 'var(--hx-1f7cff)';
+const COLOR_MARRON = 'var(--hx-8b7355)';
+const COLOR_MARRON_BG = 'var(--hx-f3ede4)';
 
 function TituloSeccion({ children, derecha }: { children: React.ReactNode; derecha?: React.ReactNode }) {
   return (
@@ -39,7 +39,7 @@ function Donut({ porcentaje, color, size, grosor }: { porcentaje: number; color:
   const offset = circ - (Math.max(0, Math.min(100, porcentaje)) / 100) * circ;
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', position: 'absolute', inset: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="#EEF0F3" strokeWidth={grosor} />
+      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={grosor} />
       {porcentaje > 0 && (
         <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke={color} strokeWidth={grosor} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={offset} style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
@@ -52,7 +52,7 @@ function CirculoDato({ valor, porcentaje = 0, color, label, sub }: { valor: stri
   const D = 78;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ position: 'absolute', inset: 6 }}>
           <Donut porcentaje={porcentaje} color={color} size={D - 12} grosor={6} />
         </div>
@@ -67,14 +67,14 @@ function CirculoDato({ valor, porcentaje = 0, color, label, sub }: { valor: stri
 /** Esqueleto de la lista mientras cargan los temas */
 function CargandoTemas() {
   return (
-    <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
       <div style={{ padding: '12px 14px', fontSize: 13, color: TEXT_MUTED, borderBottom: `1px solid ${BORDER}` }}>Cargando temas…</div>
       {[0, 1, 2, 3].map((i) => (
         <div key={i} className="op-pulso" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < 3 ? `1px solid ${BORDER}` : 'none' }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#F1EDE6', flexShrink: 0 }} />
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--hx-f1ede6)', flexShrink: 0 }} />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ height: 10, borderRadius: 6, background: '#F1EDE6', width: '85%' }} />
-            <div style={{ height: 10, borderRadius: 6, background: '#F1EDE6', width: '55%' }} />
+            <div style={{ height: 10, borderRadius: 6, background: 'var(--hx-f1ede6)', width: '85%' }} />
+            <div style={{ height: 10, borderRadius: 6, background: 'var(--hx-f1ede6)', width: '55%' }} />
           </div>
         </div>
       ))}
@@ -88,7 +88,7 @@ function CargandoTemas() {
 
 function Vacio({ titulo, texto }: { titulo: string; texto: string }) {
   return (
-    <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: '22px 18px', textAlign: 'center' }}>
+    <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: '22px 18px', textAlign: 'center' }}>
       <div style={{ width: 48, height: 48, borderRadius: 14, background: COLOR_MARRON_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
         <BookOpen size={22} color={COLOR_MARRON} />
       </div>
@@ -220,7 +220,7 @@ export default function TemarioOposicionPage() {
         </div>
 
         {/* Pestañas (mismo estilo que el selector de periodo de Practicar) */}
-        <div style={{ display: 'flex', background: 'white', borderRadius: 999, padding: 4, gap: 4, boxShadow: SOMBRA }}>
+        <div style={{ display: 'flex', background: 'var(--c-superficie)', borderRadius: 999, padding: 4, gap: 4, boxShadow: SOMBRA }}>
           {([
             { key: 'programa', label: 'Programa', icon: ListOrdered },
             { key: 'material', label: 'Material', icon: Library },
@@ -230,8 +230,8 @@ export default function TemarioOposicionPage() {
               onClick={() => setTab(key)}
               style={{
                 flex: 1, padding: '9px 4px', border: 'none', borderRadius: 999, cursor: 'pointer',
-                background: tab === key ? '#0f172a' : 'transparent',
-                color: tab === key ? 'white' : TEXT_SECONDARY,
+                background: tab === key ? 'var(--hxbg-0f172a)' : 'transparent',
+                color: tab === key ? 'var(--c-primario-texto)' : TEXT_SECONDARY,
                 fontSize: 13, fontWeight: 700,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 transition: 'background 0.15s ease, color 0.15s ease',
@@ -255,7 +255,7 @@ export default function TemarioOposicionPage() {
                   <CirculoDato
                     valor={`${completados}`}
                     porcentaje={temas.length ? (completados / temas.length) * 100 : 0}
-                    color="#16A34A"
+                    color="var(--hx-16a34a)"
                     label="Completados"
                     sub={`de ${temas.length} temas`}
                   />
@@ -274,9 +274,9 @@ export default function TemarioOposicionPage() {
             {modoEstudiar && ultimoTema?.numeroTema && !busqueda && (
               <button
                 onClick={() => irATema(ultimoTema.numeroTema)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: 'white', border: 'none', borderRadius: 18, padding: 14, boxShadow: SOMBRA, cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: 'var(--c-superficie)', border: 'none', borderRadius: 18, padding: 14, boxShadow: SOMBRA, cursor: 'pointer' }}
               >
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: '#EAF2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--hx-eaf2fe)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <PlayCircle size={22} color={COLOR_ESTUDIAR} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -285,7 +285,7 @@ export default function TemarioOposicionPage() {
                     {ultimoTema.tituloTema}
                   </div>
                 </div>
-                <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+                <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
               </button>
             )}
 
@@ -296,7 +296,7 @@ export default function TemarioOposicionPage() {
               </TituloSeccion>
 
               {!cargandoTemario && temas.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 14, padding: '10px 14px', boxShadow: SOMBRA, marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--c-superficie)', borderRadius: 14, padding: '10px 14px', boxShadow: SOMBRA, marginBottom: 12 }}>
                   <Search size={15} color={TEXT_MUTED} style={{ flexShrink: 0 }} />
                   <input
                     type="text"
@@ -325,11 +325,11 @@ export default function TemarioOposicionPage() {
               ) : temasFiltrados.length === 0 ? (
                 <Vacio titulo="Sin resultados" texto="Ningún tema coincide con tu búsqueda. Prueba con otro término o con el número del tema." />
               ) : (
-                <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+                <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
                   {temasFiltrados.map((tema: any, i: number) => {
                     const porcentaje = progresoPorTemaId[tema.id]?.porcentajeTotal ?? 0;
                     const completado = porcentaje >= 80;
-                    const color = completado ? '#16A34A' : porcentaje > 0 ? COLOR_ESTUDIAR : '#D1D5DB';
+                    const color = completado ? 'var(--hx-16a34a)' : porcentaje > 0 ? COLOR_ESTUDIAR : 'var(--hx-d1d5db)';
                     const R = 19;
                     const circ = 2 * Math.PI * R;
                     return (
@@ -344,7 +344,7 @@ export default function TemarioOposicionPage() {
                       >
                         <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <svg width="44" height="44" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-                            <circle cx="22" cy="22" r={R} fill="none" stroke="#F1EDE6" strokeWidth="3.5" />
+                            <circle cx="22" cy="22" r={R} fill="none" stroke="var(--hx-f1ede6)" strokeWidth="3.5" />
                             {porcentaje > 0 && (
                               <circle cx="22" cy="22" r={R} fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round"
                                 strokeDasharray={circ} strokeDashoffset={circ - (Math.min(porcentaje, 100) / 100) * circ}
@@ -352,7 +352,7 @@ export default function TemarioOposicionPage() {
                             )}
                           </svg>
                           {completado
-                            ? <CheckCircle2 size={19} color="#16A34A" />
+                            ? <CheckCircle2 size={19} color="var(--hx-16a34a)" />
                             : <span style={{ fontSize: 14, fontWeight: 800, color: porcentaje > 0 ? TEXT_PRIMARY : TEXT_MUTED }}>{tema.numero}</span>}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -365,7 +365,7 @@ export default function TemarioOposicionPage() {
                             </div>
                           )}
                         </div>
-                        {modoEstudiar && <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />}
+                        {modoEstudiar && <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />}
                       </button>
                     );
                   })}
@@ -381,12 +381,12 @@ export default function TemarioOposicionPage() {
             {apuntesOploraOposicion.length > 0 && (
               <section>
                 <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{apuntesOploraOposicion.length}</span>}>Apuntes OPLORA</TituloSeccion>
-                <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+                <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
                   {apuntesOploraOposicion.map((ap: any, i: number) => (
                     <FilaMaterial
                       key={ap.id}
                       ultima={i === apuntesOploraOposicion.length - 1}
-                      Icon={BookOpen} color="#B7791F" bg="#FEF6E4"
+                      Icon={BookOpen} color="var(--hx-b7791f)" bg="var(--hx-fef6e4)"
                       titulo={ap.titulo}
                       sub={[ap.descripcion, ap.tipo?.toUpperCase(), ap.paginas ? `${ap.paginas} págs` : null, ap.tamanoBytes ? `${(ap.tamanoBytes / 1024 / 1024).toFixed(1)} MB` : null].filter(Boolean).join(' · ')}
                       onClick={() => router.push(`/app/apuntes/${ap.id}`)}
@@ -398,13 +398,13 @@ export default function TemarioOposicionPage() {
 
             <section>
               <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{leyes.length}</span>}>Normativa</TituloSeccion>
-              <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
                 {leyes.length === 0 && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>No hay normativa vinculada a esta oposición.</div>}
                 {leyes.map((ol: any, i: number) => (
                   <FilaMaterial
                     key={ol.id}
                     ultima={i === leyes.length - 1}
-                    Icon={Scale} color="#7C3AED" bg="#F3F0FC"
+                    Icon={Scale} color="var(--hx-7c3aed)" bg="var(--hx-f3f0fc)"
                     titulo={ol.ley?.nombre}
                     sub={`${ol.versionLey?.tipoNorma ?? 'Normativa'}${ol.versionLey?.referenciaBoe ? ` · ${ol.versionLey.referenciaBoe}` : ''}`}
                     onClick={() => router.push(`/app/ley/${ol.versionLey?.leyId ?? ol.ley?.id}?oposicionId=${oposicionId}`)}
@@ -415,12 +415,12 @@ export default function TemarioOposicionPage() {
 
             <section>
               <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{misApuntesOposicion.length}</span>}>Mis apuntes</TituloSeccion>
-              <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
                 {misApuntesOposicion.map((ap: any) => (
                   <FilaMaterial
                     key={ap.id}
                     ultima={false}
-                    Icon={FileText} color="#2563EB" bg="#EAF2FE"
+                    Icon={FileText} color="var(--hx-2563eb)" bg="var(--hx-eaf2fe)"
                     titulo={ap.nombre}
                     sub={[
                       ap.creadoEn ? new Date(ap.creadoEn).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : null,
@@ -463,7 +463,7 @@ export default function TemarioOposicionPage() {
                   disabled={subiendoApunte}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', cursor: subiendoApunte ? 'default' : 'pointer', textAlign: 'left' }}
                 >
-                  <div style={{ width: 40, height: 40, borderRadius: 12, border: '1.5px dashed #CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, border: '1.5px dashed var(--hx-cbd5e1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Upload size={17} color={TEXT_SECONDARY} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -473,7 +473,7 @@ export default function TemarioOposicionPage() {
                 </button>
               </div>
               {errorSubida && (
-                <div style={{ fontSize: 12, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px', marginTop: 10 }}>{errorSubida}</div>
+                <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 12, padding: '10px 12px', marginTop: 10 }}>{errorSubida}</div>
               )}
             </section>
           </>
@@ -498,7 +498,7 @@ function FilaMaterial({ Icon, color, bg, titulo, sub, onClick, href, ultima }: {
         <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>{titulo}</div>
         {sub && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{sub}</div>}
       </div>
-      <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+      <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
     </>
   );
   const estilo: React.CSSProperties = {

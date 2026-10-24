@@ -32,9 +32,9 @@ import {
   COLOR_SEMANAL_BG,
 } from '@/styles/tokens';
 
-const BG_APP = '#FCEEE8';
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const COLOR_TEST = '#4D7C0F';
+const BG_APP = 'var(--c-bg-retos)';
+const SOMBRA = 'var(--c-sombra)';
+const COLOR_TEST = 'var(--hx-4d7c0f)';
 
 // ⭐ Normaliza un RetoFC (duelo de flashcards, estructura propia con retador/retado/resultados)
 // a la misma forma "participación" que ya usan las derivaciones y los widgets de retos de Test
@@ -608,9 +608,9 @@ const oposicionId = usuario?.oposicionActiva?.id;
           <section>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 12, padding: '0 4px' }}>Mis duelos</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, padding: '0 4px' }}>
-              <CirculoReto valor={`${statsRetos.victorias}`} porcentaje={(statsRetos.victorias / statsRetos.total) * 100} color="#16A34A" label="Victorias" sub={`de ${statsRetos.total} duelos`} />
+              <CirculoReto valor={`${statsRetos.victorias}`} porcentaje={(statsRetos.victorias / statsRetos.total) * 100} color="var(--hx-16a34a)" label="Victorias" sub={`de ${statsRetos.total} duelos`} />
               <CirculoReto valor={`${statsRetos.pct}%`} porcentaje={statsRetos.pct} color={COLOR_RETOS} label="% victorias" sub={statsRetos.empates > 0 ? `${statsRetos.empates} ${statsRetos.empates === 1 ? 'empate' : 'empates'}` : 'Sin empates'} />
-              <CirculoReto valor={`${teToca.length}`} porcentaje={teToca.length > 0 ? 100 : 0} color="#D97706" label="Te toca" sub={teToca.length === 1 ? 'reto por jugar' : 'retos por jugar'} />
+              <CirculoReto valor={`${teToca.length}`} porcentaje={teToca.length > 0 ? 100 : 0} color="var(--hx-d97706)" label="Te toca" sub={teToca.length === 1 ? 'reto por jugar' : 'retos por jugar'} />
             </div>
           </section>
         )}
@@ -621,7 +621,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
         {/* Nuevo reto */}
         <button
           onClick={() => { setModalAbierto(true); setPaso('retado'); }}
-          style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', border: 'none', borderRadius: 18, padding: 14, boxShadow: SOMBRA, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--c-superficie)', border: 'none', borderRadius: 18, padding: 14, boxShadow: SOMBRA, cursor: 'pointer', width: '100%', textAlign: 'left' }}
         >
           <div style={{ width: 42, height: 42, borderRadius: 12, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Swords size={21} color={COLOR_RETOS} />
@@ -630,8 +630,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
             <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Retar a alguien</div>
             <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Test, flashcards o psicotécnicos contra otro opositor</div>
           </div>
-          <span style={{ width: 34, height: 34, borderRadius: '50%', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Plus size={18} color="white" />
+          <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--hxbg-0f172a)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Plus size={18} color="var(--c-primario-texto)" />
           </span>
         </button>
 
@@ -642,7 +642,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
             {teToca.length > 0 && <span style={{ fontSize: 11, color: TEXT_MUTED }}>{teToca.length}</span>}
           </div>
           {teToca.length === 0 ? (
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: '16px', fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: '16px', fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
               {retosUsuarioPendientes.length === 0 && retosUsuarioCompletados.length === 0
                 ? 'Todavía no tienes duelos. Reta a otro opositor de tu convocatoria y compara quién sabe más.'
                 : 'No tienes ningún reto pendiente de jugar.'}
@@ -707,7 +707,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   <button
                     onClick={() => setPaso(PASOS[PASOS.indexOf(paso) - 1])}
                     aria-label="Paso anterior"
-                    style={{ background: 'white', border: 'none', borderRadius: '50%', width: '34px', height: '34px', cursor: 'pointer', color: TEXT_PRIMARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA }}
+                    style={{ background: 'var(--c-superficie)', border: 'none', borderRadius: '50%', width: '34px', height: '34px', cursor: 'pointer', color: TEXT_PRIMARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA }}
                   >
                     <ChevronLeft size={17} />
                   </button>
@@ -718,7 +718,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <button
                   onClick={() => { setModalAbierto(false); setError(''); setPaso('retado'); }}
                   aria-label="Cerrar"
-                  style={{ background: 'white', border: 'none', borderRadius: '50%', width: '34px', height: '34px', cursor: 'pointer', color: TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA }}
+                  style={{ background: 'var(--c-superficie)', border: 'none', borderRadius: '50%', width: '34px', height: '34px', cursor: 'pointer', color: TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA }}
                 >
                   <X size={16} />
                 </button>
@@ -729,7 +729,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     key={p}
                     style={{
                       flex: 1, height: '4px', borderRadius: '999px',
-                      background: i <= PASOS.indexOf(paso) ? colorPasoActivo : '#E5E7EB',
+                      background: i <= PASOS.indexOf(paso) ? colorPasoActivo : 'var(--hx-e5e7eb)',
                       transition: 'background 0.25s ease',
                     }}
                   />
@@ -748,7 +748,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               <>
               {/* ⭐ Reto al azar */}
               {rivalAzar ? (
-                <div style={{ background: 'white', borderRadius: 16, boxShadow: SOMBRA, padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ background: 'var(--c-superficie)', borderRadius: 16, boxShadow: SOMBRA, padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
                   <AvatarUsuario persona={rivalAzar} size={44} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>Te ha tocado</div>
@@ -767,7 +767,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <button
                   onClick={sortearRival}
                   disabled={sorteando || !oposicionId}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', border: 'none', borderRadius: 16, padding: 12, boxShadow: SOMBRA, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--c-superficie)', border: 'none', borderRadius: 16, padding: 12, boxShadow: SOMBRA, cursor: 'pointer', width: '100%', textAlign: 'left' }}
                 >
                   <span style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {sorteando ? <Loader2 size={19} color={COLOR_RETOS} style={{ animation: 'oplora-girar 0.8s linear infinite' }} /> : <Shuffle size={19} color={COLOR_RETOS} />}
@@ -776,11 +776,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Reto al azar</span>
                     <span style={{ display: 'block', fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Te emparejamos con otro opositor de tu convocatoria</span>
                   </span>
-                  <ChevronRight size={16} color="#C4C9D2" />
+                  <ChevronRight size={16} color="var(--hx-c4c9d2)" />
                 </button>
               )}
               {errorAzar && (
-                <div style={{ fontSize: 12, color: '#B91C1C', display: 'flex', alignItems: 'flex-start', gap: 6, lineHeight: 1.45 }}>
+                <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', display: 'flex', alignItems: 'flex-start', gap: 6, lineHeight: 1.45 }}>
                   <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} /> {errorAzar}
                 </div>
               )}
@@ -793,7 +793,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
               {!rivalAzar && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>
-                <span style={{ flex: 1, height: 1, background: '#E8DCD2' }} /> o reta a alguien que conozcas <span style={{ flex: 1, height: 1, background: '#E8DCD2' }} />
+                <span style={{ flex: 1, height: 1, background: 'var(--hx-e8dcd2)' }} /> o reta a alguien que conozcas <span style={{ flex: 1, height: 1, background: 'var(--hx-e8dcd2)' }} />
               </div>
               )}
 
@@ -806,7 +806,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                       <button
                         key={c.id}
                         onClick={() => setForm({ ...form, retadoNickOEmail: c.contacto?.nick ?? c.contacto?.email ?? '' })}
-                        style={{ padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.retadoNickOEmail === (c.contacto?.nick ?? c.contacto?.email) ? '#111827' : 'white', color: form.retadoNickOEmail === (c.contacto?.nick ?? c.contacto?.email) ? 'white' : '#374151' }}
+                        style={{ padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.retadoNickOEmail === (c.contacto?.nick ?? c.contacto?.email) ? 'var(--hxbg-111827)' : 'var(--c-superficie)', color: form.retadoNickOEmail === (c.contacto?.nick ?? c.contacto?.email) ? 'var(--c-primario-texto)' : 'var(--hx-374151)' }}
                       >
                         @{c.contacto?.nick ?? c.contacto?.nombre}
                       </button>
@@ -822,42 +822,42 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   value={form.retadoNickOEmail}
                   onChange={(e) => setForm({ ...form, retadoNickOEmail: e.target.value })}
                   placeholder="Su nick o su email"
-                  style={{ width: '100%', padding: '12px 14px', fontSize: '14px', border: 'none', borderRadius: '12px', outline: 'none', boxSizing: 'border-box', background: 'white', boxShadow: SOMBRA }}
+                  style={{ width: '100%', padding: '12px 14px', fontSize: '14px', border: 'none', borderRadius: '12px', outline: 'none', boxSizing: 'border-box', background: 'var(--c-superficie)', boxShadow: SOMBRA }}
                 />
                 {validando && (
-                  <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>Comprobando...</div>
+                  <div style={{ fontSize: '12px', color: 'var(--hx-9ca3af)', marginTop: '6px' }}>Comprobando...</div>
                 )}
 
               {!validando && validacion && (
                 <div style={{ marginTop: '6px' }}>
                   {!validacion.encontrado && (
-                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--hx-dc2626)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><UserX size={14} /> No hemos encontrado a ese usuario</span>
                       <button
                         onClick={() => setModalInvitar(true)}
-                        style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}
+                        style={{ fontSize: '12px', color: 'var(--hx-1f7cff)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}
                       >
                         Invitar por email
                       </button>
                     </div>
                   )}
                   {validacion.encontrado && validacion.error && (
-                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.error}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--hx-dc2626)', display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.error}</div>
                   )}
                   {validacion.encontrado && !validacion.error && !validacion.mismaOposicion && (
-                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ fontSize: '12px', color: 'var(--hx-dc2626)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.nombre} no prepara esta oposición</span>
-                      <button onClick={() => setModalInvitar(true)} style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}>Invitarle</button>
+                      <button onClick={() => setModalInvitar(true)} style={{ fontSize: '12px', color: 'var(--hx-1f7cff)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}>Invitarle</button>
                     </div>
                   )}
                   {validacion.encontrado && !validacion.error && validacion.mismaOposicion && !validacion.mismaConvocatoria && (
-                    <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ fontSize: '12px', color: 'var(--hx-dc2626)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><AlertTriangle size={13} /> {validacion.nombre} está en otra convocatoria</span>
-                      <button onClick={() => setModalInvitar(true)} style={{ fontSize: '12px', color: '#1F7CFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}>Avisarle</button>
+                      <button onClick={() => setModalInvitar(true)} style={{ fontSize: '12px', color: 'var(--hx-1f7cff)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', flexShrink: 0 }}>Avisarle</button>
                     </div>
                   )}
                   {validacion.encontrado && !validacion.error && validacion.mismaOposicion && validacion.mismaConvocatoria && (
-                    <div style={{ fontSize: '12px', color: '#15803d', display: 'flex', alignItems: 'center', gap: 5 }}><Check size={14} /> {validacion.nombre} — listo para retar</div>
+                    <div style={{ fontSize: '12px', color: 'var(--hx-15803d)', display: 'flex', alignItems: 'center', gap: 5 }}><Check size={14} /> {validacion.nombre} — listo para retar</div>
                   )}
                 </div>
               )}
@@ -871,7 +871,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT_SECONDARY, marginBottom: '8px' }}>Tipo de reto</div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {[
-                    { key: 'test', Icon: ClipboardCheck, color: '#4D7C0F', label: 'Test' },
+                    { key: 'test', Icon: ClipboardCheck, color: 'var(--hx-4d7c0f)', label: 'Test' },
                     { key: 'fc', Icon: Layers, color: COLOR_FC, label: 'Flashcards' },
                     { key: 'psico', Icon: Brain, color: COLOR_PSICO, label: 'Psicotécnicos' },
                   ].map(({ key, Icon, color, label }) => {
@@ -883,12 +883,12 @@ const oposicionId = usuario?.oposicionActiva?.id;
                       disabled={bloqueadoPsico}
                       style={{
                         flex: 1, padding: '10px 6px', borderRadius: '12px', cursor: bloqueadoPsico ? 'not-allowed' : 'pointer', textAlign: 'center',
-                        border: form.categoria === key ? `2px solid ${key === 'fc' ? COLOR_FC : key === 'psico' ? COLOR_PSICO : '#111827'}` : 'none',
-                        background: 'white',
+                        border: form.categoria === key ? `2px solid ${key === 'fc' ? COLOR_FC : key === 'psico' ? COLOR_PSICO : 'var(--hx-111827)'}` : 'none',
+                        background: 'var(--c-superficie)',
                         opacity: bloqueadoPsico ? 0.45 : 1,
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}>{bloqueadoPsico ? <Lock size={18} color="#9ca3af" /> : <Icon size={18} color={color} />}</div>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}>{bloqueadoPsico ? <Lock size={18} color="var(--hx-9ca3af)" /> : <Icon size={18} color={color} />}</div>
                       <div style={{ fontSize: '11px', fontWeight: 500, color: TEXT_PRIMARY }}>{label}</div>
                       {bloqueadoPsico && (
                         <div style={{ fontSize: '9px', color: TEXT_MUTED, marginTop: '2px' }}>No disponible</div>
@@ -913,7 +913,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                         style={{
                           display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '12px', cursor: 'pointer', textAlign: 'left',
                           border: form.psicoTipo === m.tipo ? `2px solid ${COLOR_PSICO}` : 'none',
-                          background: 'white',
+                          background: 'var(--c-superficie)',
                         }}
                       >
                         <IconoModalidad tipo={m.tipo} size={32} />
@@ -925,14 +925,14 @@ const oposicionId = usuario?.oposicionActiva?.id;
                         </div>
                         <div style={{
                           width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
-                          border: `2px solid ${form.psicoTipo === m.tipo ? COLOR_PSICO : '#d1d5db'}`,
-                          background: form.psicoTipo === m.tipo ? COLOR_PSICO : 'white',
+                          border: `2px solid ${form.psicoTipo === m.tipo ? COLOR_PSICO : 'var(--hx-d1d5db)'}`,
+                          background: form.psicoTipo === m.tipo ? COLOR_PSICO : 'var(--c-superficie)',
                         }} />
                       </button>
                     ))}
                   </div>
                   {form.psicoTipo && psicoDisponibles && psicoDisponibles.total < form.numPsico && (
-                    <div style={{ marginTop: '8px', fontSize: '11px', color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '8px 10px' }}>
+                    <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--hx-b45309)', background: 'var(--hx-fffbeb)', border: '1px solid var(--hx-fde68a)', borderRadius: '10px', padding: '8px 10px' }}>
                       Solo hay {psicoDisponibles.total} preguntas disponibles para esta modalidad (pediste {form.numPsico}). El duelo se creará igualmente con las que haya.
                     </div>
                   )}
@@ -952,7 +952,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     <button
                       key={key}
                       onClick={() => setForm({ ...form, tipoReto: key as TipoRetoUsuario, temaId: '', versionLeyId: '' })}
-                      style={{ flex: 1, padding: '10px 6px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', border: form.tipoReto === key ? '2px solid #111827' : 'none', background: 'white' }}
+                      style={{ flex: 1, padding: '10px 6px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', border: form.tipoReto === key ? '2px solid var(--hx-111827)' : 'none', background: 'var(--c-superficie)' }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}><Icon size={18} color={TEXT_PRIMARY} /></div>
                       <div style={{ fontSize: '11px', fontWeight: 500, color: TEXT_PRIMARY }}>{label}</div>
@@ -965,7 +965,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <select
                   value={form.versionLeyId}
                   onChange={(e) => setForm({ ...form, versionLeyId: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', border: 'none', borderRadius: '10px', fontSize: '13px', color: TEXT_PRIMARY, background: 'white' }}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', borderRadius: '10px', fontSize: '13px', color: TEXT_PRIMARY, background: 'var(--c-superficie)' }}
                 >
                   <option value="">Elige una ley...</option>
                   {leyes.map((ol: any) => (
@@ -978,7 +978,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 <select
                   value={form.temaId}
                   onChange={(e) => setForm({ ...form, temaId: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', border: 'none', borderRadius: '10px', fontSize: '13px', color: TEXT_PRIMARY, background: 'white' }}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', borderRadius: '10px', fontSize: '13px', color: TEXT_PRIMARY, background: 'var(--c-superficie)' }}
                 >
                   <option value="">Elige un tema...</option>
                   {temas.map((t: any) => (
@@ -1001,7 +1001,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                       <button
                         key={n}
                         onClick={() => setForm({ ...form, numPsico: n })}
-                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numPsico === n ? COLOR_PSICO : 'white', color: form.numPsico === n ? 'white' : '#6b7280' }}
+                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numPsico === n ? COLOR_PSICO : 'var(--c-superficie)', color: form.numPsico === n ? 'white' : 'var(--hx-6b7280)' }}
                       >
                         {n}
                       </button>
@@ -1018,7 +1018,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                       <button
                         key={n}
                         onClick={() => setForm({ ...form, numFC: n })}
-                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numFC === n ? COLOR_FC : 'white', color: form.numFC === n ? 'white' : '#6b7280' }}
+                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numFC === n ? COLOR_FC : 'var(--c-superficie)', color: form.numFC === n ? 'white' : 'var(--hx-6b7280)' }}
                       >
                         {n}
                       </button>
@@ -1035,7 +1035,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                       <button
                         key={n}
                         onClick={() => setForm({ ...form, numPreguntas: n })}
-                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numPreguntas === n ? '#111827' : 'white', color: form.numPreguntas === n ? 'white' : '#6b7280' }}
+                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.numPreguntas === n ? 'var(--hxbg-111827)' : 'var(--c-superficie)', color: form.numPreguntas === n ? 'var(--c-primario-texto)' : 'var(--hx-6b7280)' }}
                       >
                         {n}
                       </button>
@@ -1056,7 +1056,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                       <button
                         key={horas}
                         onClick={() => setForm({ ...form, horasPlazo: horas })}
-                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.horasPlazo === horas ? '#111827' : 'white', color: form.horasPlazo === horas ? 'white' : '#6b7280' }}
+                        style={{ flex: 1, padding: '9px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', border: 'none', background: form.horasPlazo === horas ? 'var(--hxbg-111827)' : 'var(--c-superficie)', color: form.horasPlazo === horas ? 'var(--c-primario-texto)' : 'var(--hx-6b7280)' }}
                       >
                         {label}
                       </button>
@@ -1070,7 +1070,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
               {paso === 'resumen' && (
               <>
-              <div style={{ background: 'white', borderRadius: '12px', padding: '14px', fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.5 }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: '12px', padding: '14px', fontSize: '13px', fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.5 }}>
                 Retas a {validacion?.nombre ?? form.retadoNickOEmail}
                 {' · '}
                 {form.categoria === 'psico'
@@ -1095,18 +1095,18 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
                     placeholder="Escribe algo motivador para tu rival..."
                     maxLength={140}
-                    style={{ width: '100%', minHeight: '60px', padding: '10px 12px', fontSize: '13px', border: 'none', borderRadius: '10px', outline: 'none', boxSizing: 'border-box', background: 'white', resize: 'vertical', fontFamily: 'inherit' }}
+                    style={{ width: '100%', minHeight: '60px', padding: '10px 12px', fontSize: '13px', border: 'none', borderRadius: '10px', outline: 'none', boxSizing: 'border-box', background: 'var(--c-superficie)', resize: 'vertical', fontFamily: 'inherit' }}
                   />
                 </div>
               )}
 
               {error && (
-                <div style={{ fontSize: '12px', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '8px 12px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--hx-dc2626)', background: 'var(--hx-fef2f2)', border: '1px solid var(--hx-fecaca)', borderRadius: '10px', padding: '8px 12px' }}>
                   {error}
                 </div>
               )}
 
-              <div style={{ background: 'white', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: TEXT_SECONDARY }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: TEXT_SECONDARY }}>
                 {form.categoria === 'psico'
                   ? `Tu rival jugará las mismas ${form.numPsico} preguntas psicotécnicas y tendrá ${form.horasPlazo === 168 ? '1 semana' : `${form.horasPlazo} h`} para hacerlo.`
                   : form.categoria === 'fc'
@@ -1130,7 +1130,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 style={{
                   width: '100%', padding: '13px', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700,
                   cursor: (!pasoValido || (paso === 'resumen' && crearReto.isPending)) ? 'not-allowed' : 'pointer',
-                  background: '#111827', color: 'white',
+                  background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)',
                   opacity: (!pasoValido || (paso === 'resumen' && crearReto.isPending)) ? 0.5 : 1,
                 }}
               >
@@ -1175,13 +1175,13 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   const ruta = esFC ? `/app/retos/fc/${idReal}?directo=true` : esPsico ? `/app/retos/psico/${idReal}?directo=true` : `/app/retos/${idReal}?directo=true`;
                   router.push(ruta);
                 }}
-                style={{ width: '100%', padding: '13px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: '13px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
               >
                 Hacer reto ahora
               </button>
               <button
                 onClick={() => setRetoRecienCreado(null)}
-                style={{ width: '100%', padding: '13px', background: 'white', color: TEXT_SECONDARY, border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                style={{ width: '100%', padding: '13px', background: 'var(--c-superficie)', color: TEXT_SECONDARY, border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
               >
                 Dejarlo para más adelante
               </button>
@@ -1223,11 +1223,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
           : caducadoPreview ? 'Caducado'
             : !miParticipacion?.completado ? 'Te toca jugar' : 'Esperando a tu rival';
         const colorEstado = ambosCompletados
-          ? (empate ? '#B45309' : yoGane ? '#15803D' : '#B91C1C')
-          : caducadoPreview ? '#B91C1C' : !miParticipacion?.completado ? COLOR_RETOS : TEXT_SECONDARY;
+          ? (empate ? 'var(--hx-b45309)' : yoGane ? 'var(--hx-15803d)' : 'var(--hx-b91c1c)')
+          : caducadoPreview ? 'var(--hx-b91c1c)' : !miParticipacion?.completado ? COLOR_RETOS : TEXT_SECONDARY;
         const fondoEstado = ambosCompletados
-          ? (empate ? '#FEF3C7' : yoGane ? '#DCFCE7' : '#FEE2E2')
-          : caducadoPreview ? '#FEE2E2' : !miParticipacion?.completado ? COLOR_RETOS_BG : '#F1F5F9';
+          ? (empate ? 'var(--hx-fef3c7)' : yoGane ? 'var(--hx-dcfce7)' : 'var(--hx-fee2e2)')
+          : caducadoPreview ? 'var(--hx-fee2e2)' : !miParticipacion?.completado ? COLOR_RETOS_BG : 'var(--hx-f1f5f9)';
 
         return (
           <div onClick={cerrarModalPreview} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
@@ -1235,7 +1235,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
               {/* Cabecera */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 14px' }}>
-                <span style={{ width: 42, height: 42, borderRadius: 12, background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: SOMBRA }}>
+                <span style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--c-superficie)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: SOMBRA }}>
                   <Swords size={20} color={COLOR_RETOS} />
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -1244,13 +1244,13 @@ const oposicionId = usuario?.oposicionActiva?.id;
                     {ambito} · {retoDetalle.preguntas?.length ?? 0} preguntas
                   </div>
                 </div>
-                <button onClick={cerrarModalPreview} aria-label="Cerrar" style={{ background: 'white', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA, flexShrink: 0 }}><X size={17} /></button>
+                <button onClick={cerrarModalPreview} aria-label="Cerrar" style={{ background: 'var(--c-superficie)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: TEXT_SECONDARY, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: SOMBRA, flexShrink: 0 }}><X size={17} /></button>
               </div>
 
               <div style={{ padding: '0 18px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
                 {/* Marcador */}
-                <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: 16 }}>
+                <div style={{ background: 'var(--c-superficie)', borderRadius: 20, boxShadow: SOMBRA, padding: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8 }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: fondoEstado, color: colorEstado }}>
                       {ambosCompletados ? (empate ? <Handshake size={12} /> : <Crown size={12} />) : <Hourglass size={12} />}
@@ -1267,7 +1267,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
                 {/* Mensaje del retador */}
                 {meRetaron && retoDetalle.mensaje && (
-                  <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: '12px 14px' }}>
+                  <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: '12px 14px' }}>
                     <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600, marginBottom: 4 }}>
                       Mensaje de {retoDetalle.creador.nick ?? retoDetalle.creador.nombre}
                     </div>
@@ -1286,32 +1286,32 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 )}
 
                 {revanchaAbierta && (
-                  <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14 }}>
+                  <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 14 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 8 }}>Revancha</div>
                     <textarea
                       value={mensajeRevancha}
                       onChange={(e) => setMensajeRevancha(e.target.value)}
                       placeholder="Añade un mensaje (opcional)"
                       maxLength={140}
-                      style={{ width: '100%', minHeight: 60, padding: '10px 12px', fontSize: 13, border: '2px solid #EEF0F3', borderRadius: 12, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', marginBottom: 10 }}
+                      style={{ width: '100%', minHeight: 60, padding: '10px 12px', fontSize: 13, border: '2px solid var(--hx-eef0f3)', borderRadius: 12, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', marginBottom: 10 }}
                     />
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
                         onClick={() => { setRevanchaAbierta(false); setMensajeRevancha(''); }}
-                        style={{ flex: 1, padding: 12, background: '#F1F5F9', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                        style={{ flex: 1, padding: 12, background: 'var(--hx-f1f5f9)', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={() => enviarRevancha.mutate()}
                         disabled={enviarRevancha.isPending}
-                        style={{ flex: 2, padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: enviarRevancha.isPending ? 0.7 : 1 }}
+                        style={{ flex: 2, padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: enviarRevancha.isPending ? 0.7 : 1 }}
                       >
                         {enviarRevancha.isPending ? 'Enviando…' : 'Enviar revancha'}
                       </button>
                     </div>
                     {enviarRevancha.isError && (
-                      <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 8 }}>
+                      <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', marginTop: 8 }}>
                         {(enviarRevancha.error as any)?.response?.data?.message ?? 'No se ha podido enviar la revancha.'}
                       </div>
                     )}
@@ -1326,7 +1326,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 ) : !miParticipacion?.completado ? (
                   <button
                     onClick={() => router.push(`/app/retos/${retoPreview}?directo=true`)}
-                    style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+                    style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
                   >
                     <Swords size={16} /> Jugar el duelo
                   </button>
@@ -1337,7 +1337,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                 ) : (
                   <button
                     onClick={() => router.push(`/app/retos/${retoPreview}`)}
-                    style={{ width: '100%', padding: 13, background: 'white', color: TEXT_PRIMARY, border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                    style={{ width: '100%', padding: 13, background: 'var(--c-superficie)', color: TEXT_PRIMARY, border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
                     Ver resultado completo <ChevronRight size={15} />
                   </button>
@@ -1359,7 +1359,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
         >
           {errorAccion ? (
             <>
-              <div style={{ width: 52, height: 52, borderRadius: 16, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><AlertTriangle size={24} color="#DC2626" /></div>
+              <div style={{ width: 52, height: 52, borderRadius: 16, background: 'var(--hx-fef2f2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><AlertTriangle size={24} color="var(--hx-dc2626)" /></div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY, marginBottom: '6px' }}>
                 No se puede completar
               </div>
@@ -1368,14 +1368,14 @@ const oposicionId = usuario?.oposicionActiva?.id;
               </div>
               <button
                 onClick={() => { setConfirmacion(null); setErrorAccion(null); }}
-                style={{ width: '100%', padding: '12px', background: '#111827', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: '12px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
               >
                 Entendido
               </button>
             </>
           ) : (
             <>
-              <div style={{ width: 52, height: 52, borderRadius: 16, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>{confirmacion.accion === 'cancelar' ? <Ban size={24} color="#DC2626" /> : <UserX size={24} color="#DC2626" />}</div>
+              <div style={{ width: 52, height: 52, borderRadius: 16, background: 'var(--hx-fef2f2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>{confirmacion.accion === 'cancelar' ? <Ban size={24} color="var(--hx-dc2626)" /> : <UserX size={24} color="var(--hx-dc2626)" />}</div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: TEXT_PRIMARY, marginBottom: '6px' }}>
                 {confirmacion.accion === 'cancelar' ? '¿Cancelar este reto?' : '¿Rechazar este reto?'}
               </div>
@@ -1385,7 +1385,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={() => setConfirmacion(null)}
-                  style={{ flex: 1, padding: '12px', background: 'white', color: TEXT_SECONDARY, border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '12px', background: 'var(--c-superficie)', color: TEXT_SECONDARY, border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Volver
                 </button>
@@ -1406,7 +1406,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
       {toast && (
         <div style={{
           position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)',
-          background: '#111827', color: 'white', fontSize: '13px', fontWeight: 600,
+          background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: '13px', fontWeight: 600,
           padding: '10px 18px', borderRadius: '999px', boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
           zIndex: 100, pointerEvents: 'none', whiteSpace: 'nowrap',
         }}>
@@ -1449,14 +1449,14 @@ function AvatarUsuarioBase({ persona, size = 64 }: { persona: any; size?: number
       <img
         src={getOploUrl(persona?.nivel ?? 1)}
         alt=""
-        style={{ width: size, height: size, objectFit: 'contain', borderRadius: '50%', background: '#EFE9E0' }}
+        style={{ width: size, height: size, objectFit: 'contain', borderRadius: '50%', background: 'var(--hx-efe9e0)' }}
       />
     );
   }
 
   return (
     <div style={{
-      width: size, height: size, borderRadius: '50%', background: '#EFE9E0',
+      width: size, height: size, borderRadius: '50%', background: 'var(--hx-efe9e0)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: size * 0.34, fontWeight: 700, color: TEXT_PRIMARY,
     }}>
@@ -1469,15 +1469,15 @@ function colorPorTiempoRestante(fechaFin: string, fechaInicio: string): string {
   const total = new Date(fechaFin).getTime() - new Date(fechaInicio).getTime();
   const restante = new Date(fechaFin).getTime() - Date.now();
   const pct = Math.max(0, Math.min(100, (restante / total) * 100));
-  if (pct > 50) return '#1F7CFF'; // azul — tiempo de sobra
-  if (pct > 20) return '#D97706'; // ámbar — se acerca
-  return '#DC2626'; // rojo — poco tiempo
+  if (pct > 50) return 'var(--hx-1f7cff)'; // azul — tiempo de sobra
+  if (pct > 20) return 'var(--hx-d97706)'; // ámbar — se acerca
+  return 'var(--hx-dc2626)'; // rojo — poco tiempo
 }
 
 export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tipo = 'test' }: any) {
   const esFC = tipo === 'fc';
   const esPsico = tipo === 'psico';
-  const colorGanador = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : '#D97706';
+  const colorGanador = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : 'var(--hx-d97706)';
   const participaciones = reto.participaciones ?? [];
   const yo = participaciones.find((p: any) => p.usuario?.id === usuarioActual?.id);
   const rival = participaciones.find((p: any) => p.usuario?.id !== usuarioActual?.id);
@@ -1493,7 +1493,7 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
   const yoCompletado = yo?.completado;
   const IconoCategoria = esPsico ? Brain : esFC ? Layers : ClipboardCheck;
   const colorCategoria = esPsico ? COLOR_PSICO : esFC ? COLOR_FC : COLOR_TEST;
-  const colorCategoriaBg = esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#F3FAE9';
+  const colorCategoriaBg = esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : 'var(--hx-f3fae9)';
 
   // ⭐ Diseño compacto: avatares pequeños en horizontal (avatar + nombre/estado a cada lado)
   // y la "línea de tiempo" en vertical entre los dos participantes, para que quepan más retos
@@ -1511,12 +1511,12 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
     }}>
       <AvatarUsuario persona={persona} size={38} />
       {esGanador && (
-        <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: 18, height: 18, borderRadius: '50%', background: colorGanador, border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: 18, height: 18, borderRadius: '50%', background: colorGanador, border: '2px solid var(--c-superficie)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Crown size={10} color="white" />
         </div>
       )}
       {esEmpate && (
-        <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: 18, height: 18, borderRadius: '50%', background: '#B45309', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: 18, height: 18, borderRadius: '50%', background: '#B45309', border: '2px solid var(--c-superficie)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Handshake size={10} color="white" />
         </div>
       )}
@@ -1524,10 +1524,10 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
         // ⭐ Identifica quién lanzó el reto: icono de espadas en la esquina de su avatar.
         <div style={{
           position: 'absolute', top: '-4px', left: '-4px', width: '16px', height: '16px',
-          borderRadius: '50%', background: '#111827', border: '2px solid white',
+          borderRadius: '50%', background: 'var(--hxbg-111827)', border: '2px solid var(--c-superficie)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <Swords size={9} color="white" />
+          <Swords size={9} color="var(--c-primario-texto)" />
         </div>
       )}
     </div>
@@ -1561,7 +1561,7 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
         </div>
         {mostrarTiempo && (
           <>
-            <div style={{ position: 'relative', width: '4px', height: '18px', background: '#F1F5F9', borderRadius: '999px', overflow: 'hidden' }}>
+            <div style={{ position: 'relative', width: '4px', height: '18px', background: 'var(--hx-f1f5f9)', borderRadius: '999px', overflow: 'hidden' }}>
               <div style={{
                 position: 'absolute', bottom: 0, left: 0, width: '100%', height: `${pctTiempo}%`,
                 background: colorTiempo, borderRadius: '999px', transition: 'height 0.5s ease',
@@ -1586,7 +1586,7 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
             ) : yoCompletado ? (
               `${rival.porcentaje}%`
             ) : (
-              <span style={{ fontSize: '12px', color: '#15803d', fontWeight: 600 }}>Hecho</span>
+              <span style={{ fontSize: '12px', color: 'var(--hx-15803d)', fontWeight: 600 }}>Hecho</span>
             )}
           </div>
         </div>
@@ -1614,7 +1614,7 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
           </button>
         )}
       </div>
-      <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
         {aMostrar.map((p: any, idx: number) => {
           const expirado = retoCaducado(p.reto);
           const rival = p.reto.creador?.id === usuario?.id
@@ -1630,15 +1630,15 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
             <div
               key={p.id}
               onClick={() => onVer(p)}
-              style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderBottom: idx < aMostrar.length - 1 ? '1px solid #F5EEEA' : 'none' }}
+              style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderBottom: idx < aMostrar.length - 1 ? '1px solid var(--hx-f5eeea)' : 'none' }}
             >
-              <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: expirado ? '#F4F5F7' : empate ? '#FEF3C7' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : '#f0fdf4') : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: expirado ? 'var(--hx-f4f5f7)' : empate ? 'var(--hx-fef3c7)' : gane ? (esPsico ? COLOR_PSICO_BG : esFC ? COLOR_FC_BG : 'var(--hx-f0fdf4)') : 'var(--hx-fef2f2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {(() => {
                   // ⭐ Icono de la actividad (el mismo que en el resto de la app), coloreado por resultado.
-                  if (expirado) return <Clock size={17} color="#9CA3AF" />;
-                  if (empate) return <Handshake size={17} color="#B45309" />;
+                  if (expirado) return <Clock size={17} color="var(--hx-9ca3af)" />;
+                  if (empate) return <Handshake size={17} color="var(--hx-b45309)" />;
                   const IconoAct = esPsico ? Brain : esFC ? Layers : ClipboardCheck;
-                  return <IconoAct size={17} color={gane ? (esPsico ? COLOR_PSICO : esFC ? COLOR_FC : '#16A34A') : '#dc2626'} />;
+                  return <IconoAct size={17} color={gane ? (esPsico ? COLOR_PSICO : esFC ? COLOR_FC : 'var(--hx-16a34a)') : 'var(--hx-dc2626)'} />;
                 })()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1649,7 +1649,7 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
                   {expirado ? 'Se acabó el plazo' : `${p.porcentaje ?? 0}% · ${rivalParticipacion?.porcentaje ?? '?'}%`} · {descripcionReto(p.reto)}
                 </div>
               </div>
-              <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+              <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
             </div>
           );
         })}
@@ -1665,9 +1665,9 @@ function CirculoReto({ valor, porcentaje, color, label, sub }: { valor: string; 
   const c = 2 * Math.PI * r;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <svg width={D - 12} height={D - 12} style={{ position: 'absolute', top: 6, left: 6, transform: 'rotate(-90deg)' }}>
-          <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke="#F3ECE8" strokeWidth={g} />
+          <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke="var(--hx-f3ece8)" strokeWidth={g} />
           {porcentaje > 0 && (
             <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke={color} strokeWidth={g} strokeLinecap="round"
               strokeDasharray={c} strokeDashoffset={c - (Math.min(100, porcentaje) / 100) * c} style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
@@ -1690,7 +1690,7 @@ function TarjetaDuelo({ p, usuario, onAbrir, onJugar, onQuitar }: { p: any; usua
   const restante = p.reto.fechaFin ? tiempoRestante(p.reto.fechaFin).replace(' restantes', '') : null;
   const urgente = p.reto.fechaFin && new Date(p.reto.fechaFin).getTime() - Date.now() < 6 * 3600 * 1000;
   return (
-    <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
       <div onClick={onAbrir} style={{ padding: '12px 14px', cursor: 'pointer' }}>
         <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontWeight: 600, color: TEXT_SECONDARY }}>{esCreador ? `Retaste a ${rival?.nick ?? rival?.nombre ?? 'tu rival'}` : `${p.reto.creador?.nick ?? p.reto.creador?.nombre ?? 'Alguien'} te ha retado`}</span>
@@ -1699,14 +1699,14 @@ function TarjetaDuelo({ p, usuario, onAbrir, onJugar, onQuitar }: { p: any; usua
         </div>
         <DueloReto reto={p.reto} usuarioActual={usuario} tipo={esFC ? 'fc' : esPsico ? 'psico' : 'test'} />
         {p.reto.mensaje && !esCreador && (
-          <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 10, fontStyle: 'italic', background: '#FBF7F5', borderRadius: 10, padding: '7px 10px' }}>
+          <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 10, fontStyle: 'italic', background: 'var(--hx-fbf7f5)', borderRadius: 10, padding: '7px 10px' }}>
             “{p.reto.mensaje}”
           </div>
         )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderTop: '1px solid #F5EEEA' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderTop: '1px solid var(--hx-f5eeea)' }}>
         {restante && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: urgente ? '#DC2626' : TEXT_MUTED, flex: 1 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: urgente ? 'var(--hx-dc2626)' : TEXT_MUTED, flex: 1 }}>
             {onJugar ? <Clock size={13} /> : <Hourglass size={13} />}
             {onJugar ? `Quedan ${restante}` : `Tu rival tiene ${restante}`}
           </span>
@@ -1714,7 +1714,7 @@ function TarjetaDuelo({ p, usuario, onAbrir, onJugar, onQuitar }: { p: any; usua
         {onQuitar && (
           <button
             onClick={(e) => { e.stopPropagation(); onQuitar(); }}
-            style={{ background: 'none', border: 'none', padding: '6px 8px', cursor: 'pointer', color: '#B91C1C', fontSize: 12, fontWeight: 600 }}
+            style={{ background: 'none', border: 'none', padding: '6px 8px', cursor: 'pointer', color: 'var(--hx-b91c1c)', fontSize: 12, fontWeight: 600 }}
           >
             {esCreador ? 'Cancelar' : 'Rechazar'}
           </button>
@@ -1722,7 +1722,7 @@ function TarjetaDuelo({ p, usuario, onAbrir, onJugar, onQuitar }: { p: any; usua
         {onJugar && (
           <button
             onClick={(e) => { e.stopPropagation(); onJugar(); }}
-            style={{ background: '#0f172a', color: 'white', border: 'none', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+            style={{ background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
           >
             Jugar
           </button>

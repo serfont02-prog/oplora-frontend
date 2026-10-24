@@ -34,7 +34,7 @@ export default function ResumenPage() {
       .then((res) => {
         setUsuario(res.data);
         if (res.data?.oposicionActiva) {
-          setTimeout(() => confetti({ particleCount: 70, spread: 60, origin: { y: 0.3 }, colors: ['#1F7CFF', '#0f172a', '#93C5FD', '#FBBF24'] }), 250);
+          setTimeout(() => confetti({ particleCount: 70, spread: 60, origin: { y: 0.3 }, colors: ['var(--hx-1f7cff)', 'var(--hx-0f172a)', 'var(--hx-93c5fd)', '#FBBF24'] }), 250);
         }
       })
       .catch(() => setErrorCarga(true));
@@ -84,15 +84,15 @@ export default function ResumenPage() {
 
   return (
     <PantallaOnboarding paso={5} atras="/app/onboarding/minireto" titulo="¡Ya tienes tu plan!" subtitulo="Todo listo. Ahora toca empezar.">
-      <div style={{ background: '#0f172a', borderRadius: 18, padding: 16, color: 'white', marginBottom: 14 }}>
+      <div style={{ background: 'var(--hxhero-0f172a)', borderRadius: 18, padding: 16, color: 'white', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(31,124,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <GraduationCap size={22} color="#93C5FD" />
+            <GraduationCap size={22} color="var(--hx-93c5fd)" />
           </span>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tu oposición</div>
+            <div style={{ fontSize: 11, color: 'var(--hx-94a3b8)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tu oposición</div>
             <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3, marginTop: 2 }}>{opo.nombre}</div>
-            {opo.subgrupo && <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Subgrupo {opo.subgrupo}</div>}
+            {opo.subgrupo && <div style={{ fontSize: 12, color: 'var(--hx-94a3b8)', marginTop: 2 }}>Subgrupo {opo.subgrupo}</div>}
           </div>
         </div>
       </div>
@@ -100,7 +100,7 @@ export default function ResumenPage() {
       {filas.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 16 }}>
           {filas.map((f, i) => (
-            <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 2px', borderTop: i ? '1px solid #EEF0F3' : 'none' }}>
+            <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 2px', borderTop: i ? '1px solid var(--hx-eef0f3)' : 'none' }}>
               <f.icono size={17} color={COLOR_MARCA} />
               <span style={{ flex: 1, fontSize: 13, color: TEXT_SECONDARY }}>{f.label}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, textAlign: 'right' }}>{f.valor}</span>

@@ -66,14 +66,14 @@ export default function EntrenamientoPage() {
         <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '24px 24px 96px', textAlign: 'center' }}>
           <div style={{ maxWidth: 420 }}>
             <h1 style={{ fontSize: 24, marginBottom: 8 }}>Elige una oposición primero</h1>
-            <p style={{ color: '#6b7280', marginBottom: 20 }}>
+            <p style={{ color: 'var(--hx-6b7280)', marginBottom: 20 }}>
               Necesitamos saber qué oposición preparas para crear tu entrenamiento.
             </p>
             <button
               onClick={() => router.push('/app/onboarding/oposicion')}
               style={{
                 border: 'none', borderRadius: 999, padding: '12px 18px',
-                background: '#111827', color: 'white', fontWeight: 700, cursor: 'pointer',
+                background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontWeight: 700, cursor: 'pointer',
               }}
             >
               Elegir oposición

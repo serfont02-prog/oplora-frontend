@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { RotateCw } from 'lucide-react';
 
-const BG_APP = '#EAF0FF';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const BG_APP = 'var(--c-bg-dashboard)';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_SECONDARY = 'var(--hx-6b7280)';
+const TEXT_MUTED = 'var(--hx-9ca3af)';
 
 const flashcards = [
   {
@@ -70,7 +70,7 @@ export default function OnboardingFlashcards({ onFinish }: Props) {
               key={i}
               style={{
                 flex: 1, height: 4, borderRadius: 999,
-                background: i <= index ? '#1F7CFF' : '#E5E7EB',
+                background: i <= index ? '#1F7CFF' : 'var(--hx-e5e7eb)',
                 transition: 'background 0.3s',
               }}
             />
@@ -81,10 +81,10 @@ export default function OnboardingFlashcards({ onFinish }: Props) {
         <div
           onClick={() => setShowBack(!showBack)}
           style={{
-            background: 'white', borderRadius: '18px', padding: '2rem 1.5rem',
+            background: 'var(--c-superficie)', borderRadius: '18px', padding: '2rem 1.5rem',
             cursor: 'pointer', minHeight: 200,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
-            border: '1px solid #F1F5F9', textAlign: 'center',
+            border: '1px solid var(--hx-f1f5f9)', textAlign: 'center',
           }}
         >
           <div style={{ fontSize: 17, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.5 }}>
@@ -100,7 +100,7 @@ export default function OnboardingFlashcards({ onFinish }: Props) {
           onClick={next}
           style={{
             width: '100%', padding: '14px 18px', borderRadius: '12px',
-            background: '#111827', color: 'white', fontSize: 14, fontWeight: 700,
+            background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: 14, fontWeight: 700,
             border: 'none', cursor: 'pointer',
           }}
         >

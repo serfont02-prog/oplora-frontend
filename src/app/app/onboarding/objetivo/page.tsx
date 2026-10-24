@@ -11,10 +11,10 @@ import { PantallaOnboarding, OpcionOnboarding, ListaOpciones } from '@/component
 import { AvisoAuth } from '@/components/auth/PantallaAuth';
 
 const OPCIONES = [
-  { valor: 'menos_1h', icono: Clock, color: '#1F7CFF', fondo: '#EAF0FF', titulo: 'Menos de 1 hora al día', subtitulo: 'Poco a poco, pero constante' },
-  { valor: '1_3h', icono: Hourglass, color: '#4F46E5', fondo: '#E0E7FF', titulo: 'De 1 a 3 horas al día', subtitulo: 'Le dedico un buen rato cada día' },
-  { valor: 'mas_3h', icono: Flame, color: '#C2410C', fondo: '#FCEEE8', titulo: 'Más de 3 horas al día', subtitulo: 'Voy a por todas' },
-  { valor: 'variable', icono: CalendarDays, color: '#4D7C0F', fondo: '#ECFCCB', titulo: 'Depende del día', subtitulo: 'Mi disponibilidad cambia mucho' },
+  { valor: 'menos_1h', icono: Clock, color: 'var(--hx-1f7cff)', fondo: 'var(--hx-eaf0ff)', titulo: 'Menos de 1 hora al día', subtitulo: 'Poco a poco, pero constante' },
+  { valor: '1_3h', icono: Hourglass, color: 'var(--hx-4f46e5)', fondo: 'var(--hx-e0e7ff)', titulo: 'De 1 a 3 horas al día', subtitulo: 'Le dedico un buen rato cada día' },
+  { valor: 'mas_3h', icono: Flame, color: 'var(--hx-c2410c)', fondo: 'var(--hx-fceee8)', titulo: 'Más de 3 horas al día', subtitulo: 'Voy a por todas' },
+  { valor: 'variable', icono: CalendarDays, color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)', titulo: 'Depende del día', subtitulo: 'Mi disponibilidad cambia mucho' },
 ];
 
 export default function TiempoDisponiblePage() {

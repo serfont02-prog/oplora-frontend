@@ -20,10 +20,10 @@ import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA, COLOR_FC, COLOR_FC_B
 type TabTema = 'material' | 'mi-estudio' | 'progreso';
 
 const BG_APP = BG_TEMA;
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const BORDER = '#F0ECE6';
-const COLOR_ESTUDIAR = '#1F7CFF';
-const COLOR_TEST = '#4D7C0F';
+const SOMBRA = 'var(--c-sombra)';
+const BORDER = 'var(--hx-f0ece6)';
+const COLOR_ESTUDIAR = 'var(--hx-1f7cff)';
+const COLOR_TEST = 'var(--hx-4d7c0f)';
 const TZ = 'Europe/Madrid';
 
 /** "YYYY-MM-DD" de una fecha en Madrid (antes se usaba toISOString, que es UTC y fallaba de noche) */
@@ -55,7 +55,7 @@ function BotonRedondo({ onClick, label, disabled, children, size = 38 }: { onCli
       onClick={onClick}
       aria-label={label}
       disabled={disabled}
-      style={{ width: size, height: size, borderRadius: '50%', border: 'none', background: 'white', boxShadow: disabled ? 'none' : SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: disabled ? 'default' : 'pointer', flexShrink: 0, opacity: disabled ? 0.4 : 1 }}
+      style={{ width: size, height: size, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: disabled ? 'none' : SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: disabled ? 'default' : 'pointer', flexShrink: 0, opacity: disabled ? 0.4 : 1 }}
     >
       {children}
     </button>
@@ -66,10 +66,10 @@ function BotonRedondo({ onClick, label, disabled, children, size = 38 }: { onCli
 function Acceso({ label, sub, Icon, color, onClick, badge }: { label: string; sub?: string; Icon: any; color: string; onClick: () => void; badge?: number }) {
   return (
     <button onClick={onClick} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: 0 }}>
-      <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Icon size={22} color={color} />
         {!!badge && badge > 0 && (
-          <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, background: '#DC2626', color: 'white', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white', boxSizing: 'border-box' }}>
+          <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, background: '#DC2626', color: 'white', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--c-superficie)', boxSizing: 'border-box' }}>
             {badge > 9 ? '9+' : badge}
           </span>
         )}
@@ -87,9 +87,9 @@ function CirculoDato({ valor, porcentaje, color, label, sub }: { valor: string; 
   const c = 2 * Math.PI * r;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <svg width={D - 12} height={D - 12} style={{ position: 'absolute', top: 6, left: 6, transform: 'rotate(-90deg)' }}>
-          <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke="#EEF0F3" strokeWidth={g} />
+          <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={g} />
           {porcentaje > 0 && (
             <circle cx={(D - 12) / 2} cy={(D - 12) / 2} r={r} fill="none" stroke={color} strokeWidth={g} strokeLinecap="round"
               strokeDasharray={c} strokeDashoffset={c - (Math.min(100, porcentaje) / 100) * c} style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
@@ -116,7 +116,7 @@ function FilaLista({ Icon, color, bg, titulo, sub, onClick, href, ultima, derech
         <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>{titulo}</div>
         {sub && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{sub}</div>}
       </div>
-      {derecha ?? ((onClick || href) && <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />)}
+      {derecha ?? ((onClick || href) && <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />)}
     </>
   );
   const estilo: React.CSSProperties = {
@@ -130,7 +130,7 @@ function FilaLista({ Icon, color, bg, titulo, sub, onClick, href, ultima, derech
 }
 
 const Caja = ({ children, padding = 0 }: { children: React.ReactNode; padding?: number }) => (
-  <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden', padding }}>{children}</div>
+  <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden', padding }}>{children}</div>
 );
 
 export default function TemaPage() {
@@ -372,8 +372,8 @@ export default function TemaPage() {
   if (cargandoTema) {
     return (
       <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-        <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <BookOpen size={24} color="#8B7355" />
+        <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <BookOpen size={24} color="var(--hx-8b7355)" />
         </div>
         <span style={{ fontSize: 13, color: TEXT_SECONDARY, fontWeight: 600 }}>Cargando tema…</span>
       </div>
@@ -384,14 +384,14 @@ export default function TemaPage() {
   if (convocatoriasError || temasError || !tema) {
     return (
       <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem' }}>
-        <div style={{ background: 'white', borderRadius: 20, padding: '1.75rem 1.5rem', maxWidth: 380, width: '100%', textAlign: 'center', boxShadow: SOMBRA }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 20, padding: '1.75rem 1.5rem', maxWidth: 380, width: '100%', textAlign: 'center', boxShadow: SOMBRA }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>
             {convocatoriasError || temasError ? 'No se ha podido cargar el tema' : `No existe el tema ${numeroTema}`}
           </div>
           <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 16 }}>
             {convocatoriasError || temasError ? 'Comprueba la conexión e inténtalo de nuevo.' : 'Puede que el temario de tu convocatoria haya cambiado.'}
           </div>
-          <button onClick={() => router.push(`/app/tema/${oposicionId}?modo=estudiar`)} style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={() => router.push(`/app/tema/${oposicionId}?modo=estudiar`)} style={{ width: '100%', padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             Ir al temario
           </button>
         </div>
@@ -408,7 +408,7 @@ export default function TemaPage() {
   const maxPorTema = limites?.limites?.preguntasPorTema ?? 20;
   const numRepasoCompleto = Math.max(5, Math.min(20, maxPorTema));
 
-  const colorAnillo = completado ? '#16A34A' : porcentajeProgreso > 0 ? COLOR_ESTUDIAR : '#D1D5DB';
+  const colorAnillo = completado ? 'var(--hx-16a34a)' : porcentajeProgreso > 0 ? COLOR_ESTUDIAR : 'var(--hx-d1d5db)';
   const R = 30;
   const C = 2 * Math.PI * R;
 
@@ -446,16 +446,16 @@ export default function TemaPage() {
 
         {/* Título y progreso del tema */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0 4px' }}>
-          <div style={{ position: 'relative', width: 70, height: 70, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: 70, height: 70, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="70" height="70" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-              <circle cx="35" cy="35" r={R} fill="none" stroke="#F1EDE6" strokeWidth="4.5" />
+              <circle cx="35" cy="35" r={R} fill="none" stroke="var(--hx-f1ede6)" strokeWidth="4.5" />
               {porcentajeProgreso > 0 && (
                 <circle cx="35" cy="35" r={R} fill="none" stroke={colorAnillo} strokeWidth="4.5" strokeLinecap="round"
                   strokeDasharray={C} strokeDashoffset={C - (Math.min(porcentajeProgreso, 100) / 100) * C} style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
               )}
             </svg>
             {completado
-              ? <CheckCircle2 size={26} color="#16A34A" />
+              ? <CheckCircle2 size={26} color="var(--hx-16a34a)" />
               : <span style={{ fontSize: 16, fontWeight: 800, color: porcentajeProgreso > 0 ? TEXT_PRIMARY : TEXT_MUTED }}>{porcentajeProgreso}%</span>}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -478,8 +478,8 @@ export default function TemaPage() {
 
         {/* Repaso programado para hoy */}
         {repasoHoy && (
-          <div style={{ background: 'white', borderRadius: 18, padding: 14, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 12, border: `1.5px solid ${COLOR_ESTUDIAR}` }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: '#EAF2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 14, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 12, border: `1.5px solid ${COLOR_ESTUDIAR}` }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--hx-eaf2fe)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <CalendarCheck size={20} color={COLOR_ESTUDIAR} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -491,7 +491,7 @@ export default function TemaPage() {
             <button
               onClick={() => guardarRepaso(null)}
               disabled={programando}
-              style={{ border: 'none', background: '#0f172a', color: 'white', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+              style={{ border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
             >
               Hecho
             </button>
@@ -505,7 +505,7 @@ export default function TemaPage() {
             label="Flashcards" sub={totalFC > 0 ? `${totalFC} tarjetas` : 'Repasar'} Icon={Layers} color={COLOR_FC}
             onClick={() => router.push(`/app/flashcards/repasar?temaId=${tema.id}&oposicionId=${oposicionId}&numeroTema=${numeroTema}`)}
           />
-          <Acceso label="Notas" sub={notaTexto ? 'Escritas' : 'Escribir'} Icon={NotebookPen} color="#8B7355" onClick={() => abrirSeccion('notas')} />
+          <Acceso label="Notas" sub={notaTexto ? 'Escritas' : 'Escribir'} Icon={NotebookPen} color="var(--hx-8b7355)" onClick={() => abrirSeccion('notas')} />
           <Acceso
             label="Repaso" sub={repasoProgramado ? (repasoHoy ? 'Hoy' : fechaCorta(repasoProgramado)) : 'Programar'}
             Icon={CalendarDays} color={COLOR_ESTUDIAR} onClick={() => abrirSeccion('repaso')}
@@ -513,14 +513,14 @@ export default function TemaPage() {
         </div>
 
         {/* Pestañas */}
-        <div style={{ display: 'flex', background: 'white', borderRadius: 999, padding: 4, gap: 4, boxShadow: SOMBRA }}>
+        <div style={{ display: 'flex', background: 'var(--c-superficie)', borderRadius: 999, padding: 4, gap: 4, boxShadow: SOMBRA }}>
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
               style={{
                 flex: 1, padding: '9px 4px', border: 'none', borderRadius: 999, cursor: 'pointer',
-                background: tab === key ? '#0f172a' : 'transparent', color: tab === key ? 'white' : TEXT_SECONDARY,
+                background: tab === key ? 'var(--hxbg-0f172a)' : 'transparent', color: tab === key ? 'var(--c-primario-texto)' : TEXT_SECONDARY,
                 fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                 transition: 'background 0.15s ease, color 0.15s ease',
               }}
@@ -538,12 +538,12 @@ export default function TemaPage() {
               <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{apuntesOplora.length}</span>}>Apuntes OPLORA</TituloSeccion>
               <Caja>
                 {apuntesOploraPendiente ? <div style={{ padding: 14, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>
-                  : apuntesOploraError ? <div style={{ padding: 14, fontSize: 13, color: '#B91C1C' }}>No se han podido cargar los apuntes.</div>
+                  : apuntesOploraError ? <div style={{ padding: 14, fontSize: 13, color: 'var(--hx-b91c1c)' }}>No se han podido cargar los apuntes.</div>
                   : apuntesOplora.length === 0 ? <div style={{ padding: 14, fontSize: 13, color: TEXT_MUTED }}>Este tema todavía no tiene apuntes de OPLORA.</div>
                   : apuntesOplora.map((ap: any, i: number) => (
                     <FilaLista
                       key={ap.id} ultima={i === apuntesOplora.length - 1}
-                      Icon={BookOpen} color="#B7791F" bg="#FEF6E4"
+                      Icon={BookOpen} color="var(--hx-b7791f)" bg="var(--hx-fef6e4)"
                       titulo={ap.titulo}
                       sub={[ap.tipo?.toUpperCase(), ap.paginas ? `${ap.paginas} págs` : null].filter(Boolean).join(' · ') || undefined}
                       onClick={() => router.push(`/app/apuntes/${ap.id}`)}
@@ -557,13 +557,13 @@ export default function TemaPage() {
               {normativaPendiente ? (
                 <Caja padding={14}><div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</div></Caja>
               ) : normativaError ? (
-                <Caja padding={14}><div style={{ fontSize: 13, color: '#B91C1C' }}>No se ha podido cargar la normativa.</div></Caja>
+                <Caja padding={14}><div style={{ fontSize: 13, color: 'var(--hx-b91c1c)' }}>No se ha podido cargar la normativa.</div></Caja>
               ) : Object.keys(normativaPorLey).length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {Object.entries(normativaPorLey).map(([leyNombre, data]: [string, any]) => (
                     <Caja key={leyNombre}>
                       <FilaLista
-                        ultima={false} Icon={Scale} color="#7C3AED" bg="#F3F0FC"
+                        ultima={false} Icon={Scale} color="var(--hx-7c3aed)" bg="var(--hx-f3f0fc)"
                         titulo={leyNombre} sub={`${data.articulos.length} ${data.articulos.length === 1 ? 'artículo' : 'artículos'} en este tema`}
                         onClick={data.leyId ? () => router.push(`/app/ley/${data.leyId}?oposicionId=${oposicionId}`) : undefined}
                       />
@@ -573,7 +573,7 @@ export default function TemaPage() {
                             key={art.id}
                             onClick={() => router.push(`/app/articulo/${art.id}?oposicionId=${oposicionId}`)}
                             // ⭐ Artículos en azul (la ley va en morado): antes tenían el mismo color y se confundían
-                            style={{ padding: '5px 11px', borderRadius: 999, border: '1px solid #D6E4FF', background: '#EAF0FF', fontSize: 12, color: '#1F5FD1', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ padding: '5px 11px', borderRadius: 999, border: '1px solid var(--hx-d6e4ff)', background: 'var(--hx-eaf0ff)', fontSize: 12, color: 'var(--hx-1f5fd1)', cursor: 'pointer', fontWeight: 600 }}
                           >
                             Art. {art.numero}
                           </button>
@@ -597,11 +597,11 @@ export default function TemaPage() {
               <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{apuntes.length}</span>}>Mis apuntes</TituloSeccion>
               <Caja>
                 {apuntesPendiente && <div style={{ padding: 14, fontSize: 13, color: TEXT_MUTED, borderBottom: `1px solid ${BORDER}` }}>Cargando…</div>}
-                {apuntesError && <div style={{ padding: 14, fontSize: 13, color: '#B91C1C', borderBottom: `1px solid ${BORDER}` }}>No se han podido cargar tus apuntes.</div>}
+                {apuntesError && <div style={{ padding: 14, fontSize: 13, color: 'var(--hx-b91c1c)', borderBottom: `1px solid ${BORDER}` }}>No se han podido cargar tus apuntes.</div>}
                 {apuntes.map((ap: any) => (
                   <FilaLista
                     key={ap.id} ultima={false}
-                    Icon={FileText} color="#2563EB" bg="#EAF2FE"
+                    Icon={FileText} color="var(--hx-2563eb)" bg="var(--hx-eaf2fe)"
                     titulo={ap.nombre}
                     sub={ap.creadoEn ? new Date(ap.creadoEn).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : undefined}
                     href={ap.urlArchivo}
@@ -637,7 +637,7 @@ export default function TemaPage() {
                   disabled={subiendoApunte}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', cursor: subiendoApunte ? 'default' : 'pointer', textAlign: 'left' }}
                 >
-                  <div style={{ width: 40, height: 40, borderRadius: 12, border: '1.5px dashed #CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, border: '1.5px dashed var(--hx-cbd5e1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Upload size={17} color={TEXT_SECONDARY} />
                   </div>
                   <div>
@@ -646,7 +646,7 @@ export default function TemaPage() {
                   </div>
                 </button>
               </Caja>
-              {errorSubida && <div style={{ fontSize: 12, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px', marginTop: 10 }}>{errorSubida}</div>}
+              {errorSubida && <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 12, padding: '10px 12px', marginTop: 10 }}>{errorSubida}</div>}
             </section>
           </>
         )}
@@ -659,7 +659,7 @@ export default function TemaPage() {
               <Caja padding={16}>
                 {repasoProgramado ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: '#EAF2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--hx-eaf2fe)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <CalendarCheck size={20} color={COLOR_ESTUDIAR} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -672,7 +672,7 @@ export default function TemaPage() {
                     <button
                       onClick={() => guardarRepaso(null)}
                       disabled={programando}
-                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#B91C1C', background: '#FEF2F2', border: 'none', borderRadius: 999, padding: '6px 10px', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', border: 'none', borderRadius: 999, padding: '6px 10px', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}
                     >
                       <X size={13} /> Quitar
                     </button>
@@ -696,7 +696,7 @@ export default function TemaPage() {
                           <button
                             key={dias}
                             onClick={() => { setFechaElegida(f); setMostrarCalendario(false); }}
-                            style={{ padding: '10px 4px', borderRadius: 10, fontSize: 12, cursor: 'pointer', border: 'none', background: activo ? '#0f172a' : '#F3F4F6', color: activo ? 'white' : TEXT_SECONDARY, fontWeight: 700 }}
+                            style={{ padding: '10px 4px', borderRadius: 10, fontSize: 12, cursor: 'pointer', border: 'none', background: activo ? 'var(--hxbg-0f172a)' : 'var(--hx-f3f4f6)', color: activo ? 'var(--c-primario-texto)' : TEXT_SECONDARY, fontWeight: 700 }}
                           >
                             {label}
                           </button>
@@ -704,7 +704,7 @@ export default function TemaPage() {
                       })}
                       <button
                         onClick={() => { setMostrarCalendario(true); setFechaElegida(''); }}
-                        style={{ padding: '10px 4px', borderRadius: 10, fontSize: 12, cursor: 'pointer', border: 'none', background: mostrarCalendario ? '#0f172a' : '#F3F4F6', color: mostrarCalendario ? 'white' : TEXT_SECONDARY, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                        style={{ padding: '10px 4px', borderRadius: 10, fontSize: 12, cursor: 'pointer', border: 'none', background: mostrarCalendario ? 'var(--hxbg-0f172a)' : 'var(--hx-f3f4f6)', color: mostrarCalendario ? 'var(--c-primario-texto)' : TEXT_SECONDARY, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                       >
                         <CalendarDays size={13} /> Otra fecha
                       </button>
@@ -715,7 +715,7 @@ export default function TemaPage() {
                         value={fechaElegida}
                         min={sumarDias(1)}
                         onChange={(e) => setFechaElegida(e.target.value)}
-                        style={{ width: '100%', padding: '13px 14px', fontSize: 15, border: '1px solid #E5E7EB', borderRadius: 12, outline: 'none', color: TEXT_PRIMARY, boxSizing: 'border-box', marginBottom: 10, background: 'white' }}
+                        style={{ width: '100%', padding: '13px 14px', fontSize: 15, border: '1px solid var(--hx-e5e7eb)', borderRadius: 12, outline: 'none', color: TEXT_PRIMARY, boxSizing: 'border-box', marginBottom: 10, background: 'var(--c-superficie)' }}
                       />
                     )}
                     {fechaElegida && (
@@ -724,19 +724,19 @@ export default function TemaPage() {
                     <button
                       onClick={() => fechaElegida && guardarRepaso(fechaElegida)}
                       disabled={!fechaElegida || programando}
-                      style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: fechaElegida ? 'pointer' : 'default', opacity: fechaElegida ? 1 : 0.4 }}
+                      style={{ width: '100%', padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: fechaElegida ? 'pointer' : 'default', opacity: fechaElegida ? 1 : 0.4 }}
                     >
                       {programando ? 'Guardando…' : 'Programar repaso'}
                     </button>
                   </>
                 )}
-                {errorRepaso && <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 10 }}>{errorRepaso}</div>}
+                {errorRepaso && <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', marginTop: 10 }}>{errorRepaso}</div>}
               </Caja>
             </section>
 
             <section ref={refNotas}>
               <TituloSeccion derecha={
-                <span style={{ fontSize: 11, fontWeight: 600, color: estadoNota === 'error' ? '#B91C1C' : estadoNota === 'guardado' ? '#16A34A' : TEXT_MUTED }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: estadoNota === 'error' ? 'var(--hx-b91c1c)' : estadoNota === 'guardado' ? 'var(--hx-16a34a)' : TEXT_MUTED }}>
                   {estadoNota === 'guardando' ? 'Guardando…' : estadoNota === 'guardado' ? 'Guardado' : estadoNota === 'error' ? 'No se ha guardado' : 'Se guarda solo'}
                 </span>
               }>
@@ -751,7 +751,7 @@ export default function TemaPage() {
                   placeholder="Escribe aquí tus notas sobre este tema…"
                   style={{
                     width: '100%', minHeight: 220, padding: 12, fontSize: 14, color: TEXT_PRIMARY, lineHeight: 1.7,
-                    border: 'none', borderRadius: 12, outline: 'none', resize: 'vertical', background: '#FFFBEB',
+                    border: 'none', borderRadius: 12, outline: 'none', resize: 'vertical', background: 'var(--hx-fffbeb)',
                     boxSizing: 'border-box', fontFamily: 'inherit',
                   }}
                 />
@@ -768,7 +768,7 @@ export default function TemaPage() {
               {progresoPendiente ? (
                 <Caja padding={14}><div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</div></Caja>
               ) : progresoCompletoError || !desglose ? (
-                <Caja padding={14}><div style={{ fontSize: 13, color: '#B91C1C' }}>No se ha podido cargar el progreso.</div></Caja>
+                <Caja padding={14}><div style={{ fontSize: 13, color: 'var(--hx-b91c1c)' }}>No se ha podido cargar el progreso.</div></Caja>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, padding: '0 4px' }}>
                   <CirculoDato valor={`${desglose.lectura.puntos}`} porcentaje={(desglose.lectura.puntos / 50) * 100} color={COLOR_ESTUDIAR} label="Lectura" sub="de 50 puntos" />
@@ -782,7 +782,7 @@ export default function TemaPage() {
               <TituloSeccion>Mi actividad en el tema</TituloSeccion>
               <Caja>
                 <FilaLista
-                  ultima={false} Icon={ClipboardCheck} color={COLOR_TEST} bg="#F3FAE9"
+                  ultima={false} Icon={ClipboardCheck} color={COLOR_TEST} bg="var(--hx-f3fae9)"
                   titulo={`${progresoTest?.total ?? 0} preguntas respondidas`}
                   sub={`${progresoTest?.correctas ?? 0} correctas · ${progresoTest?.falladas ?? 0} falladas`}
                   derecha={<span />}
@@ -794,13 +794,13 @@ export default function TemaPage() {
                   derecha={<span />}
                 />
                 <FilaLista
-                  ultima={false} Icon={Flame} color="#C2410C" bg="#FFF1E8"
+                  ultima={false} Icon={Flame} color="var(--hx-c2410c)" bg="var(--hx-fff1e8)"
                   titulo={`${progresoSesiones?.diasEstudiados ?? 0} ${(progresoSesiones?.diasEstudiados ?? 0) === 1 ? 'día' : 'días'} estudiando el tema`}
                   sub={progresoSesiones?.ultimaSesion ? `Última vez: ${new Date(progresoSesiones.ultimaSesion).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}` : 'Primera vez que entras'}
                   derecha={<span />}
                 />
                 <FilaLista
-                  ultima Icon={Clock} color={COLOR_ESTUDIAR} bg="#EAF2FE"
+                  ultima Icon={Clock} color={COLOR_ESTUDIAR} bg="var(--hx-eaf2fe)"
                   titulo={repasoProgramado ? `Repaso: ${repasoProgramado === hoy ? 'hoy' : fechaLarga(repasoProgramado)}` : 'Sin repaso programado'}
                   sub={repasoProgramado ? 'Te avisaremos ese día' : 'Prográmalo en Mi estudio'}
                   onClick={() => abrirSeccion('repaso')}
@@ -814,8 +814,8 @@ export default function TemaPage() {
                 {repasoDesbloqueado ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 42, height: 42, borderRadius: 12, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Target size={21} color="#16A34A" />
+                      <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--hx-f0fdf4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Target size={21} color="var(--hx-16a34a)" />
                       </div>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Listo para el repaso completo</div>
@@ -832,15 +832,15 @@ export default function TemaPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 42, height: 42, borderRadius: 12, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Lock size={19} color="#9CA3AF" />
+                      <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--hx-f3f4f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Lock size={19} color="var(--hx-9ca3af)" />
                       </div>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Se desbloquea al 80%</div>
                         <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Lee el material, haz tests y repasa flashcards del tema</div>
                       </div>
                     </div>
-                    <div style={{ height: 6, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden' }}>
+                    <div style={{ height: 6, background: 'var(--hx-eef0f3)', borderRadius: 999, overflow: 'hidden' }}>
                       <div style={{ width: `${Math.min(100, (porcentajeProgreso / 80) * 100)}%`, height: '100%', background: '#D97706', borderRadius: 999 }} />
                     </div>
                     <div style={{ fontSize: 11, color: TEXT_MUTED }}>{porcentajeProgreso}% de 80%</div>

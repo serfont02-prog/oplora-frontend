@@ -48,7 +48,7 @@ export function PantallaOnboarding({
         @keyframes oplora-aparecer { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
       `}</style>
       <div aria-hidden style={{ position: 'absolute', width: 420, height: 420, borderRadius: '50%', background: 'rgba(31,124,255,0.10)', top: -160, right: -140 }} />
-      <div aria-hidden style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.65)', bottom: -120, left: -110 }} />
+      <div aria-hidden style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'color-mix(in srgb, var(--c-superficie) 65%, transparent)', bottom: -120, left: -110 }} />
 
       <div style={{ position: 'relative', width: '100%', maxWidth: 420 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, minHeight: 38, position: 'relative' }}>
@@ -56,7 +56,7 @@ export function PantallaOnboarding({
             <button
               onClick={() => router.push(atras)}
               aria-label="Volver al paso anterior"
-              style={{ position: 'absolute', left: 0, width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              style={{ position: 'absolute', left: 0, width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
               <ArrowLeft size={18} color={TEXT_PRIMARY} />
             </button>
@@ -64,7 +64,7 @@ export function PantallaOnboarding({
           <LogoOplora alto={38} />
         </div>
 
-        <main style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '22px 20px 22px', animation: 'oplora-aparecer 0.3s ease' }}>
+        <main style={{ background: 'var(--c-superficie)', borderRadius: 24, boxShadow: SOMBRA, padding: '22px 20px 22px', animation: 'oplora-aparecer 0.3s ease' }}>
           {paso != null && <BarraPasos paso={paso} />}
           {(titulo || subtitulo) && (
             <header style={{ marginBottom: 16 }}>
@@ -83,7 +83,7 @@ export function BarraPasos({ paso, total = PASOS_ONBOARDING }: { paso: number; t
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
       {Array.from({ length: total }, (_, i) => (
-        <div key={i} style={{ flex: 1, height: 5, borderRadius: 999, background: i < paso ? COLOR_MARCA : '#E5E7EB', transition: 'background 0.3s' }} />
+        <div key={i} style={{ flex: 1, height: 5, borderRadius: 999, background: i < paso ? COLOR_MARCA : 'var(--hx-e5e7eb)', transition: 'background 0.3s' }} />
       ))}
       <span style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, marginLeft: 4, flexShrink: 0 }}>{paso} de {total}</span>
     </div>
@@ -97,7 +97,7 @@ export function OpcionOnboarding({
   icono: IconoOpcion,
   etiquetaCaja,
   color = COLOR_MARCA,
-  fondo = '#EAF0FF',
+  fondo = 'var(--hx-eaf0ff)',
   titulo,
   subtitulo,
   seleccionada = false,
@@ -122,7 +122,7 @@ export function OpcionOnboarding({
   onClick?: () => void;
   disabled?: boolean;
 }) {
-  const acento = correcta ? '#16A34A' : COLOR_MARCA;
+  const acento = correcta ? 'var(--hx-16a34a)' : COLOR_MARCA;
   const activa = seleccionada || correcta;
   return (
     <button
@@ -133,8 +133,8 @@ export function OpcionOnboarding({
         textAlign: 'left',
         padding: '12px 12px',
         borderRadius: 16,
-        border: `2px solid ${activa ? acento : '#EEF0F3'}`,
-        background: activa ? (correcta ? '#F0FDF4' : '#F5F8FF') : 'white',
+        border: `2px solid ${activa ? acento : 'var(--hx-eef0f3)'}`,
+        background: activa ? (correcta ? 'var(--hx-f0fdf4)' : 'var(--hx-f5f8ff)') : 'var(--c-superficie)',
         cursor: disabled ? 'default' : 'pointer',
         display: 'flex',
         gap: 12,
@@ -152,7 +152,7 @@ export function OpcionOnboarding({
         <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: activa ? acento : TEXT_PRIMARY, lineHeight: 1.35 }}>{titulo}</span>
         {subtitulo && <span style={{ display: 'block', fontSize: 12, color: TEXT_SECONDARY, marginTop: 2, lineHeight: 1.4 }}>{subtitulo}</span>}
       </span>
-      {activa ? <Check size={17} color={acento} /> : <ChevronRight size={17} color="#C4C9D2" />}
+      {activa ? <Check size={17} color={acento} /> : <ChevronRight size={17} color="var(--hx-c4c9d2)" />}
     </button>
   );
 }

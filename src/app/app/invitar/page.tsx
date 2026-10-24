@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth';
 import FormInvitar from '@/components/invitar/FormInvitar';
 import { BG_NEUTRAL, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_RETOS, COLOR_RETOS_BG } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const SOMBRA = 'var(--c-sombra)';
 const TIPO: Record<string, string> = { app: 'Invitado a OPLORA', oposicion: 'Invitado a tu oposición', convocatoria: 'Avisado de tu convocatoria' };
 
 export default function InvitarPage() {
@@ -33,7 +33,7 @@ export default function InvitarPage() {
           <button
             onClick={() => (oposicion?.id ? router.push(`/app/oposicion/${oposicion.id}/ajustes`) : router.back())}
             aria-label="Volver"
-            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
@@ -43,7 +43,7 @@ export default function InvitarPage() {
           </div>
         </div>
 
-        <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ width: 44, height: 44, borderRadius: 13, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Users size={22} color={COLOR_RETOS} />
           </div>
@@ -57,9 +57,9 @@ export default function InvitarPage() {
         {enviadas.length > 0 && (
           <section>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Invitaciones enviadas</div>
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
               {enviadas.map((i: any, k: number) => (
-                <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: k < enviadas.length - 1 ? '1px solid #EEF0F3' : 'none' }}>
+                <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: k < enviadas.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
                   <Mail size={16} color={TEXT_MUTED} style={{ flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>{i.email}</div>

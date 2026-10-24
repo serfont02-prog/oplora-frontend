@@ -14,8 +14,8 @@ import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { PuntosGanadosCard } from '@/components/gamificacion/PuntosGanadosCard';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const COLOR_TEST = '#4D7C0F';
+const SOMBRA = 'var(--c-sombra)';
+const COLOR_TEST = 'var(--hx-4d7c0f)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 /** "1/3" → 0.333…, "0,25" → 0.25, vacío → 0 */
@@ -107,7 +107,7 @@ export default function ResultadoTestPage() {
   const notaPenalizada = total > 0 ? Math.max(0, ((correctas - falladas * fraccion - blancos * fraccionBlanco) / total) * 10) : 0;
   const hayPenalizacion = fraccion > 0 || fraccionBlanco > 0;
 
-  const colorNota = pct >= 80 ? '#16A34A' : pct >= 60 ? '#1F7CFF' : pct >= 40 ? '#D97706' : '#DC2626';
+  const colorNota = pct >= 80 ? 'var(--hx-16a34a)' : pct >= 60 ? 'var(--hx-1f7cff)' : pct >= 40 ? 'var(--hx-d97706)' : 'var(--hx-dc2626)';
   const mensaje = pct >= 80 ? 'Excelente' : pct >= 60 ? 'Bien hecho' : pct >= 40 ? 'Sigue practicando' : 'Toca repasar';
   const titulo = modo === 'repaso' ? 'Repaso inteligente' : modo === 'primer_reto' ? 'Primer reto' : 'Resultado del test';
 
@@ -134,7 +134,7 @@ export default function ResultadoTestPage() {
           <button
             onClick={() => router.push('/app/entrenamiento')}
             aria-label="Cerrar"
-            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <X size={18} color={TEXT_PRIMARY} />
           </button>
@@ -142,9 +142,9 @@ export default function ResultadoTestPage() {
 
         {/* Acierto */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width={D - 24} height={D - 24} style={{ position: 'absolute', top: 12, left: 12, transform: 'rotate(-90deg)' }}>
-              <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke="#EEF0F3" strokeWidth={10} />
+              <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={10} />
               {pct > 0 && (
                 <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke={colorNota} strokeWidth={10} strokeLinecap="round"
                   strokeDasharray={circ} strokeDashoffset={circ - (pct / 100) * circ} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
@@ -164,14 +164,14 @@ export default function ResultadoTestPage() {
         </div>
 
         {/* Cifras */}
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '14px 4px' }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '14px 4px' }}>
           {[
-            { v: correctas, l: 'Aciertos', c: '#16A34A' },
-            { v: falladas, l: 'Fallos', c: '#DC2626' },
+            { v: correctas, l: 'Aciertos', c: 'var(--hx-16a34a)' },
+            { v: falladas, l: 'Fallos', c: 'var(--hx-dc2626)' },
             { v: blancos, l: 'En blanco', c: TEXT_SECONDARY },
             { v: tiempoTexto, l: `${medio}s / pregunta`, c: TEXT_PRIMARY },
           ].map((d, i) => (
-            <div key={d.l} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid #EEF0F3' : 'none' }}>
+            <div key={d.l} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: d.c }}>{d.v}</div>
               <div style={{ fontSize: 10, color: TEXT_MUTED, marginTop: 2 }}>{d.l}</div>
             </div>
@@ -184,20 +184,20 @@ export default function ResultadoTestPage() {
         {(puedeRepasar || (modo === 'repaso' && fcPendientes.length > 0)) && (
           <section>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Sigue practicando</div>
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
               {puedeRepasar && (
                 <button
                   onClick={() => router.push(`/app/test/${oposicionId}?modo=repaso&n=10`)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', borderBottom: modo === 'repaso' && fcPendientes.length > 0 ? '1px solid #EEF0F3' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'none', border: 'none', borderBottom: modo === 'repaso' && fcPendientes.length > 0 ? '1px solid var(--hx-eef0f3)' : 'none', cursor: 'pointer', textAlign: 'left' }}
                 >
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F3FAE9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--hx-f3fae9)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Target size={20} color={COLOR_TEST} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>Repaso inteligente</div>
                     <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Vuelve sobre las preguntas que más fallas</div>
                   </div>
-                  <ChevronRight size={16} color="#C4C9D2" />
+                  <ChevronRight size={16} color="var(--hx-c4c9d2)" />
                 </button>
               )}
               {modo === 'repaso' && fcPendientes.length > 0 && (
@@ -214,7 +214,7 @@ export default function ResultadoTestPage() {
                       {fcPendientes.length} {fcPendientes.length === 1 ? 'tarjeta pendiente' : 'tarjetas pendientes'} de repaso
                     </div>
                   </div>
-                  <ChevronRight size={16} color="#C4C9D2" />
+                  <ChevronRight size={16} color="var(--hx-c4c9d2)" />
                 </button>
               )}
             </div>
@@ -225,15 +225,15 @@ export default function ResultadoTestPage() {
         {(media !== null || mejor !== null) && (
           <section>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Comparado con tus tests</div>
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
                 { l: 'Este test', v: pct, c: colorNota },
-                ...(media !== null ? [{ l: 'Tu media', v: media, c: '#94A3B8' }] : []),
-                ...(mejor !== null ? [{ l: 'Tu mejor', v: mejor, c: '#16A34A' }] : []),
+                ...(media !== null ? [{ l: 'Tu media', v: media, c: 'var(--hx-94a3b8)' }] : []),
+                ...(mejor !== null ? [{ l: 'Tu mejor', v: mejor, c: 'var(--hx-16a34a)' }] : []),
               ].map(({ l, v, c }) => (
                 <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 74, fontSize: 12, color: TEXT_SECONDARY, flexShrink: 0 }}>{l}</div>
-                  <div style={{ flex: 1, height: 8, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden' }}>
+                  <div style={{ flex: 1, height: 8, background: 'var(--hx-eef0f3)', borderRadius: 999, overflow: 'hidden' }}>
                     <div style={{ width: `${Math.max(0, Math.min(100, v))}%`, height: '100%', background: c, borderRadius: 999, transition: 'width 0.5s' }} />
                   </div>
                   <div style={{ width: 38, fontSize: 12, fontWeight: 700, color: TEXT_PRIMARY, textAlign: 'right' }}>{v}%</div>
@@ -251,22 +251,22 @@ export default function ResultadoTestPage() {
           <section>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', gap: 8 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Revisa tus respuestas</span>
-              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.7)', borderRadius: 999, padding: 3, gap: 2 }}>
+              <div style={{ display: 'flex', background: 'color-mix(in srgb, var(--c-superficie) 70%, transparent)', borderRadius: 999, padding: 3, gap: 2 }}>
                 {([['todas', 'Todas'], ['falladas', 'Fallos'], ['blanco', 'En blanco']] as const).map(([k, l]) => (
-                  <button key={k} onClick={() => setFiltro(k)} style={{ border: 'none', borderRadius: 999, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', background: filtro === k ? '#0f172a' : 'transparent', color: filtro === k ? 'white' : TEXT_SECONDARY }}>
+                  <button key={k} onClick={() => setFiltro(k)} style={{ border: 'none', borderRadius: 999, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', background: filtro === k ? 'var(--hxbg-0f172a)' : 'transparent', color: filtro === k ? 'var(--c-primario-texto)' : TEXT_SECONDARY }}>
                     {l}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
               {visibles.length === 0 && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>No hay preguntas en este filtro.</div>}
               {visibles.map(({ d, i }, k) => {
                 const Icono = d.enBlanco ? MinusCircle : d.correcta ? CheckCircle2 : XCircle;
-                const colorEst = d.enBlanco ? '#94A3B8' : d.correcta ? '#16A34A' : '#DC2626';
+                const colorEst = d.enBlanco ? 'var(--hx-94a3b8)' : d.correcta ? 'var(--hx-16a34a)' : 'var(--hx-dc2626)';
                 const esta = abierta === i;
                 return (
-                  <div key={i} style={{ borderBottom: k < visibles.length - 1 ? '1px solid #EEF0F3' : 'none' }}>
+                  <div key={i} style={{ borderBottom: k < visibles.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
                     <button
                       onClick={() => setAbierta(esta ? null : i)}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
@@ -276,7 +276,7 @@ export default function ResultadoTestPage() {
                       <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.4, ...(esta ? {} : { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }) }}>
                         {d.enunciado}
                       </span>
-                      <ChevronDown size={15} color="#C4C9D2" style={{ flexShrink: 0, transform: esta ? 'rotate(180deg)' : 'none' }} />
+                      <ChevronDown size={15} color="var(--hx-c4c9d2)" style={{ flexShrink: 0, transform: esta ? 'rotate(180deg)' : 'none' }} />
                     </button>
                     {esta && (
                       <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -284,17 +284,17 @@ export default function ResultadoTestPage() {
                           const esCorrecta = j === d.indiceCorrecta;
                           const esTuya = j === d.indiceSeleccionada;
                           return (
-                            <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 10, fontSize: 13, color: TEXT_PRIMARY, background: esCorrecta ? '#F0FDF4' : esTuya ? '#FEF2F2' : '#F8F9FA' }}>
-                              <span style={{ fontSize: 11, fontWeight: 800, color: esCorrecta ? '#16A34A' : esTuya ? '#DC2626' : TEXT_MUTED }}>{LETRAS[j] ?? j + 1}</span>
+                            <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 10, fontSize: 13, color: TEXT_PRIMARY, background: esCorrecta ? 'var(--hx-f0fdf4)' : esTuya ? 'var(--hx-fef2f2)' : 'var(--hx-f8f9fa)' }}>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: esCorrecta ? 'var(--hx-16a34a)' : esTuya ? 'var(--hx-dc2626)' : TEXT_MUTED }}>{LETRAS[j] ?? j + 1}</span>
                               <span style={{ flex: 1, lineHeight: 1.4 }}>{limpiar(op)}</span>
-                              {esCorrecta && <CheckCircle2 size={15} color="#16A34A" />}
-                              {esTuya && !esCorrecta && <XCircle size={15} color="#DC2626" />}
+                              {esCorrecta && <CheckCircle2 size={15} color="var(--hx-16a34a)" />}
+                              {esTuya && !esCorrecta && <XCircle size={15} color="var(--hx-dc2626)" />}
                             </div>
                           );
                         })}
                         {d.enBlanco && <div style={{ fontSize: 12, color: TEXT_MUTED }}>La dejaste en blanco.</div>}
                         {d.explicacion && (
-                          <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.5, background: '#F8F9FA', borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
+                          <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.5, background: 'var(--hx-f8f9fa)', borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
                             <Lightbulb size={14} color={COLOR_TEST} style={{ flexShrink: 0, marginTop: 2 }} />
                             <span>{d.explicacion}</span>
                           </div>
@@ -312,7 +312,7 @@ export default function ResultadoTestPage() {
         {modo === 'primer_reto' ? (
           <button
             onClick={() => router.push('/app/entrenamiento?step=flashcards')}
-            style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
           >
             Continuar con las flashcards
           </button>
@@ -320,13 +320,13 @@ export default function ResultadoTestPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button
               onClick={() => router.push('/app/entrenamiento?abrir=test')}
-              style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
             >
               Hacer otro test
             </button>
             <button
               onClick={compartir}
-              style={{ width: '100%', padding: 13, background: 'white', border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: TEXT_PRIMARY }}
+              style={{ width: '100%', padding: 13, background: 'var(--c-superficie)', border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: TEXT_PRIMARY }}
             >
               <Share2 size={15} /> Compartir resultado
             </button>
@@ -337,7 +337,7 @@ export default function ResultadoTestPage() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
-          background: '#111827', color: 'white', fontSize: 13, fontWeight: 600,
+          background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: 13, fontWeight: 600,
           padding: '10px 18px', borderRadius: 999, boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
           zIndex: 100, pointerEvents: 'none', whiteSpace: 'nowrap',
         }}>

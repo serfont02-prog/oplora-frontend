@@ -14,8 +14,8 @@ import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { IconoModalidad } from '@/components/psicotecnicos/iconos';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_PSICO } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const BORDER = '#EEF0F3';
+const SOMBRA = 'var(--c-sombra)';
+const BORDER = 'var(--hx-eef0f3)';
 
 function Donut({ porcentaje, color, size, grosor }: { porcentaje: number; color: string; size: number; grosor: number }) {
   const radio = (size - grosor) / 2;
@@ -23,7 +23,7 @@ function Donut({ porcentaje, color, size, grosor }: { porcentaje: number; color:
   const offset = circunferencia - (Math.max(0, Math.min(100, porcentaje)) / 100) * circunferencia;
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', position: 'absolute', inset: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="#EEF0F3" strokeWidth={grosor} />
+      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={grosor} />
       {porcentaje > 0 && (
         <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke={color} strokeWidth={grosor} strokeLinecap="round"
           strokeDasharray={circunferencia} strokeDashoffset={offset} style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
@@ -36,7 +36,7 @@ function CirculoDato({ valor, porcentaje = 0, label, sub }: { valor: string; por
   const D = 78;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ position: 'absolute', inset: 6 }}>
           <Donut porcentaje={porcentaje} color={COLOR_PSICO} size={D - 12} grosor={6} />
         </div>
@@ -84,7 +84,7 @@ export default function PsicotecnicosHubPage() {
           <button
             onClick={() => router.push('/app/entrenamiento')}
             aria-label="Volver a Practicar"
-            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
@@ -132,7 +132,7 @@ export default function PsicotecnicosHubPage() {
         {/* Modalidades */}
         <section>
           <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Elige una modalidad</div>
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
             {isLoading && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
             {!isLoading && modalidades.length === 0 && (
               <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
@@ -156,7 +156,7 @@ export default function PsicotecnicosHubPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>{m.nombre}</span>
                       {m.oficial && (
-                        <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 999, background: '#E0E7FF', color: COLOR_PSICO, fontWeight: 700 }}>En el examen</span>
+                        <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 999, background: 'var(--hx-e0e7ff)', color: COLOR_PSICO, fontWeight: 700 }}>En el examen</span>
                       )}
                     </div>
                     <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1, lineHeight: 1.4 }}>{m.descripcion}</div>
@@ -166,7 +166,7 @@ export default function PsicotecnicosHubPage() {
                       </div>
                     )}
                   </div>
-                  <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+                  <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
                 </button>
               );
             })}

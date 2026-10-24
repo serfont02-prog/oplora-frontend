@@ -35,7 +35,7 @@ export default function SimulacroGeneradoSelectorPage() {
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <CabeceraPractica eyebrow="Simulacro OPLORA" titulo="¿Qué ejercicio quieres simular?" onVolver={() => router.push('/app/entrenamiento/simulacro')} />
 
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
           {isLoading && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
           {!isLoading && ejercicios.length === 0 && (
             <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
@@ -48,7 +48,7 @@ export default function SimulacroGeneradoSelectorPage() {
               onClick={() => router.push(`/app/entrenamiento/simulacro-oplora/${ej.numero}`)}
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', textAlign: 'left',
-                background: 'none', border: 'none', borderBottom: i < ejercicios.length - 1 ? '1px solid #EEF0F3' : 'none', cursor: 'pointer',
+                background: 'none', border: 'none', borderBottom: i < ejercicios.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none', cursor: 'pointer',
               }}
             >
               <div style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_SIMULACRO_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -62,7 +62,7 @@ export default function SimulacroGeneradoSelectorPage() {
                   {[ej.numPreguntas ? `${ej.numPreguntas} preguntas` : null, ej.tiempoMinutos ? `${ej.tiempoMinutos} min` : null].filter(Boolean).join(' · ') || 'Estructura de tu convocatoria'}
                 </div>
               </div>
-              <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+              <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
             </button>
           ))}
         </div>

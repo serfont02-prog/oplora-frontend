@@ -51,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (cargando || !esAdmin) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL, fontSize: 13, color: '#6b7280' }}>
+      <div className="op-claro" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL, fontSize: 13, color: '#6b7280' }}>
         {cargando ? 'Comprobando acceso…' : 'Sin acceso al panel de administración'}
       </div>
     );
@@ -59,8 +59,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const inicial = (usuario?.nombre || usuario?.email || 'A').trim().charAt(0).toUpperCase();
 
+  // ⭐ El panel de administración se queda siempre en claro (clase op-claro)
   return (
-    <div style={{ display: 'flex', height: '100vh', background: BG_NEUTRAL }}>
+    <div className="op-claro" style={{ display: 'flex', height: '100vh', background: BG_NEUTRAL }}>
 
       {/* Sidebar */}
       <div style={{ width: '220px', background: '#111827', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>

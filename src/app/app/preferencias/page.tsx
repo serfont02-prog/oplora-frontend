@@ -16,16 +16,16 @@ import { useMiLiga } from '@/components/liga/TarjetaLiga';
 import AvisosLiga from '@/components/liga/AvisosLiga';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL, COLOR_RETOS, COLOR_RETOS_BG } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const SOMBRA = 'var(--c-sombra)';
 
 type Categoria = 'retos' | 'repasos' | 'noticias' | 'convocatoria' | 'normativa';
 
 const CATEGORIAS: { clave: Categoria; titulo: string; sub: string; icono: any; color: string; fondo: string }[] = [
   { clave: 'retos', titulo: 'Retos y duelos', sub: 'Cuando te retan y cuando termina un duelo', icono: Swords, color: COLOR_RETOS, fondo: COLOR_RETOS_BG },
-  { clave: 'repasos', titulo: 'Recordatorios de repaso', sub: 'Temas y flashcards que te toca repasar hoy', icono: CalendarClock, color: '#4D7C0F', fondo: '#ECFCCB' },
-  { clave: 'noticias', titulo: 'Noticias', sub: 'Nuevas noticias de tu oposición', icono: Newspaper, color: '#1F7CFF', fondo: '#EAF0FF' },
-  { clave: 'convocatoria', titulo: 'Tu convocatoria', sub: 'Nuevas convocatorias, documentos y listas', icono: Megaphone, color: '#4F46E5', fondo: '#E0E7FF' },
-  { clave: 'normativa', titulo: 'Cambios en la normativa', sub: 'Cuando cambia una ley de tu temario', icono: Scale, color: '#6B5F3E', fondo: '#EDE9DD' },
+  { clave: 'repasos', titulo: 'Recordatorios de repaso', sub: 'Temas y flashcards que te toca repasar hoy', icono: CalendarClock, color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)' },
+  { clave: 'noticias', titulo: 'Noticias', sub: 'Nuevas noticias de tu oposición', icono: Newspaper, color: 'var(--hx-1f7cff)', fondo: 'var(--hx-eaf0ff)' },
+  { clave: 'convocatoria', titulo: 'Tu convocatoria', sub: 'Nuevas convocatorias, documentos y listas', icono: Megaphone, color: 'var(--hx-4f46e5)', fondo: 'var(--hx-e0e7ff)' },
+  { clave: 'normativa', titulo: 'Cambios en la normativa', sub: 'Cuando cambia una ley de tu temario', icono: Scale, color: 'var(--hx-6b5f3e)', fondo: 'var(--hx-ede9dd)' },
 ];
 
 function Seccion({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
@@ -42,7 +42,7 @@ function FilaAviso({ icono: Icono, color, fondo, titulo, sub, activo, onCambiar,
   icono: any; color: string; fondo: string; titulo: string; sub: string; activo: boolean; onCambiar: (v: boolean) => void; borde?: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderTop: borde ? '1px solid #EEF0F3' : 'none' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderTop: borde ? '1px solid var(--hx-eef0f3)' : 'none' }}>
       <span style={{ width: 40, height: 40, borderRadius: 12, background: fondo, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Icono size={19} color={color} />
       </span>
@@ -93,7 +93,7 @@ export default function PreferenciasPage() {
           <button
             onClick={() => router.push('/app/perfil')}
             aria-label="Volver a Perfil"
-            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
@@ -101,11 +101,11 @@ export default function PreferenciasPage() {
         </div>
 
         {error && (
-          <div style={{ background: '#FEF2F2', color: '#B91C1C', borderRadius: 14, padding: '10px 12px', fontSize: 13, lineHeight: 1.45 }}>{error}</div>
+          <div style={{ background: 'var(--hx-fef2f2)', color: 'var(--hx-b91c1c)', borderRadius: 14, padding: '10px 12px', fontSize: 13, lineHeight: 1.45 }}>{error}</div>
         )}
 
         <Seccion titulo="Qué avisos quieres recibir" nota="Las respuestas de soporte te llegarán siempre.">
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
             {CATEGORIAS.map((c, i) => (
               <FilaAviso
                 key={c.clave}
@@ -123,7 +123,7 @@ export default function PreferenciasPage() {
         </Seccion>
 
         <Seccion titulo="Retos al azar">
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
             <FilaAviso
               icono={Shuffle}
               color={COLOR_RETOS}
@@ -141,11 +141,11 @@ export default function PreferenciasPage() {
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Liga Oplora</div>
           )}
           {isLoading && (
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 14, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>
           )}
           {data?.liga && <AvisosLiga avisos={data.avisos} titulo="Liga Oplora" />}
           {data && !data.liga && (
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 14, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 14, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
               Podrás configurar los avisos de la Liga cuando entres en la liga de tu convocatoria.
             </div>
           )}
@@ -153,16 +153,16 @@ export default function PreferenciasPage() {
 
         <button
           onClick={() => router.push('/app/alertas')}
-          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: 'white', border: 'none', borderRadius: 18, boxShadow: SOMBRA, cursor: 'pointer', textAlign: 'left' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: 'var(--c-superficie)', border: 'none', borderRadius: 18, boxShadow: SOMBRA, cursor: 'pointer', textAlign: 'left' }}
         >
-          <span style={{ width: 40, height: 40, borderRadius: 12, background: '#FDF8E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Bell size={19} color="#CA8A04" />
+          <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--hx-fdf8e8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Bell size={19} color="var(--hx-ca8a04)" />
           </span>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>Tus alertas</div>
             <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Todo lo que te ha llegado</div>
           </div>
-          <ChevronRight size={16} color="#C4C9D2" />
+          <ChevronRight size={16} color="var(--hx-c4c9d2)" />
         </button>
       </div>
     </div>

@@ -31,7 +31,7 @@ export default function ProgramaPublicoPage() {
 
   if (isLoading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL }}>
-      <div style={{ fontSize: '14px', color: '#9ca3af' }}>Cargando...</div>
+      <div style={{ fontSize: '14px', color: 'var(--hx-9ca3af)' }}>Cargando...</div>
     </div>
   );
 
@@ -55,11 +55,11 @@ export default function ProgramaPublicoPage() {
     <div style={{ minHeight: '100vh', background: BG_NEUTRAL }}>
 
       {/* Header */}
-      <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f3f4f6)', padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             onClick={() => router.push('/app/catalogo')}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--hx-6b7280)', background: 'none', border: 'none', cursor: 'pointer' }}
           >
             <ArrowLeft size={14} />
             Catálogo
@@ -69,13 +69,13 @@ export default function ProgramaPublicoPage() {
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={() => router.push('/app/login')}
-              style={{ fontSize: '12px', color: '#6b7280', background: 'none', border: '1px solid #e5e7eb', borderRadius: '7px', padding: '6px 12px', cursor: 'pointer' }}
+              style={{ fontSize: '12px', color: 'var(--hx-6b7280)', background: 'none', border: '1px solid var(--hx-e5e7eb)', borderRadius: '7px', padding: '6px 12px', cursor: 'pointer' }}
             >
               Acceder
             </button>
             <button
               onClick={() => router.push('/app/registro')}
-              style={{ fontSize: '12px', color: 'white', background: '#111827', border: 'none', borderRadius: '7px', padding: '6px 12px', cursor: 'pointer', fontWeight: 500 }}
+              style={{ fontSize: '12px', color: 'var(--c-primario-texto)', background: 'var(--hxbg-111827)', border: 'none', borderRadius: '7px', padding: '6px 12px', cursor: 'pointer', fontWeight: 500 }}
             >
               Empezar gratis
             </button>
@@ -87,18 +87,18 @@ export default function ProgramaPublicoPage() {
 
         {/* Info oposición */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '4px' }}>{oposicion?.nombre}</div>
-          <div style={{ fontSize: '13px', color: '#6b7280' }}>{oposicion?.administracion}</div>
+          <div style={{ fontSize: '20px', fontWeight: 600, color: 'var(--hx-111827)', marginBottom: '4px' }}>{oposicion?.nombre}</div>
+          <div style={{ fontSize: '13px', color: 'var(--hx-6b7280)' }}>{oposicion?.administracion}</div>
         </div>
 
         {/* Convocatoria activa */}
         {convocatoriaActiva && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ background: 'var(--hx-f0fdf4)', border: '1px solid var(--hx-bbf7d0)', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#15803d', marginBottom: '2px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--hx-15803d)', marginBottom: '2px' }}>
                 Convocatoria {convocatoriaActiva.anyo} activa
               </div>
-              <div style={{ fontSize: '12px', color: '#166534' }}>
+              <div style={{ fontSize: '12px', color: 'var(--hx-166534)' }}>
                 {convocatoriaActiva.plazas?.toLocaleString()} plazas
                 {convocatoriaActiva.fechaExamen && ` · Examen ${new Date(convocatoriaActiva.fechaExamen).toLocaleDateString('es-ES')}`}
               </div>
@@ -109,51 +109,51 @@ export default function ProgramaPublicoPage() {
 
         {/* Programa de temas */}
         <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '15px', fontWeight: 600, color: '#111827' }}>Programa oficial</div>
-          <span style={{ fontSize: '12px', color: '#6b7280' }}>{temas.length} temas (ejemplo)</span>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--hx-111827)' }}>Programa oficial</div>
+          <span style={{ fontSize: '12px', color: 'var(--hx-6b7280)' }}>{temas.length} temas (ejemplo)</span>
         </div>
 
-        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
+        <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
           {temas.map((tema, i) => (
             <div
               key={i}
               onClick={() => !usuario && router.push('/app/registro')}
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: i < temas.length - 1 ? '1px solid #f9fafb' : 'none', cursor: 'pointer' }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: i < temas.length - 1 ? '1px solid var(--hx-f9fafb)' : 'none', cursor: 'pointer' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hx-f9fafb)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-superficie)')}
             >
-              <span style={{ fontSize: '12px', fontWeight: 500, color: '#9ca3af', minWidth: '52px' }}>Tema {i + 1}</span>
-              <span style={{ fontSize: '13px', color: '#111827', flex: 1 }}>{tema}</span>
-              {!usuario && <Lock size={12} color="#d1d5db" />}
+              <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--hx-9ca3af)', minWidth: '52px' }}>Tema {i + 1}</span>
+              <span style={{ fontSize: '13px', color: 'var(--hx-111827)', flex: 1 }}>{tema}</span>
+              {!usuario && <Lock size={12} color="var(--hx-d1d5db)" />}
             </div>
           ))}
-          <div style={{ padding: '10px 16px', borderTop: '1px solid #f3f4f6', textAlign: 'center', fontSize: '12px', color: '#9ca3af' }}>
+          <div style={{ padding: '10px 16px', borderTop: '1px solid var(--hx-f3f4f6)', textAlign: 'center', fontSize: '12px', color: 'var(--hx-9ca3af)' }}>
             + más temas en el programa completo
           </div>
         </div>
 
         {/* CTA si no está logado */}
         {!usuario && (
-          <div style={{ background: '#111827', borderRadius: '16px', padding: '1.5rem', textAlign: 'center', color: 'white' }}>
+          <div style={{ background: 'var(--hxhero-111827)', borderRadius: '16px', padding: '1.5rem', textAlign: 'center', color: 'white' }}>
             <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>Estudia esta oposición con IA</div>
-            <div style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)', marginBottom: '1.25rem' }}>
               Tests ilimitados · Alertas de listas · Progreso por tema
             </div>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
               <button
                 onClick={() => router.push('/app/registro')}
-                style={{ padding: '10px 20px', background: 'white', color: '#111827', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                style={{ padding: '10px 20px', background: 'var(--c-superficie)', color: 'var(--hx-111827)', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
               >
                 Empezar 7 días gratis
               </button>
               <button
                 onClick={() => router.push('/app/login')}
-                style={{ padding: '10px 20px', background: 'transparent', color: '#9ca3af', border: '1px solid #374151', borderRadius: '10px', fontSize: '13px', cursor: 'pointer' }}
+                style={{ padding: '10px 20px', background: 'transparent', color: 'var(--hx-9ca3af)', border: '1px solid var(--hx-374151)', borderRadius: '10px', fontSize: '13px', cursor: 'pointer' }}
               >
                 Ya tengo cuenta
               </button>
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '10px' }}>Sin tarjeta · Cancela cuando quieras · Desde 7€/mes</div>
+            <div style={{ fontSize: '11px', color: 'var(--hx-6b7280)', marginTop: '10px' }}>Sin tarjeta · Cancela cuando quieras · Desde 7€/mes</div>
           </div>
         )}
 
@@ -161,7 +161,7 @@ export default function ProgramaPublicoPage() {
         {usuario && (
           <button
             onClick={() => router.push(`/app/oposicion/${id}`)}
-            style={{ width: '100%', padding: '12px', background: '#111827', color: 'white', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
+            style={{ width: '100%', padding: '12px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
           >
             Ir a estudiar esta oposición →
           </button>

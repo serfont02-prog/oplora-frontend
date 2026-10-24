@@ -20,9 +20,9 @@ import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL } from '@/styles/t
 import SelectorApariencia from '@/components/ui/SelectorApariencia';
 
 const BG_APP = BG_NEUTRAL;
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const BORDER = '#EEF0F3';
-const AZUL = '#1F7CFF';
+const SOMBRA = 'var(--c-sombra)';
+const BORDER = 'var(--hx-eef0f3)';
+const AZUL = 'var(--hx-1f7cff)';
 
 const NIVELES = [
   { nivel: 1, nombre: 'Opositor', puntosMin: 0, puntosMax: 100 },
@@ -41,7 +41,7 @@ function Seccion({ titulo, derecha, children }: { titulo: string; derecha?: Reac
         <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>{titulo}</span>
         {derecha}
       </div>
-      <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>{children}</div>
+      <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>{children}</div>
     </section>
   );
 }
@@ -58,10 +58,10 @@ function Fila({ Icon, color, bg, titulo, sub, onClick, ultima = false, peligro =
         <Icon size={19} color={color} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: peligro ? '#B91C1C' : TEXT_PRIMARY }}>{titulo}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: peligro ? 'var(--hx-b91c1c)' : TEXT_PRIMARY }}>{titulo}</div>
         {sub && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
       </div>
-      {!peligro && <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />}
+      {!peligro && <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />}
     </button>
   );
 }
@@ -132,7 +132,7 @@ export default function PerfilPage() {
           <button
             onClick={() => router.push('/app/dashboard')}
             aria-label="Volver a Inicio"
-            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
@@ -140,15 +140,15 @@ export default function PerfilPage() {
         </div>
 
         {/* Quién eres */}
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <button
               onClick={() => { setErrorAvatar(''); setModalAvatar(true); }}
               aria-label="Cambiar foto de perfil"
-              style={{ position: 'relative', width: 72, height: 72, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer', background: '#F1F5F9', overflow: 'visible' }}
+              style={{ position: 'relative', width: 72, height: 72, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer', background: 'var(--hx-f1f5f9)', overflow: 'visible' }}
             >
               <img src={avatarSrc} alt="" style={{ width: 72, height: 72, borderRadius: '50%', objectFit: usuario.tipoAvatar === 'foto' ? 'cover' : 'contain' }} />
-              <span style={{ position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: '50%', background: AZUL, border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: '50%', background: AZUL, border: '2px solid var(--c-superficie)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Camera size={12} color="white" />
               </span>
             </button>
@@ -158,7 +158,7 @@ export default function PerfilPage() {
             <div style={{ fontSize: 17, fontWeight: 700, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{usuario.nombre}</div>
             {usuario.nick && <div style={{ fontSize: 13, color: TEXT_SECONDARY, fontWeight: 600 }}>@{usuario.nick}</div>}
             <div style={{ fontSize: 12, color: TEXT_MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{usuario.email}</div>
-            <span style={{ display: 'inline-block', marginTop: 6, fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 999, background: plan === 'Gratuito' ? '#F1F5F9' : '#EAF0FF', color: plan === 'Gratuito' ? TEXT_SECONDARY : AZUL }}>
+            <span style={{ display: 'inline-block', marginTop: 6, fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 999, background: plan === 'Gratuito' ? 'var(--hx-f1f5f9)' : 'var(--hx-eaf0ff)', color: plan === 'Gratuito' ? TEXT_SECONDARY : AZUL }}>
               Plan {plan}
             </span>
           </div>
@@ -170,7 +170,7 @@ export default function PerfilPage() {
             <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Mi nivel</span>
             {usuario.oposicionActiva?.nombre && <span style={{ fontSize: 11, color: TEXT_MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{usuario.oposicionActiva.nombre}</span>}
           </div>
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
             <button onClick={() => setVerNiveles((v) => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: 16, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <img src={getOploUrl(nivel)} alt="" style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -184,7 +184,7 @@ export default function PerfilPage() {
                     <div style={{ fontSize: 10, color: TEXT_MUTED }}>puntos</div>
                   </div>
                 </div>
-                <div style={{ height: 7, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden', margin: '8px 0 6px' }}>
+                <div style={{ height: 7, background: 'var(--hx-eef0f3)', borderRadius: 999, overflow: 'hidden', margin: '8px 0 6px' }}>
                   <div style={{ width: `${porcentaje}%`, height: '100%', background: `linear-gradient(90deg, ${AZUL}, #60a5fa)`, borderRadius: 999, transition: 'width 0.4s' }} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -192,7 +192,7 @@ export default function PerfilPage() {
                     {nivelSiguiente ? `${puntosParaSiguiente} puntos para ${nivelSiguiente.nombre}` : 'Nivel máximo alcanzado'}
                   </span>
                   {racha > 0 && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: '#C2410C', background: '#FFF1E8', borderRadius: 999, padding: '2px 8px', flexShrink: 0 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: 'var(--hx-c2410c)', background: 'var(--hx-fff1e8)', borderRadius: 999, padding: '2px 8px', flexShrink: 0 }}>
                       <Flame size={11} /> {racha} {racha === 1 ? 'día' : 'días'}
                     </span>
                   )}
@@ -212,7 +212,7 @@ export default function PerfilPage() {
                   const conseguido = nivel >= n.nivel;
                   const esActual = nivel === n.nivel;
                   return (
-                    <div key={n.nivel} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: i < NIVELES.length - 1 ? `1px solid ${BORDER}` : 'none', background: esActual ? '#F5F8FF' : 'transparent' }}>
+                    <div key={n.nivel} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: i < NIVELES.length - 1 ? `1px solid ${BORDER}` : 'none', background: esActual ? 'var(--hx-f5f8ff)' : 'transparent' }}>
                       <img src={getOploUrl(n.nivel)} alt="" style={{ width: 40, height: 40, objectFit: 'contain', opacity: conseguido ? 1 : 0.35, flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: conseguido ? TEXT_PRIMARY : TEXT_MUTED }}>{n.nivel}. {n.nombre}</div>
@@ -220,7 +220,7 @@ export default function PerfilPage() {
                       </div>
                       {esActual
                         ? <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: AZUL, color: 'white' }}>Actual</span>
-                        : conseguido ? <Check size={16} color="#16A34A" /> : <Lock size={14} color="#C4C9D2" />}
+                        : conseguido ? <Check size={16} color="var(--hx-16a34a)" /> : <Lock size={14} color="var(--hx-c4c9d2)" />}
                     </div>
                   );
                 })}
@@ -233,44 +233,44 @@ export default function PerfilPage() {
 
         <Seccion titulo="Tu cuenta">
           <Fila
-            Icon={GraduationCap} color={AZUL} bg="#EAF0FF"
+            Icon={GraduationCap} color={AZUL} bg="var(--hx-eaf0ff)"
             titulo="Mi oposición" sub={usuario.oposicionActiva?.nombre ?? 'Elige tu oposición'}
             onClick={() => router.push(usuario.oposicionActiva?.id ? `/app/oposicion/${usuario.oposicionActiva.id}/ajustes` : '/app/onboarding/oposicion')}
           />
           {/* ⭐ Antes decía "Plan Profesional" para cualquier plan de pago, también el Esencial */}
           <Fila
-            Icon={CreditCard} color="#4D7C0F" bg="#F3FAE9"
+            Icon={CreditCard} color="var(--hx-4d7c0f)" bg="var(--hx-f3fae9)"
             titulo="Mi suscripción" sub={plan === 'Gratuito' ? 'Plan gratuito · Ver planes' : `Plan ${plan}`}
             onClick={() => router.push('/app/suscripciones')}
           />
-          <Fila Icon={Bell} color="#CA8A04" bg="#FDF8E8" titulo="Alertas" sub="Tus avisos y recordatorios" onClick={() => router.push('/app/alertas')} />
+          <Fila Icon={Bell} color="var(--hx-ca8a04)" bg="var(--hx-fdf8e8)" titulo="Alertas" sub="Tus avisos y recordatorios" onClick={() => router.push('/app/alertas')} />
           <Fila
-            Icon={Settings} color={TEXT_SECONDARY} bg="#F1F5F9"
+            Icon={Settings} color={TEXT_SECONDARY} bg="var(--hx-f1f5f9)"
             titulo="Notificaciones y avisos" sub="Elige qué avisos quieres recibir"
             onClick={() => router.push('/app/preferencias')}
             ultima={usuario.rol !== 'admin'}
           />
           {usuario.rol === 'admin' && (
-            <Fila Icon={ShieldCheck} color={AZUL} bg="#EAF0FF" titulo="Panel de administración" sub="Oposiciones, usuarios y contenido" onClick={() => router.push('/admin')} ultima />
+            <Fila Icon={ShieldCheck} color={AZUL} bg="var(--hx-eaf0ff)" titulo="Panel de administración" sub="Oposiciones, usuarios y contenido" onClick={() => router.push('/admin')} ultima />
           )}
         </Seccion>
 
-        {/* ⭐ Apariencia: de momento solo para admin, mientras se pasan las pantallas al modo oscuro */}
-        {usuario.rol === 'admin' && (
+        {/* ⭐ Apariencia: claro, oscuro o automático (sigue al móvil, por defecto) */}
+        {(
           <Seccion titulo="Apariencia">
             <SelectorApariencia />
             <div style={{ fontSize: 12, color: TEXT_MUTED, padding: '0 14px 12px', lineHeight: 1.45 }}>
-              En pruebas: por ahora solo Inicio cambia a oscuro. Se guarda en este dispositivo.
+              Automático sigue el modo de tu móvil. Se guarda en este dispositivo.
             </div>
           </Seccion>
         )}
 
         <Seccion titulo="Ayuda">
-          <Fila Icon={LifeBuoy} color="#0891B2" bg="#E0F7FA" titulo="Contactar con soporte" sub="Estamos contigo durante el proceso" onClick={() => router.push('/app/soporte')} ultima />
+          <Fila Icon={LifeBuoy} color="var(--hx-0891b2)" bg="var(--hx-e0f7fa)" titulo="Contactar con soporte" sub="Estamos contigo durante el proceso" onClick={() => router.push('/app/soporte')} ultima />
         </Seccion>
 
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
-          <Fila Icon={LogOut} color="#DC2626" bg="#FEF2F2" titulo="Cerrar sesión" onClick={logout} peligro ultima />
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <Fila Icon={LogOut} color="var(--hx-dc2626)" bg="var(--hx-fef2f2)" titulo="Cerrar sesión" onClick={logout} peligro ultima />
         </div>
       </div>
 
@@ -283,22 +283,22 @@ export default function PerfilPage() {
             <input ref={inputCamara} type="file" accept="image/*" capture="user" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) subirImagen(f); }} />
             <input ref={inputGaleria} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) subirImagen(f); }} />
 
-            <div style={{ background: 'white', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden' }}>
-              <Fila Icon={Camera} color={AZUL} bg="#EAF0FF" titulo="Hacer un selfie" onClick={() => !subiendo && inputCamara.current?.click()} />
-              <Fila Icon={ImageIcon} color="#7C3AED" bg="#F3F0FC" titulo="Elegir de la galería" onClick={() => !subiendo && inputGaleria.current?.click()} />
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden' }}>
+              <Fila Icon={Camera} color={AZUL} bg="var(--hx-eaf0ff)" titulo="Hacer un selfie" onClick={() => !subiendo && inputCamara.current?.click()} />
+              <Fila Icon={ImageIcon} color="var(--hx-7c3aed)" bg="var(--hx-f3f0fc)" titulo="Elegir de la galería" onClick={() => !subiendo && inputGaleria.current?.click()} />
               <button
                 onClick={() => !subiendo && usarIconoOplo()}
                 style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
               >
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F1F5F9', overflow: 'hidden', flexShrink: 0 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--hx-f1f5f9)', overflow: 'hidden', flexShrink: 0 }}>
                   <img src={getOploUrl(nivel)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
                 <div style={{ flex: 1, fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>Usar a OPLO de mi nivel</div>
-                {usuario.tipoAvatar !== 'foto' && <Check size={16} color="#16A34A" />}
+                {usuario.tipoAvatar !== 'foto' && <Check size={16} color="var(--hx-16a34a)" />}
               </button>
             </div>
 
-            {errorAvatar && <div style={{ fontSize: 12, color: '#B91C1C', background: '#FEF2F2', borderRadius: 10, padding: '8px 10px', marginTop: 10 }}>{errorAvatar}</div>}
+            {errorAvatar && <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 10, padding: '8px 10px', marginTop: 10 }}>{errorAvatar}</div>}
 
             <button onClick={() => setModalAvatar(false)} disabled={subiendo} style={{ width: '100%', marginTop: 10, padding: 12, background: 'none', border: 'none', color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               {subiendo ? 'Subiendo…' : 'Cancelar'}
@@ -343,7 +343,7 @@ function SeccionLiga() {
             <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>{liga.nombreDivision} división</div>
             <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Convocatoria {liga.convocatoria?.anyo} · Ver la liga</div>
           </div>
-          <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+          <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
         </button>
       )}
       {copas.length === 0 ? (

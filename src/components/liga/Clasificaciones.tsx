@@ -14,11 +14,11 @@ import {
   nombreMes, sumarMes, formatoNota, formatoPuntos, formatoTiempo, mensajeError,
 } from './ligaUtils';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_MUTED = '#6B7280';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_MUTED = 'var(--hx-6b7280)';
 
 export function Caja({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div style={{ background: 'white', borderRadius: 18, padding: 14, border: '1px solid #F1F5F9', ...style }}>{children}</div>;
+  return <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 14, border: '1px solid var(--hx-f1f5f9)', ...style }}>{children}</div>;
 }
 
 export function FilaUsuario({
@@ -26,9 +26,9 @@ export function FilaUsuario({
 }: {
   posicion: number | null; usuario: any; esYo: boolean; derecha: React.ReactNode; sub?: React.ReactNode; marca?: React.ReactNode;
 }) {
-  const medalla = posicion === 1 ? '#EAB308' : posicion === 2 ? '#94A3B8' : posicion === 3 ? '#B45309' : null;
+  const medalla = posicion === 1 ? '#EAB308' : posicion === 2 ? 'var(--hx-94a3b8)' : posicion === 3 ? 'var(--hx-b45309)' : null;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, background: esYo ? BG_LIGA : 'white', border: esYo ? `1px solid ${COLOR_LIGA}33` : '1px solid #F1F5F9' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, background: esYo ? BG_LIGA : 'var(--c-superficie)', border: esYo ? `1px solid ${`color-mix(in srgb, ${COLOR_LIGA} 20%, transparent)`}` : '1px solid var(--hx-f1f5f9)' }}>
       <span style={{ width: 24, textAlign: 'center', fontSize: 13, fontWeight: 800, color: medalla ?? TEXT_MUTED, flexShrink: 0 }}>{posicion ?? '—'}</span>
       <AvatarMini usuario={usuario} />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -64,7 +64,7 @@ export function ClasificacionMensual({ miDivision }: { miDivision: number }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', borderRadius: 12, padding: '6px 8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--c-superficie)', borderRadius: 12, padding: '6px 8px' }}>
         <button
           onClick={() => mesMostrado && setMes(sumarMes(mesMostrado, -1))}
           aria-label="Mes anterior"
@@ -90,8 +90,8 @@ export function ClasificacionMensual({ miDivision }: { miDivision: number }) {
             key={d}
             onClick={() => setDivision(d)}
             style={{
-              flex: '1 0 auto', border: division === d ? `1.5px solid ${COLOR_LIGA}` : '1px solid #F1F5F9',
-              background: division === d ? 'white' : 'rgba(255,255,255,0.6)', color: division === d ? COLOR_LIGA : TEXT_MUTED,
+              flex: '1 0 auto', border: division === d ? `1.5px solid ${COLOR_LIGA}` : '1px solid var(--hx-f1f5f9)',
+              background: division === d ? 'var(--c-superficie)' : 'color-mix(in srgb, var(--c-superficie) 60%, transparent)', color: division === d ? COLOR_LIGA : TEXT_MUTED,
               borderRadius: 999, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
             }}
           >
@@ -113,7 +113,7 @@ export function ClasificacionMensual({ miDivision }: { miDivision: number }) {
                 {lineaAscenso && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 9px' }}>
                     <div style={{ flex: 1, height: 1, background: '#16A34A55' }} />
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Zona de ascenso</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--hx-16a34a)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Zona de ascenso</span>
                     <div style={{ flex: 1, height: 1, background: '#16A34A55' }} />
                   </div>
                 )}
@@ -124,7 +124,7 @@ export function ClasificacionMensual({ miDivision }: { miDivision: number }) {
                   marca={
                     <>
                       {f.campeon && <Crown size={13} color={HEX_COPA[colorDivision(data.division)]} />}
-                      {f.zonaAscenso && !f.campeon && <ArrowUp size={13} color="#16A34A" />}
+                      {f.zonaAscenso && !f.campeon && <ArrowUp size={13} color="var(--hx-16a34a)" />}
                     </>
                   }
                   sub={`${f.jornadasJugadas} ${f.jornadasJugadas === 1 ? 'jornada' : 'jornadas'}${f.jornadasGanadas ? ` · ${f.jornadasGanadas} ${f.jornadasGanadas === 1 ? 'victoria' : 'victorias'}` : ''}`}
@@ -230,7 +230,7 @@ export function ClasificacionJornada({ jornada }: { jornada: any }) {
       {!data.provisional && (
         <button
           onClick={() => router.push(`/app/liga/revision/${jornada.id}`)}
-          style={{ marginTop: 4, border: 'none', borderRadius: 12, padding: 11, background: '#111827', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          style={{ marginTop: 4, border: 'none', borderRadius: 12, padding: 11, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
         >
           Ver soluciones
         </button>

@@ -8,9 +8,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, X, Clock, Timer, CheckCircle2, XCircle, MinusCircle, ChevronDown, Lightbulb, Grid3x3, Send, Ban, AlertTriangle, BookX } from 'lucide-react';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-export const COLOR_SIMULACRO = '#6B5F3E';
-export const COLOR_SIMULACRO_BG = '#EDE9DD';
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+export const COLOR_SIMULACRO = 'var(--hx-6b5f3e)';
+export const COLOR_SIMULACRO_BG = 'var(--hx-ede9dd)';
+const SOMBRA = 'var(--c-sombra)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 // `anulada`: pregunta anulada por el tribunal (se muestra pero no puntúa). Solo en el simulacro oficial.
@@ -46,7 +46,7 @@ function BotonRedondo({ onClick, label, children }: { onClick: () => void; label
     <button
       onClick={onClick}
       aria-label={label}
-      style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+      style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
     >
       {children}
     </button>
@@ -133,16 +133,16 @@ export default function ExamenSimulacro({
             </div>
           </div>
 
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
             {filas.map(([k, v], i) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i < filas.length - 1 ? '1px solid #EEF0F3' : 'none' }}>
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i < filas.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
                 <span style={{ fontSize: 13, color: TEXT_SECONDARY }}>{k}</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY }}>{v}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 10, background: 'white', borderRadius: 14, padding: 14, boxShadow: SOMBRA, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.55 }}>
+          <div style={{ display: 'flex', gap: 10, background: 'var(--c-superficie)', borderRadius: 14, padding: 14, boxShadow: SOMBRA, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.55 }}>
             <Timer size={18} color={COLOR_SIMULACRO} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>{aviso}</span>
           </div>
@@ -150,7 +150,7 @@ export default function ExamenSimulacro({
           <button
             onClick={() => { setFase('examen'); window.scrollTo({ top: 0 }); }}
             disabled={preguntas.length === 0}
-            style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: preguntas.length === 0 ? 0.5 : 1 }}
+            style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: preguntas.length === 0 ? 0.5 : 1 }}
           >
             Empezar examen
           </button>
@@ -182,19 +182,19 @@ export default function ExamenSimulacro({
               </button>
               <span style={{
                 display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, fontWeight: 800,
-                color: pocoTiempo ? '#DC2626' : TEXT_PRIMARY, background: 'white', borderRadius: 999, padding: '6px 10px', boxShadow: SOMBRA,
+                color: pocoTiempo ? 'var(--hx-dc2626)' : TEXT_PRIMARY, background: 'var(--c-superficie)', borderRadius: 999, padding: '6px 10px', boxShadow: SOMBRA,
               }}>
                 <Clock size={14} />
                 {formatoReloj(restantes ?? segundos)}
               </span>
               <button
                 onClick={() => setConfirmar('entregar')}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, border: 'none', borderRadius: 999, padding: '8px 12px', background: '#0f172a', color: 'white', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, border: 'none', borderRadius: 999, padding: '8px 12px', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
               >
                 <Send size={13} /> Entregar
               </button>
             </div>
-            <div style={{ height: 5, background: 'rgba(255,255,255,0.8)', borderRadius: 999, overflow: 'hidden', marginTop: 10 }}>
+            <div style={{ height: 5, background: 'color-mix(in srgb, var(--c-superficie) 80%, transparent)', borderRadius: 999, overflow: 'hidden', marginTop: 10 }}>
               <div style={{ width: `${(respondidas / Math.max(1, preguntas.length)) * 100}%`, height: '100%', background: COLOR_SIMULACRO, borderRadius: 999, transition: 'width 0.3s' }} />
             </div>
           </div>
@@ -203,7 +203,7 @@ export default function ExamenSimulacro({
         <div style={{ maxWidth: 560, margin: '0 auto', padding: '6px 1.25rem 0' }}>
           {/* Confirmaciones (en la propia pantalla, sin ventanas del navegador) */}
           {confirmar && (
-            <div style={{ background: 'white', borderRadius: 16, padding: 14, boxShadow: SOMBRA, marginBottom: 14 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: 14, boxShadow: SOMBRA, marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>
                 {confirmar === 'entregar' ? '¿Entregar el examen?' : '¿Salir del examen?'}
               </div>
@@ -213,11 +213,11 @@ export default function ExamenSimulacro({
                   : 'No se guardará nada de este intento.'}
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button onClick={() => setConfirmar(null)} style={{ flex: 1, border: 'none', background: '#F3F4F6', color: TEXT_SECONDARY, borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={() => setConfirmar(null)} style={{ flex: 1, border: 'none', background: 'var(--hx-f3f4f6)', color: TEXT_SECONDARY, borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                   Seguir
                 </button>
                 {confirmar === 'entregar' ? (
-                  <button onClick={entregar} style={{ flex: 1, border: 'none', background: '#0f172a', color: 'white', borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={entregar} style={{ flex: 1, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                     Entregar
                   </button>
                 ) : (
@@ -230,17 +230,17 @@ export default function ExamenSimulacro({
           )}
 
           {(corrigiendo || errorCorregir) && (
-            <div style={{ background: 'white', borderRadius: 14, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: errorCorregir ? '#B91C1C' : TEXT_SECONDARY }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 14, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: errorCorregir ? 'var(--hx-b91c1c)' : TEXT_SECONDARY }}>
               <span style={{ flex: 1 }}>{errorCorregir ? 'No se ha podido corregir el examen. Comprueba la conexión.' : 'Corrigiendo…'}</span>
               {errorCorregir && (
-                <button onClick={entregar} style={{ border: 'none', background: '#0f172a', color: 'white', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Reintentar</button>
+                <button onClick={entregar} style={{ border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Reintentar</button>
               )}
             </div>
           )}
 
           {/* Mapa de preguntas (plegable: con 100 preguntas ocupaba media pantalla) */}
           {verMapa && (
-            <div style={{ background: 'white', borderRadius: 16, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))', gap: 6 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))', gap: 6 }}>
               {preguntas.map((q, i) => {
                 const hecha = typeof respuestas[q.id] === 'number';
                 const actual = i === indice;
@@ -251,7 +251,7 @@ export default function ExamenSimulacro({
                     style={{
                       height: 34, borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 700,
                       border: actual ? `2px solid ${COLOR_SIMULACRO}` : '2px solid transparent',
-                      background: hecha ? COLOR_SIMULACRO_BG : '#F3F4F6',
+                      background: hecha ? COLOR_SIMULACRO_BG : 'var(--hx-f3f4f6)',
                       color: hecha ? COLOR_SIMULACRO : TEXT_MUTED,
                     }}
                   >
@@ -264,11 +264,11 @@ export default function ExamenSimulacro({
 
           {p && (
             <>
-              <div style={{ background: 'white', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 12 }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED }}>Pregunta {indice + 1}</span>
                   {p.anulada && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#475569', background: '#F1F5F9', borderRadius: 999, padding: '2px 8px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: 'var(--hx-475569)', background: 'var(--hx-f1f5f9)', borderRadius: 999, padding: '2px 8px' }}>
                       <Ban size={11} /> Anulada por el tribunal · no puntúa
                     </span>
                   )}
@@ -288,10 +288,10 @@ export default function ExamenSimulacro({
                         textAlign: 'left', padding: '12px 14px', borderRadius: 14, cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: TEXT_PRIMARY,
                         border: sel ? `2px solid ${COLOR_SIMULACRO}` : '2px solid transparent',
-                        background: sel ? '#F7F4EC' : 'white', boxShadow: SOMBRA,
+                        background: sel ? 'var(--hx-f7f4ec)' : 'var(--c-superficie)', boxShadow: SOMBRA,
                       }}
                     >
-                      <span style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: sel ? COLOR_SIMULACRO : '#F3F4F6', color: sel ? 'white' : TEXT_SECONDARY }}>
+                      <span style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: sel ? COLOR_SIMULACRO : 'var(--hx-f3f4f6)', color: sel ? 'white' : TEXT_SECONDARY }}>
                         {LETRAS[i] ?? i + 1}
                       </span>
                       <span style={{ flex: 1, lineHeight: 1.45, minWidth: 0, overflowWrap: 'break-word' }}>{limpiar(op)}</span>
@@ -312,12 +312,12 @@ export default function ExamenSimulacro({
             <button
               onClick={() => setIndice((i) => Math.max(0, i - 1))}
               disabled={indice === 0}
-              style={{ flex: 1, padding: 13, background: 'white', border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, cursor: indice === 0 ? 'default' : 'pointer', opacity: indice === 0 ? 0.4 : 1 }}
+              style={{ flex: 1, padding: 13, background: 'var(--c-superficie)', border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, cursor: indice === 0 ? 'default' : 'pointer', opacity: indice === 0 ? 0.4 : 1 }}
             >
               Anterior
             </button>
             {indice < preguntas.length - 1 ? (
-              <button onClick={() => setIndice((i) => i + 1)} style={{ flex: 1, padding: 13, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={() => setIndice((i) => i + 1)} style={{ flex: 1, padding: 13, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                 Siguiente
               </button>
             ) : (
@@ -346,7 +346,7 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
   const r = (D - 24 - 10) / 2;
   const circ = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(100, nota * 10));
-  const color = aprueba ? '#16A34A' : '#DC2626';
+  const color = aprueba ? 'var(--hx-16a34a)' : 'var(--hx-dc2626)';
 
   const revisionPorId = useMemo(() => {
     const m = new Map<string, any>();
@@ -377,9 +377,9 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width={D - 24} height={D - 24} style={{ position: 'absolute', top: 12, left: 12, transform: 'rotate(-90deg)' }}>
-              <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke="#EEF0F3" strokeWidth={10} />
+              <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={10} />
               {pct > 0 && (
                 <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={r} fill="none" stroke={color} strokeWidth={10} strokeLinecap="round"
                   strokeDasharray={circ} strokeDashoffset={circ - (pct / 100) * circ} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
@@ -390,7 +390,7 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
               <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>sobre 10</div>
             </div>
           </div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, padding: '6px 12px', borderRadius: 999, background: aprueba ? '#F0FDF4' : '#FEF2F2', color: aprueba ? '#15803D' : '#B91C1C' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, padding: '6px 12px', borderRadius: 999, background: aprueba ? 'var(--hx-f0fdf4)' : 'var(--hx-fef2f2)', color: aprueba ? 'var(--hx-15803d)' : 'var(--hx-b91c1c)' }}>
             {aprueba ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
             {aprueba ? 'Con esta nota aprobarías' : 'No llegarías al aprobado'}
             {notaMin != null && <span style={{ fontWeight: 500 }}>· mínimo {notaMin.toLocaleString('es-ES')}</span>}
@@ -398,22 +398,22 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
         </div>
 
         {Number(resultado?.anuladas ?? 0) > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: TEXT_SECONDARY, background: 'white', borderRadius: 14, boxShadow: SOMBRA, padding: '10px 12px' }}>
-            <Ban size={15} color="#64748B" style={{ flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: TEXT_SECONDARY, background: 'var(--c-superficie)', borderRadius: 14, boxShadow: SOMBRA, padding: '10px 12px' }}>
+            <Ban size={15} color="var(--hx-64748b)" style={{ flexShrink: 0 }} />
             <span>
               {resultado.anuladas === 1 ? '1 pregunta fue anulada' : `${resultado.anuladas} preguntas fueron anuladas`} por el tribunal y no cuenta{resultado.anuladas === 1 ? '' : 'n'} en la nota, como en el examen real.
             </span>
           </div>
         )}
 
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '14px 4px' }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '14px 4px' }}>
           {[
-            { v: resultado?.correctas ?? 0, l: 'Aciertos', c: '#16A34A' },
-            { v: resultado?.incorrectas ?? 0, l: 'Fallos', c: '#DC2626' },
+            { v: resultado?.correctas ?? 0, l: 'Aciertos', c: 'var(--hx-16a34a)' },
+            { v: resultado?.incorrectas ?? 0, l: 'Fallos', c: 'var(--hx-dc2626)' },
             { v: resultado?.blancos ?? 0, l: 'En blanco', c: TEXT_SECONDARY },
             { v: formatoReloj(segundos), l: 'Tiempo', c: TEXT_PRIMARY },
           ].map((d, i) => (
-            <div key={d.l} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid #EEF0F3' : 'none' }}>
+            <div key={d.l} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: d.c }}>{d.v}</div>
               <div style={{ fontSize: 10, color: TEXT_MUTED, marginTop: 2 }}>{d.l}</div>
             </div>
@@ -424,24 +424,24 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
           <section>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', gap: 8 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Revisa el examen</span>
-              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.7)', borderRadius: 999, padding: 3, gap: 2 }}>
+              <div style={{ display: 'flex', background: 'color-mix(in srgb, var(--c-superficie) 70%, transparent)', borderRadius: 999, padding: 3, gap: 2 }}>
                 {([['todas', 'Todas'], ['falladas', 'Fallos'], ['blanco', 'En blanco']] as const).map(([k, l]) => (
-                  <button key={k} onClick={() => setFiltro(k)} style={{ border: 'none', borderRadius: 999, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', background: filtro === k ? '#0f172a' : 'transparent', color: filtro === k ? 'white' : TEXT_SECONDARY }}>
+                  <button key={k} onClick={() => setFiltro(k)} style={{ border: 'none', borderRadius: 999, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', background: filtro === k ? 'var(--hxbg-0f172a)' : 'transparent', color: filtro === k ? 'var(--c-primario-texto)' : TEXT_SECONDARY }}>
                     {l}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
               {visibles.length === 0 && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>No hay preguntas en este filtro.</div>}
               {visibles.map((f: any, k: number) => {
                 const Icono = f.estado === 'correcta' ? CheckCircle2 : f.estado === 'incorrecta' ? XCircle : f.estado === 'anulada' ? Ban : MinusCircle;
-                const colorEst = f.estado === 'correcta' ? '#16A34A' : f.estado === 'incorrecta' ? '#DC2626' : '#94A3B8';
+                const colorEst = f.estado === 'correcta' ? 'var(--hx-16a34a)' : f.estado === 'incorrecta' ? 'var(--hx-dc2626)' : 'var(--hx-94a3b8)';
                 const estadoPregunta = f.d?.estadoPregunta;
                 const abiertaEsta = abierta === f.p.id;
                 const idxCorrecta = f.d?.indiceCorrecta;
                 return (
-                  <div key={f.p.id} style={{ borderBottom: k < visibles.length - 1 ? '1px solid #EEF0F3' : 'none' }}>
+                  <div key={f.p.id} style={{ borderBottom: k < visibles.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
                     <button
                       onClick={() => setAbierta(abiertaEsta ? null : f.p.id)}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
@@ -451,7 +451,7 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
                       <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.4, ...(abiertaEsta ? {} : { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }) }}>
                         {f.p.enunciado}
                       </span>
-                      <ChevronDown size={15} color="#C4C9D2" style={{ flexShrink: 0, transform: abiertaEsta ? 'rotate(180deg)' : 'none' }} />
+                      <ChevronDown size={15} color="var(--hx-c4c9d2)" style={{ flexShrink: 0, transform: abiertaEsta ? 'rotate(180deg)' : 'none' }} />
                     </button>
                     {abiertaEsta && (
                       <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -461,33 +461,33 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
                           return (
                             <div key={i} style={{
                               display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 10, fontSize: 13,
-                              background: esCorrecta ? '#F0FDF4' : esTuya ? '#FEF2F2' : '#F8F9FA',
+                              background: esCorrecta ? 'var(--hx-f0fdf4)' : esTuya ? 'var(--hx-fef2f2)' : 'var(--hx-f8f9fa)',
                               color: TEXT_PRIMARY,
                             }}>
-                              <span style={{ fontSize: 11, fontWeight: 800, color: esCorrecta ? '#16A34A' : esTuya ? '#DC2626' : TEXT_MUTED }}>{LETRAS[i] ?? i + 1}</span>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: esCorrecta ? 'var(--hx-16a34a)' : esTuya ? 'var(--hx-dc2626)' : TEXT_MUTED }}>{LETRAS[i] ?? i + 1}</span>
                               <span style={{ flex: 1, lineHeight: 1.4 }}>{limpiar(op)}</span>
-                              {esCorrecta && <CheckCircle2 size={15} color="#16A34A" />}
-                              {esTuya && !esCorrecta && <XCircle size={15} color="#DC2626" />}
+                              {esCorrecta && <CheckCircle2 size={15} color="var(--hx-16a34a)" />}
+                              {esTuya && !esCorrecta && <XCircle size={15} color="var(--hx-dc2626)" />}
                             </div>
                           );
                         })}
                         {f.estado === 'blanco' && <div style={{ fontSize: 12, color: TEXT_MUTED }}>La dejaste en blanco.</div>}
                         {estadoPregunta === 'anulada' && (
-                          <AvisoPregunta Icono={Ban} color="#475569" fondo="#F1F5F9" texto="El tribunal anuló esta pregunta: no cuenta en la nota." />
+                          <AvisoPregunta Icono={Ban} color="var(--hx-475569)" fondo="var(--hx-f1f5f9)" texto="El tribunal anuló esta pregunta: no cuenta en la nota." />
                         )}
                         {estadoPregunta === 'fuera_temario' && (
-                          <AvisoPregunta Icono={BookX} color="#92400E" fondo="#FFFBEB" texto="Esta pregunta ya no entra en el temario actual." />
+                          <AvisoPregunta Icono={BookX} color="var(--hx-92400e)" fondo="var(--hx-fffbeb)" texto="Esta pregunta ya no entra en el temario actual." />
                         )}
                         {estadoPregunta === 'desactualizada' && (
                           <AvisoPregunta
                             Icono={AlertTriangle}
-                            color="#B45309"
-                            fondo="#FFF7ED"
+                            color="var(--hx-b45309)"
+                            fondo="var(--hx-fff7ed)"
                             texto={`La normativa ha cambiado desde este examen: la respuesta marcada es la oficial de entonces.${f.d?.notaActualizacion ? ` ${f.d.notaActualizacion}` : ''}`}
                           />
                         )}
                         {f.d?.explicacion && (
-                          <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.5, background: '#F8F9FA', borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
+                          <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.5, background: 'var(--hx-f8f9fa)', borderRadius: 10, padding: '9px 11px', marginTop: 2 }}>
                             <Lightbulb size={14} color={COLOR_SIMULACRO} style={{ flexShrink: 0, marginTop: 2 }} />
                             <span>{f.d.explicacion}</span>
                           </div>
@@ -503,11 +503,11 @@ function ResultadoSimulacro({ resultado, preguntas, respuestas, segundos, titulo
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {onOtro && (
-            <button onClick={onOtro} style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={onOtro} style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
               {textoOtro}
             </button>
           )}
-          <button onClick={onSalir} style={{ width: '100%', padding: 13, background: 'white', border: 'none', boxShadow: SOMBRA, color: TEXT_PRIMARY, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={onSalir} style={{ width: '100%', padding: 13, background: 'var(--c-superficie)', border: 'none', boxShadow: SOMBRA, color: TEXT_PRIMARY, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             Volver a Practicar
           </button>
         </div>
@@ -534,7 +534,7 @@ export function SimulacroNoDisponible({ error, onVolver, onPlanes }: { error: an
     : null;
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem', background: BG_APP }}>
-      <div style={{ background: 'white', borderRadius: 20, padding: '1.75rem 1.5rem', maxWidth: 400, width: '100%', textAlign: 'center', boxShadow: SOMBRA }}>
+      <div style={{ background: 'var(--c-superficie)', borderRadius: 20, padding: '1.75rem 1.5rem', maxWidth: 400, width: '100%', textAlign: 'center', boxShadow: SOMBRA }}>
         <div style={{ width: 52, height: 52, borderRadius: 16, background: COLOR_SIMULACRO_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
           <Timer size={24} color={COLOR_SIMULACRO} />
         </div>
@@ -548,7 +548,7 @@ export function SimulacroNoDisponible({ error, onVolver, onPlanes }: { error: an
         </div>
         <button
           onClick={bloqueado ? onPlanes : onVolver}
-          style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          style={{ width: '100%', padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
         >
           {bloqueado ? 'Ver planes' : 'Volver'}
         </button>
@@ -565,7 +565,7 @@ export function SimulacroNoDisponible({ error, onVolver, onPlanes }: { error: an
 export function CargandoSimulacro({ texto = 'Preparando el examen…' }: { texto?: string }) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: BG_APP }}>
-      <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Timer size={26} color={COLOR_SIMULACRO} />
       </div>
       <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_SECONDARY }}>{texto}</div>

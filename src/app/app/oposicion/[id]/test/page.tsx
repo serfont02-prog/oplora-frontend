@@ -68,7 +68,7 @@ export default function TestHubPage() {
       style={{
         minHeight: '100vh',
         background:
-          'linear-gradient(180deg,#eef4ff 0%,#f8fafc 40%,#ffffff 100%)',
+          'linear-gradient(180deg,var(--hx-eef4ff) 0%,var(--hx-f8fafc) 40%,var(--hx-ffffff) 100%)',
       }}
     >
       <div
@@ -190,7 +190,7 @@ export default function TestHubPage() {
           style={{
             borderRadius: '28px',
             overflow: 'hidden',
-            background: 'white',
+            background: 'var(--c-superficie)',
             boxShadow:
               '0 10px 30px rgba(15,23,42,.06)',
             marginBottom: '16px',
@@ -271,8 +271,8 @@ export default function TestHubPage() {
                 height: '58px',
                 borderRadius: '18px',
                 border: 'none',
-                background: '#111827',
-                color: 'white',
+                background: 'var(--hxbg-111827)',
+                color: 'var(--c-primario-texto)',
                 fontSize: '15px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -290,7 +290,7 @@ export default function TestHubPage() {
             alignItems: 'center',
             gap: '8px',
             justifyContent: 'center',
-            color: '#94a3b8',
+            color: 'var(--hx-94a3b8)',
             fontSize: '12px',
             padding: '8px 0 24px',
           }}
@@ -383,11 +383,11 @@ function StatCard({ title, value, icon }: any) {
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,.72)',
+        background: 'color-mix(in srgb, var(--c-superficie) 72%, transparent)',
         backdropFilter: 'blur(12px)',
         borderRadius: '22px',
         padding: '18px',
-        border: '1px solid rgba(255,255,255,.5)',
+        border: '1px solid color-mix(in srgb, var(--c-superficie) 50%, transparent)',
         boxShadow:
           '0 10px 30px rgba(15,23,42,.04)',
       }}
@@ -403,14 +403,14 @@ function StatCard({ title, value, icon }: any) {
         <div
           style={{
             fontSize: '12px',
-            color: '#64748b',
+            color: 'var(--hx-64748b)',
             fontWeight: 600,
           }}
         >
           {title}
         </div>
 
-        <div style={{ color: '#4f46e5' }}>
+        <div style={{ color: 'var(--hx-4f46e5)' }}>
           {icon}
         </div>
       </div>
@@ -419,7 +419,7 @@ function StatCard({ title, value, icon }: any) {
         style={{
           fontSize: '28px',
           fontWeight: 800,
-          color: '#0f172a',
+          color: 'var(--hx-0f172a)',
         }}
       >
         {value}

@@ -32,9 +32,9 @@ export default function SimulacroOficialPage() {
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <CabeceraPractica eyebrow="Simulacro oficial" titulo="Elige un examen real" onVolver={() => router.push('/app/entrenamiento/simulacro')} />
 
-        {isLoading && <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
+        {isLoading && <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
         {!isLoading && examenes.length === 0 && (
-          <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
             Todavía no hay exámenes oficiales de tu oposición. Mientras tanto puedes hacer un simulacro OPLORA.
           </div>
         )}
@@ -44,7 +44,7 @@ export default function SimulacroOficialPage() {
           return (
             <section key={anyo}>
               <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Convocatoria {anyo}</div>
-              <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
                 {delAnyo.map((ex: any, i: number) => {
                   const disponible = ex.totalPreguntas > 0;
                   return (
@@ -54,7 +54,7 @@ export default function SimulacroOficialPage() {
                       disabled={!disponible}
                       style={{
                         width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', textAlign: 'left',
-                        background: 'none', border: 'none', borderBottom: i < delAnyo.length - 1 ? '1px solid #EEF0F3' : 'none',
+                        background: 'none', border: 'none', borderBottom: i < delAnyo.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none',
                         cursor: disponible ? 'pointer' : 'default', opacity: disponible ? 1 : 0.5,
                       }}
                     >
@@ -69,7 +69,7 @@ export default function SimulacroOficialPage() {
                           Ejercicio {ex.parte} · {disponible ? `${ex.totalPreguntas} preguntas` : 'Sin preguntas todavía'}
                         </div>
                       </div>
-                      {disponible && <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />}
+                      {disponible && <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />}
                     </button>
                   );
                 })}

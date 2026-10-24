@@ -147,7 +147,7 @@ export function PuntosGanadosCard({
           border-radius: 50%;
           overflow: hidden;
           background: white;
-          border: 3px solid white;
+          border: 3px solid var(--c-superficie);
         }
         .puntos-pill__oplo-img {
           width: 100%;
@@ -176,13 +176,13 @@ export function PuntosGanadosCard({
           color: white;
         }
         .puntos-pill--nivel .puntos-pill__mas {
-          color: #fde68a;
+          color: var(--hx-fde68a);
         }
         .puntos-pill__nivel-badge {
           margin-top: 3px;
           font-size: 13px;
           font-weight: 700;
-          color: #fde68a;
+          color: var(--hx-fde68a);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -190,7 +190,7 @@ export function PuntosGanadosCard({
         .puntos-pill__frase {
           margin-top: 2px;
           font-size: 13px;
-          color: #cbd5e1;
+          color: var(--hx-cbd5e1);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;

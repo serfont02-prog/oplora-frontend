@@ -32,16 +32,16 @@ type Oposicion = {
 };
 
 const TIPOS: { id: Tipo; label: string; sub: string; icono: any; color: string; fondo: string }[] = [
-  { id: 'estado', label: 'Estado', sub: 'Policía Nacional, Guardia Civil, AGE…', icono: Landmark, color: '#1F7CFF', fondo: '#EAF0FF' },
-  { id: 'ccaa', label: 'Comunidad Autónoma', sub: 'Oposiciones de tu comunidad', icono: MapPinned, color: '#4D7C0F', fondo: '#ECFCCB' },
-  { id: 'empresa_publica', label: 'Empresa pública', sub: 'Correos, Renfe, Adif…', icono: Building2, color: '#6B5F3E', fondo: '#EDE9DD' },
+  { id: 'estado', label: 'Estado', sub: 'Policía Nacional, Guardia Civil, AGE…', icono: Landmark, color: 'var(--hx-1f7cff)', fondo: 'var(--hx-eaf0ff)' },
+  { id: 'ccaa', label: 'Comunidad Autónoma', sub: 'Oposiciones de tu comunidad', icono: MapPinned, color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)' },
+  { id: 'empresa_publica', label: 'Empresa pública', sub: 'Correos, Renfe, Adif…', icono: Building2, color: 'var(--hx-6b5f3e)', fondo: 'var(--hx-ede9dd)' },
 ];
 
 const CATEGORIAS: { id: Categoria; label: string; icono: any; color: string; fondo: string }[] = [
-  { id: 'administracion_general', label: 'Administración', icono: FileText, color: '#4F46E5', fondo: '#E0E7FF' },
-  { id: 'seguridad', label: 'Seguridad', icono: Shield, color: '#1F7CFF', fondo: '#EAF0FF' },
-  { id: 'justicia', label: 'Justicia', icono: Scale, color: '#6B5F3E', fondo: '#EDE9DD' },
-  { id: 'sanidad', label: 'Sanidad', icono: HeartPulse, color: '#BE123C', fondo: '#FFE4E6' },
+  { id: 'administracion_general', label: 'Administración', icono: FileText, color: 'var(--hx-4f46e5)', fondo: 'var(--hx-e0e7ff)' },
+  { id: 'seguridad', label: 'Seguridad', icono: Shield, color: 'var(--hx-1f7cff)', fondo: 'var(--hx-eaf0ff)' },
+  { id: 'justicia', label: 'Justicia', icono: Scale, color: 'var(--hx-6b5f3e)', fondo: 'var(--hx-ede9dd)' },
+  { id: 'sanidad', label: 'Sanidad', icono: HeartPulse, color: 'var(--hx-be123c)', fondo: 'var(--hx-ffe4e6)' },
 ];
 const ICONO_CATEGORIA: Record<string, any> = Object.fromEntries(CATEGORIAS.map((c) => [c.id, c.icono]));
 
@@ -199,7 +199,7 @@ function OnboardingOposicionPage() {
                     key={c}
                     onClick={() => setCcaa(c)}
                     disabled={!n}
-                    style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 12, border: '2px solid #EEF0F3', background: 'white', cursor: n ? 'pointer' : 'default', opacity: n ? 1 : 0.45 }}
+                    style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 12, border: '2px solid var(--hx-eef0f3)', background: 'var(--c-superficie)', cursor: n ? 'pointer' : 'default', opacity: n ? 1 : 0.45 }}
                   >
                     <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3 }}>{c}</div>
                     <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{n ? textoNum(n) : 'Próximamente'}</div>
@@ -229,14 +229,14 @@ function OnboardingOposicionPage() {
 
           {pasoActual === 'resultado' && filtroCompleto && base.length === 1 && (
             <div style={{ animation: 'oplora-aparecer 0.3s ease' }}>
-              <div style={{ background: '#0f172a', borderRadius: 18, padding: '18px 16px', color: 'white', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ background: 'var(--hxhero-0f172a)', borderRadius: 18, padding: '18px 16px', color: 'white', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(31,124,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {(() => { const I = (base[0].categoria && ICONO_CATEGORIA[base[0].categoria]) || GraduationCap; return <I size={22} color="#93C5FD" />; })()}
+                  {(() => { const I = (base[0].categoria && ICONO_CATEGORIA[base[0].categoria]) || GraduationCap; return <I size={22} color="var(--hx-93c5fd)" />; })()}
                 </span>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>{base[0].nombre}</div>
                   {(base[0].subgrupo || base[0].administracion) && (
-                    <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 3 }}>
+                    <div style={{ fontSize: 12, color: 'var(--hx-94a3b8)', marginTop: 3 }}>
                       {[base[0].administracion, base[0].subgrupo && `Subgrupo ${base[0].subgrupo}`].filter(Boolean).join(' · ')}
                     </div>
                   )}
@@ -290,7 +290,7 @@ function OnboardingOposicionPage() {
         <style>{`@keyframes oplora-girar { to { transform: rotate(360deg); } } @keyframes oplora-aparecer { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
         <div style={{ maxWidth: 560, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-            <button onClick={() => router.back()} aria-label="Volver" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <button onClick={() => router.back()} aria-label="Volver" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
               <ArrowLeft size={18} color={TEXT_PRIMARY} />
             </button>
             <div>
@@ -299,15 +299,15 @@ function OnboardingOposicionPage() {
             </div>
           </div>
           {actual?.nombre && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0f172a', color: 'white', borderRadius: 16, padding: '12px 14px', marginBottom: 12 }}>
-              {(() => { const I = ((actual as any).categoria && ICONO_CATEGORIA[(actual as any).categoria]) || GraduationCap; return <I size={18} color="#93C5FD" />; })()}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--hxhero-0f172a)', color: 'white', borderRadius: 16, padding: '12px 14px', marginBottom: 12 }}>
+              {(() => { const I = ((actual as any).categoria && ICONO_CATEGORIA[(actual as any).categoria]) || GraduationCap; return <I size={18} color="var(--hx-93c5fd)" />; })()}
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ahora preparas</div>
+                <div style={{ fontSize: 10, color: 'var(--hx-94a3b8)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ahora preparas</div>
                 <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3 }}>{actual.nombre}</div>
               </div>
             </div>
           )}
-          <div style={{ background: 'white', borderRadius: 20, boxShadow: SOMBRA, padding: 16 }}>{contenido}</div>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 20, boxShadow: SOMBRA, padding: 16 }}>{contenido}</div>
         </div>
       </div>
     );
@@ -325,7 +325,7 @@ function Chip({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       onClick={onClick}
       aria-label={`Quitar ${label}`}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px 5px 12px', borderRadius: 999, background: '#EAF0FF', color: COLOR_MARCA, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px 5px 12px', borderRadius: 999, background: 'var(--hx-eaf0ff)', color: COLOR_MARCA, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}
     >
       {label}
       <X size={12} />

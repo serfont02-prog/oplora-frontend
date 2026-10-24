@@ -19,8 +19,8 @@ import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { BG_DASHBOARD, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const AZUL = '#1F7CFF';
+const SOMBRA = 'var(--c-sombra)';
+const AZUL = 'var(--hx-1f7cff)';
 
 type Notificacion = {
   id: string;
@@ -33,17 +33,17 @@ type Notificacion = {
   creadoEn: string;
 };
 
-const RETOS = { color: '#C2410C', fondo: '#FCEEE8' };
-const ROJO = { color: '#DC2626', fondo: '#FEE2E2' };
-const AZUL_SUAVE = { color: AZUL, fondo: '#EAF0FF' };
-const ORO = { color: '#CA8A04', fondo: '#FDF8E8' };
+const RETOS = { color: 'var(--hx-c2410c)', fondo: 'var(--hx-fceee8)' };
+const ROJO = { color: 'var(--hx-dc2626)', fondo: 'var(--hx-fee2e2)' };
+const AZUL_SUAVE = { color: AZUL, fondo: 'var(--hx-eaf0ff)' };
+const ORO = { color: 'var(--hx-ca8a04)', fondo: 'var(--hx-fdf8e8)' };
 
 const TIPO: Record<string, { icono: any; color: string; fondo: string }> = {
-  admitido: { icono: CircleCheck, color: '#15803D', fondo: '#DCFCE7' },
+  admitido: { icono: CircleCheck, color: 'var(--hx-15803d)', fondo: 'var(--hx-dcfce7)' },
   excluido: { icono: CircleX, ...ROJO },
-  cambio_normativo: { icono: FilePenLine, color: '#6B5F3E', fondo: '#EDE9DD' },
+  cambio_normativo: { icono: FilePenLine, color: 'var(--hx-6b5f3e)', fondo: 'var(--hx-ede9dd)' },
   nuevo_documento: { icono: FileText, ...AZUL_SUAVE },
-  nueva_convocatoria: { icono: Megaphone, color: '#4F46E5', fondo: '#E0E7FF' },
+  nueva_convocatoria: { icono: Megaphone, color: 'var(--hx-4f46e5)', fondo: 'var(--hx-e0e7ff)' },
   plazo_importante: { icono: AlarmClock, ...ROJO },
   reto_diario: { icono: Zap, ...RETOS },
   reto_recibido: { icono: Swords, ...RETOS },
@@ -51,10 +51,10 @@ const TIPO: Record<string, { icono: any; color: string; fondo: string }> = {
   logro: { icono: Award, ...ORO },
   racha_peligro: { icono: Flame, ...ROJO },
   nueva_noticia: { icono: Newspaper, ...AZUL_SUAVE },
-  respuesta_soporte: { icono: LifeBuoy, color: '#4D7C0F', fondo: '#ECFCCB' },
+  respuesta_soporte: { icono: LifeBuoy, color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)' },
   liga: { icono: Trophy, ...ORO },
 };
-const TIPO_DEFECTO = { icono: Bell, color: '#64748B', fondo: '#F1F5F9' };
+const TIPO_DEFECTO = { icono: Bell, color: 'var(--hx-64748b)', fondo: 'var(--hx-f1f5f9)' };
 
 const EMOJIS = new RegExp('[\\p{Extended_Pictographic}\\u{1F1E6}-\\u{1F1FF}\\uFE0F\\u200D]', 'gu');
 const sinEmojis = (t: string) => String(t ?? '').replace(EMOJIS, '').replace(/\s{2,}/g, ' ').replace(/\s+([!?.,:])/g, '$1').trim();
@@ -177,7 +177,7 @@ export default function AlertasPage() {
           <button
             onClick={() => marcarTodas.mutate()}
             disabled={marcarTodas.isPending}
-            style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: AZUL, background: 'white', border: 'none', borderRadius: 999, padding: '8px 14px', cursor: 'pointer', boxShadow: SOMBRA, marginTop: -6 }}
+            style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: AZUL, background: 'var(--c-superficie)', border: 'none', borderRadius: 999, padding: '8px 14px', cursor: 'pointer', boxShadow: SOMBRA, marginTop: -6 }}
           >
             <CheckCheck size={14} /> Marcar todas como leídas
           </button>
@@ -186,24 +186,24 @@ export default function AlertasPage() {
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[0, 1, 2].map((i) => (
-              <div key={i} style={{ height: 78, borderRadius: 20, background: 'white', boxShadow: SOMBRA, animation: 'oplora-brillo 1.2s ease-in-out infinite' }} />
+              <div key={i} style={{ height: 78, borderRadius: 20, background: 'var(--c-superficie)', boxShadow: SOMBRA, animation: 'oplora-brillo 1.2s ease-in-out infinite' }} />
             ))}
           </div>
         ) : isError ? (
-          <div style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '2rem 1.5rem', textAlign: 'center' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 24, boxShadow: SOMBRA, padding: '2rem 1.5rem', textAlign: 'center' }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 4 }}>No se han podido cargar tus alertas</div>
             <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 14 }}>Comprueba la conexión e inténtalo de nuevo.</div>
             <button
               onClick={() => refetch()}
               disabled={isFetching}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >
               <RefreshCw size={14} style={isFetching ? { animation: 'oplora-girar 0.8s linear infinite' } : undefined} /> Reintentar
             </button>
           </div>
         ) : notificaciones.length === 0 ? (
-          <div style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '2.5rem 1.5rem', textAlign: 'center' }}>
-            <span style={{ width: 56, height: 56, borderRadius: 16, background: '#EAF0FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 24, boxShadow: SOMBRA, padding: '2.5rem 1.5rem', textAlign: 'center' }}>
+            <span style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--hx-eaf0ff)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
               <BellOff size={24} color={AZUL} />
             </span>
             <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4 }}>No tienes alertas</div>
@@ -217,7 +217,7 @@ export default function AlertasPage() {
               <div style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 4px 8px' }}>
                 {titulo}
               </div>
-              <div style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, overflow: 'hidden' }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 24, boxShadow: SOMBRA, overflow: 'hidden' }}>
                 {items.map((n, i) => {
                   const c = TIPO[n.tipo] ?? TIPO_DEFECTO;
                   const Icono = c.icono;
@@ -229,8 +229,8 @@ export default function AlertasPage() {
                       style={{
                         width: '100%', textAlign: 'left', border: 'none', cursor: navegable || !n.leida ? 'pointer' : 'default',
                         display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 14px 14px 16px',
-                        background: n.leida ? 'white' : '#F5F8FF',
-                        borderTop: i ? '1px solid #EEF0F3' : 'none',
+                        background: n.leida ? 'var(--c-superficie)' : 'var(--hx-f5f8ff)',
+                        borderTop: i ? '1px solid var(--hx-eef0f3)' : 'none',
                         font: 'inherit',
                       }}
                     >
@@ -241,7 +241,7 @@ export default function AlertasPage() {
                         <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 14, fontWeight: n.leida ? 600 : 700, color: TEXT_PRIMARY, lineHeight: 1.35 }}>{sinEmojis(n.titulo)}</span>
                           {n.prioridad === 'alta' && !n.leida && (
-                            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 999, background: '#FEE2E2', color: '#DC2626', fontWeight: 700 }}>Importante</span>
+                            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 999, background: 'var(--hx-fee2e2)', color: 'var(--hx-dc2626)', fontWeight: 700 }}>Importante</span>
                           )}
                         </span>
                         <span style={{ display: 'block', fontSize: 12.5, color: TEXT_SECONDARY, lineHeight: 1.5, marginTop: 2 }}>{sinEmojis(n.mensaje)}</span>
@@ -249,7 +249,7 @@ export default function AlertasPage() {
                       </span>
                       <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, alignSelf: 'stretch', justifyContent: navegable ? 'space-between' : 'flex-start', paddingTop: 4 }}>
                         <span aria-label={n.leida ? undefined : 'Sin leer'} style={{ width: 8, height: 8, borderRadius: '50%', background: n.leida ? 'transparent' : AZUL }} />
-                        {navegable && <ChevronRight size={16} color="#CBD5E1" />}
+                        {navegable && <ChevronRight size={16} color="var(--hx-cbd5e1)" />}
                       </span>
                     </button>
                   );

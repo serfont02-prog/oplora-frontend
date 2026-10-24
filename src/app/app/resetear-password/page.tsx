@@ -70,8 +70,8 @@ function ResetearPasswordContenido() {
       <PantallaAuth>
         <EstadoAuth
           icono={AlertTriangle}
-          color="#B45309"
-          fondo="#FFFBEB"
+          color="var(--hx-b45309)"
+          fondo="var(--hx-fffbeb)"
           titulo="Enlace no válido o caducado"
           texto="Los enlaces para cambiar la contraseña duran 30 minutos y solo se pueden usar una vez. Pide uno nuevo."
         >
@@ -86,8 +86,8 @@ function ResetearPasswordContenido() {
       <PantallaAuth>
         <EstadoAuth
           icono={CheckCircle2}
-          color="#16A34A"
-          fondo="#F0FDF4"
+          color="var(--hx-16a34a)"
+          fondo="var(--hx-f0fdf4)"
           titulo="Contraseña actualizada"
           texto="Ya puedes entrar con tu contraseña nueva."
         >
@@ -115,7 +115,7 @@ function ResetearPasswordContenido() {
           placeholder="Otra vez la misma"
           value={passwordConfirm}
           onChange={setPasswordConfirm}
-          ayuda={coinciden ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#15803D' }}><Check size={12} /> Coinciden</span> : undefined}
+          ayuda={coinciden ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--hx-15803d)' }}><Check size={12} /> Coinciden</span> : undefined}
         />
         {error && <AvisoAuth>{error}</AvisoAuth>}
         <BotonAuth cargando={cargando} textoCargando="Guardando…">Guardar contraseña</BotonAuth>

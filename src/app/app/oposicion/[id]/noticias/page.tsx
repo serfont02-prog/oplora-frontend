@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, Newspaper, Scale, Sparkles, X, ExternalLink, ChevronRight } from 'lucide-react';
 import { BG_NEUTRAL as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const SOMBRA = 'var(--c-sombra)';
 
 type TipoNoticia = 'oficial' | 'legislativa' | 'oplora';
 
@@ -36,9 +36,9 @@ const FILTROS: { key: TipoNoticia | 'todas'; label: string }[] = [
 ];
 
 const TIPO: Record<TipoNoticia, { Icon: any; bg: string; color: string; label: string }> = {
-  oficial: { Icon: Newspaper, bg: '#E6F1FB', color: '#185FA5', label: 'Oficial' },
-  legislativa: { Icon: Scale, bg: '#EEEDFE', color: '#3C3489', label: 'Normativa' },
-  oplora: { Icon: Sparkles, bg: '#FDF1DC', color: '#B45309', label: 'OPLORA' },
+  oficial: { Icon: Newspaper, bg: 'var(--hx-e6f1fb)', color: 'var(--hx-185fa5)', label: 'Oficial' },
+  legislativa: { Icon: Scale, bg: 'var(--hx-eeedfe)', color: 'var(--hx-3c3489)', label: 'Normativa' },
+  oplora: { Icon: Sparkles, bg: 'var(--hx-fdf1dc)', color: 'var(--hx-b45309)', label: 'OPLORA' },
 };
 
 function fecha(f?: string | null): string {
@@ -59,20 +59,20 @@ function ModalNoticia({ noticia, onClose }: { noticia: Noticia; onClose: () => v
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 560, maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 560, maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <t.Icon size={17} color={t.color} />
           </div>
           <div style={{ flex: 1, fontSize: 12, color: TEXT_MUTED, fontWeight: 600 }}>{t.label} · {fecha(noticia.fechaPublicacion ?? noticia.creadoEn)}</div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'var(--hx-f3f4f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
             <X size={16} color={TEXT_SECONDARY} />
           </button>
         </div>
         <div style={{ fontSize: 17, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.35, marginBottom: 12 }}>{noticia.titulo}</div>
-        <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{noticia.contenido}</div>
+        <div style={{ fontSize: 14, color: 'var(--hx-374151)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{noticia.contenido}</div>
         {noticia.urlOrigen && (
-          <a href={noticia.urlOrigen} target="_blank" rel="noopener noreferrer" style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 12, background: '#0f172a', color: 'white', borderRadius: 12, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+          <a href={noticia.urlOrigen} target="_blank" rel="noopener noreferrer" style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', borderRadius: 12, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
             Ver la fuente original <ExternalLink size={15} />
           </a>
         )}
@@ -122,7 +122,7 @@ export default function NoticiasPage() {
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
-          <button onClick={() => router.push('/app/dashboard')} aria-label="Volver a Inicio" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+          <button onClick={() => router.push('/app/dashboard')} aria-label="Volver a Inicio" style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -132,7 +132,7 @@ export default function NoticiasPage() {
         </div>
 
         {/* Filtro */}
-        <div style={{ display: 'flex', background: 'white', borderRadius: 999, padding: 4, gap: 2, boxShadow: SOMBRA, overflowX: 'auto' }}>
+        <div style={{ display: 'flex', background: 'var(--c-superficie)', borderRadius: 999, padding: 4, gap: 2, boxShadow: SOMBRA, overflowX: 'auto' }}>
           {FILTROS.map(({ key, label }) => {
             const activo = filtro === key;
             const n = cuenta(key);
@@ -140,7 +140,7 @@ export default function NoticiasPage() {
               <button
                 key={key}
                 onClick={() => setFiltro(key)}
-                style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: 'none', background: activo ? '#0f172a' : 'transparent', color: activo ? 'white' : TEXT_SECONDARY, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: 'none', background: activo ? 'var(--hxbg-0f172a)' : 'transparent', color: activo ? 'var(--c-primario-texto)' : TEXT_SECONDARY, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
               >
                 {label}{n > 0 && key !== 'todas' ? ` · ${n}` : ''}
               </button>
@@ -149,17 +149,17 @@ export default function NoticiasPage() {
         </div>
 
         {cargando ? (
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: 16, fontSize: 13, color: TEXT_MUTED }}>Cargando noticias…</div>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, fontSize: 13, color: TEXT_MUTED }}>Cargando noticias…</div>
         ) : lista.length === 0 ? (
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, padding: '24px 18px', textAlign: 'center' }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: '#E6F1FB', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
-              <Newspaper size={24} color="#185FA5" />
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: '24px 18px', textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: 'var(--hx-e6f1fb)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+              <Newspaper size={24} color="var(--hx-185fa5)" />
             </div>
             <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4 }}>{filtro === 'todas' ? 'Sin noticias por ahora' : 'No hay noticias de este tipo'}</div>
             <div style={{ fontSize: 13, color: TEXT_MUTED }}>Te avisaremos en cuanto haya novedades.</div>
           </div>
         ) : (
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
             {lista.map((n, i) => {
               const t = TIPO[n.tipo] ?? TIPO.oficial;
               const tieneContenido = !!n.contenido && n.contenido.trim().length > 0;
@@ -172,7 +172,7 @@ export default function NoticiasPage() {
                 <div
                   key={n.id}
                   onClick={esClicable ? abrir : undefined}
-                  style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '13px 14px', borderBottom: i < lista.length - 1 ? '1px solid #EEF0F3' : 'none', cursor: esClicable ? 'pointer' : 'default', background: n.destacada ? '#FFFBEB' : 'transparent' }}
+                  style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '13px 14px', borderBottom: i < lista.length - 1 ? '1px solid var(--hx-eef0f3)' : 'none', cursor: esClicable ? 'pointer' : 'default', background: n.destacada ? 'var(--hx-fffbeb)' : 'transparent' }}
                 >
                   <div style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <t.Icon size={17} color={t.color} />
@@ -180,7 +180,7 @@ export default function NoticiasPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>
                       {t.label} · {fecha(n.fechaPublicacion ?? n.creadoEn)}
-                      {n.destacada && <span style={{ marginLeft: 6, color: '#B45309' }}>· Destacada</span>}
+                      {n.destacada && <span style={{ marginLeft: 6, color: 'var(--hx-b45309)' }}>· Destacada</span>}
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.35, marginTop: 2 }}>{n.titulo}</div>
                     {n.resumen && (
@@ -189,7 +189,7 @@ export default function NoticiasPage() {
                       </div>
                     )}
                   </div>
-                  {esClicable && (tieneContenido ? <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0, marginTop: 10 }} /> : <ExternalLink size={15} color="#C4C9D2" style={{ flexShrink: 0, marginTop: 10 }} />)}
+                  {esClicable && (tieneContenido ? <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0, marginTop: 10 }} /> : <ExternalLink size={15} color="var(--hx-c4c9d2)" style={{ flexShrink: 0, marginTop: 10 }} />)}
                 </div>
               );
             })}

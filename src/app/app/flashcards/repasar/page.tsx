@@ -13,7 +13,7 @@ type EstadoRepaso = 'pregunta' | 'respuesta' | 'fin';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC } from '@/styles/tokens';
 
-const BG_APP = '#FDF4FE';
+const BG_APP = 'var(--c-bg-flashcards)';
 
 export default function RepasarPage() {
   const router = useRouter();
@@ -141,9 +141,9 @@ export default function RepasarPage() {
   };
 
   const NIVEL_COLOR: Record<string, string> = {
-    basico: '#15803d',
-    medio: '#d97706',
-    alto: '#dc2626',
+    basico: 'var(--hx-15803d)',
+    medio: 'var(--hx-d97706)',
+    alto: 'var(--hx-dc2626)',
   };
 
   if (cargando || isLoading) return null;
@@ -165,7 +165,7 @@ export default function RepasarPage() {
           actions={
             <button
               onClick={volver}
-              style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              style={{ width: '100%', padding: 13, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
             >
               {desdeHub ? 'Volver a flashcards' : temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver'}
             </button>
@@ -191,7 +191,7 @@ export default function RepasarPage() {
             aria-label="Volver"
             style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
-            <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'white', boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: 'var(--c-sombra)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ArrowLeft size={17} />
             </span>
             {desdeHub ? 'Flashcards' : temaId ? 'Tema' : articuloId ? 'Artículo' : 'Flashcards'}
@@ -204,7 +204,7 @@ export default function RepasarPage() {
         {/* FIN */}
         {estado === 'fin' && (
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'white', boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: 'var(--c-sombra)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
               <PartyPopper size={28} color={COLOR_FC} />
             </div>
             <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>¡Repaso completado!</div>
@@ -216,16 +216,16 @@ export default function RepasarPage() {
               <PuntosGanadosCard gamificacion={gamificacionInfo} />
             )}
 
-            <div style={{ background: 'white', borderRadius: 16, padding: '1.25rem', marginBottom: 16, textAlign: 'left' }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: '1.25rem', marginBottom: 16, textAlign: 'left' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
                 Resumen
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 {[
-                  { label: 'Fácil', value: sabidas, color: '#15803d', bg: '#f0fdf4' },
-                  { label: 'Bien', value: bien, color: '#2563eb', bg: '#eff6ff' },
-                  { label: 'Difícil', value: dificil, color: '#d97706', bg: '#fffbeb' },
-                  { label: 'Nada', value: falladas, color: '#dc2626', bg: '#fef2f2' },
+                  { label: 'Fácil', value: sabidas, color: 'var(--hx-15803d)', bg: 'var(--hx-f0fdf4)' },
+                  { label: 'Bien', value: bien, color: 'var(--hx-2563eb)', bg: 'var(--hx-eff6ff)' },
+                  { label: 'Difícil', value: dificil, color: 'var(--hx-d97706)', bg: 'var(--hx-fffbeb)' },
+                  { label: 'Nada', value: falladas, color: 'var(--hx-dc2626)', bg: 'var(--hx-fef2f2)' },
                 ].map(({ label, value, color, bg }) => (
                   <div key={label} style={{ textAlign: 'center', padding: '10px 6px', background: bg, borderRadius: 12 }}>
                     <div style={{ fontSize: 20, fontWeight: 800, color }}>{value}</div>
@@ -234,7 +234,7 @@ export default function RepasarPage() {
                 ))}
               </div>
 
-              <div style={{ marginTop: 12, padding: '10px 12px', background: '#FAF5FB', borderRadius: 12, fontSize: 12, color: TEXT_SECONDARY }}>
+              <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--hx-faf5fb)', borderRadius: 12, fontSize: 12, color: TEXT_SECONDARY }}>
                 <Lightbulb size={14} color={COLOR_FC} style={{ verticalAlign: '-2px', marginRight: 6 }} />
                 Las tarjetas difíciles o falladas aparecerán antes en tu próximo repaso
               </div>
@@ -251,13 +251,13 @@ export default function RepasarPage() {
                   setTiempoInicio(Date.now());
                   invalidarEstadoFC();
                 }}
-                style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: 13, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
                 Repasar de nuevo
               </button>
               <button
                 onClick={volver}
-                style={{ width: '100%', padding: 13, background: 'white', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                style={{ width: '100%', padding: 13, background: 'var(--c-superficie)', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
               >
                 {desdeHub ? 'Volver a flashcards' : temaId ? 'Volver al tema' : articuloId ? 'Volver al artículo' : 'Volver a flashcards'}
               </button>
@@ -268,7 +268,7 @@ export default function RepasarPage() {
         {/* TARJETA */}
         {estado !== 'fin' && fc && (
           <div>
-            <div style={{ height: 4, background: '#EEDCF0', borderRadius: 2, overflow: 'hidden', marginBottom: 18 }}>
+            <div style={{ height: 4, background: 'var(--hx-eedcf0)', borderRadius: 2, overflow: 'hidden', marginBottom: 18 }}>
               <div style={{
                 width: `${((indice + 1) / flashcards.length) * 100}%`,
                 height: '100%',
@@ -279,22 +279,22 @@ export default function RepasarPage() {
             </div>
 
             <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: '#F3E8FF', color: COLOR_FC, fontWeight: 500 }}>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'var(--hx-f3e8ff)', color: COLOR_FC, fontWeight: 500 }}>
                 {TIPO_LABEL[fc.tipo] ?? fc.tipo}
               </span>
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'white', color: NIVEL_COLOR[fc.nivel] ?? TEXT_SECONDARY, fontWeight: 500 }}>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'var(--c-superficie)', color: NIVEL_COLOR[fc.nivel] ?? TEXT_SECONDARY, fontWeight: 500 }}>
                 {fc.nivel}
               </span>
               {fc.articulo && (
-                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: '#E6F1FB', color: '#185FA5', fontWeight: 500 }}>
+                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'var(--hx-e6f1fb)', color: 'var(--hx-185fa5)', fontWeight: 500 }}>
                   Art. {fc.articulo.numero}
                 </span>
               )}
             </div>
 
             <div style={{
-              background: 'white',
-              border: estado === 'respuesta' ? `2px solid ${COLOR_FC}` : '1px solid #F1F5F9',
+              background: 'var(--c-superficie)',
+              border: estado === 'respuesta' ? `2px solid ${COLOR_FC}` : '1px solid var(--hx-f1f5f9)',
               borderRadius: 18,
               padding: '1.5rem',
               marginBottom: 16,
@@ -309,7 +309,7 @@ export default function RepasarPage() {
               </div>
 
               {estado === 'respuesta' && (
-                <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '1rem' }}>
+                <div style={{ borderTop: '1px solid var(--hx-f1f5f9)', paddingTop: '1rem' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: COLOR_FC, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
                     Respuesta
                   </div>
@@ -319,7 +319,7 @@ export default function RepasarPage() {
                       : fc.respuesta}
                   </div>
                   {fc.explicacion && (
-                    <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 10, lineHeight: 1.6, background: '#FAF5FB', borderRadius: 10, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 10, lineHeight: 1.6, background: 'var(--hx-faf5fb)', borderRadius: 10, padding: '8px 10px' }}>
                       <Lightbulb size={13} color={COLOR_FC} style={{ verticalAlign: '-2px', marginRight: 6 }} />
                       {fc.explicacion}
                     </div>
@@ -333,14 +333,14 @@ export default function RepasarPage() {
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => handleVF(true)}
-                  style={{ flex: 1, padding: 14, background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#15803d', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: 14, background: 'var(--hx-f0fdf4)', border: '2px solid var(--hx-86efac)', borderRadius: 14, fontSize: 15, fontWeight: 700, color: 'var(--hx-15803d)', cursor: 'pointer' }}
                 >
                   <CheckCircle2 size={17} style={{ verticalAlign: '-3px', marginRight: 6 }} />
                   Verdadero
                 </button>
                 <button
                   onClick={() => handleVF(false)}
-                  style={{ flex: 1, padding: 14, background: '#fef2f2', border: '2px solid #fca5a5', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#dc2626', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: 14, background: 'var(--hx-fef2f2)', border: '2px solid var(--hx-fca5a5)', borderRadius: 14, fontSize: 15, fontWeight: 700, color: 'var(--hx-dc2626)', cursor: 'pointer' }}
                 >
                   <XCircle size={17} style={{ verticalAlign: '-3px', marginRight: 6 }} />
                   Falso
@@ -352,7 +352,7 @@ export default function RepasarPage() {
             {estado === 'pregunta' && fc.tipo !== 'vf' && (
               <button
                 onClick={handleVerRespuesta}
-                style={{ width: '100%', padding: 14, background: '#111827', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: 14, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
                 Ver respuesta
               </button>
@@ -362,27 +362,27 @@ export default function RepasarPage() {
             {estado === 'respuesta' && fc.tipo === 'vf' && (
               <div>
                 <div style={{
-                  background: respuestaVF === (fc.respuesta === 'true') ? '#f0fdf4' : '#fef2f2',
-                  border: `1px solid ${respuestaVF === (fc.respuesta === 'true') ? '#86efac' : '#fca5a5'}`,
+                  background: respuestaVF === (fc.respuesta === 'true') ? 'var(--hx-f0fdf4)' : 'var(--hx-fef2f2)',
+                  border: `1px solid ${respuestaVF === (fc.respuesta === 'true') ? 'var(--hx-86efac)' : 'var(--hx-fca5a5)'}`,
                   borderRadius: 12, padding: '10px 14px', marginBottom: 10,
                   display: 'flex', alignItems: 'center', gap: 8,
                 }}>
                   {respuestaVF === (fc.respuesta === 'true')
-                    ? <CheckCircle2 size={17} color="#15803d" />
-                    : <XCircle size={17} color="#dc2626" />}
-                  <span style={{ fontSize: 13, fontWeight: 600, color: respuestaVF === (fc.respuesta === 'true') ? '#15803d' : '#dc2626' }}>
+                    ? <CheckCircle2 size={17} color="var(--hx-15803d)" />
+                    : <XCircle size={17} color="var(--hx-dc2626)" />}
+                  <span style={{ fontSize: 13, fontWeight: 600, color: respuestaVF === (fc.respuesta === 'true') ? 'var(--hx-15803d)' : 'var(--hx-dc2626)' }}>
                     {respuestaVF === (fc.respuesta === 'true') ? '¡Correcto!' : 'Incorrecto'}
                   </span>
                 </div>
                 {errorRegistro && (
-                  <div style={{ fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '8px 12px', marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, color: 'var(--hx-dc2626)', background: 'var(--hx-fef2f2)', border: '1px solid var(--hx-fecaca)', borderRadius: 10, padding: '8px 12px', marginBottom: 10 }}>
                     {errorRegistro}
                   </div>
                 )}
                 <button
                   onClick={() => handleResultado(respuestaVF === (fc.respuesta === 'true') ? 4 : 1)}
                   disabled={registrar.isPending}
-                  style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: registrar.isPending ? 'not-allowed' : 'pointer', opacity: registrar.isPending ? 0.6 : 1 }}
+                  style={{ width: '100%', padding: 12, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: registrar.isPending ? 'not-allowed' : 'pointer', opacity: registrar.isPending ? 0.6 : 1 }}
                 >
                   {registrar.isPending ? 'Guardando...' : 'Siguiente →'}
                 </button>
@@ -396,16 +396,16 @@ export default function RepasarPage() {
                   ¿Cómo te ha ido?
                 </div>
                 {errorRegistro && (
-                  <div style={{ fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '8px 12px', marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, color: 'var(--hx-dc2626)', background: 'var(--hx-fef2f2)', border: '1px solid var(--hx-fecaca)', borderRadius: 10, padding: '8px 12px', marginBottom: 10 }}>
                     {errorRegistro}
                   </div>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                   {[
-                    { cal: 0, label: 'Nada', sub: 'Hoy', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
-                    { cal: 2, label: 'Difícil', sub: '1 día', color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
-                    { cal: 3, label: 'Bien', sub: 'Varios días', color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
-                    { cal: 5, label: 'Fácil', sub: 'Semanas', color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
+                    { cal: 0, label: 'Nada', sub: 'Hoy', color: 'var(--hx-dc2626)', bg: 'var(--hx-fef2f2)', border: 'var(--hx-fca5a5)' },
+                    { cal: 2, label: 'Difícil', sub: '1 día', color: 'var(--hx-d97706)', bg: 'var(--hx-fffbeb)', border: 'var(--hx-fde68a)' },
+                    { cal: 3, label: 'Bien', sub: 'Varios días', color: 'var(--hx-2563eb)', bg: 'var(--hx-eff6ff)', border: 'var(--hx-bfdbfe)' },
+                    { cal: 5, label: 'Fácil', sub: 'Semanas', color: 'var(--hx-15803d)', bg: 'var(--hx-f0fdf4)', border: 'var(--hx-86efac)' },
                   ].map(({ cal, label, sub, color, bg, border }) => (
                     <button
                       key={cal}

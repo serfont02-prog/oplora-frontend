@@ -8,8 +8,8 @@ import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, XCircle, X, Lightbulb } from 'lucide-react';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const COLOR_TEST = '#4D7C0F';
+const SOMBRA = 'var(--c-sombra)';
+const COLOR_TEST = 'var(--hx-4d7c0f)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 interface Pregunta {
@@ -97,8 +97,8 @@ export default function PreguntaTest({
 
   const pctTiempo = tiempoTotal && tiempoRestante !== null ? (tiempoRestante / tiempoTotal) * 100 : null;
   const colorTiempo = tiempoRestante !== null
-    ? tiempoRestante > 10 ? '#1F7CFF' : tiempoRestante > 5 ? '#D97706' : '#DC2626'
-    : '#1F7CFF';
+    ? tiempoRestante > 10 ? 'var(--hx-1f7cff)' : tiempoRestante > 5 ? 'var(--hx-d97706)' : 'var(--hx-dc2626)'
+    : 'var(--hx-1f7cff)';
 
   // Penalización por dejar en blanco: solo si la convocatoria no permite blancos "gratis"
   const restaBlanco = convocatoria?.permiteBlancos === false && convocatoria?.fraccionPenalizacionBlanco
@@ -110,11 +110,11 @@ export default function PreguntaTest({
   const estiloOpcion = (idx: number) => {
     if (!respondida) {
       const sel = seleccionada === idx;
-      return { border: sel ? '#0f172a' : 'transparent', bg: 'white', letraBg: sel ? '#0f172a' : '#F3F4F6', letraColor: sel ? 'white' : TEXT_SECONDARY, texto: TEXT_PRIMARY };
+      return { border: sel ? 'var(--hx-0f172a)' : 'transparent', bg: 'var(--c-superficie)', letraBg: sel ? 'var(--hxbg-0f172a)' : 'var(--hx-f3f4f6)', letraColor: sel ? 'var(--c-primario-texto)' : TEXT_SECONDARY, texto: TEXT_PRIMARY };
     }
-    if (idx === pregunta.correcta) return { border: '#16A34A', bg: '#F0FDF4', letraBg: '#16A34A', letraColor: 'white', texto: '#14532D' };
-    if (idx === seleccionada) return { border: '#DC2626', bg: '#FEF2F2', letraBg: '#DC2626', letraColor: 'white', texto: '#7F1D1D' };
-    return { border: 'transparent', bg: 'white', letraBg: '#F3F4F6', letraColor: TEXT_MUTED, texto: TEXT_SECONDARY };
+    if (idx === pregunta.correcta) return { border: 'var(--hx-16a34a)', bg: 'var(--hx-f0fdf4)', letraBg: '#16A34A', letraColor: 'white', texto: 'var(--hx-14532d)' };
+    if (idx === seleccionada) return { border: 'var(--hx-dc2626)', bg: 'var(--hx-fef2f2)', letraBg: '#DC2626', letraColor: 'white', texto: 'var(--hx-7f1d1d)' };
+    return { border: 'transparent', bg: 'var(--c-superficie)', letraBg: 'var(--hx-f3f4f6)', letraColor: TEXT_MUTED, texto: TEXT_SECONDARY };
   };
 
   const salir = () => {
@@ -132,7 +132,7 @@ export default function PreguntaTest({
             <button
               onClick={() => setConfirmarSalir(true)}
               aria-label="Salir del test"
-              style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
               <X size={17} color={TEXT_PRIMARY} />
             </button>
@@ -142,7 +142,7 @@ export default function PreguntaTest({
                   {titulo} · <span style={{ color: TEXT_SECONDARY, fontWeight: 600 }}>Pregunta {preguntaActual + 1} de {preguntas.length}</span>
                 </span>
               </div>
-              <div style={{ height: 6, background: 'rgba(255,255,255,0.85)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ height: 6, background: 'color-mix(in srgb, var(--c-superficie) 85%, transparent)', borderRadius: 999, overflow: 'hidden' }}>
                 <div style={{ width: `${((preguntaActual + 1) / preguntas.length) * 100}%`, height: '100%', background: color, borderRadius: 999, transition: 'width .25s' }} />
               </div>
             </div>
@@ -158,11 +158,11 @@ export default function PreguntaTest({
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '4px 1.25rem 0' }}>
         {/* Confirmar salida, en la propia pantalla */}
         {confirmarSalir && (
-          <div style={{ background: 'white', borderRadius: 16, padding: 14, boxShadow: SOMBRA, marginBottom: 14 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: 14, boxShadow: SOMBRA, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>¿Salir del test?</div>
             <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 3 }}>{avisoSalir}</div>
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button onClick={() => setConfirmarSalir(false)} style={{ flex: 1, border: 'none', background: '#F3F4F6', color: TEXT_SECONDARY, borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={() => setConfirmarSalir(false)} style={{ flex: 1, border: 'none', background: 'var(--hx-f3f4f6)', color: TEXT_SECONDARY, borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                 Seguir
               </button>
               <button onClick={salir} style={{ flex: 1, border: 'none', background: '#DC2626', color: 'white', borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
@@ -173,7 +173,7 @@ export default function PreguntaTest({
         )}
 
         {/* Enunciado */}
-        <div style={{ background: 'white', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 12 }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 12 }}>
           {pregunta.imagenUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={pregunta.imagenUrl} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: 14, display: 'block' }} />
@@ -214,8 +214,8 @@ export default function PreguntaTest({
                 <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: 1.45, fontWeight: 500, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                   {opcion.replace(/^[a-fA-F]\)\s*/, '')}
                 </span>
-                {respondida && idx === pregunta.correcta && <CheckCircle2 size={20} color="#16A34A" style={{ flexShrink: 0 }} />}
-                {respondida && idx === seleccionada && idx !== pregunta.correcta && <XCircle size={20} color="#DC2626" style={{ flexShrink: 0 }} />}
+                {respondida && idx === pregunta.correcta && <CheckCircle2 size={20} color="var(--hx-16a34a)" style={{ flexShrink: 0 }} />}
+                {respondida && idx === seleccionada && idx !== pregunta.correcta && <XCircle size={20} color="var(--hx-dc2626)" style={{ flexShrink: 0 }} />}
               </button>
             );
           })}
@@ -223,9 +223,9 @@ export default function PreguntaTest({
 
         {/* Explicación */}
         {respondida && mostrarExplicaciones && pregunta.explicacion && (
-          <div style={{ marginTop: 14, background: 'white', borderRadius: 16, padding: 16, boxShadow: SOMBRA, display: 'flex', gap: 10 }}>
+          <div style={{ marginTop: 14, background: 'var(--c-superficie)', borderRadius: 16, padding: 16, boxShadow: SOMBRA, display: 'flex', gap: 10 }}>
             <Lightbulb size={17} color={COLOR_TEST} style={{ flexShrink: 0, marginTop: 2 }} />
-            <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.65 }}>{pregunta.explicacion}</div>
+            <div style={{ fontSize: 14, color: 'var(--hx-374151)', lineHeight: 1.65 }}>{pregunta.explicacion}</div>
           </div>
         )}
       </div>
@@ -253,8 +253,8 @@ export default function PreguntaTest({
                 disabled={seleccionada === null || enviando}
                 style={{
                   width: '100%', height: 52, borderRadius: 14, border: 'none',
-                  background: seleccionada !== null ? '#0f172a' : '#DDE3EE',
-                  color: seleccionada !== null ? 'white' : TEXT_MUTED,
+                  background: seleccionada !== null ? 'var(--hxbg-0f172a)' : 'var(--hx-dde3ee)',
+                  color: seleccionada !== null ? 'var(--c-primario-texto)' : TEXT_MUTED,
                   fontSize: 15, fontWeight: 700, cursor: seleccionada !== null ? 'pointer' : 'default',
                 }}
               >
@@ -276,11 +276,11 @@ export default function PreguntaTest({
                   }}
                   style={{
                     width: '100%', height: 42, borderRadius: 12, border: 'none', boxShadow: SOMBRA,
-                    background: 'white', color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    background: 'var(--c-superficie)', color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, cursor: 'pointer',
                   }}
                 >
                   Dejar en blanco
-                  <span style={{ fontSize: 11, color: restaBlanco ? '#D97706' : '#16A34A', marginLeft: 6, fontWeight: 500 }}>
+                  <span style={{ fontSize: 11, color: restaBlanco ? 'var(--hx-d97706)' : 'var(--hx-16a34a)', marginLeft: 6, fontWeight: 500 }}>
                     · {restaBlanco ? `resta ${restaBlanco}` : 'no resta'}
                   </span>
                 </button>
@@ -289,7 +289,7 @@ export default function PreguntaTest({
           ) : (
             <button
               onClick={siguiente}
-              style={{ width: '100%', height: 52, borderRadius: 14, border: 'none', background: '#0f172a', color: 'white', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+              style={{ width: '100%', height: 52, borderRadius: 14, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
             >
               {ultima ? 'Ver resultados' : 'Siguiente pregunta'}
             </button>
@@ -309,10 +309,10 @@ function RelojPregunta({ segundos, pct, color }: { segundos: number; pct: number
   return (
     <div
       aria-label={`Quedan ${segundos} segundos`}
-      style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
       <svg width={D} height={D} style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-        <circle cx={D / 2} cy={D / 2} r={r - 2} fill="none" stroke="#EEF0F3" strokeWidth={g} />
+        <circle cx={D / 2} cy={D / 2} r={r - 2} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={g} />
         <circle
           cx={D / 2} cy={D / 2} r={r - 2} fill="none" stroke={color} strokeWidth={g} strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={c - (pct / 100) * c}

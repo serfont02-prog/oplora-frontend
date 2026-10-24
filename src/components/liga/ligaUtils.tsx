@@ -5,8 +5,9 @@
 import { Trophy } from 'lucide-react';
 import { getOploUrl } from '@/lib/oplo';
 
-export const COLOR_LIGA = '#C2410C';
-export const BG_LIGA = '#FCEEE8';
+// Variables CSS: siguen el modo claro/oscuro. No concatenar sufijos de transparencia (usar color-mix).
+export const COLOR_LIGA = 'var(--c-liga)';
+export const BG_LIGA = 'var(--c-liga-bg)';
 
 export const HEX_COPA: Record<string, string> = {
   oro: '#EAB308',
@@ -109,7 +110,7 @@ export function CopaBadge({ color, veces, size = 22 }: { color: string | null; v
   return (
     <span
       title={NOMBRE_COPA[color] ?? 'Copa'}
-      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size, borderRadius: '50%', background: 'white', boxShadow: '0 0 0 1.5px ' + hex, flexShrink: 0 }}
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: '0 0 0 1.5px ' + hex, flexShrink: 0 }}
     >
       <Trophy size={Math.round(size * 0.6)} color={hex} strokeWidth={2.2} />
       {veces != null && veces > 1 && (
@@ -141,7 +142,7 @@ export function AvatarMini({ usuario, size = 30 }: { usuario: any; size?: number
   const src = usuario?.tipoAvatar === 'foto' && usuario?.avatarUrl ? usuario.avatarUrl : getOploUrl(1);
   return (
     <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-      <img src={src} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', background: '#F1F5F9' }} />
+      <img src={src} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', background: 'var(--c-superficie-2)' }} />
       <CopaEnAvatar copa={usuario?.copaLiga} size={size} />
     </span>
   );

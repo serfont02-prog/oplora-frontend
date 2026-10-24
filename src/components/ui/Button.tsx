@@ -13,7 +13,7 @@ const variantStyles: Record<ButtonVariant, CSSProperties> = {
   primary: {
     background: 'var(--op-color-primary)',
     borderColor: 'var(--op-color-primary)',
-    color: '#ffffff',
+    color: 'var(--hx-ffffff)',
     boxShadow: '0 10px 20px rgba(31, 124, 255, 0.18)',
   },
   secondary: {

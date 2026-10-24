@@ -3,8 +3,8 @@
 import { CheckCircle2, Clock3, ClipboardCheck, Layers, Target, Sparkles, Home } from 'lucide-react';
 import { TEXT_PRIMARY, TEXT_SECONDARY, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 
-const BG_APP = '#EAF0FF';
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const BG_APP = 'var(--c-bg-dashboard)';
+const SOMBRA = 'var(--c-sombra)';
 
 export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void }) {
   return (
@@ -12,7 +12,7 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
       <section style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Hero — mismo estilo oscuro sólido que el resto de la app */}
-        <div style={{ background: '#0f172a', borderRadius: '18px', padding: '20px 18px', color: 'white', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ background: 'var(--hxhero-0f172a)', borderRadius: '18px', padding: '20px 18px', color: 'white', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             padding: '4px 10px', borderRadius: 999,
@@ -27,7 +27,7 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
             Tu primer entrenamiento OPLORA
           </h1>
 
-          <p style={{ fontSize: 13, lineHeight: 1.6, color: '#94a3b8', margin: 0 }}>
+          <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--hx-94a3b8)', margin: 0 }}>
             En unos minutos verás cómo se entrena: preguntas cortas, corrección inmediata y repaso para convertir cada fallo en avance.
           </p>
         </div>
@@ -40,10 +40,10 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
         </div>
 
         {/* Pasos — tarjeta plana única, sin cajas anidadas */}
-        <div style={{ background: 'white', borderRadius: '18px', padding: '16px', boxShadow: SOMBRA, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: '18px', padding: '16px', boxShadow: SOMBRA, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Step
-            icon={<ClipboardCheck size={18} color="#4D7C0F" />}
-            bg="#F3FAE9"
+            icon={<ClipboardCheck size={18} color="var(--hx-4d7c0f)" />}
+            bg="var(--hx-f3fae9)"
             title="Primero calibramos"
             text="Un mini test nos ayuda a entender tu punto de partida."
           />
@@ -54,8 +54,8 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
             text="Verás flashcards para fijar ideas clave sin saturarte."
           />
           <Step
-            icon={<Home size={18} color="#1F7CFF" />}
-            bg="#EAF0FF"
+            icon={<Home size={18} color="var(--hx-1f7cff)" />}
+            bg="var(--hx-eaf0ff)"
             title="Después cambia tu inicio"
             text="Cuando acabes, pasarás a estado activo y OPLORA te mostrará el entrenamiento diario."
           />
@@ -65,7 +65,7 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
           onClick={onNext}
           style={{
             width: '100%', border: 'none', borderRadius: '12px', padding: '14px 18px',
-            background: '#111827', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
           }}
         >
           Empezar
@@ -78,7 +78,7 @@ export function OnboardingEntrenamientoIntro({ onNext }: { onNext: () => void })
 function Metric({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: TEXT_PRIMARY, fontSize: 12, fontWeight: 600 }}>
-      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, color: '#1F7CFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, color: 'var(--hx-1f7cff)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {icon}
       </div>
       {label}

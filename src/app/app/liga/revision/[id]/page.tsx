@@ -10,10 +10,10 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { COLOR_LIGA, BG_LIGA, formatoNota, formatoPuntos, formatoTiempo, mensajeError } from '@/components/liga/ligaUtils';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_MUTED = '#6B7280';
-const VERDE = '#16A34A';
-const ROJO = '#DC2626';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_MUTED = 'var(--hx-6b7280)';
+const VERDE = 'var(--hx-16a34a)';
+const ROJO = 'var(--hx-dc2626)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 type Filtro = 'todas' | 'fallos' | 'blanco';
@@ -45,14 +45,14 @@ export default function RevisionJornadaPage() {
   const j = data?.jornada;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F8F9FA', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--c-bg-neutral)', paddingBottom: 40 }}>
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={() => router.push('/app/liga')}
             aria-label="Volver"
-            style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={17} color={TEXT_PRIMARY} />
           </button>
@@ -66,7 +66,7 @@ export default function RevisionJornadaPage() {
 
         {isLoading && <div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
         {error && (
-          <div style={{ background: 'white', borderRadius: 16, padding: 16, fontSize: 13, color: TEXT_MUTED }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: 16, fontSize: 13, color: TEXT_MUTED }}>
             {mensajeError(error, 'No se ha podido cargar la revisión')}
           </div>
         )}
@@ -74,7 +74,7 @@ export default function RevisionJornadaPage() {
         {data && (
           <>
             {r?.enviado ? (
-              <div style={{ background: 'white', borderRadius: 18, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                 <Dato titulo="Nota" valor={formatoNota(r.nota)} />
                 <Dato titulo="Puesto" valor={r.posicion != null ? `${r.posicion}º` : '—'} />
                 <Dato titulo="Puntos" valor={r.puntos != null ? `+${formatoPuntos(r.puntos)}` : '—'} color={COLOR_LIGA} />
@@ -89,7 +89,7 @@ export default function RevisionJornadaPage() {
             )}
 
             {r?.enviado && (
-              <div style={{ display: 'flex', background: 'white', borderRadius: 12, padding: 4, gap: 4 }}>
+              <div style={{ display: 'flex', background: 'var(--c-superficie)', borderRadius: 12, padding: 4, gap: 4 }}>
                 {([
                   ['todas', 'Todas'],
                   ['fallos', 'Fallos'],
@@ -98,7 +98,7 @@ export default function RevisionJornadaPage() {
                   <button
                     key={k}
                     onClick={() => setFiltro(k)}
-                    style={{ flex: 1, border: 'none', borderRadius: 9, padding: '8px 0', cursor: 'pointer', fontSize: 12, fontWeight: 700, background: filtro === k ? '#111827' : 'transparent', color: filtro === k ? 'white' : TEXT_MUTED }}
+                    style={{ flex: 1, border: 'none', borderRadius: 9, padding: '8px 0', cursor: 'pointer', fontSize: 12, fontWeight: 700, background: filtro === k ? 'var(--hxbg-111827)' : 'transparent', color: filtro === k ? 'var(--c-primario-texto)' : TEXT_MUTED }}
                   >
                     {label}
                   </button>
@@ -107,7 +107,7 @@ export default function RevisionJornadaPage() {
             )}
 
             {preguntas.length === 0 && (
-              <div style={{ background: 'white', borderRadius: 16, padding: 16, fontSize: 13, color: TEXT_MUTED, textAlign: 'center' }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: 16, fontSize: 13, color: TEXT_MUTED, textAlign: 'center' }}>
                 {filtro === 'fallos' ? '¡Ningún fallo!' : filtro === 'blanco' ? 'No dejaste ninguna en blanco.' : 'No hay preguntas.'}
               </div>
             )}
@@ -115,9 +115,9 @@ export default function RevisionJornadaPage() {
             {preguntas.map((p: any) => {
               const acierto = p.tuRespuesta != null && p.tuRespuesta === p.correcta;
               const fallo = p.tuRespuesta != null && p.tuRespuesta !== p.correcta;
-              const borde = !r?.enviado ? '#F1F5F9' : acierto ? VERDE : fallo ? ROJO : '#D1D5DB';
+              const borde = !r?.enviado ? 'var(--hx-f1f5f9)' : acierto ? VERDE : fallo ? ROJO : 'var(--hx-d1d5db)';
               return (
-                <div key={p.id ?? p.n} style={{ background: 'white', borderRadius: 16, padding: 14, borderLeft: `4px solid ${borde}` }}>
+                <div key={p.id ?? p.n} style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: 14, borderLeft: `4px solid ${borde}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED }}>Pregunta {p.n}</span>
                     {r?.enviado && (
@@ -133,11 +133,11 @@ export default function RevisionJornadaPage() {
                     {(p.opciones ?? []).map((op: string, i: number) => {
                       const esCorrecta = i === p.correcta;
                       const esTuya = i === p.tuRespuesta;
-                      const fondo = esCorrecta ? '#F0FDF4' : esTuya ? '#FEF2F2' : 'white';
-                      const linea = esCorrecta ? VERDE : esTuya ? ROJO : '#E5E7EB';
+                      const fondo = esCorrecta ? 'var(--hx-f0fdf4)' : esTuya ? 'var(--hx-fef2f2)' : 'white';
+                      const linea = esCorrecta ? VERDE : esTuya ? ROJO : 'var(--hx-e5e7eb)';
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 11px', borderRadius: 11, background: fondo, border: `1px solid ${linea}` }}>
-                          <span style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, background: esCorrecta ? VERDE : esTuya ? ROJO : '#F3F4F6', color: esCorrecta || esTuya ? 'white' : TEXT_MUTED }}>
+                          <span style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, background: esCorrecta ? VERDE : esTuya ? ROJO : 'var(--hx-f3f4f6)', color: esCorrecta || esTuya ? 'white' : TEXT_MUTED }}>
                             {esCorrecta ? <Check size={13} /> : esTuya ? <XIcon size={13} /> : LETRAS[i] ?? i + 1}
                           </span>
                           <span style={{ fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.45, paddingTop: 1 }}>
@@ -150,7 +150,7 @@ export default function RevisionJornadaPage() {
                   </div>
 
                   {p.explicacion && (
-                    <div style={{ marginTop: 10, background: '#F8F9FA', borderRadius: 11, padding: '9px 11px', fontSize: 12, color: TEXT_MUTED, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                    <div style={{ marginTop: 10, background: 'var(--hx-f8f9fa)', borderRadius: 11, padding: '9px 11px', fontSize: 12, color: TEXT_MUTED, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
                       {p.explicacion}
                     </div>
                   )}
@@ -166,7 +166,7 @@ export default function RevisionJornadaPage() {
 
 function Dato({ titulo, valor, color }: { titulo: string; valor: React.ReactNode; color?: string }) {
   return (
-    <div style={{ background: '#F8F9FA', borderRadius: 10, padding: '9px 4px', textAlign: 'center' }}>
+    <div style={{ background: 'var(--hx-f8f9fa)', borderRadius: 10, padding: '9px 4px', textAlign: 'center' }}>
       <div style={{ fontSize: 16, fontWeight: 800, color: color ?? TEXT_PRIMARY }}>{valor}</div>
       <div style={{ fontSize: 10, color: TEXT_MUTED }}>{titulo}</div>
     </div>

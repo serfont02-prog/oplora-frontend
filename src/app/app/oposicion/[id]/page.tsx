@@ -24,16 +24,16 @@ const tipoDocLabel: Record<string, string> = {
 };
 
 const tipoDocColor: Record<string, { bg: string; color: string }> = {
-  resolucion_convocatoria:      { bg: '#FAEEDA', color: '#854F0B' },
-  lista_admitidos_provisional:  { bg: '#EAF3DE', color: '#3B6D11' },
-  lista_admitidos_definitiva:   { bg: '#EAF3DE', color: '#3B6D11' },
-  lista_excluidos_provisional:  { bg: '#FCEBEB', color: '#A32D2D' },
-  lista_excluidos_definitiva:   { bg: '#FCEBEB', color: '#A32D2D' },
-  cronograma:                   { bg: '#E6F1FB', color: '#185FA5' },
-  nota_informativa:             { bg: '#F1EFE8', color: '#5F5E5A' },
-  normas_especificas:           { bg: '#FAEEDA', color: '#854F0B' },
-  guia_inscripcion:             { bg: '#F1EFE8', color: '#5F5E5A' },
-  otro:                         { bg: '#F1EFE8', color: '#5F5E5A' },
+  resolucion_convocatoria:      { bg: 'var(--hx-faeeda)', color: 'var(--hx-854f0b)' },
+  lista_admitidos_provisional:  { bg: 'var(--hx-eaf3de)', color: 'var(--hx-3b6d11)' },
+  lista_admitidos_definitiva:   { bg: 'var(--hx-eaf3de)', color: 'var(--hx-3b6d11)' },
+  lista_excluidos_provisional:  { bg: 'var(--hx-fcebeb)', color: 'var(--hx-a32d2d)' },
+  lista_excluidos_definitiva:   { bg: 'var(--hx-fcebeb)', color: 'var(--hx-a32d2d)' },
+  cronograma:                   { bg: 'var(--hx-e6f1fb)', color: 'var(--hx-185fa5)' },
+  nota_informativa:             { bg: 'var(--hx-f1efe8)', color: 'var(--hx-5f5e5a)' },
+  normas_especificas:           { bg: 'var(--hx-faeeda)', color: 'var(--hx-854f0b)' },
+  guia_inscripcion:             { bg: 'var(--hx-f1efe8)', color: 'var(--hx-5f5e5a)' },
+  otro:                         { bg: 'var(--hx-f1efe8)', color: 'var(--hx-5f5e5a)' },
 };
 
 export default function OposicionDocumentosPage() {
@@ -83,7 +83,7 @@ export default function OposicionDocumentosPage() {
  
     if (cargando || isLoading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL }}>
-      <div style={{ fontSize: '14px', color: '#9ca3af' }}>Cargando...</div>
+      <div style={{ fontSize: '14px', color: 'var(--hx-9ca3af)' }}>Cargando...</div>
     </div>
   );
 
@@ -93,16 +93,16 @@ export default function OposicionDocumentosPage() {
     <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: '90px' }}>
 
       {/* Header sticky */}
-      <div style={{ background: 'white', borderBottom: '1px solid #f3f4f6', padding: '0 1.25rem', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f3f4f6)', padding: '0 1.25rem', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 0', maxWidth: '560px', margin: '0 auto' }}>
           <button
             onClick={() => router.push('/app/dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--hx-6b7280)', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={14} />
             Inicio
           </button>
-          <span style={{ fontSize: '12px', fontWeight: 500, color: '#111827', textAlign: 'center', lineHeight: 1.4 }}>
+          <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--hx-111827)', textAlign: 'center', lineHeight: 1.4 }}>
             Documentos oficiales
           </span>
           <span style={{ width: '50px', flexShrink: 0 }} />
@@ -113,7 +113,7 @@ export default function OposicionDocumentosPage() {
 
         {/* Hero oscuro */}
         <div style={{
-          background: '#0f172a',
+          background: 'var(--hxhero-0f172a)',
           borderRadius: '16px',
           padding: '18px 16px',
           color: 'white',
@@ -123,7 +123,7 @@ export default function OposicionDocumentosPage() {
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
             <div>
-              <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{ fontSize: '11px', color: 'var(--hx-94a3b8)', fontWeight: 500, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Documentos oficiales
               </div>
               <div style={{ fontSize: '16px', fontWeight: 700, lineHeight: 1.3 }}>
@@ -134,7 +134,7 @@ export default function OposicionDocumentosPage() {
               fontSize: '10px', fontWeight: 600, padding: '3px 9px',
               borderRadius: '999px', flexShrink: 0, marginTop: '2px',
               background: convocatoriaActiva ? 'rgba(22,163,74,0.2)' : 'rgba(239,68,68,0.15)',
-              color: convocatoriaActiva ? '#4ade80' : '#fca5a5',
+              color: convocatoriaActiva ? '#4ade80' : 'var(--hx-fca5a5)',
             }}>
               {convocatoriaActiva ? 'Activa' : 'Cerrada'}
             </span>
@@ -142,17 +142,17 @@ export default function OposicionDocumentosPage() {
 
           {convoc && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '12px', color: '#94a3b8' }}>Convocatoria {convoc.anyo}</span>
+              <span style={{ fontSize: '12px', color: 'var(--hx-94a3b8)' }}>Convocatoria {convoc.anyo}</span>
               {convoc.plazas && (
                 <>
-                  <span style={{ fontSize: '12px', color: '#475569' }}>·</span>
-                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>{convoc.plazas.toLocaleString()} plazas</span>
+                  <span style={{ fontSize: '12px', color: 'var(--hx-475569)' }}>·</span>
+                  <span style={{ fontSize: '12px', color: 'var(--hx-94a3b8)' }}>{convoc.plazas.toLocaleString()} plazas</span>
                 </>
               )}
               {!cargandoDocs && (
                 <>
-                  <span style={{ fontSize: '12px', color: '#475569' }}>·</span>
-                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>{documentos.length} documentos</span>
+                  <span style={{ fontSize: '12px', color: 'var(--hx-475569)' }}>·</span>
+                  <span style={{ fontSize: '12px', color: 'var(--hx-94a3b8)' }}>{documentos.length} documentos</span>
                 </>
               )}
             </div>
@@ -161,21 +161,21 @@ export default function OposicionDocumentosPage() {
 
         {/* Lista de documentos */}
         {cargandoDocs ? (
-          <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', padding: '2rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando documentos...</div>
+          <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: '14px', padding: '2rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)' }}>Cargando documentos...</div>
           </div>
         ) : documentos.length === 0 ? (
-          <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', padding: '3rem', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <FileText size={22} color="#9ca3af" />
+          <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: '14px', padding: '3rem', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--hx-f3f4f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <FileText size={22} color="var(--hx-9ca3af)" />
             </div>
-            <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827', marginBottom: '4px' }}>Sin documentos</div>
-            <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--hx-111827)', marginBottom: '4px' }}>Sin documentos</div>
+            <div style={{ fontSize: '12px', color: 'var(--hx-9ca3af)' }}>
               No hay documentos publicados para esta convocatoria
             </div>
           </div>
         ) : (
-        <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: '14px', overflow: 'hidden' }}>
           {documentos.map((doc: any, i: number) => {
             const color = tipoDocColor[doc.tipo] ?? tipoDocColor.otro;
             return (
@@ -189,13 +189,13 @@ export default function OposicionDocumentosPage() {
                   alignItems: 'center',
                   gap: '12px',
                   padding: '13px 14px',
-                  borderBottom: i < documentos.length - 1 ? '1px solid #f3f4f6' : 'none',
+                  borderBottom: i < documentos.length - 1 ? '1px solid var(--hx-f3f4f6)' : 'none',
                   textDecoration: 'none',
-                  background: 'white',
+                  background: 'var(--c-superficie)',
                   transition: 'background 0.1s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hx-f9fafb)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-superficie)')}
               >
                 <div style={{
                   width: '36px', height: '36px', borderRadius: '10px',
@@ -205,15 +205,15 @@ export default function OposicionDocumentosPage() {
                   <FileText size={15} color={color.color} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--hx-111827)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {doc.titulo}
                   </div>
                   {doc.descripcion && (
-                    <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '3px', lineHeight: 1.4 }}>
+                    <div style={{ fontSize: '11px', color: 'var(--hx-6b7280)', marginTop: '3px', lineHeight: 1.4 }}>
                       {doc.descripcion}
                     </div>
                   )}
-                  <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '3px', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--hx-9ca3af)', marginTop: '3px', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span style={{ padding: '1px 6px', borderRadius: '20px', fontWeight: 500, background: color.bg, color: color.color, fontSize: '10px' }}>
                       {tipoDocLabel[doc.tipo] ?? 'Doc'}
                     </span>
@@ -222,7 +222,7 @@ export default function OposicionDocumentosPage() {
                     {doc.subtipo && <><span>·</span><span>{doc.subtipo.replace('_', ' ')}</span></>}
                   </div>
                 </div>
-                <ExternalLink size={13} color="#d1d5db" style={{ flexShrink: 0 }} />
+                <ExternalLink size={13} color="var(--hx-d1d5db)" style={{ flexShrink: 0 }} />
               </a>
             );
           })}

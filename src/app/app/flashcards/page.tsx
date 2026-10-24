@@ -15,9 +15,9 @@ import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_FC_BG, BG_FLASHCARDS } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const BORDER = '#F3EEF5';
-const COLOR_DUDOSA = '#D97706';
+const SOMBRA = 'var(--c-sombra)';
+const BORDER = 'var(--hx-f3eef5)';
+const COLOR_DUDOSA = 'var(--hx-d97706)';
 const TEMAS_VISIBLES = 6;
 const MAX_SESION = 30;
 const MAX_CONTEO = 99; // el endpoint devuelve 10 si no se le pasa límite
@@ -32,7 +32,7 @@ function Donut({ porcentaje, color, size, grosor }: { porcentaje: number; color:
   const offset = circunferencia - (Math.max(0, Math.min(100, porcentaje)) / 100) * circunferencia;
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', position: 'absolute', inset: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="#EEF0F3" strokeWidth={grosor} />
+      <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={grosor} />
       {porcentaje > 0 && (
         <circle cx={size / 2} cy={size / 2} r={radio} fill="none" stroke={color} strokeWidth={grosor} strokeLinecap="round"
           strokeDasharray={circunferencia} strokeDashoffset={offset} style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
@@ -46,7 +46,7 @@ function CirculoDato({ valor, porcentaje, color, label, sub }: { valor: string; 
   const D = 78;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ position: 'absolute', inset: 6 }}>
           <Donut porcentaje={porcentaje} color={color} size={D - 12} grosor={6} />
         </div>
@@ -132,7 +132,7 @@ export default function FlashcardsPage() {
           <button
             onClick={() => router.push('/app/entrenamiento')}
             aria-label="Volver a Practicar"
-            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
@@ -154,10 +154,10 @@ export default function FlashcardsPage() {
         {/* Repaso de hoy — acción principal */}
         <section>
           <TituloSeccion>Repaso de hoy</TituloSeccion>
-          <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_FC_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {nPendientes > 0 ? <Layers size={20} color={COLOR_FC} /> : <CheckCircle2 size={20} color="#16A34A" />}
+                {nPendientes > 0 ? <Layers size={20} color={COLOR_FC} /> : <CheckCircle2 size={20} color="var(--hx-16a34a)" />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>
@@ -177,11 +177,11 @@ export default function FlashcardsPage() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
                   <span style={{ fontSize: 11, color: TEXT_MUTED }}>Flashcards de hoy</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: limiteAgotado ? '#DC2626' : TEXT_PRIMARY }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: limiteAgotado ? 'var(--hx-dc2626)' : TEXT_PRIMARY }}>
                     {hechasHoy} de {limiteDia}
                   </span>
                 </div>
-                <div style={{ height: 6, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ height: 6, background: 'var(--hx-eef0f3)', borderRadius: 999, overflow: 'hidden' }}>
                   <div style={{ width: `${limiteDia > 0 ? Math.min(100, (hechasHoy / limiteDia) * 100) : 0}%`, height: '100%', background: limiteAgotado ? '#DC2626' : COLOR_FC, borderRadius: 999, transition: 'width 0.5s ease' }} />
                 </div>
               </div>
@@ -192,7 +192,7 @@ export default function FlashcardsPage() {
                 onClick={() => (limiteAgotado
                   ? router.push('/app/suscripciones')
                   : router.push(`/app/flashcards/repasar?oposicionId=${oposicionId}&n=${nSesion}`))}
-                style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: '#0f172a', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 {limiteAgotado
                   ? 'Límite de hoy alcanzado · Ver planes'
@@ -212,7 +212,7 @@ export default function FlashcardsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, padding: '0 4px' }}>
               <CirculoDato valor={`${pct(dominadas)}%`} porcentaje={pct(dominadas)} color={COLOR_FC} label="Dominadas" sub={`${dominadas.toLocaleString('es-ES')} tarjetas`} />
               <CirculoDato valor={dudosas.toLocaleString('es-ES')} porcentaje={pct(dudosas)} color={COLOR_DUDOSA} label="Dudosas" sub="Necesitan repaso" />
-              <CirculoDato valor={sinVer.toLocaleString('es-ES')} porcentaje={pct(sinVer)} color="#94A3B8" label="Sin ver" sub="Aún por estrenar" />
+              <CirculoDato valor={sinVer.toLocaleString('es-ES')} porcentaje={pct(sinVer)} color="var(--hx-94a3b8)" label="Sin ver" sub="Aún por estrenar" />
             </div>
           </section>
         )}
@@ -220,7 +220,7 @@ export default function FlashcardsPage() {
         {/* Practicar por tema */}
         <section>
           <TituloSeccion>Practicar por tema</TituloSeccion>
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
             {cargandoTemas && (
               <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>Cargando temas…</div>
             )}
@@ -243,7 +243,7 @@ export default function FlashcardsPage() {
                 <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, color: TEXT_PRIMARY, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                   {t.titulo}
                 </div>
-                <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+                <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
               </button>
             ))}
             {temas.length > TEMAS_VISIBLES && (

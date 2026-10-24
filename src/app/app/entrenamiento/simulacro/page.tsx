@@ -38,7 +38,7 @@ export default function SeleccionarSimulacroPage() {
               <button
                 key={href}
                 onClick={() => router.push(href)}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', background: 'white', border: 'none', borderRadius: 18, padding: 16, boxShadow: SOMBRA, cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', background: 'var(--c-superficie)', border: 'none', borderRadius: 18, padding: 16, boxShadow: SOMBRA, cursor: 'pointer' }}
               >
                 <div style={{ width: 44, height: 44, borderRadius: 13, background: COLOR_SIMULACRO_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={22} color={COLOR_SIMULACRO} />
@@ -47,7 +47,7 @@ export default function SeleccionarSimulacroPage() {
                   <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>{titulo}</div>
                   <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.45 }}>{texto}</div>
                 </div>
-                <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+                <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
               </button>
             ))}
           </div>

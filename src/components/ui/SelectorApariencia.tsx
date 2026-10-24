@@ -27,9 +27,9 @@ export default function SelectorApariencia() {
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 6px',
               borderRadius: 14, cursor: 'pointer',
-              border: activo ? '1.5px solid #1F7CFF' : '1px solid #EEF0F3',
-              background: activo ? '#EAF0FF' : 'white',
-              color: activo ? '#1F5FD1' : '#475569',
+              border: activo ? '1.5px solid var(--c-azul)' : '1px solid var(--c-borde)',
+              background: activo ? 'var(--c-azul-bg)' : 'var(--c-superficie)',
+              color: activo ? 'var(--c-azul)' : 'var(--c-texto-2)',
               fontSize: 12, fontWeight: 700,
             }}
           >

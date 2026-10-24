@@ -13,7 +13,7 @@ import { ArrowLeft, X, Clock, CheckCircle2, XCircle, Lightbulb, Medal } from 'lu
 import { IconoModalidad } from '@/components/psicotecnicos/iconos';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_PSICO, COLOR_PSICO_BG } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const SOMBRA = 'var(--c-sombra)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 const DIFICULTAD_LABEL: Record<string, string> = {
@@ -30,7 +30,7 @@ function BotonVolver({ onClick, label = 'Volver' }: { onClick: () => void; label
     <button
       onClick={onClick}
       aria-label={label}
-      style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+      style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
     >
       <ArrowLeft size={18} color={TEXT_PRIMARY} />
     </button>
@@ -44,8 +44,8 @@ function Chip({ activo, onClick, children, ancho = false }: { activo: boolean; o
       style={{
         flex: ancho ? 1 : undefined, padding: ancho ? '10px' : '8px 14px', borderRadius: ancho ? 12 : 999,
         fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none',
-        background: activo ? '#0f172a' : '#F3F4F6',
-        color: activo ? 'white' : TEXT_SECONDARY,
+        background: activo ? 'var(--hxbg-0f172a)' : 'var(--hx-f3f4f6)',
+        color: activo ? 'var(--c-primario-texto)' : TEXT_SECONDARY,
         transition: 'background 0.15s ease, color 0.15s ease',
       }}
     >
@@ -227,7 +227,7 @@ export default function PsicotecnicoTipoPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 12 }}>
             <IconoModalidad tipo={tipo} size={44} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.45 }}>{modalidad?.descripcion}</div>
@@ -241,7 +241,7 @@ export default function PsicotecnicoTipoPage() {
 
           <section>
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Número de preguntas</div>
-            <div style={{ background: 'white', borderRadius: 18, padding: 12, boxShadow: SOMBRA, display: 'flex', gap: 8 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 12, boxShadow: SOMBRA, display: 'flex', gap: 8 }}>
               {[5, 10, 20].map((n) => (
                 <Chip key={n} ancho activo={numPreguntas === n} onClick={() => setNumPreguntas(n)}>{n}</Chip>
               ))}
@@ -251,7 +251,7 @@ export default function PsicotecnicoTipoPage() {
           {modalidad?.dificultadesDisponibles?.length > 0 && (
             <section>
               <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Dificultad</div>
-              <div style={{ background: 'white', borderRadius: 18, padding: 12, boxShadow: SOMBRA, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 12, boxShadow: SOMBRA, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Chip activo={!dificultad} onClick={() => setDificultad(null)}>Mixta</Chip>
                 {modalidad.dificultadesDisponibles.map((d: string) => (
                   <Chip key={d} activo={dificultad === d} onClick={() => setDificultad(d)}>{DIFICULTAD_LABEL[d] ?? d}</Chip>
@@ -261,7 +261,7 @@ export default function PsicotecnicoTipoPage() {
           )}
 
           {errorInicio && (
-            <div style={{ fontSize: 13, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px', lineHeight: 1.4 }}>
+            <div style={{ fontSize: 13, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 12, padding: '10px 12px', lineHeight: 1.4 }}>
               {errorInicio}
             </div>
           )}
@@ -269,7 +269,7 @@ export default function PsicotecnicoTipoPage() {
           <button
             onClick={iniciar}
             disabled={iniciando || !oposicionId}
-            style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: iniciando ? 'default' : 'pointer', opacity: iniciando ? 0.7 : 1 }}
+            style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: iniciando ? 'default' : 'pointer', opacity: iniciando ? 0.7 : 1 }}
           >
             {iniciando ? 'Preparando…' : 'Empezar a entrenar'}
           </button>
@@ -293,7 +293,7 @@ export default function PsicotecnicoTipoPage() {
             <button
               onClick={() => setConfirmarSalida(true)}
               aria-label="Salir del entrenamiento"
-              style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
               <X size={17} color={TEXT_PRIMARY} />
             </button>
@@ -302,21 +302,21 @@ export default function PsicotecnicoTipoPage() {
                 <span>Pregunta {indice + 1} de {preguntas.length}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} />{formatearTiempo(segundos)}</span>
               </div>
-              <div style={{ height: 6, background: 'rgba(255,255,255,0.8)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ height: 6, background: 'color-mix(in srgb, var(--c-superficie) 80%, transparent)', borderRadius: 999, overflow: 'hidden' }}>
                 <div style={{ width: `${((indice + 1) / preguntas.length) * 100}%`, height: '100%', background: COLOR_PSICO, borderRadius: 999, transition: 'width 0.3s' }} />
               </div>
             </div>
           </div>
 
           {confirmarSalida && (
-            <div style={{ background: 'white', borderRadius: 14, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 14, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ flex: 1, fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.4 }}>¿Salir? Este entrenamiento no se guardará.</div>
-              <button onClick={() => setConfirmarSalida(false)} style={{ border: 'none', background: '#F3F4F6', color: TEXT_SECONDARY, borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Seguir</button>
+              <button onClick={() => setConfirmarSalida(false)} style={{ border: 'none', background: 'var(--hx-f3f4f6)', color: TEXT_SECONDARY, borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Seguir</button>
               <button onClick={() => { setFase('config'); setConfirmarSalida(false); }} style={{ border: 'none', background: '#DC2626', color: 'white', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Salir</button>
             </div>
           )}
 
-          <div style={{ background: 'white', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 14 }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 14 }}>
             {preguntaActual.imagenUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={preguntaActual.imagenUrl} alt="" style={{ width: '100%', borderRadius: 10, marginBottom: 14 }} />
@@ -332,7 +332,7 @@ export default function PsicotecnicoTipoPage() {
               const esLaCorrecta = corregida && op.trim() === correctaTexto!.trim();
               // Solo se marca el fallo cuando ya llegó la solución (antes parpadeaba en rojo).
               const esIncorrectaElegida = corregida && esElegida && !esCorrecta;
-              const colorLetra = esLaCorrecta ? '#16A34A' : esIncorrectaElegida ? '#DC2626' : esElegida ? COLOR_PSICO : TEXT_SECONDARY;
+              const colorLetra = esLaCorrecta ? 'var(--hx-16a34a)' : esIncorrectaElegida ? 'var(--hx-dc2626)' : esElegida ? COLOR_PSICO : TEXT_SECONDARY;
 
               return (
                 <button
@@ -343,8 +343,8 @@ export default function PsicotecnicoTipoPage() {
                     textAlign: 'left', padding: '12px 14px', borderRadius: 14, fontSize: 14, fontWeight: 500,
                     cursor: mostrarCorreccion ? 'default' : 'pointer',
                     display: 'flex', alignItems: 'center', gap: 12,
-                    border: esLaCorrecta ? '2px solid #16A34A' : esIncorrectaElegida ? '2px solid #DC2626' : esElegida ? `2px solid ${COLOR_PSICO}` : '2px solid transparent',
-                    background: esLaCorrecta ? '#F0FDF4' : esIncorrectaElegida ? '#FEF2F2' : 'white',
+                    border: esLaCorrecta ? '2px solid var(--hx-16a34a)' : esIncorrectaElegida ? '2px solid var(--hx-dc2626)' : esElegida ? `2px solid ${COLOR_PSICO}` : '2px solid transparent',
+                    background: esLaCorrecta ? 'var(--hx-f0fdf4)' : esIncorrectaElegida ? 'var(--hx-fef2f2)' : 'var(--c-superficie)',
                     boxShadow: SOMBRA,
                     color: TEXT_PRIMARY,
                   }}
@@ -352,13 +352,13 @@ export default function PsicotecnicoTipoPage() {
                   <span style={{
                     width: 28, height: 28, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 12, fontWeight: 800, color: colorLetra,
-                    background: esLaCorrecta ? '#DCFCE7' : esIncorrectaElegida ? '#FEE2E2' : esElegida ? COLOR_PSICO_BG : '#F3F4F6',
+                    background: esLaCorrecta ? 'var(--hx-dcfce7)' : esIncorrectaElegida ? 'var(--hx-fee2e2)' : esElegida ? COLOR_PSICO_BG : 'var(--hx-f3f4f6)',
                   }}>
                     {LETRAS[i] ?? i + 1}
                   </span>
                   <span style={{ flex: 1, lineHeight: 1.4 }}>{op}</span>
-                  {esLaCorrecta && <CheckCircle2 size={18} color="#16A34A" style={{ flexShrink: 0 }} />}
-                  {esIncorrectaElegida && <XCircle size={18} color="#DC2626" style={{ flexShrink: 0 }} />}
+                  {esLaCorrecta && <CheckCircle2 size={18} color="var(--hx-16a34a)" style={{ flexShrink: 0 }} />}
+                  {esIncorrectaElegida && <XCircle size={18} color="var(--hx-dc2626)" style={{ flexShrink: 0 }} />}
                 </button>
               );
             })}
@@ -367,25 +367,25 @@ export default function PsicotecnicoTipoPage() {
           {mostrarCorreccion && (
             <>
               {errorCorreccion && (
-                <div style={{ fontSize: 12, color: TEXT_SECONDARY, background: 'white', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: TEXT_SECONDARY, background: 'var(--c-superficie)', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
                   No se ha podido mostrar la solución ahora. Tu respuesta se corregirá igualmente al terminar.
                 </div>
               )}
               {preguntaActual.explicacion && corregida && (
-                <div style={{ display: 'flex', gap: 8, background: 'white', borderRadius: 14, padding: 14, marginBottom: 14, fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.5, boxShadow: SOMBRA }}>
+                <div style={{ display: 'flex', gap: 8, background: 'var(--c-superficie)', borderRadius: 14, padding: 14, marginBottom: 14, fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.5, boxShadow: SOMBRA }}>
                   <Lightbulb size={16} color={COLOR_PSICO} style={{ flexShrink: 0, marginTop: 1 }} />
                   <span>{preguntaActual.explicacion}</span>
                 </div>
               )}
               {enviarResultado.isError && (
-                <div style={{ fontSize: 13, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
+                <div style={{ fontSize: 13, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
                   No se ha podido guardar el resultado. Comprueba la conexión y vuelve a intentarlo.
                 </div>
               )}
               <button
                 onClick={siguiente}
                 disabled={enviarResultado.isPending}
-                style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: enviarResultado.isPending ? 'default' : 'pointer', opacity: enviarResultado.isPending ? 0.7 : 1 }}
+                style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: enviarResultado.isPending ? 'default' : 'pointer', opacity: enviarResultado.isPending ? 0.7 : 1 }}
               >
                 {indice + 1 < preguntas.length ? 'Siguiente' : enviarResultado.isPending ? 'Guardando…' : enviarResultado.isError ? 'Reintentar' : 'Ver resultado'}
               </button>
@@ -402,7 +402,7 @@ export default function PsicotecnicoTipoPage() {
     const D = 132;
     const radio = (D - 24 - 10) / 2;
     const circ = 2 * Math.PI * radio;
-    const colorNota = pct >= 80 ? '#16A34A' : pct >= 50 ? COLOR_PSICO : '#D97706';
+    const colorNota = pct >= 80 ? 'var(--hx-16a34a)' : pct >= 50 ? COLOR_PSICO : 'var(--hx-d97706)';
     const mensaje = pct >= 80 ? '¡Muy bien!' : pct >= 50 ? 'Buen entrenamiento' : 'Sigue practicando';
 
     return (
@@ -420,9 +420,9 @@ export default function PsicotecnicoTipoPage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, paddingTop: 6 }}>
-            <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', width: D, height: D, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width={D - 24} height={D - 24} style={{ position: 'absolute', top: 12, left: 12, transform: 'rotate(-90deg)' }}>
-                <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={radio} fill="none" stroke="#EEF0F3" strokeWidth={10} />
+                <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={radio} fill="none" stroke="var(--hx-eef0f3)" strokeWidth={10} />
                 {pct > 0 && (
                   <circle cx={(D - 24) / 2} cy={(D - 24) / 2} r={radio} fill="none" stroke={colorNota} strokeWidth={10} strokeLinecap="round"
                     strokeDasharray={circ} strokeDashoffset={circ - (pct / 100) * circ} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
@@ -435,19 +435,19 @@ export default function PsicotecnicoTipoPage() {
             </div>
             <div style={{ fontSize: 17, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 6 }}>{mensaje}</div>
             {resultado.esMejorMarca && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#F0FDF4', color: '#15803D', fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 999 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--hx-f0fdf4)', color: 'var(--hx-15803d)', fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 999 }}>
                 <Medal size={14} /> Nueva mejor marca
               </div>
             )}
           </div>
 
-          <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', padding: '14px 6px' }}>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', padding: '14px 6px' }}>
             {[
-              { valor: `${resultado.correctas}`, label: 'Aciertos', color: '#16A34A' },
-              { valor: `${(resultado.totalPreguntas ?? 0) - (resultado.correctas ?? 0)}`, label: 'Fallos', color: '#DC2626' },
+              { valor: `${resultado.correctas}`, label: 'Aciertos', color: 'var(--hx-16a34a)' },
+              { valor: `${(resultado.totalPreguntas ?? 0) - (resultado.correctas ?? 0)}`, label: 'Fallos', color: 'var(--hx-dc2626)' },
               { valor: formatearTiempo(segundos), label: 'Tiempo', color: TEXT_PRIMARY },
             ].map((d, i) => (
-              <div key={d.label} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid #EEF0F3' : 'none' }}>
+              <div key={d.label} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--hx-eef0f3)' : 'none' }}>
                 <div style={{ fontSize: 19, fontWeight: 800, color: d.color }}>{d.valor}</div>
                 <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{d.label}</div>
               </div>
@@ -458,13 +458,13 @@ export default function PsicotecnicoTipoPage() {
             <button
               onClick={iniciar}
               disabled={iniciando}
-              style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: iniciando ? 0.7 : 1 }}
+              style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: iniciando ? 0.7 : 1 }}
             >
               {iniciando ? 'Preparando…' : 'Otra ronda igual'}
             </button>
             <button
               onClick={() => setFase('config')}
-              style={{ width: '100%', padding: 13, background: 'white', border: 'none', boxShadow: SOMBRA, color: TEXT_PRIMARY, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              style={{ width: '100%', padding: 13, background: 'var(--c-superficie)', border: 'none', boxShadow: SOMBRA, color: TEXT_PRIMARY, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >
               Cambiar preguntas o dificultad
             </button>
@@ -475,7 +475,7 @@ export default function PsicotecnicoTipoPage() {
               Elegir otra modalidad
             </button>
             {errorInicio && (
-              <div style={{ fontSize: 13, color: '#B91C1C', background: '#FEF2F2', borderRadius: 12, padding: '10px 12px' }}>{errorInicio}</div>
+              <div style={{ fontSize: 13, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 12, padding: '10px 12px' }}>{errorInicio}</div>
             )}
           </div>
         </div>

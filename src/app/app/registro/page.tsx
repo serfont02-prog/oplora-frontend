@@ -75,7 +75,7 @@ export default function RegistroPage() {
       encabezado={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
           {[1, 2].map((p) => (
-            <div key={p} style={{ flex: 1, height: 5, borderRadius: 999, background: p <= paso ? COLOR_MARCA : '#E5E7EB', transition: 'background 0.3s' }} />
+            <div key={p} style={{ flex: 1, height: 5, borderRadius: 999, background: p <= paso ? COLOR_MARCA : 'var(--hx-e5e7eb)', transition: 'background 0.3s' }} />
           ))}
           <span style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, flexShrink: 0 }}>Paso {paso} de 2</span>
         </div>
@@ -121,7 +121,7 @@ export default function RegistroPage() {
             placeholder="Otra vez la misma"
             value={form.passwordConfirm}
             onChange={cambiar('passwordConfirm')}
-            ayuda={coinciden ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#15803D' }}><Check size={12} /> Coinciden</span> : undefined}
+            ayuda={coinciden ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--hx-15803d)' }}><Check size={12} /> Coinciden</span> : undefined}
           />
 
           {error && <AvisoAuth>{error}</AvisoAuth>}

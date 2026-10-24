@@ -126,9 +126,9 @@ export default function SuscripcionesPage() {
           position: 'sticky',
           top: 0,
           zIndex: 20,
-          background: 'rgba(255,255,255,0.92)',
+          background: 'color-mix(in srgb, var(--c-superficie) 92%, transparent)',
           backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid var(--hx-e5e7eb)',
         }}
       >
         {/* VOLVER */}
@@ -149,7 +149,7 @@ export default function SuscripcionesPage() {
               alignItems: 'center',
               gap: 6,
               cursor: 'pointer',
-              color: '#6b7280',
+              color: 'var(--hx-6b7280)',
               fontSize: 13,
               fontWeight: 500,
             }}
@@ -173,8 +173,8 @@ export default function SuscripcionesPage() {
               gap: 6,
               padding: '6px 12px',
               borderRadius: 999,
-              background: '#EEF2FF',
-              color: '#4338CA',
+              background: 'var(--hx-eef2ff)',
+              color: 'var(--hx-4338ca)',
               fontSize: 12,
               fontWeight: 700,
               marginBottom: 14,
@@ -190,7 +190,7 @@ export default function SuscripcionesPage() {
               fontSize: 30,
               lineHeight: 1.1,
               fontWeight: 800,
-              color: '#0f172a',
+              color: 'var(--hx-0f172a)',
               margin: 0,
               marginBottom: 10,
             }}
@@ -201,7 +201,7 @@ export default function SuscripcionesPage() {
           <p
             style={{
               margin: 0,
-              color: '#64748b',
+              color: 'var(--hx-64748b)',
               fontSize: 14,
               lineHeight: 1.5,
             }}
@@ -235,13 +235,13 @@ export default function SuscripcionesPage() {
               onClick={() => setSuscripcionSeleccionada(suscripcion.id)}
               style={{
                 position: 'relative',
-                background: 'white',
+                background: 'var(--c-superficie)',
                 borderRadius: 22,
                 border: seleccionada
-                  ? '2px solid #0f172a'
+                  ? '2px solid var(--hx-0f172a)'
                   : suscripcion.recomendado
-                  ? '2px solid #1F7CFF'
-                  : '1px solid #e5e7eb',
+                  ? '2px solid var(--hx-1f7cff)'
+                  : '1px solid var(--hx-e5e7eb)',
                 padding: '1.4rem',
                 cursor: 'pointer',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
@@ -274,8 +274,8 @@ export default function SuscripcionesPage() {
                     position: 'absolute',
                     top: 14,
                     right: 14,
-                    background: '#DCFCE7',
-                    color: '#15803D',
+                    background: 'var(--hx-dcfce7)',
+                    color: 'var(--hx-15803d)',
                     fontSize: 11,
                     fontWeight: 700,
                     padding: '4px 10px',
@@ -300,7 +300,7 @@ export default function SuscripcionesPage() {
                     style={{
                       fontSize: 22,
                       fontWeight: 800,
-                      color: '#0f172a',
+                      color: 'var(--hx-0f172a)',
                     }}
                   >
                     {suscripcion.nombre}
@@ -309,7 +309,7 @@ export default function SuscripcionesPage() {
                   <div
                     style={{
                       fontSize: 13,
-                      color: '#64748b',
+                      color: 'var(--hx-64748b)',
                       marginTop: 4,
                     }}
                   >
@@ -322,7 +322,7 @@ export default function SuscripcionesPage() {
                     style={{
                       fontSize: 34,
                       fontWeight: 800,
-                      color: '#0f172a',
+                      color: 'var(--hx-0f172a)',
                       lineHeight: 1,
                     }}
                   >
@@ -332,7 +332,7 @@ export default function SuscripcionesPage() {
                   <div
                     style={{
                       fontSize: 12,
-                      color: '#94a3b8',
+                      color: 'var(--hx-94a3b8)',
                       marginTop: 4,
                     }}
                   >
@@ -360,15 +360,15 @@ export default function SuscripcionesPage() {
                     }}
                   >
                     {f.incluido ? (
-                      <Check size={15} color="#16A34A" />
+                      <Check size={15} color="var(--hx-16a34a)" />
                     ) : (
-                      <X size={15} color="#94A3B8" />
+                      <X size={15} color="var(--hx-94a3b8)" />
                     )}
 
                     <span
                       style={{
                         fontSize: 14,
-                        color: '#334155',
+                        color: 'var(--hx-334155)',
                       }}
                     >
                       {f.texto}
@@ -396,11 +396,11 @@ export default function SuscripcionesPage() {
                   borderRadius: 14,
                   border: 'none',
                   background: esActual
-                    ? '#e5e7eb'
+                    ? 'var(--hx-e5e7eb)'
                     : suscripcion.recomendado
-                    ? '#1F7CFF'
-                    : '#0f172a',
-                  color: esActual ? '#64748b' : 'white',
+                    ? 'var(--hx-1f7cff)'
+                    : 'var(--hxbg-0f172a)',
+                  color: esActual ? 'var(--hx-64748b)' : 'var(--c-primario-texto)',
                   fontWeight: 700,
                   fontSize: 14,
                   cursor: esActual ? 'default' : 'pointer',
@@ -419,8 +419,8 @@ export default function SuscripcionesPage() {
         {/* FAQ */}
         <div
           style={{
-            background: 'white',
-            border: '1px solid #e5e7eb',
+            background: 'var(--c-superficie)',
+            border: '1px solid var(--hx-e5e7eb)',
             borderRadius: 18,
             padding: '1.2rem',
             marginTop: 4,
@@ -430,7 +430,7 @@ export default function SuscripcionesPage() {
             style={{
               fontSize: 15,
               fontWeight: 700,
-              color: '#0f172a',
+              color: 'var(--hx-0f172a)',
               marginBottom: 14,
             }}
           >
@@ -457,14 +457,14 @@ export default function SuscripcionesPage() {
                 paddingBottom: 14,
                 marginBottom: 14,
                 borderBottom:
-                  i !== 2 ? '1px solid #f1f5f9' : 'none',
+                  i !== 2 ? '1px solid var(--hx-f1f5f9)' : 'none',
               }}
             >
               <div
                 style={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: '#0f172a',
+                  color: 'var(--hx-0f172a)',
                   marginBottom: 6,
                 }}
               >
@@ -474,7 +474,7 @@ export default function SuscripcionesPage() {
               <div
                 style={{
                   fontSize: 13,
-                  color: '#64748b',
+                  color: 'var(--hx-64748b)',
                   lineHeight: 1.5,
                 }}
               >

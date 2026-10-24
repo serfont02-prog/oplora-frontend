@@ -12,9 +12,9 @@ import { useMiLiga } from '@/components/liga/TarjetaLiga';
 import { COLOR_LIGA, mensajeError } from '@/components/liga/ligaUtils';
 import { Caja, ClasificacionMensual, ClasificacionGeneral, ClasificacionJornada } from '@/components/liga/Clasificaciones';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_MUTED = '#6B7280';
-const BG_APP = '#FCEEE8';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_MUTED = 'var(--hx-6b7280)';
+const BG_APP = 'var(--c-bg-retos)';
 
 type Tab = 'mensual' | 'general' | 'jornada';
 
@@ -42,7 +42,7 @@ export default function ClasificacionesLigaPage() {
           <button
             onClick={() => router.push('/app/liga')}
             aria-label="Volver"
-            style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={17} color={TEXT_PRIMARY} />
           </button>
@@ -55,14 +55,14 @@ export default function ClasificacionesLigaPage() {
         </div>
 
         {isLoading && <Caja><div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</div></Caja>}
-        {error && <Caja><div style={{ fontSize: 13, color: '#B91C1C' }}>{mensajeError(error, 'No se ha podido cargar la liga')}</div></Caja>}
+        {error && <Caja><div style={{ fontSize: 13, color: 'var(--hx-b91c1c)' }}>{mensajeError(error, 'No se ha podido cargar la liga')}</div></Caja>}
         {data && !data.liga && (
           <Caja><div style={{ fontSize: 13, color: TEXT_MUTED }}>Todavía no participas en ninguna liga.</div></Caja>
         )}
 
         {data?.liga && (
           <>
-            <div style={{ display: 'flex', background: 'white', borderRadius: 12, padding: 4, gap: 4, position: 'sticky', top: 8, zIndex: 5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', background: 'var(--c-superficie)', borderRadius: 12, padding: 4, gap: 4, position: 'sticky', top: 8, zIndex: 5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               {([
                 ['mensual', 'Mensual'],
                 ['general', 'General'],

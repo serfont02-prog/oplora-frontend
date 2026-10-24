@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { TEXT_PRIMARY, TEXT_MUTED } from '@/styles/tokens';
 
-export const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+export const SOMBRA = 'var(--c-sombra)';
 
 export default function CabeceraPractica({ eyebrow, titulo, onVolver, usuario, onPerfil }: {
   eyebrow: string; titulo: string; onVolver: () => void; usuario?: any; onPerfil?: () => void;
@@ -17,7 +17,7 @@ export default function CabeceraPractica({ eyebrow, titulo, onVolver, usuario, o
       <button
         onClick={onVolver}
         aria-label="Volver"
-        style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+        style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
       >
         <ArrowLeft size={18} color={TEXT_PRIMARY} />
       </button>

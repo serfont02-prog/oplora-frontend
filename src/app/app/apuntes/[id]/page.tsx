@@ -15,12 +15,12 @@ import { BG_NEUTRAL } from '@/styles/tokens';
 // cumplen la misma función (algo a recordar/aplicar). "Trampa de examen" se mantiene aparte a
 // propósito: es una alerta, no un tip, y ese contraste es lo que la hace útil de un vistazo.
 const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; emoji: string; label: string }> = {
-  EJEMPLO: { bg: '#FFFFFF', border: '#E5E7EB', color: '#374151', emoji: '📘', label: 'EJEMPLO' },
-  IDEA: { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡', label: 'IDEA CLAVE' },
-  'REGLA DE EXAMEN': { bg: '#FEF9E7', border: '#FDE68A', color: '#92400E', emoji: '💡', label: 'IDEA CLAVE' },
-  ESQUEMA: { bg: '#F3FBF5', border: '#BBF0CB', color: '#15803d', emoji: '🗺️', label: 'ESQUEMA' },
-  'TRAMPA DE EXAMEN': { bg: '#FEF2F2', border: '#fca5a5', color: '#dc2626', emoji: '⚠️', label: 'TRAMPA DE EXAMEN' },
-  'PREGUNTA FRECUENTE': { bg: '#FFF7ED', border: '#FED7AA', color: '#C2410C', emoji: '❓', label: 'PREGUNTA FRECUENTE' },
+  EJEMPLO: { bg: 'var(--c-superficie)', border: 'var(--hx-e5e7eb)', color: 'var(--hx-374151)', emoji: '📘', label: 'EJEMPLO' },
+  IDEA: { bg: 'var(--hx-fef9e7)', border: 'var(--hx-fde68a)', color: 'var(--hx-92400e)', emoji: '💡', label: 'IDEA CLAVE' },
+  'REGLA DE EXAMEN': { bg: 'var(--hx-fef9e7)', border: 'var(--hx-fde68a)', color: 'var(--hx-92400e)', emoji: '💡', label: 'IDEA CLAVE' },
+  ESQUEMA: { bg: 'var(--hx-f3fbf5)', border: 'var(--hx-bbf0cb)', color: 'var(--hx-15803d)', emoji: '🗺️', label: 'ESQUEMA' },
+  'TRAMPA DE EXAMEN': { bg: 'var(--hx-fef2f2)', border: 'var(--hx-fca5a5)', color: 'var(--hx-dc2626)', emoji: '⚠️', label: 'TRAMPA DE EXAMEN' },
+  'PREGUNTA FRECUENTE': { bg: 'var(--hx-fff7ed)', border: 'var(--hx-fed7aa)', color: 'var(--hx-c2410c)', emoji: '❓', label: 'PREGUNTA FRECUENTE' },
 };
 
 // ⭐ Filtros de la barra fija: cada chip muestra/oculta un tipo de caja. Los ejemplos forman
@@ -411,7 +411,7 @@ const updateProgreso = () => {
   if (cargando || isLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_NEUTRAL }}>
-        <div style={{ fontSize: '13px', color: '#9ca3af' }}>Cargando apunte...</div>
+        <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)' }}>Cargando apunte...</div>
       </div>
     );
   }
@@ -421,8 +421,8 @@ const updateProgreso = () => {
       <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_NEUTRAL }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '32px', marginBottom: '12px' }}>📄</div>
-          <div style={{ fontSize: '14px', color: '#374151' }}>Apunte no encontrado</div>
-          <button onClick={() => router.back()} style={{ marginTop: '16px', padding: '10px 20px', background: '#111827', color: 'white', border: 'none', borderRadius: '10px', fontSize: '13px', cursor: 'pointer' }}>
+          <div style={{ fontSize: '14px', color: 'var(--hx-374151)' }}>Apunte no encontrado</div>
+          <button onClick={() => router.back()} style={{ marginTop: '16px', padding: '10px 20px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '10px', fontSize: '13px', cursor: 'pointer' }}>
             Volver
           </button>
         </div>
@@ -436,11 +436,11 @@ const updateProgreso = () => {
     <div style={{ minHeight: '100vh', height: '100vh', background: BG_NEUTRAL, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* Header compacto y fijo */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'white', borderBottom: '1px solid #f3f4f6' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f3f4f6)' }}>
         <div style={{ padding: '0 1rem', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={() => { pararAudio(); router.back(); }}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--hx-6b7280)', background: 'none', border: 'none', cursor: 'pointer' }}
           >
             <ArrowLeft size={13} />
             Volver
@@ -451,7 +451,7 @@ const updateProgreso = () => {
               href={apunte.urlArchivo}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ display: 'flex', alignItems: 'center', color: '#6b7280', padding: '5px', borderRadius: '7px' }}
+              style={{ display: 'flex', alignItems: 'center', color: 'var(--hx-6b7280)', padding: '5px', borderRadius: '7px' }}
             >
               <Download size={16} />
             </a>
@@ -461,7 +461,7 @@ const updateProgreso = () => {
         {/* ⭐ Barra fija de filtros: cada chip muestra u oculta un tipo de caja.
             Desmarcándolos todos quedan solo los apuntes (y los ejemplos). */}
         {esFormatoNuevo && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 1rem', borderTop: '1px solid #f9fafb', overflowX: 'auto', scrollbarWidth: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 1rem', borderTop: '1px solid var(--hx-f9fafb)', overflowX: 'auto', scrollbarWidth: 'none' }}>
             {FILTROS_CAJA.map((f) => {
               const cfg = DESTACADO_CONFIG[f.cfg];
               const activo = filtrosCajas[f.key];
@@ -477,16 +477,16 @@ const updateProgreso = () => {
                     display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0,
                     padding: '4px 9px 4px 6px', borderRadius: '999px', cursor: 'pointer',
                     fontSize: '11px', fontWeight: 600,
-                    background: activo ? cfg.bg : 'white',
-                    border: `1px solid ${activo ? cfg.border : '#e5e7eb'}`,
-                    color: activo ? cfg.color : '#9ca3af',
+                    background: activo ? cfg.bg : 'var(--c-superficie)',
+                    border: `1px solid ${activo ? cfg.border : 'var(--hx-e5e7eb)'}`,
+                    color: activo ? cfg.color : 'var(--hx-9ca3af)',
                     opacity: sinCajas ? 0.45 : 1,
                   }}
                 >
                   <span style={{
                     width: '13px', height: '13px', borderRadius: '4px', flexShrink: 0,
-                    border: `1.5px solid ${activo ? cfg.color : '#d1d5db'}`,
-                    background: activo ? cfg.color : 'white',
+                    border: `1.5px solid ${activo ? cfg.color : 'var(--hx-d1d5db)'}`,
+                    background: activo ? cfg.color : 'var(--c-superficie)',
                     display: 'grid', placeItems: 'center',
                     color: 'white', fontSize: '9px', lineHeight: 1,
                   }}>
@@ -501,26 +501,26 @@ const updateProgreso = () => {
         )}
 
         {/* Controles fuente + progreso, compactos */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 1rem', borderTop: '1px solid #f9fafb' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 1rem', borderTop: '1px solid var(--hx-f9fafb)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button
               onClick={() => setFontSize(s => Math.max(11, s - 1))}
-              style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', fontSize: '10px', color: '#374151' }}
+              style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', fontSize: '10px', color: 'var(--hx-374151)' }}
             >
               A−
             </button>
-            <span style={{ fontSize: '11px', color: '#9ca3af', minWidth: '18px', textAlign: 'center' }}>{fontSize}</span>
+            <span style={{ fontSize: '11px', color: 'var(--hx-9ca3af)', minWidth: '18px', textAlign: 'center' }}>{fontSize}</span>
             <button
               onClick={() => setFontSize(s => Math.min(20, s + 1))}
-              style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', fontSize: '12px', color: '#374151' }}
+              style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', fontSize: '12px', color: 'var(--hx-374151)' }}
             >
               A+
             </button>
           </div>
-          <span style={{ fontSize: '11px', color: '#9ca3af' }}>{progreso}% leído</span>
+          <span style={{ fontSize: '11px', color: 'var(--hx-9ca3af)' }}>{progreso}% leído</span>
         </div>
 
-        <div style={{ height: '2px', background: '#f3f4f6' }}>
+        <div style={{ height: '2px', background: 'var(--hx-f3f4f6)' }}>
           <div style={{ width: `${progreso}%`, height: '100%', background: '#1F7CFF', transition: 'width 0.3s' }} />
         </div>
       </div>
@@ -539,24 +539,24 @@ const updateProgreso = () => {
         }}
       >
         {apunte.descripcion && (
-          <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '16px' }}>{apunte.descripcion}</div>
+          <div style={{ fontSize: '12px', color: 'var(--hx-9ca3af)', marginBottom: '16px' }}>{apunte.descripcion}</div>
         )}
 
         {/* Barra de audio — siempre visible arriba del contenido, igual que en Artículo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '14px', marginBottom: '18px', borderBottom: '1px solid #f3f4f6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '14px', marginBottom: '18px', borderBottom: '1px solid var(--hx-f3f4f6)' }}>
           <button
             onClick={() => { if (audioPlaying) pararAudio(); else reproducir(); }}
-            style={{ width: '36px', height: '36px', borderRadius: '50%', background: audioPlaying ? '#111827' : '#F4F5F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            style={{ width: '36px', height: '36px', borderRadius: '50%', background: audioPlaying ? 'var(--hxbg-111827)' : 'var(--hx-f4f5f7)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
-            {audioPlaying ? <Pause size={14} color="white" /> : <Play size={14} color="#374151" />}
+            {audioPlaying ? <Pause size={14} color="var(--c-primario-texto)" /> : <Play size={14} color="var(--hx-374151)" />}
           </button>
-          <div style={{ flex: 1, height: '4px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
+          <div style={{ flex: 1, height: '4px', background: 'var(--hx-f3f4f6)', borderRadius: '999px', overflow: 'hidden' }}>
             <div style={{ width: `${audioProgress}%`, height: '100%', background: '#1F7CFF', transition: 'width 0.5s' }} />
           </div>
-          <button onClick={cambiarVoz} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', color: '#374151' }}>
+          <button onClick={cambiarVoz} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', color: 'var(--hx-374151)' }}>
             {vozGenero === 'mujer' ? '👩' : '👨'}
           </button>
-          <button onClick={cycleVelocidad} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', color: '#374151', fontWeight: 600 }}>
+          <button onClick={cycleVelocidad} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', color: 'var(--hx-374151)', fontWeight: 600 }}>
             {velocidad}×
           </button>
         </div>
@@ -584,23 +584,23 @@ const updateProgreso = () => {
         case 'titulo':
           return bloque.nivel === 1 ? (
             <div key={bloque.id} style={{
-              fontSize: '17px', fontWeight: 700, color: '#1a1a1a',
+              fontSize: '17px', fontWeight: 700, color: 'var(--hx-1a1a1a)',
               marginTop: '32px', marginBottom: '14px',
-              paddingLeft: '10px', borderLeft: '3px solid #1F7CFF',
+              paddingLeft: '10px', borderLeft: '3px solid var(--hx-1f7cff)',
             }}>
               {bloque.texto}
             </div>
           ) : bloque.nivel === 2 ? (
             <div key={bloque.id} style={{
-              fontSize: '14px', fontWeight: 600, color: '#4b5563',
+              fontSize: '14px', fontWeight: 600, color: 'var(--hx-4b5563)',
               marginTop: '22px', marginBottom: '10px',
-              paddingLeft: '10px', borderLeft: '2px solid #e5e7eb',
+              paddingLeft: '10px', borderLeft: '2px solid var(--hx-e5e7eb)',
             }}>
               {bloque.texto}
             </div>
           ) : (
             <div key={bloque.id} style={{
-              fontSize: '13px', fontWeight: 700, color: '#1F7CFF',
+              fontSize: '13px', fontWeight: 700, color: 'var(--hx-1f7cff)',
               marginTop: '18px', marginBottom: '8px',
             }}>
               {bloque.texto}
@@ -657,7 +657,7 @@ const updateProgreso = () => {
         case 'parrafo':
           return (
             <div key={bloque.id} data-bloque-offset={offsetInicioBloque} style={{
-              fontSize: `${fontSize}px`, color: '#2d2d2d', lineHeight: 1.85,
+              fontSize: `${fontSize}px`, color: 'var(--hx-2d2d2d)', lineHeight: 1.85,
               letterSpacing: '0.01em', marginBottom: '14px',
               wordBreak: 'break-word', overflowWrap: 'anywhere',
               ...(bloque.negrita ? { fontWeight: 700 } : {}),
@@ -686,7 +686,7 @@ const updateProgreso = () => {
                 offsetItem += item.length + 2; // el join de items es con ". "
                 return (
                   <li key={i} data-bloque-offset={offsetInicioItem} style={{
-                    fontSize: `${fontSize}px`, color: '#2d2d2d', lineHeight: 1.75,
+                    fontSize: `${fontSize}px`, color: 'var(--hx-2d2d2d)', lineHeight: 1.75,
                     marginBottom: '6px', wordBreak: 'break-word', overflowWrap: 'anywhere',
                   }}>
                     <BloqueTexto
@@ -708,13 +708,13 @@ const updateProgreso = () => {
         case 'articulo_legal':
           return (
             <div key={bloque.id} style={{
-              background: '#F0F7FF', border: '1px solid #bfdbfe', borderRadius: '10px',
+              background: 'var(--hx-f0f7ff)', border: '1px solid var(--hx-bfdbfe)', borderRadius: '10px',
               padding: '12px 14px', marginBottom: '14px',
             }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#1F7CFF', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--hx-1f7cff)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Artículo {bloque.numero}
               </div>
-              <div data-bloque-offset={offsetInicioBloque} style={{ fontSize: `${fontSize}px`, color: '#1e3a5f', lineHeight: 1.8, wordBreak: 'break-word' }}>
+              <div data-bloque-offset={offsetInicioBloque} style={{ fontSize: `${fontSize}px`, color: 'var(--hx-1e3a5f)', lineHeight: 1.8, wordBreak: 'break-word' }}>
                 <BloqueTexto
                   texto={bloque.texto}
                   offsetBase={offsetInicioBloque}
@@ -740,23 +740,23 @@ const updateProgreso = () => {
     <div key={i} style={{ marginBottom: '28px' }}>
       {seccion.nivel === 1 ? (
         <div style={{
-          fontSize: '15px', fontWeight: 700, color: '#1a1a1a',
+          fontSize: '15px', fontWeight: 700, color: 'var(--hx-1a1a1a)',
           marginBottom: '10px', paddingLeft: '10px',
-          borderLeft: '3px solid #1F7CFF',
+          borderLeft: '3px solid var(--hx-1f7cff)',
         }}>
           {seccion.titulo}
         </div>
       ) : (
         <div style={{
-          fontSize: '13px', fontWeight: 600, color: '#4b5563',
+          fontSize: '13px', fontWeight: 600, color: 'var(--hx-4b5563)',
           marginBottom: '8px', paddingLeft: '10px',
-          borderLeft: '2px solid #e5e7eb',
+          borderLeft: '2px solid var(--hx-e5e7eb)',
         }}>
           {seccion.titulo}
         </div>
       )}
       <div style={{
-        fontSize: `${fontSize}px`, color: '#2d2d2d', lineHeight: 1.85,
+        fontSize: `${fontSize}px`, color: 'var(--hx-2d2d2d)', lineHeight: 1.85,
         letterSpacing: '0.01em', wordBreak: 'break-word', overflowWrap: 'anywhere',
       }}>
         {seccion.contenido}
@@ -764,20 +764,20 @@ const updateProgreso = () => {
     </div>
   ))
 ) : apunte?.textoCompleto ? (
-  <div style={{ fontSize: `${fontSize}px`, color: '#2d2d2d', lineHeight: 1.85, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+  <div style={{ fontSize: `${fontSize}px`, color: 'var(--hx-2d2d2d)', lineHeight: 1.85, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
     {apunte.textoCompleto}
   </div>
 ) : (
   <div style={{ textAlign: 'center', padding: '3rem 0' }}>
     <div style={{ fontSize: '32px', marginBottom: '12px' }}>📄</div>
-    <div style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>
+    <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)', marginBottom: '16px' }}>
       El contenido de este apunte no está disponible para lectura directa
     </div>
     <a
       href={apunte.urlArchivo}
       target="_blank"
       rel="noopener noreferrer"
-      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: '#111827', color: 'white', borderRadius: '10px', fontSize: '13px', textDecoration: 'none' }}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', borderRadius: '10px', fontSize: '13px', textDecoration: 'none' }}
     >
       <Download size={14} />
       Descargar PDF
@@ -791,7 +791,7 @@ const updateProgreso = () => {
           <div style={{ position: 'fixed', left: menuSubrayado.x, top: menuSubrayado.y, transform: 'translateX(-50%)', zIndex: 50 }}>
             <button
               onClick={crearSubrayado}
-              style={{ background: '#fef08a', border: '1px solid #eab308', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}
+              style={{ background: 'var(--hx-fef08a)', border: '1px solid #eab308', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}
             >
               ✏️ Subrayar
             </button>
@@ -807,53 +807,53 @@ const updateProgreso = () => {
   >
     <div
       onClick={(e) => e.stopPropagation()}
-      style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '480px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
+      style={{ background: 'var(--c-superficie)', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '480px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '1rem' }}>
         <div style={{ minWidth: 0 }}>
           {mapaNombresLey[articuloModal.versionLeyId] && (
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '8px', lineHeight: 1.45 }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--hx-6b7280)', marginBottom: '8px', lineHeight: 1.45 }}>
               {mapaNombresLey[articuloModal.versionLeyId]}
             </div>
           )}
           {/* ⭐ Más aire entre el nombre de la ley y el número de artículo (antes iban pegados) */}
-          <div style={{ fontSize: '16px', fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>
+          <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--hx-111827)', lineHeight: 1.3 }}>
             Artículo {articuloModal.numero}
           </div>
         </div>
         <button
           onClick={() => setArticuloModal(null)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#9ca3af' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--hx-9ca3af)' }}
         >
           ×
         </button>
       </div>
 
       {cargandoArticulo ? (
-        <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', padding: '2rem 0' }}>
+        <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)', textAlign: 'center', padding: '2rem 0' }}>
           Cargando artículo...
         </div>
       ) : articuloAbierto ? (
         <>
           {articuloAbierto.titulo && (
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '10px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--hx-374151)', marginBottom: '10px' }}>
               {articuloAbierto.titulo}
             </div>
           )}
-          <div style={{ fontSize: '13px', color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+          <div style={{ fontSize: '13px', color: 'var(--hx-374151)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
             {articuloAbierto.contenido}
           </div>
           <button
             onClick={() => {
               router.push(`/app/articulo/${articuloAbierto.id}?oposicionId=${apunte.oposicion?.id ?? ''}`);
             }}
-            style={{ marginTop: '16px', width: '100%', padding: '10px', background: '#111827', color: 'white', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+            style={{ marginTop: '16px', width: '100%', padding: '10px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
           >
             Ver artículo en la ley →
           </button>
         </>
       ) : (
-        <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', padding: '2rem 0' }}>
+        <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)', textAlign: 'center', padding: '2rem 0' }}>
           Artículo no encontrado
         </div>
       )}
@@ -940,13 +940,13 @@ function BloqueTexto({
           <mark
             key={i}
             onClick={() => onToggleSubrayado(subrayadoSeleccionado === seg.subrayado.id ? null : seg.subrayado.id)}
-            style={{ background: '#fef08a', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
+            style={{ background: 'var(--hx-fef08a)', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
           >
             {contenido}
             {subrayadoSeleccionado === seg.subrayado.id && (
               <button
                 onClick={(e) => { e.stopPropagation(); onBorrarSubrayado(seg.subrayado.id); }}
-                style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: '#111827', color: 'white', border: 'none', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
+                style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
               >
                 🗑 Borrar
               </button>

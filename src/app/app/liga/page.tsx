@@ -18,9 +18,9 @@ import {
   nombreMes, formatoPuntos, formatoTiempo, mensajeError,
 } from '@/components/liga/ligaUtils';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_MUTED = '#6B7280';
-const BG_APP = '#FCEEE8';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_MUTED = 'var(--hx-6b7280)';
+const BG_APP = 'var(--c-bg-retos)';
 
 export default function LigaPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function LigaPage() {
           <button
             onClick={() => router.push('/app/retos')}
             aria-label="Volver"
-            style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={17} color={TEXT_PRIMARY} />
           </button>
@@ -52,7 +52,7 @@ export default function LigaPage() {
         </div>
 
         {isLoading && <Caja><div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando la liga…</div></Caja>}
-        {error && <Caja><div style={{ fontSize: 13, color: '#B91C1C' }}>{mensajeError(error, 'No se ha podido cargar la liga')}</div></Caja>}
+        {error && <Caja><div style={{ fontSize: 13, color: 'var(--hx-b91c1c)' }}>{mensajeError(error, 'No se ha podido cargar la liga')}</div></Caja>}
 
         {data && !data.liga && <SinLiga motivo={data.motivo} oposicionId={oposicionId} />}
 
@@ -75,7 +75,7 @@ export default function LigaPage() {
 /* ------------------------------------------------------------------ */
 
 function Caja({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div style={{ background: 'white', borderRadius: 18, padding: 14, border: '1px solid #F1F5F9', ...style }}>{children}</div>;
+  return <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 14, border: '1px solid var(--hx-f1f5f9)', ...style }}>{children}</div>;
 }
 
 function SinLiga({ motivo, oposicionId }: { motivo?: string; oposicionId?: string }) {
@@ -96,7 +96,7 @@ function SinLiga({ motivo, oposicionId }: { motivo?: string; oposicionId?: strin
       {motivo === 'sin_convocatoria' && (
         <button
           onClick={() => router.push(oposicionId ? `/app/oposicion/${oposicionId}/convocatoria` : '/app/onboarding/oposicion')}
-          style={{ marginTop: 4, border: 'none', borderRadius: 12, padding: '11px 18px', background: '#111827', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          style={{ marginTop: 4, border: 'none', borderRadius: 12, padding: '11px 18px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
         >
           Elegir convocatoria
         </button>
@@ -108,14 +108,14 @@ function SinLiga({ motivo, oposicionId }: { motivo?: string; oposicionId?: strin
 function TarjetaDivision({ data }: { data: any }) {
   const copas = data.copas ?? {};
   return (
-    <div style={{ background: '#111827', borderRadius: 18, padding: '16px 16px', color: 'white', display: 'flex', alignItems: 'center', gap: 14 }}>
+    <div style={{ background: 'var(--hxhero-111827)', borderRadius: 18, padding: '16px 16px', color: 'white', display: 'flex', alignItems: 'center', gap: 14 }}>
       <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <span style={{ fontSize: 22, fontWeight: 800, lineHeight: 1 }}>{data.division}ª</span>
-        <span style={{ fontSize: 9, color: '#94A3B8', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>div.</span>
+        <span style={{ fontSize: 9, color: 'var(--hx-94a3b8)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>div.</span>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 16, fontWeight: 700 }}>{data.nombreDivision} división</div>
-        <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
+        <div style={{ fontSize: 12, color: 'var(--hx-94a3b8)', marginTop: 2 }}>
           {data.division > 1
             ? `Asciende el ${data.liga.porcentajeAscenso}% mejor de cada mes`
             : 'La división de los mejores'}
@@ -126,7 +126,7 @@ function TarjetaDivision({ data }: { data: any }) {
       {copas.total > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <CopaBadge color={copas.color ?? (copas.temporadas ? 'temporada' : null)} veces={copas.veces || copas.temporadas} size={30} />
-          <span style={{ fontSize: 10, color: '#94A3B8' }}>{copas.total} {copas.total === 1 ? 'copa' : 'copas'}</span>
+          <span style={{ fontSize: 10, color: 'var(--hx-94a3b8)' }}>{copas.total} {copas.total === 1 ? 'copa' : 'copas'}</span>
         </div>
       )}
     </div>
@@ -150,7 +150,7 @@ function TarjetaJornada({ data }: { data: any }) {
   if (j?.estado === 'abierta') reloj = `Cierra en ${cuentaAtras(j.fechaCierre, ahora)}`;
 
   return (
-    <Caja style={{ border: estado.destacado ? `1.5px solid ${COLOR_LIGA}` : '1px solid #F1F5F9', display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <Caja style={{ border: estado.destacado ? `1.5px solid ${COLOR_LIGA}` : '1px solid var(--hx-f1f5f9)', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: estado.destacado ? COLOR_LIGA : TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           {estado.etiqueta}
@@ -172,7 +172,7 @@ function TarjetaJornada({ data }: { data: any }) {
             ['En blanco', r.blancos],
             ['Tiempo', formatoTiempo(r.tiempoMs)],
           ].map(([label, valor]) => (
-            <div key={label as string} style={{ background: '#F8F9FA', borderRadius: 10, padding: '8px 4px', textAlign: 'center' }}>
+            <div key={label as string} style={{ background: 'var(--hx-f8f9fa)', borderRadius: 10, padding: '8px 4px', textAlign: 'center' }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: TEXT_PRIMARY }}>{valor ?? '—'}</div>
               <div style={{ fontSize: 10, color: TEXT_MUTED }}>{label}</div>
             </div>
@@ -187,7 +187,7 @@ function TarjetaJornada({ data }: { data: any }) {
       )}
 
       {j?.estado === 'abierta' && !r?.iniciado && (
-        <div style={{ fontSize: 11, color: TEXT_MUTED, lineHeight: 1.45, background: '#F8F9FA', borderRadius: 10, padding: '8px 10px' }}>
+        <div style={{ fontSize: 11, color: TEXT_MUTED, lineHeight: 1.45, background: 'var(--hx-f8f9fa)', borderRadius: 10, padding: '8px 10px' }}>
           Un solo intento. En cuanto empieces corre el reloj, aunque salgas de la app. Los fallos restan como en el examen.
         </div>
       )}
@@ -195,7 +195,7 @@ function TarjetaJornada({ data }: { data: any }) {
       {estado.accion && (
         <button
           onClick={() => router.push(estado.accion!.href)}
-          style={{ width: '100%', border: 'none', borderRadius: 12, padding: 12, background: estado.destacado ? COLOR_LIGA : '#111827', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+          style={{ width: '100%', border: 'none', borderRadius: 12, padding: 12, background: estado.destacado ? COLOR_LIGA : 'var(--hx-111827)', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
         >
           {estado.accion.label}
         </button>
@@ -246,9 +246,9 @@ function TarjetaPosicion({ division, porcentaje }: { division: number; porcentaj
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
               <span style={{ fontSize: 16, fontWeight: 800, color: TEXT_PRIMARY }}>{titular}</span>
-              {enZona && <ArrowUp size={15} color="#16A34A" />}
+              {enZona && <ArrowUp size={15} color="var(--hx-16a34a)" />}
             </div>
-            <div style={{ fontSize: 12, color: enZona ? '#16A34A' : TEXT_MUTED, marginTop: 2 }}>{detalle}</div>
+            <div style={{ fontSize: 12, color: enZona ? 'var(--hx-16a34a)' : TEXT_MUTED, marginTop: 2 }}>{detalle}</div>
           </>
         )}
       </div>
@@ -257,7 +257,7 @@ function TarjetaPosicion({ division, porcentaje }: { division: number; porcentaj
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {podio.map((f: any) => (
             <div key={f.usuario?.id ?? f.posicion} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 18, fontSize: 12, fontWeight: 800, color: f.posicion === 1 ? '#EAB308' : f.posicion === 2 ? '#94A3B8' : '#B45309' }}>{f.posicion}</span>
+              <span style={{ width: 18, fontSize: 12, fontWeight: 800, color: f.posicion === 1 ? '#EAB308' : f.posicion === 2 ? 'var(--hx-94a3b8)' : 'var(--hx-b45309)' }}>{f.posicion}</span>
               <AvatarMini usuario={f.usuario} size={24} />
               <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: f.esYo ? 800 : 600, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {nombreVisible(f.usuario)}{f.esYo ? ' (tú)' : ''}
@@ -270,7 +270,7 @@ function TarjetaPosicion({ division, porcentaje }: { division: number; porcentaj
 
       <button
         onClick={() => router.push('/app/liga/clasificacion')}
-        style={{ width: '100%', border: `1px solid ${COLOR_LIGA}55`, background: 'white', color: COLOR_LIGA, borderRadius: 12, padding: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+        style={{ width: '100%', border: `1px solid ${`color-mix(in srgb, ${COLOR_LIGA} 33%, transparent)`}`, background: 'var(--c-superficie)', color: COLOR_LIGA, borderRadius: 12, padding: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
       >
         <BarChart3 size={15} /> Ver clasificaciones
       </button>

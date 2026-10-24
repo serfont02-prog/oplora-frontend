@@ -17,14 +17,14 @@ import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_FC_BG, COLOR_PSICO, COLOR_PSICO_BG, COLOR_RETOS } from '@/styles/tokens';
 
-const BG_APP = '#EAF0FF';
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const BORDER = '#EEF0F3';
+const BG_APP = 'var(--c-bg-dashboard)';
+const SOMBRA = 'var(--c-sombra)';
+const BORDER = 'var(--hx-eef0f3)';
 
-export const COLOR_TEST = '#4D7C0F';
-export const COLOR_TEST_BG = '#F3FAE9';
-const COLOR_SIMULACRO = '#6B5F3E';
-const COLOR_SIMULACRO_BG = '#EDE9DD';
+export const COLOR_TEST = 'var(--hx-4d7c0f)';
+export const COLOR_TEST_BG = 'var(--hx-f3fae9)';
+const COLOR_SIMULACRO = 'var(--hx-6b5f3e)';
+const COLOR_SIMULACRO_BG = 'var(--hx-ede9dd)';
 
 export default function EntrenamientoHub({ usuario, oposicion, convocatoria, limites }: any) {
   const router = useRouter();
@@ -92,8 +92,8 @@ function TituloSeccion({ children, derecha }: { children: React.ReactNode; derec
 
 function IconoActividad({ Icon, color, bg, bloqueado = false }: any) {
   return (
-    <div style={{ width: 40, height: 40, borderRadius: 12, background: bloqueado ? '#F3F4F6' : bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      {bloqueado ? <Lock size={18} color="#9CA3AF" /> : <Icon size={20} color={color} />}
+    <div style={{ width: 40, height: 40, borderRadius: 12, background: bloqueado ? 'var(--hx-f3f4f6)' : bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      {bloqueado ? <Lock size={18} color="var(--hx-9ca3af)" /> : <Icon size={20} color={color} />}
     </div>
   );
 }
@@ -125,14 +125,14 @@ function AvisoRacha({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: 'white', border: 'none', borderRadius: 18, padding: 14, boxShadow: SOMBRA, cursor: 'pointer' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: 'var(--c-superficie)', border: 'none', borderRadius: 18, padding: 14, boxShadow: SOMBRA, cursor: 'pointer' }}
     >
-      <IconoActividad Icon={Flame} color={COLOR_RETOS} bg="#FFF1E8" />
+      <IconoActividad Icon={Flame} color={COLOR_RETOS} bg="var(--hx-fff1e8)" />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Recupera tu racha</div>
         <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>Haz un test hoy y vuelve a sumar días seguidos</div>
       </div>
-      <ChevronRight size={16} color="#C4C9D2" />
+      <ChevronRight size={16} color="var(--hx-c4c9d2)" />
     </button>
   );
 }
@@ -148,7 +148,7 @@ function TarjetaTest({ limites, router, onEmpezar }: any) {
   return (
     <section>
       <TituloSeccion>Tu entrenamiento</TituloSeccion>
-      <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <IconoActividad Icon={ClipboardCheck} color={COLOR_TEST} bg={COLOR_TEST_BG} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -161,11 +161,11 @@ function TarjetaTest({ limites, router, onEmpezar }: any) {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
               <span style={{ fontSize: 11, color: TEXT_MUTED }}>Preguntas de hoy</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: agotado ? '#DC2626' : TEXT_PRIMARY }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: agotado ? 'var(--hx-dc2626)' : TEXT_PRIMARY }}>
                 {preguntasHoy} de {limiteDiario}
               </span>
             </div>
-            <div style={{ height: 6, background: '#EEF0F3', borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ height: 6, background: 'var(--hx-eef0f3)', borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ width: `${pct}%`, height: '100%', background: agotado ? '#DC2626' : COLOR_TEST, borderRadius: 999, transition: 'width 0.5s ease' }} />
             </div>
           </div>
@@ -173,7 +173,7 @@ function TarjetaTest({ limites, router, onEmpezar }: any) {
 
         <button
           onClick={() => (agotado ? router.push('/app/suscripciones') : onEmpezar())}
-          style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: '#0f172a', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
         >
           {agotado ? 'Límite de hoy alcanzado · Ver planes' : 'Empezar test'}
         </button>
@@ -253,7 +253,7 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
   return (
     <section>
       <TituloSeccion>Más formas de practicar</TituloSeccion>
-      <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
         {filas.map((f, i) => (
           <button
             key={f.clave}
@@ -270,7 +270,7 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
               <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>{f.descripcion}</div>
             </div>
             {f.etiqueta && (
-              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 999, background: '#F1F5F9', color: '#475569', fontWeight: 700, flexShrink: 0 }}>
+              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 999, background: 'var(--hx-f1f5f9)', color: 'var(--hx-475569)', fontWeight: 700, flexShrink: 0 }}>
                 {f.etiqueta}
               </span>
             )}
@@ -279,7 +279,7 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
                 {f.badge > 9 ? '9+' : f.badge}
               </span>
             )}
-            <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+            <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
           </button>
         ))}
       </div>
@@ -291,9 +291,9 @@ function UpsellPremium({ suscripcion, router }: any) {
   if (suscripcion !== 'gratuito') return null;
 
   return (
-    <div style={{ background: 'white', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 14 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 12, background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Crown size={19} color="white" />
+    <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--hxbg-0f172a)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Crown size={19} color="var(--c-primario-texto)" />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 2 }}>Practica sin límites</div>
@@ -301,7 +301,7 @@ function UpsellPremium({ suscripcion, router }: any) {
       </div>
       <button
         onClick={() => router.push('/app/suscripciones')}
-        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: '#0f172a', color: 'white', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
       >
         Ver planes
       </button>

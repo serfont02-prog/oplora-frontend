@@ -41,11 +41,11 @@ const PREGUNTAS: Record<number, { pregunta: string; opciones: Opcion[] }> = {
 };
 
 const COLORES: Record<string, { color: string; fondo: string }> = {
-  constancia: { color: '#C2410C', fondo: '#FCEEE8' },
-  suerte: { color: '#4D7C0F', fondo: '#ECFCCB' },
-  cafe: { color: '#6B5F3E', fondo: '#EDE9DD' },
-  apuntes: { color: '#4F46E5', fondo: '#E0E7FF' },
-  atracon: { color: '#CA8A04', fondo: '#FDF8E8' },
+  constancia: { color: 'var(--hx-c2410c)', fondo: 'var(--hx-fceee8)' },
+  suerte: { color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)' },
+  cafe: { color: 'var(--hx-6b5f3e)', fondo: 'var(--hx-ede9dd)' },
+  apuntes: { color: 'var(--hx-4f46e5)', fondo: 'var(--hx-e0e7ff)' },
+  atracon: { color: 'var(--hx-ca8a04)', fondo: 'var(--hx-fdf8e8)' },
 };
 
 export default function MiniRetoPage() {
@@ -78,7 +78,7 @@ export default function MiniRetoPage() {
 
   return (
     <PantallaOnboarding paso={4} atras="/app/onboarding/experiencia" titulo="Un pequeño reto" subtitulo="Antes de empezar, a ver qué tal se te da.">
-      <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.45, background: '#F8FAFC', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
+      <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.45, background: 'var(--hx-f8fafc)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
         {pregunta}
       </div>
       <ListaOpciones>
@@ -100,7 +100,7 @@ export default function MiniRetoPage() {
           );
         })}
       </ListaOpciones>
-      <div aria-live="polite" style={{ minHeight: 20, textAlign: 'center', marginTop: 12, fontSize: 13, color: acertado ? '#15803D' : TEXT_SECONDARY, fontWeight: acertado ? 700 : 400 }}>
+      <div aria-live="polite" style={{ minHeight: 20, textAlign: 'center', marginTop: 12, fontSize: 13, color: acertado ? 'var(--hx-15803d)' : TEXT_SECONDARY, fontWeight: acertado ? 700 : 400 }}>
         {acertado ? '¡Exacto! La constancia es la clave.' : fallo ? `${fallo} Prueba otra vez.` : ''}
       </div>
     </PantallaOnboarding>

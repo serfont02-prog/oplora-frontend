@@ -14,14 +14,14 @@ import {
 } from 'lucide-react';
 import { BG_NEUTRAL as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const BORDER = '#EEF0F3';
+const SOMBRA = 'var(--c-sombra)';
+const BORDER = 'var(--hx-eef0f3)';
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <section>
       <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>{titulo}</div>
-      <div style={{ background: 'white', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>{children}</div>
+      <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>{children}</div>
     </section>
   );
 }
@@ -38,10 +38,10 @@ function Fila({ Icon, color, bg, titulo, sub, onClick, ultima = false, peligro =
         <Icon size={19} color={color} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: peligro ? '#B91C1C' : TEXT_PRIMARY }}>{titulo}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: peligro ? 'var(--hx-b91c1c)' : TEXT_PRIMARY }}>{titulo}</div>
         {sub && <div style={{ fontSize: 12, color: subColor ?? TEXT_MUTED, marginTop: 1 }}>{sub}</div>}
       </div>
-      <ChevronRight size={16} color="#C4C9D2" style={{ flexShrink: 0 }} />
+      <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
     </button>
   );
 }
@@ -133,7 +133,7 @@ export default function AjustesOposicionPage() {
           <button
             onClick={() => router.push('/app/dashboard')}
             aria-label="Volver a Inicio"
-            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
@@ -146,17 +146,17 @@ export default function AjustesOposicionPage() {
 
         <Seccion titulo="Tu oposición">
           <Fila
-            Icon={CalendarRange} color="#1F7CFF" bg="#EAF0FF"
+            Icon={CalendarRange} color="var(--hx-1f7cff)" bg="var(--hx-eaf0ff)"
             titulo="Mi convocatoria" sub="Fechas, plazas, ejercicios y temario"
             onClick={() => router.push(`/app/oposicion/${oposicionId}/convocatoria`)}
           />
           <Fila
-            Icon={RefreshCw} color="#1F7CFF" bg="#EAF0FF"
+            Icon={RefreshCw} color="var(--hx-1f7cff)" bg="var(--hx-eaf0ff)"
             titulo="Cambiar de convocatoria" sub="Solo a convocatorias más recientes"
             onClick={() => router.push(`/app/oposicion/${oposicionId}/cambiar-convocatoria`)}
           />
           <Fila
-            Icon={Repeat} color="#1F7CFF" bg="#EAF0FF"
+            Icon={Repeat} color="var(--hx-1f7cff)" bg="var(--hx-eaf0ff)"
             titulo="Cambiar de oposición" sub="Tu progreso en esta se guarda"
             onClick={() => router.push('/app/onboarding/oposicion?modo=cambiar')}
             ultima
@@ -167,7 +167,7 @@ export default function AjustesOposicionPage() {
 
         <Seccion titulo="Comparte">
           <Fila
-            Icon={UserPlus} color="#C2410C" bg="#FCEEE8"
+            Icon={UserPlus} color="var(--hx-c2410c)" bg="var(--hx-fceee8)"
             titulo="Invitar a un amigo" sub="Por email o compartiendo un enlace"
             onClick={() => router.push('/app/invitar')}
             ultima
@@ -176,10 +176,10 @@ export default function AjustesOposicionPage() {
 
         <Seccion titulo="Tus datos">
           <Fila
-            Icon={Download} color="#4D7C0F" bg="#F3FAE9"
+            Icon={Download} color="var(--hx-4d7c0f)" bg="var(--hx-f3fae9)"
             titulo="Exportar mi progreso"
             sub={exportando ? 'Preparando…' : errorExportar ?? 'Tus tests y aciertos en una hoja de cálculo'}
-            subColor={errorExportar ? '#B91C1C' : undefined}
+            subColor={errorExportar ? 'var(--hx-b91c1c)' : undefined}
             onClick={exportarProgreso}
             ultima
           />
@@ -187,12 +187,12 @@ export default function AjustesOposicionPage() {
 
         <Seccion titulo="Zona delicada">
           <Fila
-            Icon={RotateCcw} color="#D97706" bg="#FEF6E4"
+            Icon={RotateCcw} color="var(--hx-d97706)" bg="var(--hx-fef6e4)"
             titulo="Reiniciar mi progreso" sub="Empieza de cero conservando lo que elijas"
             onClick={() => { setEntiendo(false); setModalResetear(true); }}
           />
           <Fila
-            Icon={LogOut} color="#DC2626" bg="#FEF2F2"
+            Icon={LogOut} color="var(--hx-dc2626)" bg="var(--hx-fef2f2)"
             titulo="Abandonar esta oposición" sub="Dejará de aparecer en tu inicio"
             onClick={() => setModalAbandonar(true)}
             peligro
@@ -206,8 +206,8 @@ export default function AjustesOposicionPage() {
         <div onClick={() => setModalResetear(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#FEF6E4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <RotateCcw size={20} color="#D97706" />
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--hx-fef6e4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <RotateCcw size={20} color="var(--hx-d97706)" />
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Reiniciar progreso</div>
@@ -215,7 +215,7 @@ export default function AjustesOposicionPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden', marginBottom: 14 }}>
+            <div style={{ background: 'var(--c-superficie)', borderRadius: 16, boxShadow: SOMBRA, overflow: 'hidden', marginBottom: 14 }}>
               {CONSERVAR.map(({ key, label }, i) => {
                 const on = conservar[key];
                 return (
@@ -224,11 +224,11 @@ export default function AjustesOposicionPage() {
                     onClick={() => setConservar({ ...conservar, [key]: !on })}
                     style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', borderBottom: i < CONSERVAR.length - 1 ? `1px solid ${BORDER}` : 'none', cursor: 'pointer', textAlign: 'left' }}
                   >
-                    <span style={{ width: 22, height: 22, borderRadius: 7, background: on ? '#0f172a' : 'white', border: on ? 'none' : '2px solid #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {on && <Check size={14} color="white" strokeWidth={3} />}
+                    <span style={{ width: 22, height: 22, borderRadius: 7, background: on ? 'var(--hxbg-0f172a)' : 'var(--c-superficie)', border: on ? 'none' : '2px solid var(--hx-d1d5db)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {on && <Check size={14} color="var(--c-primario-texto)" strokeWidth={3} />}
                     </span>
                     <span style={{ flex: 1, fontSize: 14, color: TEXT_PRIMARY }}>{label}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: on ? '#16A34A' : '#B91C1C' }}>{on ? 'Se conserva' : 'Se borra'}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: on ? 'var(--hx-16a34a)' : 'var(--hx-b91c1c)' }}>{on ? 'Se conserva' : 'Se borra'}</span>
                   </button>
                 );
               })}
@@ -237,20 +237,20 @@ export default function AjustesOposicionPage() {
             {/* ⭐ Confirmación explícita: antes un solo toque borraba todo (nada venía marcado) */}
             <button
               onClick={() => setEntiendo(!entiendo)}
-              style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 10, background: '#FEF2F2', border: 'none', borderRadius: 12, padding: '10px 12px', cursor: 'pointer', textAlign: 'left', marginBottom: 14 }}
+              style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 10, background: 'var(--hx-fef2f2)', border: 'none', borderRadius: 12, padding: '10px 12px', cursor: 'pointer', textAlign: 'left', marginBottom: 14 }}
             >
-              <span style={{ width: 20, height: 20, borderRadius: 6, background: entiendo ? '#DC2626' : 'white', border: entiendo ? 'none' : '2px solid #FCA5A5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+              <span style={{ width: 20, height: 20, borderRadius: 6, background: entiendo ? '#DC2626' : 'var(--c-superficie)', border: entiendo ? 'none' : '2px solid var(--hx-fca5a5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                 {entiendo && <Check size={13} color="white" strokeWidth={3} />}
               </span>
-              <span style={{ fontSize: 12, color: '#991B1B', lineHeight: 1.45 }}>
+              <span style={{ fontSize: 12, color: 'var(--hx-991b1b)', lineHeight: 1.45 }}>
                 Entiendo que {nadaConservado ? 'se borrará todo mi progreso' : 'lo que no he marcado se borrará'} y que no se puede deshacer.
               </span>
             </button>
 
-            {resetear.isError && <div style={{ fontSize: 12, color: '#B91C1C', marginBottom: 10 }}>No se ha podido reiniciar. Inténtalo de nuevo.</div>}
+            {resetear.isError && <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', marginBottom: 10 }}>No se ha podido reiniciar. Inténtalo de nuevo.</div>}
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setModalResetear(false)} style={{ flex: 1, padding: 13, background: 'white', color: TEXT_SECONDARY, border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setModalResetear(false)} style={{ flex: 1, padding: 13, background: 'var(--c-superficie)', color: TEXT_SECONDARY, border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 Cancelar
               </button>
               <button
@@ -268,17 +268,17 @@ export default function AjustesOposicionPage() {
       {/* Abandonar oposición */}
       {modalAbandonar && (
         <div onClick={() => setModalAbandonar(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: 20, padding: '1.5rem', width: '100%', maxWidth: 360, textAlign: 'center' }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <AlertTriangle size={24} color="#DC2626" />
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', borderRadius: 20, padding: '1.5rem', width: '100%', maxWidth: 360, textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: 'var(--hx-fef2f2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <AlertTriangle size={24} color="var(--hx-dc2626)" />
             </div>
             <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>¿Abandonar {oposicion?.nombre ?? 'esta oposición'}?</div>
             <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 18, lineHeight: 1.5 }}>
               Tu progreso se guarda, pero dejará de aparecer en tu inicio. Podrás volver a añadirla cuando quieras.
             </div>
-            {abandonar.isError && <div style={{ fontSize: 12, color: '#B91C1C', marginBottom: 10 }}>No se ha podido completar. Inténtalo de nuevo.</div>}
+            {abandonar.isError && <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', marginBottom: 10 }}>No se ha podido completar. Inténtalo de nuevo.</div>}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setModalAbandonar(false)} style={{ flex: 1, padding: 12, background: '#F3F4F6', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setModalAbandonar(false)} style={{ flex: 1, padding: 12, background: 'var(--hx-f3f4f6)', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 Cancelar
               </button>
               <button onClick={() => abandonar.mutate()} disabled={abandonar.isPending} style={{ flex: 1, padding: 12, background: '#DC2626', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>

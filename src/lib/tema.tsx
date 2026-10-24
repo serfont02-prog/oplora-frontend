@@ -9,12 +9,11 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 
 export type PreferenciaTema = 'claro' | 'oscuro' | 'auto';
 export const CLAVE_TEMA = 'oplora-tema';
-// Mientras se pasan las pantallas al modo oscuro, por defecto todo el mundo ve el modo claro.
-// Cuando esté toda la app convertida, cambiar a 'auto' (aquí y en SCRIPT_TEMA lo coge de esta constante).
-export const TEMA_POR_DEFECTO: PreferenciaTema = 'claro';
+// Por defecto la app sigue el modo del móvil (claro u oscuro). SCRIPT_TEMA también usa esta constante.
+export const TEMA_POR_DEFECTO: PreferenciaTema = 'auto';
 
 type Ctx = { preferencia: PreferenciaTema; efectivo: 'claro' | 'oscuro'; cambiar: (p: PreferenciaTema) => void };
-const TemaContext = createContext<Ctx>({ preferencia: 'claro', efectivo: 'claro', cambiar: () => {} });
+const TemaContext = createContext<Ctx>({ preferencia: 'auto', efectivo: 'claro', cambiar: () => {} });
 
 function leerPreferencia(): PreferenciaTema {
   try {

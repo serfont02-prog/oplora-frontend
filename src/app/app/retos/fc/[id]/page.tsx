@@ -7,11 +7,11 @@ import { api } from '@/lib/api';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 
-const BG_APP = '#FCEEE8';
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
-const COLOR_FC = '#9333EA';
+const BG_APP = 'var(--c-bg-retos)';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_SECONDARY = 'var(--hx-6b7280)';
+const TEXT_MUTED = 'var(--hx-9ca3af)';
+const COLOR_FC = 'var(--hx-9333ea)';
 
 type EstadoFCReto = 'intro' | 'jugando' | 'resultado';
 
@@ -159,7 +159,7 @@ export default function RetoFCDetallePage() {
   if (!reto) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_APP, padding: '1.5rem' }}>
-        <div style={{ textAlign: 'center', background: 'white', borderRadius: 20, padding: '2.5rem 2rem', maxWidth: 360, width: '100%' }}>
+        <div style={{ textAlign: 'center', background: 'var(--c-superficie)', borderRadius: 20, padding: '2.5rem 2rem', maxWidth: 360, width: '100%' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🃏</div>
           <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>Reto no encontrado</div>
           <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 20 }}>
@@ -167,7 +167,7 @@ export default function RetoFCDetallePage() {
           </div>
           <button
             onClick={() => router.push('/app/retos')}
-            style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+            style={{ width: '100%', padding: 13, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
           >
             Volver a retos
           </button>
@@ -207,7 +207,7 @@ export default function RetoFCDetallePage() {
 
         {/* INTRO */}
         {estado === 'intro' && (
-          <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: '1.5rem', textAlign: 'center' }}>
+          <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: 16, padding: '1.5rem', textAlign: 'center' }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🃏</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4 }}>Duelo de flashcards</div>
             {reto.tema && (
@@ -217,30 +217,30 @@ export default function RetoFCDetallePage() {
               {flashcards.length} flashcards · vs {rivalUsuario?.nick ?? rivalUsuario?.nombre ?? 'Rival'}
             </div>
             {reto.mensaje && (
-              <div style={{ background: '#F8F9FA', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: TEXT_SECONDARY, fontStyle: 'italic', marginBottom: '0.75rem' }}>
+              <div style={{ background: 'var(--hx-f8f9fa)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: TEXT_SECONDARY, fontStyle: 'italic', marginBottom: '0.75rem' }}>
                 “{reto.mensaje}” — {reto.retador?.nick ?? reto.retador?.nombre}
               </div>
             )}
             {!ambosCompletados && reto.fechaFin && (
-              <div style={{ fontSize: 12, fontWeight: 600, color: caducado ? '#DC2626' : TEXT_SECONDARY, marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: caducado ? 'var(--hx-dc2626)' : TEXT_SECONDARY, marginBottom: '1.25rem' }}>
                 ⏱️ {tiempoRestanteTexto(reto.fechaFin)}
               </div>
             )}
 
             {yaCompleto ? (
               <div>
-                <div style={{ fontSize: 13, color: '#15803d', fontWeight: 600, marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: 'var(--hx-15803d)', fontWeight: 600, marginBottom: 8 }}>
                   ✓ Ya completaste este duelo — {aciertos} aciertos
                 </div>
                 <button
                   onClick={() => setEstado('resultado')}
-                  style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  style={{ width: '100%', padding: 12, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                 >
                   Ver resultado
                 </button>
               </div>
             ) : caducado ? (
-              <div style={{ fontSize: 13, color: '#DC2626', fontWeight: 600 }}>
+              <div style={{ fontSize: 13, color: 'var(--hx-dc2626)', fontWeight: 600 }}>
                 Este reto caducó, ya no se puede completar
               </div>
             ) : (
@@ -257,7 +257,7 @@ export default function RetoFCDetallePage() {
         {/* JUGANDO */}
         {estado === 'jugando' && fc && (
           <div>
-            <div style={{ height: 4, background: '#EEDCF0', borderRadius: 2, overflow: 'hidden', marginBottom: 18 }}>
+            <div style={{ height: 4, background: 'var(--hx-eedcf0)', borderRadius: 2, overflow: 'hidden', marginBottom: 18 }}>
               <div style={{
                 width: `${((indice + 1) / flashcards.length) * 100}%`,
                 height: '100%',
@@ -268,12 +268,12 @@ export default function RetoFCDetallePage() {
             </div>
 
             <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: '#F3E8FF', color: COLOR_FC, fontWeight: 500 }}>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'var(--hx-f3e8ff)', color: COLOR_FC, fontWeight: 500 }}>
                 {TIPO_LABEL[fc.tipo] ?? fc.tipo}
               </span>
             </div>
 
-            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 18, padding: '1.5rem', marginBottom: 16, minHeight: 180 }}>
+            <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: 18, padding: '1.5rem', marginBottom: 16, minHeight: 180 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
                 Pregunta
               </div>
@@ -286,14 +286,14 @@ export default function RetoFCDetallePage() {
               <button
                 onClick={() => responder(true)}
                 disabled={completar.isPending}
-                style={{ flex: 1, padding: 14, background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#15803d', cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
+                style={{ flex: 1, padding: 14, background: 'var(--hx-f0fdf4)', border: '2px solid var(--hx-86efac)', borderRadius: 14, fontSize: 15, fontWeight: 700, color: 'var(--hx-15803d)', cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
               >
                 ✅ Verdadero
               </button>
               <button
                 onClick={() => responder(false)}
                 disabled={completar.isPending}
-                style={{ flex: 1, padding: 14, background: '#fef2f2', border: '2px solid #fca5a5', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#dc2626', cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
+                style={{ flex: 1, padding: 14, background: 'var(--hx-fef2f2)', border: '2px solid var(--hx-fca5a5)', borderRadius: 14, fontSize: 15, fontWeight: 700, color: 'var(--hx-dc2626)', cursor: completar.isPending ? 'not-allowed' : 'pointer', opacity: completar.isPending ? 0.6 : 1 }}
               >
                 ❌ Falso
               </button>
@@ -314,15 +314,15 @@ export default function RetoFCDetallePage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, color: '#15803d' }}>✔️ {aciertos} aciertos</span>
-              <span style={{ fontSize: 13, color: '#dc2626' }}>❌ {fallos} fallos</span>
+              <span style={{ fontSize: 13, color: 'var(--hx-15803d)' }}>✔️ {aciertos} aciertos</span>
+              <span style={{ fontSize: 13, color: 'var(--hx-dc2626)' }}>❌ {fallos} fallos</span>
               <span style={{ fontSize: 13, color: TEXT_MUTED }}>
                 ⏱️ {Math.round((tiempoTotalMs || (Date.now() - tiempoInicioReto)) / 1000)}s
               </span>
             </div>
 
             {/* Duelo vs rival */}
-            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 14, padding: 16, marginBottom: 10 }}>
+            <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: 14, padding: 16, marginBottom: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', textAlign: 'center' }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 4 }}>Tú</div>
@@ -344,7 +344,7 @@ export default function RetoFCDetallePage() {
                 </div>
               )}
               {ambosCompletados && posicion && (
-                <div style={{ marginTop: 10, textAlign: 'center', fontSize: 13, fontWeight: 700, color: empate ? '#B45309' : gane ? '#15803d' : '#dc2626' }}>
+                <div style={{ marginTop: 10, textAlign: 'center', fontSize: 13, fontWeight: 700, color: empate ? 'var(--hx-b45309)' : gane ? 'var(--hx-15803d)' : 'var(--hx-dc2626)' }}>
                   {empate ? '🤝 ¡Empate!' : gane ? '🏆 ¡Has ganado el duelo!' : 'Has perdido este duelo'}
                 </div>
               )}
@@ -355,28 +355,28 @@ export default function RetoFCDetallePage() {
                 {!revanchaAbierta ? (
                   <button
                     onClick={() => setRevanchaAbierta(true)}
-                    style={{ width: '100%', padding: 12, background: 'white', color: TEXT_PRIMARY, border: '1px solid #E5E7EB', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                    style={{ width: '100%', padding: 12, background: 'var(--c-superficie)', color: TEXT_PRIMARY, border: '1px solid var(--hx-e5e7eb)', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
                   >
                     ⚔️ Pedir revancha
                   </button>
                 ) : (
-                  <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 14, padding: 12 }}>
+                  <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: 14, padding: 12 }}>
                     <textarea
                       value={mensajeRevancha}
                       onChange={(e) => setMensajeRevancha(e.target.value)}
                       placeholder="Escribe un mensaje para la revancha..."
                       maxLength={140}
-                      style={{ width: '100%', minHeight: 56, padding: '10px 12px', fontSize: 13, border: '1px solid #F1F5F9', borderRadius: 10, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', marginBottom: 8 }}
+                      style={{ width: '100%', minHeight: 56, padding: '10px 12px', fontSize: 13, border: '1px solid var(--hx-f1f5f9)', borderRadius: 10, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', marginBottom: 8 }}
                     />
                     {enviarRevancha.isError && (
-                      <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, color: 'var(--hx-dc2626)', marginBottom: 8 }}>
                         {(enviarRevancha.error as any)?.response?.data?.message ?? 'No se pudo enviar la revancha'}
                       </div>
                     )}
                     <button
                       onClick={() => enviarRevancha.mutate()}
                       disabled={enviarRevancha.isPending}
-                      style={{ width: '100%', padding: 12, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: enviarRevancha.isPending ? 'not-allowed' : 'pointer', opacity: enviarRevancha.isPending ? 0.6 : 1 }}
+                      style={{ width: '100%', padding: 12, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: enviarRevancha.isPending ? 'not-allowed' : 'pointer', opacity: enviarRevancha.isPending ? 0.6 : 1 }}
                     >
                       {enviarRevancha.isPending ? 'Enviando...' : 'Enviar revancha'}
                     </button>
@@ -387,7 +387,7 @@ export default function RetoFCDetallePage() {
 
             <button
               onClick={() => router.push('/app/retos')}
-              style={{ width: '100%', padding: 13, background: '#111827', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              style={{ width: '100%', padding: 13, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
             >
               Volver a retos
             </button>

@@ -18,10 +18,10 @@ import CargandoTest from '@/components/test/CargandoTest';
 import ResultadoDuelo, { RevisionDuelo } from '@/components/retos/ResultadoDuelo';
 import { TEXT_PRIMARY, TEXT_SECONDARY } from '@/styles/tokens';
 
-const BG_APP = '#FCEEE8';
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
-const COLOR_PSICO = '#4F46E5';
-const COLOR_PSICO_BG = '#E0E7FF';
+const BG_APP = 'var(--c-bg-retos)';
+const SOMBRA = 'var(--c-sombra)';
+const COLOR_PSICO = 'var(--hx-4f46e5)';
+const COLOR_PSICO_BG = 'var(--hx-e0e7ff)';
 
 function tiempoRestante(fechaFin?: string | null): string {
   if (!fechaFin) return '';
@@ -41,7 +41,7 @@ function Cabecera({ titulo, sub, onVolver }: { titulo: string; sub?: string; onV
       <button
         onClick={onVolver}
         aria-label="Volver a retos"
-        style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+        style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
       >
         <ArrowLeft size={18} color={TEXT_PRIMARY} />
       </button>
@@ -194,10 +194,10 @@ export default function RetoPsicoDetallePage() {
     return (
       <Contenedor>
         <Cabecera titulo="Duelo psicotécnico" onVolver={volver} />
-        <div style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '2rem 1.5rem', textAlign: 'center' }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 24, boxShadow: SOMBRA, padding: '2rem 1.5rem', textAlign: 'center' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>No hemos encontrado este duelo</div>
           <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 16, lineHeight: 1.5 }}>Puede que lo hayan cancelado o que ya no esté disponible.</div>
-          <button onClick={volver} style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Ir a retos</button>
+          <button onClick={volver} style={{ width: '100%', padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Ir a retos</button>
         </div>
       </Contenedor>
     );
@@ -231,7 +231,7 @@ export default function RetoPsicoDetallePage() {
     return (
       <Contenedor>
         <Cabecera titulo="Duelo psicotécnico" sub={`Contra ${nombreRival}`} onVolver={volver} />
-        <div style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '22px 18px 18px', textAlign: 'center', animation: 'oplora-aparecer 0.25s ease' }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 24, boxShadow: SOMBRA, padding: '22px 18px 18px', textAlign: 'center', animation: 'oplora-aparecer 0.25s ease' }}>
           <span style={{ width: 60, height: 60, borderRadius: 18, background: COLOR_PSICO_BG, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
             <Brain size={28} color={COLOR_PSICO} />
           </span>
@@ -241,14 +241,14 @@ export default function RetoPsicoDetallePage() {
           <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginTop: 4 }}>Gana quien acierte más. Si empatáis, el más rápido.</div>
 
           {meRetaron && reto.mensaje && (
-            <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '10px 14px', fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.5, marginTop: 14, textAlign: 'left' }}>
+            <div style={{ background: 'var(--hx-f8fafc)', borderRadius: 14, padding: '10px 14px', fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.5, marginTop: 14, textAlign: 'left' }}>
               “{reto.mensaje}”
             </div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', marginTop: 14, textAlign: 'left' }}>
             {filas.map((f, i) => (
-              <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 2px', borderTop: i ? '1px solid #EEF0F3' : 'none' }}>
+              <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 2px', borderTop: i ? '1px solid var(--hx-eef0f3)' : 'none' }}>
                 <f.icono size={16} color={COLOR_PSICO} />
                 <span style={{ flex: 1, fontSize: 13, color: TEXT_SECONDARY }}>{f.label}</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, textAlign: 'right' }}>{f.valor}</span>
@@ -256,19 +256,19 @@ export default function RetoPsicoDetallePage() {
             ))}
           </div>
 
-          <div style={{ background: '#F8FAFC', borderRadius: 16, padding: 14, marginTop: 10 }}>
+          <div style={{ background: 'var(--hx-f8fafc)', borderRadius: 16, padding: 14, marginTop: 10 }}>
             <DueloReto reto={retoMarcador} usuarioActual={usuario} tipo="psico" />
           </div>
 
           <div style={{ marginTop: 16 }}>
             {caducado ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, color: '#B91C1C', fontWeight: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, color: 'var(--hx-b91c1c)', fontWeight: 600 }}>
                 <Ban size={15} /> Este duelo caducó, ya no se puede jugar
               </div>
             ) : (
               <button
                 onClick={empezar}
-                style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+                style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
               >
                 <Brain size={16} /> Empezar duelo
               </button>
@@ -285,7 +285,7 @@ export default function RetoPsicoDetallePage() {
     return (
       <>
         {completar.isError && (
-          <div style={{ position: 'fixed', top: 12, left: 12, right: 12, zIndex: 30, maxWidth: 536, margin: '0 auto', background: '#FEF2F2', color: '#991B1B', borderRadius: 12, padding: '10px 12px', fontSize: 13, boxShadow: SOMBRA }}>
+          <div style={{ position: 'fixed', top: 12, left: 12, right: 12, zIndex: 30, maxWidth: 536, margin: '0 auto', background: 'var(--hx-fef2f2)', color: 'var(--hx-991b1b)', borderRadius: 12, padding: '10px 12px', fontSize: 13, boxShadow: SOMBRA }}>
             {(completar.error as any)?.response?.data?.message ?? 'No se ha podido enviar el duelo. Vuelve a pulsar «Finalizar» para reintentarlo.'}
           </div>
         )}
@@ -325,11 +325,11 @@ export default function RetoPsicoDetallePage() {
 
   const estadoDuelo = ambosCompletados
     ? (empate
-      ? { texto: 'Empate', icono: Handshake, color: '#B45309', fondo: '#FEF3C7' }
+      ? { texto: 'Empate', icono: Handshake, color: 'var(--hx-b45309)', fondo: 'var(--hx-fef3c7)' }
       : gane
-        ? { texto: '¡Has ganado!', icono: Crown, color: '#15803D', fondo: '#DCFCE7' }
-        : { texto: `Ha ganado ${nombreRival}`, icono: Crown, color: '#B91C1C', fondo: '#FEE2E2' })
-    : { texto: `Esperando a ${nombreRival}`, icono: Hourglass, color: TEXT_SECONDARY, fondo: '#F1F5F9' };
+        ? { texto: '¡Has ganado!', icono: Crown, color: 'var(--hx-15803d)', fondo: 'var(--hx-dcfce7)' }
+        : { texto: `Ha ganado ${nombreRival}`, icono: Crown, color: 'var(--hx-b91c1c)', fondo: 'var(--hx-fee2e2)' })
+    : { texto: `Esperando a ${nombreRival}`, icono: Hourglass, color: TEXT_SECONDARY, fondo: 'var(--hx-f1f5f9)' };
 
   const porPregunta = new Map(resp.map((r: any) => [r.preguntaId, r]));
   const revision: RevisionDuelo[] = resp.length
@@ -379,13 +379,13 @@ export default function RetoPsicoDetallePage() {
             </button>
           )}
           {revancha.isError && (
-            <div style={{ fontSize: 12, color: '#B91C1C', textAlign: 'center' }}>
+            <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', textAlign: 'center' }}>
               {(revancha.error as any)?.response?.data?.message ?? 'No se ha podido enviar la revancha.'}
             </div>
           )}
           <button
             onClick={volver}
-            style={{ width: '100%', padding: 14, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
           >
             Volver a retos
           </button>

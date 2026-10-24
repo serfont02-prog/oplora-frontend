@@ -13,9 +13,9 @@ import { PantallaOnboarding, OpcionOnboarding, ListaOpciones } from '@/component
 import { AvisoAuth } from '@/components/auth/PantallaAuth';
 
 const OPCIONES = [
-  { nivel: 1, icono: Sprout, color: '#4D7C0F', fondo: '#ECFCCB', titulo: 'Empiezo de cero', subtitulo: 'Estoy empezando o llevo muy poco tiempo' },
-  { nivel: 2, icono: BookOpen, color: '#1F7CFF', fondo: '#EAF0FF', titulo: 'Ya llevo un tiempo', subtitulo: 'Conozco parte del temario' },
-  { nivel: 3, icono: Award, color: '#C2410C', fondo: '#FCEEE8', titulo: 'Voy avanzado', subtitulo: 'Domino buena parte del temario' },
+  { nivel: 1, icono: Sprout, color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)', titulo: 'Empiezo de cero', subtitulo: 'Estoy empezando o llevo muy poco tiempo' },
+  { nivel: 2, icono: BookOpen, color: 'var(--hx-1f7cff)', fondo: 'var(--hx-eaf0ff)', titulo: 'Ya llevo un tiempo', subtitulo: 'Conozco parte del temario' },
+  { nivel: 3, icono: Award, color: 'var(--hx-c2410c)', fondo: 'var(--hx-fceee8)', titulo: 'Voy avanzado', subtitulo: 'Domino buena parte del temario' },
 ];
 
 export default function ExperienciaPage() {

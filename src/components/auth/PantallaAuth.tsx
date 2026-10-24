@@ -10,7 +10,7 @@ import { Eye, EyeOff, Loader2, AlertCircle, Info, CheckCircle2 } from 'lucide-re
 import LogoOplora, { COLOR_MARCA } from '@/components/marca/LogoOplora';
 import { BG_DASHBOARD, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
 
-export const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+export const SOMBRA = 'var(--c-sombra)';
 export const COLOR_ENLACE = COLOR_MARCA;
 
 /* ───────────── Pantalla ───────────── */
@@ -46,14 +46,14 @@ export function PantallaAuth({
 
       {/* Fondo: dos círculos suaves, como los círculos flotantes del Inicio */}
       <div aria-hidden style={{ position: 'absolute', width: 420, height: 420, borderRadius: '50%', background: 'rgba(31,124,255,0.10)', top: -160, right: -140 }} />
-      <div aria-hidden style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.65)', bottom: -120, left: -110 }} />
+      <div aria-hidden style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'color-mix(in srgb, var(--c-superficie) 65%, transparent)', bottom: -120, left: -110 }} />
 
       <div style={{ position: 'relative', width: '100%', maxWidth: 400 }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 22 }}>
           <LogoOplora alto={44} />
         </div>
 
-        <main style={{ background: 'white', borderRadius: 24, boxShadow: SOMBRA, padding: '26px 22px 24px' }}>
+        <main style={{ background: 'var(--c-superficie)', borderRadius: 24, boxShadow: SOMBRA, padding: '26px 22px 24px' }}>
           {(titulo || subtitulo) && (
             <header style={{ marginBottom: 18 }}>
               {titulo && <h1 style={{ fontSize: 20, fontWeight: 700, color: TEXT_PRIMARY, margin: 0, lineHeight: 1.3 }}>{titulo}</h1>}
@@ -118,8 +118,8 @@ export function CampoAuth({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          background: foco ? 'white' : '#F8FAFC',
-          border: `1.5px solid ${foco ? COLOR_MARCA : '#E5E7EB'}`,
+          background: foco ? 'var(--c-superficie)' : 'var(--hx-f8fafc)',
+          border: `1.5px solid ${foco ? COLOR_MARCA : 'var(--hx-e5e7eb)'}`,
           boxShadow: foco ? '0 0 0 3px rgba(31,124,255,0.15)' : 'none',
           borderRadius: 12,
           padding: '0 12px',
@@ -194,9 +194,9 @@ export function BotonAuth({
         fontSize: 14,
         fontWeight: 700,
         cursor: bloqueado ? 'default' : 'pointer',
-        border: principal ? 'none' : '1.5px solid #E5E7EB',
-        background: principal ? '#0f172a' : 'white',
-        color: principal ? 'white' : TEXT_PRIMARY,
+        border: principal ? 'none' : '1.5px solid var(--hx-e5e7eb)',
+        background: principal ? 'var(--hxbg-0f172a)' : 'var(--c-superficie)',
+        color: principal ? 'var(--c-primario-texto)' : TEXT_PRIMARY,
         opacity: bloqueado && !cargando ? 0.5 : 1,
         transition: 'opacity 0.15s',
       }}
@@ -209,9 +209,9 @@ export function BotonAuth({
 
 /* ───────────── Avisos ───────────── */
 const AVISOS = {
-  error: { Icono: AlertCircle, color: '#B91C1C', bg: '#FEF2F2' },
-  info: { Icono: Info, color: '#1E40AF', bg: '#EFF6FF' },
-  ok: { Icono: CheckCircle2, color: '#15803D', bg: '#F0FDF4' },
+  error: { Icono: AlertCircle, color: 'var(--hx-b91c1c)', bg: 'var(--hx-fef2f2)' },
+  info: { Icono: Info, color: 'var(--hx-1e40af)', bg: 'var(--hx-eff6ff)' },
+  ok: { Icono: CheckCircle2, color: 'var(--hx-15803d)', bg: 'var(--hx-f0fdf4)' },
 } as const;
 
 export function AvisoAuth({ tipo = 'error', children }: { tipo?: keyof typeof AVISOS; children: React.ReactNode }) {

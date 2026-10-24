@@ -289,13 +289,13 @@ export default function ArticuloPage() {
             <mark
               key={i}
               onClick={() => setSubrayadoSeleccionado(subrayadoSeleccionado === parte.subrayado.id ? null : parte.subrayado.id)}
-              style={{ background: '#fef08a', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
+              style={{ background: 'var(--hx-fef08a)', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
             >
               {parte.texto}
               {subrayadoSeleccionado === parte.subrayado.id && (
                 <button
                   onClick={(e) => { e.stopPropagation(); borrarSubrayado(parte.subrayado.id); }}
-                  style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: '#111827', color: 'white', border: 'none', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
+                  style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
                 >
                   🗑 Borrar
                 </button>
@@ -320,7 +320,7 @@ export default function ArticuloPage() {
   if (isError || !articulo) {
     return (
       <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '13px', color: '#dc2626' }}>No se ha podido cargar el artículo. Inténtalo de nuevo.</span>
+        <span style={{ fontSize: '13px', color: 'var(--hx-dc2626)' }}>No se ha podido cargar el artículo. Inténtalo de nuevo.</span>
         <button
           onClick={() => router.back()}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
@@ -345,7 +345,7 @@ export default function ArticuloPage() {
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: '90px' }}>
 
       {/* Header — volver + ley */}
-      <div style={{ background: 'white', borderBottom: '1px solid #F1F5F9', padding: '0 1.25rem', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f1f5f9)', padding: '0 1.25rem', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
         <button
           onClick={() => { pararAudio(); router.back(); }}
           style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
@@ -360,11 +360,11 @@ export default function ArticuloPage() {
       </div>
 
       {/* Navegación anterior / siguiente */}
-      <div style={{ background: 'white', borderBottom: '1px solid #F1F5F9', padding: '0 1rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: '48px', zIndex: 9 }}>
+      <div style={{ background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f1f5f9)', padding: '0 1rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: '48px', zIndex: 9 }}>
         <button
           onClick={irAnterior}
           disabled={!navArticulos?.anterior}
-          style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: navArticulos?.anterior ? TEXT_SECONDARY : '#d1d5db', background: 'none', border: 'none', cursor: navArticulos?.anterior ? 'pointer' : 'not-allowed', minWidth: '70px' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: navArticulos?.anterior ? TEXT_SECONDARY : 'var(--hx-d1d5db)', background: 'none', border: 'none', cursor: navArticulos?.anterior ? 'pointer' : 'not-allowed', minWidth: '70px' }}
         >
           <ChevronLeft size={14} />
           {navArticulos?.anterior ? `Art. ${navArticulos.anterior.numero}` : '—'}
@@ -377,7 +377,7 @@ export default function ArticuloPage() {
         <button
           onClick={irSiguiente}
           disabled={!navArticulos?.siguiente}
-          style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: navArticulos?.siguiente ? TEXT_SECONDARY : '#d1d5db', background: 'none', border: 'none', cursor: navArticulos?.siguiente ? 'pointer' : 'not-allowed', minWidth: '70px', justifyContent: 'flex-end' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: navArticulos?.siguiente ? TEXT_SECONDARY : 'var(--hx-d1d5db)', background: 'none', border: 'none', cursor: navArticulos?.siguiente ? 'pointer' : 'not-allowed', minWidth: '70px', justifyContent: 'flex-end' }}
         >
           {navArticulos?.siguiente ? `Art. ${navArticulos.siguiente.numero}` : '—'}
           <ChevronRight size={14} />
@@ -390,28 +390,28 @@ export default function ArticuloPage() {
         onTouchEnd={handleTouchEnd}
         style={{ maxWidth: '560px', margin: '0 auto', padding: '1.25rem', position: 'relative' }}
       >
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: '16px', padding: '1.25rem', marginBottom: '12px' }}>
+        <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: '16px', padding: '1.25rem', marginBottom: '12px' }}>
 
           {/* Barra de audio — arriba del texto para que siempre sea visible sin hacer scroll */}
-          <div style={{ paddingBottom: '12px', marginBottom: '1rem', borderBottom: '1px solid #F1F5F9' }}>
+          <div style={{ paddingBottom: '12px', marginBottom: '1rem', borderBottom: '1px solid var(--hx-f1f5f9)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
                 onClick={() => { if (reproduciendo && !modoContinuo) pararAudio(); else { setModoContinuo(false); iniciarAudio(false); } }}
-                style={{ width: '36px', height: '36px', borderRadius: '50%', background: reproduciendo && !modoContinuo ? '#111827' : '#F4F5F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                style={{ width: '36px', height: '36px', borderRadius: '50%', background: reproduciendo && !modoContinuo ? 'var(--hxbg-111827)' : 'var(--hx-f4f5f7)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
               >
-                {reproduciendo && !modoContinuo ? <Pause size={14} color="white" /> : <Play size={14} color="#374151" />}
+                {reproduciendo && !modoContinuo ? <Pause size={14} color="var(--c-primario-texto)" /> : <Play size={14} color="var(--hx-374151)" />}
               </button>
               <button
                 onClick={() => { if (reproduciendo && modoContinuo) pararAudio(); else { setModoContinuo(true); iniciarAudio(true); } }}
-                style={{ padding: '6px 10px', borderRadius: '8px', background: reproduciendo && modoContinuo ? '#111827' : '#F4F5F7', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: reproduciendo && modoContinuo ? 'white' : '#374151', flexShrink: 0 }}
+                style={{ padding: '6px 10px', borderRadius: '8px', background: reproduciendo && modoContinuo ? 'var(--hxbg-111827)' : 'var(--hx-f4f5f7)', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: reproduciendo && modoContinuo ? 'var(--c-primario-texto)' : 'var(--hx-374151)', flexShrink: 0 }}
               >
                 ⏩ Desde aquí
               </button>
               <div style={{ flex: 1 }} />
-              <button onClick={cambiarVoz} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', color: TEXT_SECONDARY }}>
+              <button onClick={cambiarVoz} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', color: TEXT_SECONDARY }}>
                 {vozGenero === 'mujer' ? '👩' : '👨'}
               </button>
-              <button onClick={cambiarVelocidad} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', color: TEXT_SECONDARY }}>
+              <button onClick={cambiarVelocidad} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', color: TEXT_SECONDARY }}>
                 {velocidad}x
               </button>
             </div>
@@ -420,18 +420,18 @@ export default function ArticuloPage() {
           {/* Texto con subrayados */}
           <div
             data-articulo-contenido
-            style={{ fontSize: '14px', color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: '1rem', userSelect: 'text', position: 'relative' }}
+            style={{ fontSize: '14px', color: 'var(--hx-374151)', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: '1rem', userSelect: 'text', position: 'relative' }}
           >
             {renderTextoConSubrayados(articulo.contenido ?? '')}
           </div>
 
           {/* Notas personales */}
-          <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '12px' }}>
+          <div style={{ borderTop: '1px solid var(--hx-f1f5f9)', paddingTop: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
               <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Mis notas
               </div>
-              <div style={{ fontSize: '10px', color: notaGuardada ? '#15803d' : TEXT_MUTED }}>
+              <div style={{ fontSize: '10px', color: notaGuardada ? 'var(--hx-15803d)' : TEXT_MUTED }}>
                 {notaGuardando ? 'Guardando...' : notaGuardada ? '✓ Guardado' : ''}
               </div>
             </div>
@@ -439,7 +439,7 @@ export default function ArticuloPage() {
               value={notaTexto}
               onChange={(e) => handleNotaChange(e.target.value)}
               placeholder="Escribe aquí tus notas personales sobre este artículo..."
-              style={{ width: '100%', minHeight: '80px', padding: '10px', fontSize: '12px', color: '#374151', border: '1px solid #e5e7eb', borderRadius: '10px', outline: 'none', resize: 'vertical', lineHeight: 1.6, background: '#FFFBEB', boxSizing: 'border-box', fontFamily: 'inherit' }}
+              style={{ width: '100%', minHeight: '80px', padding: '10px', fontSize: '12px', color: 'var(--hx-374151)', border: '1px solid var(--hx-e5e7eb)', borderRadius: '10px', outline: 'none', resize: 'vertical', lineHeight: 1.6, background: 'var(--hx-fffbeb)', boxSizing: 'border-box', fontFamily: 'inherit' }}
             />
           </div>
 
@@ -451,13 +451,13 @@ export default function ArticuloPage() {
                 router.push(`/app/test/${oposicionId}?versionLeyId=${versionLeyId}&n=15`);
               }}
               disabled={!oposicionId || !versionLeyId}
-              style={{ flex: 1, padding: '11px', background: '#F4F5F7', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: (!oposicionId || !versionLeyId) ? '#9CA3AF' : '#374151', cursor: (!oposicionId || !versionLeyId) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+              style={{ flex: 1, padding: '11px', background: 'var(--hx-f4f5f7)', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: (!oposicionId || !versionLeyId) ? 'var(--hx-9ca3af)' : 'var(--hx-374151)', cursor: (!oposicionId || !versionLeyId) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
             >
               🎯 Test de esta ley
             </button>
             <button
               onClick={() => router.push(`/app/flashcards/repasar?articuloId=${articulo.id}&leyId=${leyId ?? ''}&oposicionId=${oposicionId ?? ''}`)}
-              style={{ flex: 1, padding: '11px', background: '#F4F5F7', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+              style={{ flex: 1, padding: '11px', background: 'var(--hx-f4f5f7)', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: 'var(--hx-374151)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
             >
               🃏 Flashcard
             </button>
@@ -467,7 +467,7 @@ export default function ArticuloPage() {
             <div style={{ position: 'fixed', left: menuSubrayado.x, top: menuSubrayado.y, transform: 'translateX(-50%)', zIndex: 50 }}>
               <button
                 onClick={crearSubrayado}
-                style={{ background: '#fef08a', border: '1px solid #eab308', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}
+                style={{ background: 'var(--hx-fef08a)', border: '1px solid #eab308', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}
               >
                 ✏️ Subrayar
               </button>

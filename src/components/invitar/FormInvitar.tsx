@@ -12,7 +12,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_RETOS, COLOR_RETOS_BG } from '@/styles/tokens';
 
-const SOMBRA = '0 6px 18px rgba(15, 23, 42, 0.08)';
+const SOMBRA = 'var(--c-sombra)';
 
 const TEXTO_TIPO: Record<string, (nombre?: string) => string> = {
   app: () => 'Aún no usa OPLORA: le enviaremos una invitación para crear su cuenta.',
@@ -87,18 +87,18 @@ export default function FormInvitar({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {enviadoA && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#F0FDF4', borderRadius: 14, padding: '10px 12px' }}>
-          <CheckCircle2 size={18} color="#16A34A" style={{ flexShrink: 0 }} />
-          <span style={{ flex: 1, fontSize: 13, color: '#166534', fontWeight: 600 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--hx-f0fdf4)', borderRadius: 14, padding: '10px 12px' }}>
+          <CheckCircle2 size={18} color="var(--hx-16a34a)" style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1, fontSize: 13, color: 'var(--hx-166534)', fontWeight: 600 }}>
             {enviadoA === 'enlace' ? 'Enlace copiado. Pégalo donde quieras.' : `Invitación enviada a ${enviadoA}`}
           </span>
-          <button onClick={() => setEnviadoA(null)} aria-label="Cerrar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#166534', display: 'flex' }}><X size={15} /></button>
+          <button onClick={() => setEnviadoA(null)} aria-label="Cerrar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hx-166534)', display: 'flex' }}><X size={15} /></button>
         </div>
       )}
 
       <div>
         <label style={{ fontSize: 12, fontWeight: 600, color: TEXT_SECONDARY, display: 'block', marginBottom: 6 }}>Email o nick</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '0 12px', boxShadow: SOMBRA }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--c-superficie)', borderRadius: 12, padding: '0 12px', boxShadow: SOMBRA }}>
           <Mail size={16} color={TEXT_MUTED} style={{ flexShrink: 0 }} />
           <input
             type="text"
@@ -111,7 +111,7 @@ export default function FormInvitar({
           />
         </div>
         {destino.trim().length >= 3 && (
-          <div style={{ fontSize: 12, color: estado?.puedeInvitar ? TEXT_SECONDARY : '#B45309', marginTop: 6, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 12, color: estado?.puedeInvitar ? TEXT_SECONDARY : 'var(--hx-b45309)', marginTop: 6, lineHeight: 1.4 }}>
             {isFetching || debounced !== destino.trim() ? 'Comprobando…' : textoEstado}
           </div>
         )}
@@ -127,23 +127,23 @@ export default function FormInvitar({
             onChange={(e) => setMensaje(e.target.value)}
             maxLength={300}
             placeholder="¿Nos preparamos juntos la oposición?"
-            style={{ width: '100%', minHeight: 64, padding: '10px 12px', fontSize: 13, border: 'none', borderRadius: 12, outline: 'none', boxSizing: 'border-box', background: 'white', boxShadow: SOMBRA, resize: 'vertical', fontFamily: 'inherit' }}
+            style={{ width: '100%', minHeight: 64, padding: '10px 12px', fontSize: 13, border: 'none', borderRadius: 12, outline: 'none', boxSizing: 'border-box', background: 'var(--c-superficie)', boxShadow: SOMBRA, resize: 'vertical', fontFamily: 'inherit' }}
           />
         </div>
       )}
 
-      {error && <div style={{ fontSize: 12, color: '#B91C1C', background: '#FEF2F2', borderRadius: 10, padding: '8px 10px' }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 10, padding: '8px 10px' }}>{error}</div>}
 
       <button
         onClick={enviar}
         disabled={!puede || enviando}
-        style={{ width: '100%', padding: 12, background: '#0f172a', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: puede ? 'pointer' : 'default', opacity: puede && !enviando ? 1 : 0.45, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+        style={{ width: '100%', padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: puede ? 'pointer' : 'default', opacity: puede && !enviando ? 1 : 0.45, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
       >
         <Send size={15} /> {enviando ? 'Enviando…' : 'Enviar invitación por email'}
       </button>
       <button
         onClick={compartirEnlace}
-        style={{ width: '100%', padding: 11, background: 'white', color: TEXT_PRIMARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+        style={{ width: '100%', padding: 11, background: 'var(--c-superficie)', color: TEXT_PRIMARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
       >
         <Share2 size={15} color={COLOR_RETOS} /> Compartir enlace por otra app
       </button>
@@ -155,7 +155,7 @@ export default function FormInvitar({
 export function ModalInvitar({ onClose, ...props }: React.ComponentProps<typeof FormInvitar> & { onClose: () => void }) {
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: '1rem' }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: '#FCEEE8', borderRadius: 20, padding: '1.25rem', width: '100%', maxWidth: 400, maxHeight: '88vh', overflowY: 'auto' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--hx-fceee8)', borderRadius: 20, padding: '1.25rem', width: '100%', maxWidth: 400, maxHeight: '88vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Mail size={20} color={COLOR_RETOS} />
@@ -164,7 +164,7 @@ export function ModalInvitar({ onClose, ...props }: React.ComponentProps<typeof 
             <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Invitar para retar</div>
             <div style={{ fontSize: 12, color: TEXT_MUTED }}>Le escribiremos de tu parte</div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'white', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
             <X size={16} color={TEXT_SECONDARY} />
           </button>
         </div>

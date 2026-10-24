@@ -14,9 +14,9 @@ type Props = {
 export default function CargandoTest({ total, texto = 'Preparando test…', subtexto }: Props) {
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24 }}>
-      <div style={{ position: 'relative', width: 72, height: 72, borderRadius: '50%', background: 'white', boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="op-spin" style={{ position: 'absolute', inset: 6, borderRadius: '50%', border: '3px solid #EEF0F3', borderTopColor: '#4D7C0F' }} />
-        <ClipboardCheck size={24} color="#4D7C0F" />
+      <div style={{ position: 'relative', width: 72, height: 72, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: 'var(--c-sombra)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="op-spin" style={{ position: 'absolute', inset: 6, borderRadius: '50%', border: '3px solid var(--hx-eef0f3)', borderTopColor: 'var(--hx-4d7c0f)' }} />
+        <ClipboardCheck size={24} color="var(--hx-4d7c0f)" />
       </div>
       <div style={{ fontSize: 15, fontWeight: 600, color: TEXT_PRIMARY }}>{texto}</div>
       <div style={{ fontSize: 13, color: TEXT_MUTED, textAlign: 'center', lineHeight: 1.6 }}>

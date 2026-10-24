@@ -6,9 +6,9 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_SECONDARY = 'var(--hx-6b7280)';
+const TEXT_MUTED = 'var(--hx-9ca3af)';
 
 type EstadoTicket = 'abierto' | 'respondido' | 'cerrado';
 
@@ -29,9 +29,9 @@ const ESTADO_LABEL: Record<EstadoTicket, string> = {
 };
 
 const ESTADO_COLOR: Record<EstadoTicket, { bg: string; text: string }> = {
-  abierto: { bg: '#FEF3C7', text: '#92400E' },
-  respondido: { bg: '#DCFCE7', text: '#15803D' },
-  cerrado: { bg: '#F1F5F9', text: '#64748B' },
+  abierto: { bg: 'var(--hx-fef3c7)', text: 'var(--hx-92400e)' },
+  respondido: { bg: 'var(--hx-dcfce7)', text: 'var(--hx-15803d)' },
+  cerrado: { bg: 'var(--hx-f1f5f9)', text: 'var(--hx-64748b)' },
 };
 
 function formatearFecha(fecha: string): string {
@@ -67,7 +67,7 @@ export default function SoportePage() {
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>
       {/* Header */}
-      <div style={{ background: '#0f172a', padding: '1rem 1.25rem 1.5rem' }}>
+      <div style={{ background: 'var(--hxhero-0f172a)', padding: '1rem 1.25rem 1.5rem' }}>
         <button
           onClick={() => router.back()}
           style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 10, padding: '6px 12px', color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginBottom: 16 }}
@@ -75,12 +75,12 @@ export default function SoportePage() {
           ← Volver
         </button>
         <div style={{ fontSize: 17, fontWeight: 700, color: 'white' }}>Soporte</div>
-        <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Cuéntanos qué necesitas y te responderemos aquí</div>
+        <div style={{ fontSize: 12, color: 'var(--hx-94a3b8)', marginTop: 2 }}>Cuéntanos qué necesitas y te responderemos aquí</div>
       </div>
 
       <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Formulario */}
-        <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 16 }}>
+        <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: 16, padding: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginBottom: 12 }}>Nueva consulta</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <input
@@ -99,7 +99,7 @@ export default function SoportePage() {
               onClick={enviar}
               disabled={!asunto.trim() || !mensaje.trim() || mutEnviar.isPending}
               style={{
-                padding: '11px 0', borderRadius: 12, border: 'none', background: '#111827', color: 'white',
+                padding: '11px 0', borderRadius: 12, border: 'none', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)',
                 fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 opacity: (!asunto.trim() || !mensaje.trim() || mutEnviar.isPending) ? 0.5 : 1,
               }}
@@ -116,7 +116,7 @@ export default function SoportePage() {
           {isLoading ? (
             <div style={{ fontSize: 13, color: TEXT_MUTED, textAlign: 'center', padding: 20 }}>Cargando...</div>
           ) : tickets.length === 0 ? (
-            <div style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 20, textAlign: 'center', fontSize: 13, color: TEXT_MUTED }}>
+            <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: 16, padding: 20, textAlign: 'center', fontSize: 13, color: TEXT_MUTED }}>
               Todavía no has enviado ninguna consulta
             </div>
           ) : (
@@ -124,7 +124,7 @@ export default function SoportePage() {
               {tickets.map((t) => {
                 const color = ESTADO_COLOR[t.estado];
                 return (
-                  <div key={t.id} style={{ background: 'white', border: '1px solid #F1F5F9', borderRadius: 16, padding: 14 }}>
+                  <div key={t.id} style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: 16, padding: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY }}>{t.asunto}</div>
                       <span style={{ fontSize: 10, padding: '3px 9px', borderRadius: 999, fontWeight: 700, background: color.bg, color: color.text, flexShrink: 0 }}>
@@ -135,8 +135,8 @@ export default function SoportePage() {
                     <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{t.mensaje}</div>
 
                     {t.respuesta && (
-                      <div style={{ marginTop: 10, background: '#EAF0FF', borderRadius: 12, padding: 12 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#1F7CFF', marginBottom: 4 }}>Respuesta de Oplora:</div>
+                      <div style={{ marginTop: 10, background: 'var(--hx-eaf0ff)', borderRadius: 12, padding: 12 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--hx-1f7cff)', marginBottom: 4 }}>Respuesta de Oplora:</div>
                         <div style={{ fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{t.respuesta}</div>
                       </div>
                     )}
@@ -152,6 +152,6 @@ export default function SoportePage() {
 }
 
 const inputEstilo: React.CSSProperties = {
-  fontSize: 13, padding: '10px 12px', borderRadius: 10, border: '1px solid #E5E7EB',
-  outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', background: '#F9FAFB',
+  fontSize: 13, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--hx-e5e7eb)',
+  outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', background: 'var(--hx-f9fafb)',
 };

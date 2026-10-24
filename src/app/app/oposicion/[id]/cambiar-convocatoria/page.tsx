@@ -7,9 +7,9 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
 
-const TEXT_PRIMARY = '#111827';
-const TEXT_SECONDARY = '#6B7280';
-const TEXT_MUTED = '#9CA3AF';
+const TEXT_PRIMARY = 'var(--hx-111827)';
+const TEXT_SECONDARY = 'var(--hx-6b7280)';
+const TEXT_MUTED = 'var(--hx-9ca3af)';
 
 export default function CambiarConvocatoriaPage() {
   const params = useParams();
@@ -68,7 +68,7 @@ export default function CambiarConvocatoriaPage() {
                 disabled={esActual || cambiar.isPending}
                 style={{
                   width: '100%', textAlign: 'left', padding: '14px 16px',
-                  background: 'white', border: esActual ? '2px solid #1F7CFF' : '1px solid #F1F5F9',
+                  background: 'var(--c-superficie)', border: esActual ? '2px solid var(--hx-1f7cff)' : '1px solid var(--hx-f1f5f9)',
                   borderRadius: 14, cursor: esActual ? 'default' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}
@@ -79,7 +79,7 @@ export default function CambiarConvocatoriaPage() {
                     {c.plazas ? `${c.plazas} plazas` : ''} {c.estado === 'activa' ? '· Activa' : ''}
                   </div>
                 </div>
-                {esActual && <CheckCircle2 size={18} color="#1F7CFF" />}
+                {esActual && <CheckCircle2 size={18} color="var(--hx-1f7cff)" />}
               </button>
             );
           })}

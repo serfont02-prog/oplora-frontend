@@ -236,16 +236,16 @@ export default function TestPage({ params }: TestPageProps) {
   const getColorOpcion = (idx: number) => {
     if (!respondida) {
       return seleccionada === idx
-        ? { bg: '#eef2ff', border: '#111827', color: '#111827' }
-        : { bg: 'white', border: '#e5e7eb', color: '#111827' };
+        ? { bg: 'var(--hx-eef2ff)', border: 'var(--hx-111827)', color: 'var(--hx-111827)' }
+        : { bg: 'var(--c-superficie)', border: 'var(--hx-e5e7eb)', color: 'var(--hx-111827)' };
     }
     if (idx === pregunta?.correcta) {
-      return { bg: '#dcfce7', border: '#16a34a', color: '#14532d' };
+      return { bg: 'var(--hx-dcfce7)', border: 'var(--hx-16a34a)', color: 'var(--hx-14532d)' };
     }
     if (idx === seleccionada) {
-      return { bg: '#fee2e2', border: '#dc2626', color: '#7f1d1d' };
+      return { bg: 'var(--hx-fee2e2)', border: 'var(--hx-dc2626)', color: 'var(--hx-7f1d1d)' };
     }
-    return { bg: 'white', border: '#e5e7eb', color: '#6b7280' };
+    return { bg: 'var(--c-superficie)', border: 'var(--hx-e5e7eb)', color: 'var(--hx-6b7280)' };
   };
 
   const titulo = modo === 'repaso' ? 'Repaso inteligente'
@@ -273,7 +273,7 @@ export default function TestPage({ params }: TestPageProps) {
     } catch { /* sin detalle */ }
     const esLimite = !!motivo && motivo !== 'simulacro_bloqueado';
     return (
-      <main style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center', background: '#EAF0FF' }}>
+      <main style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center', background: 'var(--c-bg-dashboard)' }}>
         <EmptyState
           icon={<Lock size={28} />}
           eyebrow={titulo}
@@ -309,7 +309,7 @@ export default function TestPage({ params }: TestPageProps) {
     const esSeleccionConcreta = temasIds.length > 0 || !!versionLeyId;
 
     return (
-      <main className="op-app-surface" style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center', background: '#EAF0FF' }}>
+      <main className="op-app-surface" style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center', background: 'var(--c-bg-dashboard)' }}>
         {modo === 'repaso' ? (
           <EmptyState
             icon={<Target size={28} />}
@@ -369,11 +369,11 @@ export default function TestPage({ params }: TestPageProps) {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#EAF0FF' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--c-bg-dashboard)' }}>
       {errorGuardado && (
         <div style={{ maxWidth: 560, margin: '0 auto', padding: '12px 1.25rem 0' }}>
         <div style={{
-          background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b',
+          background: 'var(--hx-fef2f2)', border: '1px solid var(--hx-fecaca)', color: 'var(--hx-991b1b)',
           borderRadius: 12, padding: '12px 14px', marginBottom: 14,
           fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
         }}>
@@ -415,10 +415,10 @@ export default function TestPage({ params }: TestPageProps) {
 function EmptyStep({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ width: 38, height: 38, borderRadius: 12, background: '#E6F1FB', color: '#185FA5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--hx-e6f1fb)', color: 'var(--hx-185fa5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {icon}
       </div>
-      <div style={{ color: '#4b5563', fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
+      <div style={{ color: 'var(--hx-4b5563)', fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
         {text}
       </div>
     </div>
