@@ -535,7 +535,7 @@ export default function TemaPage() {
         {/* ── MATERIAL ── */}
         {tab === 'material' && (
           <>
-            <TarjetaTemarioPapel oposicionId={oposicionId} />
+            <TarjetaTemarioPapel oposicionId={oposicionId} lugar="tema" />
 
             <section>
               <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{apuntesOplora.length}</span>}>Apuntes OPLORA</TituloSeccion>

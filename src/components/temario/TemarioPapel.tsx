@@ -11,8 +11,14 @@ import { useRouter } from 'next/navigation';
 import { BookCopy, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
 
+export type LugarTemarioPapel = 'lector' | 'tema' | 'listaTemas' | 'perfil';
+export type ValorOpcion = { id: string; nombre: string; descripcion: string; suplemento: number | null };
+export type GrupoOpciones = { id: string; nombre: string; valores: ValorOpcion[] };
+
 export type ProductoTemarioPapel = {
   activo: boolean;
+  ubicaciones?: Partial<Record<LugarTemarioPapel, boolean>>;
+  opciones?: GrupoOpciones[];
   titulo: string;
   edicion: string;
   paginas: number | null;
@@ -25,8 +31,12 @@ export type ProductoTemarioPapel = {
   imagenes: string[];
 };
 
+/** El admin elige en qué sitios de la app aparece el acceso al temario en papel. */
+export const visibleEn = (p: ProductoTemarioPapel | null | undefined, lugar: LugarTemarioPapel) =>
+  !!p && p.ubicaciones?.[lugar] !== false;
+
 export function useTemarioPapel(oposicionId?: string) {
-  return useQuery<{ producto: ProductoTemarioPapel | null; interesado: boolean }>({
+  return useQuery<{ producto: ProductoTemarioPapel | null; interesado: boolean; opciones: Record<string, string> | null }>({
     queryKey: ['temario-papel', oposicionId],
     queryFn: async () => (await api.get(`/temario-papel/oposicion/${oposicionId}`)).data,
     enabled: !!oposicionId,
@@ -46,11 +56,11 @@ export function resumenProducto(p: ProductoTemarioPapel) {
   ].filter(Boolean).join(' · ');
 }
 
-export function TarjetaTemarioPapel({ oposicionId }: { oposicionId?: string }) {
+export function TarjetaTemarioPapel({ oposicionId, lugar }: { oposicionId?: string; lugar: 'tema' | 'listaTemas' }) {
   const router = useRouter();
   const { data } = useTemarioPapel(oposicionId);
   const p = data?.producto;
-  if (!p) return null;
+  if (!p || !visibleEn(p, lugar)) return null;
   const portada = p.imagenes[0];
   return (
     <button
@@ -82,7 +92,7 @@ export function TarjetaTemarioPapel({ oposicionId }: { oposicionId?: string }) {
 export function BotonEnPapel({ oposicionId }: { oposicionId?: string }) {
   const router = useRouter();
   const { data } = useTemarioPapel(oposicionId);
-  if (!data?.producto) return null;
+  if (!visibleEn(data?.producto, 'lector')) return null;
   return (
     <button
       onClick={() => router.push('/app/temario-papel')}

@@ -3,7 +3,7 @@
 // ⭐ Temario en papel: ficha del temario completo impreso de la oposición del usuario.
 // Mientras no se pueda pagar desde la app, el botón apunta al usuario a la lista de aviso.
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookCopy, Check, ChevronLeft, ChevronRight, FileText, Layers, Package, RefreshCw, Truck, X, Bell } from 'lucide-react';
@@ -34,21 +34,41 @@ export default function TemarioPapelPage() {
   const { data, isLoading, isError } = useTemarioPapel(oposicionId);
   const [visor, setVisor] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [eleccion, setEleccion] = useState<Record<string, string>>({});
+
+  const p = data?.producto;
+  const imagenes = p?.imagenes ?? [];
+  const grupos = p?.opciones ?? [];
+
+  // Elección inicial: la guardada (si ya pidió aviso) o la primera opción de cada grupo
+  useEffect(() => {
+    if (!p) return;
+    const inicial: Record<string, string> = {};
+    for (const g of p.opciones ?? []) inicial[g.id] = data?.opciones?.[g.id] ?? g.valores[0]?.id;
+    setEleccion(inicial);
+  }, [p, data?.opciones]);
+
+  const suplementos = useMemo(() => grupos.reduce((s, g) => s + (g.valores.find((v) => v.id === eleccion[g.id])?.suplemento ?? 0), 0), [grupos, eleccion]);
+  const precioTotal = p?.precio != null ? p.precio + suplementos : null;
 
   const cambiarAviso = useMutation({
-    mutationFn: async (quiero: boolean) => {
+    mutationFn: async ({ quiero, opciones }: { quiero: boolean; opciones?: Record<string, string> }) => {
       const url = `/temario-papel/oposicion/${oposicionId}/interes`;
-      return (quiero ? await api.post(url) : await api.delete(url)).data;
+      return (quiero ? await api.post(url, { opciones }) : await api.delete(url)).data;
     },
     onMutate: () => setError(''),
     onSuccess: (res: any) => {
-      queryClient.setQueryData(['temario-papel', oposicionId], (prev: any) => (prev ? { ...prev, interesado: !!res?.interesado } : prev));
+      queryClient.setQueryData(['temario-papel', oposicionId], (prev: any) => (prev ? { ...prev, interesado: !!res?.interesado, opciones: res?.opciones ?? null } : prev));
     },
     onError: () => setError('No se ha podido guardar. Comprueba la conexión e inténtalo de nuevo.'),
   });
 
-  const p = data?.producto;
-  const imagenes = p?.imagenes ?? [];
+  const elegir = (grupo: string, valor: string) => {
+    const nueva = { ...eleccion, [grupo]: valor };
+    setEleccion(nueva);
+    // Si ya pidió aviso, se guarda al momento cómo lo quiere
+    if (data?.interesado) cambiarAviso.mutate({ quiero: true, opciones: nueva });
+  };
 
   const volver = () => (window.history.length > 1 ? router.back() : router.push('/app/dashboard'));
 
@@ -111,9 +131,9 @@ export default function TemarioPapelPage() {
                   <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, color: 'var(--c-azul)', background: 'var(--c-azul-bg)', borderRadius: 999, padding: '3px 9px', marginBottom: 8 }}>{p.edicion}</span>
                 )}
                 <div style={{ fontSize: 20, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1.2 }}>{p.titulo}</div>
-                {p.precio != null && (
+                {precioTotal != null && (
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 22, fontWeight: 800, color: TEXT_PRIMARY }}>{formatoEuros(p.precio)}</span>
+                    <span style={{ fontSize: 22, fontWeight: 800, color: TEXT_PRIMARY }}>{formatoEuros(precioTotal)}</span>
                     <span style={{ fontSize: 12, color: TEXT_MUTED }}>
                       {p.gastosEnvio == null ? '' : p.gastosEnvio === 0 ? 'Envío incluido' : `+ ${formatoEuros(p.gastosEnvio)} de envío`}
                     </span>
@@ -132,6 +152,47 @@ export default function TemarioPapelPage() {
                 <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.6, whiteSpace: 'pre-line' }}>{p.descripcion}</div>
               )}
             </div>
+
+            {grupos.length > 0 && (
+              <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Elige cómo lo quieres</div>
+                  <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2 }}>
+                    {data?.interesado ? 'Guardamos tu elección para cuando abramos los pedidos.' : 'Nos ayuda a preparar los ejemplares. Podrás cambiarlo al pedirlo.'}
+                  </div>
+                </div>
+                {grupos.map((g) => (
+                  <div key={g.id}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: TEXT_SECONDARY, marginBottom: 6 }}>{g.nombre}</div>
+                    <div role="radiogroup" aria-label={g.nombre} style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(g.valores.length, 3)}, 1fr)`, gap: 8 }}>
+                      {g.valores.map((v) => {
+                        const activo = eleccion[g.id] === v.id;
+                        return (
+                          <button
+                            key={v.id}
+                            role="radio"
+                            aria-checked={activo}
+                            onClick={() => elegir(g.id, v.id)}
+                            style={{
+                              textAlign: 'left', padding: '10px 12px', borderRadius: 14, cursor: 'pointer',
+                              border: activo ? '1.5px solid var(--c-azul)' : '1px solid var(--c-borde)',
+                              background: activo ? 'var(--c-azul-bg)' : 'var(--c-superficie)',
+                            }}
+                          >
+                            <div style={{ fontSize: 13, fontWeight: 700, color: activo ? 'var(--c-azul)' : TEXT_PRIMARY }}>{v.nombre}</div>
+                            {(v.descripcion || (v.suplemento ?? 0) > 0) && (
+                              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.35 }}>
+                                {[v.descripcion, (v.suplemento ?? 0) > 0 ? `+${formatoEuros(v.suplemento!)}` : null].filter(Boolean).join(' · ')}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 14, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--c-verde-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -162,7 +223,7 @@ export default function TemarioPapelPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY }}>Te avisaremos en cuanto puedas pedirlo</div>
                   <button
-                    onClick={() => cambiarAviso.mutate(false)}
+                    onClick={() => cambiarAviso.mutate({ quiero: false })}
                     disabled={cambiarAviso.isPending}
                     style={{ border: 'none', background: 'none', padding: 0, marginTop: 2, fontSize: 12, color: TEXT_MUTED, textDecoration: 'underline', cursor: 'pointer' }}
                   >
@@ -173,7 +234,7 @@ export default function TemarioPapelPage() {
             ) : (
               <>
                 <button
-                  onClick={() => cambiarAviso.mutate(true)}
+                  onClick={() => cambiarAviso.mutate({ quiero: true, opciones: eleccion })}
                   disabled={cambiarAviso.isPending}
                   style={{ width: '100%', padding: 14, border: 'none', borderRadius: 14, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cambiarAviso.isPending ? 0.7 : 1 }}
                 >

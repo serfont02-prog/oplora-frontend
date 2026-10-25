@@ -379,7 +379,7 @@ export default function TemarioOposicionPage() {
         {/* ── MATERIAL ── */}
         {tab === 'material' && (
           <>
-            <TarjetaTemarioPapel oposicionId={oposicionId} />
+            <TarjetaTemarioPapel oposicionId={oposicionId} lugar="listaTemas" />
 
             {apuntesOploraOposicion.length > 0 && (
               <section>
