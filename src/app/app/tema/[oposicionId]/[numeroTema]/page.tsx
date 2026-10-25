@@ -15,6 +15,7 @@ import {
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
+import { TarjetaTemarioPapel } from '@/components/temario/TemarioPapel';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 
 type TabTema = 'material' | 'mi-estudio' | 'progreso';
@@ -534,6 +535,8 @@ export default function TemaPage() {
         {/* ── MATERIAL ── */}
         {tab === 'material' && (
           <>
+            <TarjetaTemarioPapel oposicionId={oposicionId} />
+
             <section>
               <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{apuntesOplora.length}</span>}>Apuntes OPLORA</TituloSeccion>
               <Caja>

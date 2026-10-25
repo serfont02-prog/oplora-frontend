@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { FileText, Users, BarChart2, BookOpen, Home, ChevronRight, LogOut, Newspaper, Settings,Layers, BookMarked, LifeBuoy, Brain, Trophy, ScrollText, Smartphone } from 'lucide-react';
+import { FileText, Users, BarChart2, BookOpen, Home, ChevronRight, LogOut, Newspaper, Settings,Layers, BookMarked, LifeBuoy, Brain, Trophy, ScrollText, Smartphone, BookCopy } from 'lucide-react';
 import { BG_NEUTRAL } from '@/styles/tokens';
 import { useAuth } from '@/lib/auth';
 
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/admin/psicotecnicos', label: 'Psicotécnicos', icon: Brain },
   { href: '/admin/liga', label: 'Liga Oplora', icon: Trophy },
   { href: '/admin/apuntes', label: 'Apuntes OPLORA', icon: BookMarked },
+  { href: '/admin/temario-papel', label: 'Temario en papel', icon: BookCopy },
   { href: '/admin/configuracion', label: 'Configuración', icon: Settings },
 ];
 

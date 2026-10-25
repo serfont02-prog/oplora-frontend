@@ -5,7 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { ArrowLeft, Download, Play, Pause } from 'lucide-react';
+import { ArrowLeft, Play, Pause } from 'lucide-react';
+import { BotonEnPapel } from '@/components/temario/TemarioPapel';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { renderReferencias, construirMapaSiglas, construirMapaNombres } from '@/lib/referenciasArticulos';
 import { BG_NEUTRAL } from '@/styles/tokens';
@@ -446,15 +447,10 @@ const updateProgreso = () => {
             Volver
           </button>
           {/* el nombre del archivo ya no se muestra: su sitio lo ocupa la barra de filtros de abajo */}
+          {/* ⭐ Antes había un botón para descargar el PDF. Los apuntes se estudian en la app y el
+              temario completo se vende impreso: el botón lleva a su ficha (si la oposición lo tiene). */}
           <div style={{ display: 'flex', gap: '6px' }}>
-            <a
-              href={apunte.urlArchivo}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: 'flex', alignItems: 'center', color: 'var(--hx-6b7280)', padding: '5px', borderRadius: '7px' }}
-            >
-              <Download size={16} />
-            </a>
+            <BotonEnPapel oposicionId={oposicionId} />
           </div>
         </div>
 
@@ -771,17 +767,11 @@ const updateProgreso = () => {
   <div style={{ textAlign: 'center', padding: '3rem 0' }}>
     <div style={{ fontSize: '32px', marginBottom: '12px' }}>📄</div>
     <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)', marginBottom: '16px' }}>
-      El contenido de este apunte no está disponible para lectura directa
+      Este apunte todavía no se puede leer en la app
     </div>
-    <a
-      href={apunte.urlArchivo}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', borderRadius: '10px', fontSize: '13px', textDecoration: 'none' }}
-    >
-      <Download size={14} />
-      Descargar PDF
-    </a>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <BotonEnPapel oposicionId={oposicionId} />
+    </div>
   </div>
 )}
 

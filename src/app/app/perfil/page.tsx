@@ -14,10 +14,11 @@ import { useMiLiga } from '@/components/liga/TarjetaLiga';
 import { CopaEnAvatar, CopaBadge, COLOR_LIGA, BG_LIGA, nombreMes } from '@/components/liga/ligaUtils';
 import {
   ArrowLeft, ChevronRight, ChevronDown, Camera, Image as ImageIcon, Bell, Settings, CreditCard, GraduationCap, ShieldCheck,
-  LifeBuoy, LogOut, Flame, Check, Trophy, Lock,
+  LifeBuoy, LogOut, Flame, Check, Trophy, Lock, BookCopy,
 } from 'lucide-react';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL } from '@/styles/tokens';
 import SelectorApariencia from '@/components/ui/SelectorApariencia';
+import { useTemarioPapel } from '@/components/temario/TemarioPapel';
 
 const BG_APP = BG_NEUTRAL;
 const SOMBRA = 'var(--c-sombra)';
@@ -75,6 +76,7 @@ export default function PerfilPage() {
   const [verNiveles, setVerNiveles] = useState(false);
   const inputGaleria = useRef<HTMLInputElement>(null);
   const inputCamara = useRef<HTMLInputElement>(null);
+  const { data: temarioPapel } = useTemarioPapel(usuario?.oposicionActiva?.id);
 
   if (!usuario) return null;
 
@@ -243,6 +245,9 @@ export default function PerfilPage() {
             titulo="Mi suscripción" sub={plan === 'Gratuito' ? 'Plan gratuito · Ver planes' : `Plan ${plan}`}
             onClick={() => router.push('/app/suscripciones')}
           />
+          {temarioPapel?.producto && (
+            <Fila Icon={BookCopy} color={AZUL} bg="var(--c-azul-bg)" titulo="Temario en papel" sub={temarioPapel.interesado ? 'Te avisaremos cuando puedas pedirlo' : 'El temario completo, impreso y encuadernado'} onClick={() => router.push('/app/temario-papel')} />
+          )}
           <Fila Icon={Bell} color="var(--hx-ca8a04)" bg="var(--hx-fdf8e8)" titulo="Alertas" sub="Tus avisos y recordatorios" onClick={() => router.push('/app/alertas')} />
           <Fila
             Icon={Settings} color={TEXT_SECONDARY} bg="var(--hx-f1f5f9)"

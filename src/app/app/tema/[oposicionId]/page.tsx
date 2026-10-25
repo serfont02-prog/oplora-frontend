@@ -13,6 +13,7 @@ import { api } from '@/lib/api';
 import { Search, CheckCircle2, ChevronRight, BookOpen, FileText, Upload, ListOrdered, Library, Scale, X, PlayCircle } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
+import { TarjetaTemarioPapel } from '@/components/temario/TemarioPapel';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA } from '@/styles/tokens';
 
 type Tab = 'programa' | 'material';
@@ -378,6 +379,8 @@ export default function TemarioOposicionPage() {
         {/* ── MATERIAL ── */}
         {tab === 'material' && (
           <>
+            <TarjetaTemarioPapel oposicionId={oposicionId} />
+
             {apuntesOploraOposicion.length > 0 && (
               <section>
                 <TituloSeccion derecha={<span style={{ fontSize: 11, color: TEXT_MUTED }}>{apuntesOploraOposicion.length}</span>}>Apuntes OPLORA</TituloSeccion>
