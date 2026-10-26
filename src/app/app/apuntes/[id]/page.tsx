@@ -5,23 +5,23 @@ import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { ArrowLeft, Play, Pause } from 'lucide-react';
+import { ArrowLeft, Play, Pause, BookOpen, Lightbulb, Network, AlertTriangle, HelpCircle, Check, User, Highlighter, Trash2, X, ChevronRight, CheckCircle2, XCircle, FileText, Minus, Plus } from 'lucide-react';
 import { BotonEnPapel } from '@/components/temario/TemarioPapel';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { renderReferencias, renderReferenciasTitulo, construirMapaSiglas, construirMapaNombres } from '@/lib/referenciasArticulos';
-import { BG_NEUTRAL } from '@/styles/tokens';
+import { BG_TEMA as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA } from '@/styles/tokens';
 
 // ⭐ Colores de las cajas destacadas (compartidos por las cajas y por la barra de filtros).
 // "Idea" y "Regla de examen" se fusionan en una sola categoría visual ("Idea clave"): ambas
 // cumplen la misma función (algo a recordar/aplicar). "Trampa de examen" se mantiene aparte a
 // propósito: es una alerta, no un tip, y ese contraste es lo que la hace útil de un vistazo.
-const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; emoji: string; label: string }> = {
-  EJEMPLO: { bg: 'var(--c-superficie)', border: 'var(--hx-e5e7eb)', color: 'var(--hx-374151)', emoji: '📘', label: 'EJEMPLO' },
-  IDEA: { bg: 'var(--hx-fef9e7)', border: 'var(--hx-fde68a)', color: 'var(--hx-92400e)', emoji: '💡', label: 'IDEA CLAVE' },
-  'REGLA DE EXAMEN': { bg: 'var(--hx-fef9e7)', border: 'var(--hx-fde68a)', color: 'var(--hx-92400e)', emoji: '💡', label: 'IDEA CLAVE' },
-  ESQUEMA: { bg: 'var(--hx-f3fbf5)', border: 'var(--hx-bbf0cb)', color: 'var(--hx-15803d)', emoji: '🗺️', label: 'ESQUEMA' },
-  'TRAMPA DE EXAMEN': { bg: 'var(--hx-fef2f2)', border: 'var(--hx-fca5a5)', color: 'var(--hx-dc2626)', emoji: '⚠️', label: 'TRAMPA DE EXAMEN' },
-  'PREGUNTA FRECUENTE': { bg: 'var(--hx-fff7ed)', border: 'var(--hx-fed7aa)', color: 'var(--hx-c2410c)', emoji: '❓', label: 'PREGUNTA FRECUENTE' },
+const DESTACADO_CONFIG: Record<string, { bg: string; border: string; color: string; Icono: any; label: string }> = {
+  EJEMPLO: { bg: 'var(--c-superficie-2)', border: 'var(--c-borde)', color: 'var(--c-texto-2)', Icono: BookOpen, label: 'Ejemplo' },
+  IDEA: { bg: 'var(--hx-fef9e7)', border: 'var(--hx-fde68a)', color: 'var(--hx-92400e)', Icono: Lightbulb, label: 'Idea clave' },
+  'REGLA DE EXAMEN': { bg: 'var(--hx-fef9e7)', border: 'var(--hx-fde68a)', color: 'var(--hx-92400e)', Icono: Lightbulb, label: 'Idea clave' },
+  ESQUEMA: { bg: 'var(--hx-f3fbf5)', border: 'var(--hx-bbf0cb)', color: 'var(--hx-15803d)', Icono: Network, label: 'Esquema' },
+  'TRAMPA DE EXAMEN': { bg: 'var(--hx-fef2f2)', border: 'var(--hx-fca5a5)', color: 'var(--hx-dc2626)', Icono: AlertTriangle, label: 'Trampa de examen' },
+  'PREGUNTA FRECUENTE': { bg: 'var(--hx-fff7ed)', border: 'var(--hx-fed7aa)', color: 'var(--hx-c2410c)', Icono: HelpCircle, label: 'Pregunta de examen' },
 };
 
 // ⭐ Filtros de la barra fija: cada chip muestra/oculta un tipo de caja. Los ejemplos forman
@@ -411,19 +411,21 @@ const updateProgreso = () => {
 
   if (cargando || isLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_NEUTRAL }}>
-        <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)' }}>Cargando apunte...</div>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_APP }}>
+        <div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando apunte…</div>
       </div>
     );
   }
 
   if (!apunte) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_NEUTRAL }}>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_APP, padding: '1.25rem' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>📄</div>
-          <div style={{ fontSize: '14px', color: 'var(--hx-374151)' }}>Apunte no encontrado</div>
-          <button onClick={() => router.back()} style={{ marginTop: '16px', padding: '10px 20px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '10px', fontSize: '13px', cursor: 'pointer' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--c-azul-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+            <FileText size={22} color="var(--c-azul)" />
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Apunte no encontrado</div>
+          <button onClick={() => router.back()} style={{ marginTop: 14, padding: '10px 20px', background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             Volver
           </button>
         </div>
@@ -432,92 +434,81 @@ const updateProgreso = () => {
   }
 
   let offsetAcumulado = 0;
+  const numeroTema = apunte.tema?.numero;
 
   return (
-    <div style={{ minHeight: '100vh', height: '100vh', background: BG_NEUTRAL, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', height: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-      {/* Header compacto y fijo */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f3f4f6)' }}>
-        <div style={{ padding: '0 1rem', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button
-            onClick={() => { pararAudio(); router.back(); }}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--hx-6b7280)', background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            <ArrowLeft size={13} />
-            Volver
-          </button>
-          {/* el nombre del archivo ya no se muestra: su sitio lo ocupa la barra de filtros de abajo */}
-          {/* ⭐ Antes había un botón para descargar el PDF. Los apuntes se estudian en la app y el
-              temario completo se vende impreso: el botón lleva a su ficha (si la oposición lo tiene). */}
-          <div style={{ display: 'flex', gap: '6px' }}>
+      {/* Cabecera fija: volver, título, temario en papel, filtros, letra y progreso */}
+      <div style={{ flexShrink: 0, background: BG_APP, padding: '12px 1.25rem 10px', zIndex: 20 }}>
+        <div style={{ maxWidth: 600, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={() => { pararAudio(); router.back(); }}
+              aria-label="Volver"
+              style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            >
+              <ArrowLeft size={18} color={TEXT_PRIMARY} />
+            </button>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                {numeroTema ? `Tema ${numeroTema} · Apuntes OPLORA` : 'Apuntes OPLORA'}
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>
+                {apunte.tema?.titulo || apunte.titulo}
+              </div>
+            </div>
+            {/* ⭐ Antes había un botón para descargar el PDF. Los apuntes se estudian en la app y el
+                temario completo se vende impreso: el botón lleva a su ficha (si la oposición lo tiene). */}
             <BotonEnPapel oposicionId={oposicionId} />
           </div>
-        </div>
 
-        {/* ⭐ Barra fija de filtros: cada chip muestra u oculta un tipo de caja.
-            Desmarcándolos todos quedan solo los apuntes (y los ejemplos). */}
-        {esFormatoNuevo && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 1rem', borderTop: '1px solid var(--hx-f9fafb)', overflowX: 'auto', scrollbarWidth: 'none' }}>
-            {FILTROS_CAJA.map((f) => {
-              const cfg = DESTACADO_CONFIG[f.cfg];
-              const activo = filtrosCajas[f.key];
-              const sinCajas = conteoCajas[f.key] === 0;
-              return (
-                <button
-                  key={f.key}
-                  role="checkbox"
-                  aria-checked={activo}
-                  onClick={() => toggleFiltroCaja(f.key)}
-                  title={activo ? `Ocultar ${f.label.toLowerCase()}` : `Mostrar ${f.label.toLowerCase()}`}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0,
-                    padding: '4px 9px 4px 6px', borderRadius: '999px', cursor: 'pointer',
-                    fontSize: '11px', fontWeight: 600,
-                    background: activo ? cfg.bg : 'var(--c-superficie)',
-                    border: `1px solid ${activo ? cfg.border : 'var(--hx-e5e7eb)'}`,
-                    color: activo ? cfg.color : 'var(--hx-9ca3af)',
-                    opacity: sinCajas ? 0.45 : 1,
-                  }}
-                >
-                  <span style={{
-                    width: '13px', height: '13px', borderRadius: '4px', flexShrink: 0,
-                    border: `1.5px solid ${activo ? cfg.color : 'var(--hx-d1d5db)'}`,
-                    background: activo ? cfg.color : 'var(--c-superficie)',
-                    display: 'grid', placeItems: 'center',
-                    color: 'white', fontSize: '9px', lineHeight: 1,
-                  }}>
-                    {activo ? '✓' : ''}
-                  </span>
-                  {f.label}
-                  {!sinCajas && <span style={{ fontWeight: 500, opacity: 0.7 }}>{conteoCajas[f.key]}</span>}
-                </button>
-              );
-            })}
+          {/* ⭐ Filtros: cada chip muestra u oculta un tipo de caja. Desmarcándolos todos quedan
+              solo los apuntes (y los ejemplos). */}
+          {esFormatoNuevo && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', margin: '0 -2px', padding: '0 2px' }}>
+              {FILTROS_CAJA.map((f) => {
+                const cfg = DESTACADO_CONFIG[f.cfg];
+                const activo = filtrosCajas[f.key];
+                const sinCajas = conteoCajas[f.key] === 0;
+                const Icono = cfg.Icono;
+                return (
+                  <button
+                    key={f.key}
+                    role="checkbox"
+                    aria-checked={activo}
+                    onClick={() => toggleFiltroCaja(f.key)}
+                    title={activo ? `Ocultar ${f.label.toLowerCase()}` : `Mostrar ${f.label.toLowerCase()}`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+                      padding: '6px 10px', borderRadius: 999, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                      background: activo ? cfg.bg : 'var(--c-superficie)',
+                      border: `1px solid ${activo ? cfg.border : 'var(--c-borde)'}`,
+                      color: activo ? cfg.color : TEXT_MUTED,
+                      opacity: sinCajas ? 0.45 : 1,
+                    }}
+                  >
+                    {activo ? <Icono size={13} /> : <span style={{ width: 13, height: 13, borderRadius: 4, border: '1.5px solid var(--c-chevron)', flexShrink: 0 }} />}
+                    {f.label}
+                    {!sinCajas && <span style={{ fontWeight: 500, opacity: 0.7 }}>{conteoCajas[f.key]}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Tamaño de letra y progreso de lectura */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--c-superficie)', borderRadius: 999, boxShadow: SOMBRA, flexShrink: 0 }}>
+              <button onClick={() => setFontSize((t) => Math.max(11, t - 1))} aria-label="Letra más pequeña" style={botonLetra}><Minus size={13} /></button>
+              <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_SECONDARY, minWidth: 30, textAlign: 'center' }}>Aa {fontSize}</span>
+              <button onClick={() => setFontSize((t) => Math.min(20, t + 1))} aria-label="Letra más grande" style={botonLetra}><Plus size={13} /></button>
+            </div>
+            <div style={{ flex: 1, height: 6, background: 'var(--c-pista)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ width: `${progreso}%`, height: '100%', background: 'var(--c-azul)', borderRadius: 999, transition: 'width 0.3s' }} />
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 600, color: TEXT_MUTED, flexShrink: 0 }}>{progreso}% leído</span>
           </div>
-        )}
-
-        {/* Controles fuente + progreso, compactos */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 1rem', borderTop: '1px solid var(--hx-f9fafb)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button
-              onClick={() => setFontSize(s => Math.max(11, s - 1))}
-              style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', fontSize: '10px', color: 'var(--hx-374151)' }}
-            >
-              A−
-            </button>
-            <span style={{ fontSize: '11px', color: 'var(--hx-9ca3af)', minWidth: '18px', textAlign: 'center' }}>{fontSize}</span>
-            <button
-              onClick={() => setFontSize(s => Math.min(20, s + 1))}
-              style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', fontSize: '12px', color: 'var(--hx-374151)' }}
-            >
-              A+
-            </button>
-          </div>
-          <span style={{ fontSize: '11px', color: 'var(--hx-9ca3af)' }}>{progreso}% leído</span>
-        </div>
-
-        <div style={{ height: '2px', background: 'var(--hx-f3f4f6)' }}>
-          <div style={{ width: `${progreso}%`, height: '100%', background: '#1F7CFF', transition: 'width 0.3s' }} />
         </div>
       </div>
 
@@ -525,38 +516,33 @@ const updateProgreso = () => {
       <div
         ref={contentRef}
         onScroll={updateProgreso}
-        style={{
-          flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden',
-          padding: '1.5rem 1.25rem',
-          maxWidth: '600px', margin: '0 auto', width: '100%',
-          boxSizing: 'border-box',
-          paddingBottom: '90px',
-          position: 'relative',
-        }}
+        style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: '4px 1.25rem 96px', position: 'relative' }}
       >
-        {apunte.descripcion && (
-          <div style={{ fontSize: '12px', color: 'var(--hx-9ca3af)', marginBottom: '16px' }}>{apunte.descripcion}</div>
-        )}
-
-        {/* Barra de audio — siempre visible arriba del contenido, igual que en Artículo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '14px', marginBottom: '18px', borderBottom: '1px solid var(--hx-f3f4f6)' }}>
+       <div style={{ maxWidth: 600, margin: '0 auto', background: 'var(--c-superficie)', borderRadius: 20, boxShadow: SOMBRA, overflow: 'hidden' }}>
+        {/* Audio: siempre arriba del texto, igual que en Artículo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid var(--c-borde)' }}>
           <button
             onClick={() => { if (audioPlaying) pararAudio(); else reproducir(); }}
-            style={{ width: '36px', height: '36px', borderRadius: '50%', background: audioPlaying ? 'var(--hxbg-111827)' : 'var(--hx-f4f5f7)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            aria-label={audioPlaying ? 'Pausar' : 'Escuchar el apunte'}
+            style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: audioPlaying ? 'var(--c-primario)' : 'var(--c-azul-bg)' }}
           >
-            {audioPlaying ? <Pause size={14} color="var(--c-primario-texto)" /> : <Play size={14} color="var(--hx-374151)" />}
+            {audioPlaying ? <Pause size={16} color="var(--c-primario-texto)" /> : <Play size={16} color="var(--c-azul)" style={{ marginLeft: 2 }} />}
           </button>
-          <div style={{ flex: 1, height: '4px', background: 'var(--hx-f3f4f6)', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{ width: `${audioProgress}%`, height: '100%', background: '#1F7CFF', transition: 'width 0.5s' }} />
+          <div style={{ flex: 1, height: 4, background: 'var(--c-pista)', borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ width: `${audioProgress}%`, height: '100%', background: 'var(--c-azul)', transition: 'width 0.5s' }} />
           </div>
-          <button onClick={cambiarVoz} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', color: 'var(--hx-374151)' }}>
-            {vozGenero === 'mujer' ? '👩' : '👨'}
+          <button onClick={cambiarVoz} aria-label="Cambiar voz" style={{ ...chipAudio }}>
+            <User size={13} /> {vozGenero === 'mujer' ? 'Mujer' : 'Hombre'}
           </button>
-          <button onClick={cycleVelocidad} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', color: 'var(--hx-374151)', fontWeight: 600 }}>
-            {velocidad}×
+          <button onClick={cycleVelocidad} aria-label="Cambiar velocidad" style={{ ...chipAudio, minWidth: 44, justifyContent: 'center' }}>
+            {velocidad}x
           </button>
         </div>
 
+        <div style={{ padding: '6px 18px 20px' }}>
+        {apunte.descripcion && (
+          <div style={{ fontSize: 12, color: TEXT_MUTED, margin: '10px 0 4px' }}>{apunte.descripcion}</div>
+        )}
 
         {esFormatoNuevo ? (
   // ⭐ NUEVO FORMATO — renderizado por tipo de bloque
@@ -580,24 +566,24 @@ const updateProgreso = () => {
         case 'titulo':
           return bloque.nivel === 1 ? (
             <div key={bloque.id} style={{
-              fontSize: '17px', fontWeight: 700, color: 'var(--hx-1a1a1a)',
-              marginTop: '32px', marginBottom: '14px',
-              paddingLeft: '10px', borderLeft: '3px solid var(--hx-1f7cff)',
+              fontSize: 17, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1.35,
+              marginTop: 28, marginBottom: 12,
+              paddingLeft: 10, borderLeft: '3px solid var(--c-azul)',
             }}>
               {renderReferenciasTitulo(bloque.texto, mapaSiglas, abrirArticulo, `t${bloque.id}`)}
             </div>
           ) : bloque.nivel === 2 ? (
             <div key={bloque.id} style={{
-              fontSize: '14px', fontWeight: 600, color: 'var(--hx-4b5563)',
-              marginTop: '22px', marginBottom: '10px',
-              paddingLeft: '10px', borderLeft: '2px solid var(--hx-e5e7eb)',
+              fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.4,
+              marginTop: 22, marginBottom: 10,
+              paddingLeft: 10, borderLeft: '2px solid var(--c-borde)',
             }}>
               {renderReferenciasTitulo(bloque.texto, mapaSiglas, abrirArticulo, `t${bloque.id}`)}
             </div>
           ) : (
             <div key={bloque.id} style={{
-              fontSize: '13px', fontWeight: 700, color: 'var(--hx-1f7cff)',
-              marginTop: '18px', marginBottom: '8px',
+              fontSize: 13, fontWeight: 700, color: 'var(--c-azul)',
+              marginTop: 18, marginBottom: 8,
             }}>
               {renderReferenciasTitulo(bloque.texto, mapaSiglas, abrirArticulo, `t${bloque.id}`)}
             </div>
@@ -613,11 +599,11 @@ const updateProgreso = () => {
           const cfg = DESTACADO_CONFIG[bloque.titulo] ?? DESTACADO_CONFIG.IDEA;
           return (
             <div key={bloque.id} style={{
-              background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '12px',
-              padding: '14px 16px', marginBottom: '16px', marginTop: '18px',
+              background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 16,
+              padding: '14px 16px', marginBottom: 16, marginTop: 18,
             }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: cfg.color, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {cfg.emoji} {cfg.label}
+              <div style={{ fontSize: 11, fontWeight: 800, color: cfg.color, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <cfg.Icono size={14} /> {cfg.label}
               </div>
               {bloque.contenido.map((c: any, i: number) => {
                 if (c.tipo !== 'parrafo') return null;
@@ -630,19 +616,20 @@ const updateProgreso = () => {
                 const REGEX_SOLUCION = /^(?:[✅❌]|Respuesta correcta\b|Ojo:)/u;
                 const esSolucion = REGEX_SOLUCION.test(texto);
                 const anteriorEsSolucion = i > 0 && REGEX_SOLUCION.test(bloque.contenido[i - 1]?.texto ?? '');
-                const iconoSolucion = /^Respuesta correcta\b/.test(texto) ? '✅ ' : /^Ojo:/.test(texto) ? '❌ ' : '';
+                const iconoSolucion = /^Respuesta correcta\b/.test(texto) ? 'ok' : /^Ojo:/.test(texto) ? 'ojo' : '';
                 return (
                   <div key={i} style={{
                     fontSize: `${fontSize}px`, color: cfg.color, lineHeight: 1.75, opacity: 0.9,
                     marginBottom: i < bloque.contenido.length - 1 ? (esOpcion ? '4px' : '8px') : 0,
                     ...(esOpcion ? { paddingLeft: '12px' } : {}),
                     ...(esSolucion && !anteriorEsSolucion
-                      ? { borderTop: `1px dashed ${cfg.border}`, paddingTop: '8px', marginTop: '8px', fontWeight: iconoSolucion.startsWith('❌') ? 400 : 600 }
-                      : esSolucion && !iconoSolucion.startsWith('❌') ? { fontWeight: 600 } : {}),
+                      ? { borderTop: `1px dashed ${cfg.border}`, paddingTop: '8px', marginTop: '8px', fontWeight: iconoSolucion === 'ojo' ? 400 : 600 }
+                      : esSolucion && iconoSolucion !== 'ojo' ? { fontWeight: 600 } : {}),
                   }}>
                     {/* ⭐ las referencias [SIGLAS artículo N] también son clicables dentro de las cajas */}
-                    {iconoSolucion}
-                    {renderReferencias(texto, mapaSiglas, abrirArticulo, `d${bloque.id}-${i}`)}
+                    {iconoSolucion === 'ok' && <CheckCircle2 size={15} color="var(--hx-16a34a)" style={{ verticalAlign: '-3px', marginRight: 5 }} />}
+                    {iconoSolucion === 'ojo' && <XCircle size={15} color="var(--hx-dc2626)" style={{ verticalAlign: '-3px', marginRight: 5 }} />}
+                    {renderReferencias(texto.replace(/^[✅❌]\s*/u, ''), mapaSiglas, abrirArticulo, `d${bloque.id}-${i}`)}
                   </div>
                 );
               })}
@@ -653,7 +640,7 @@ const updateProgreso = () => {
         case 'parrafo':
           return (
             <div key={bloque.id} data-bloque-offset={offsetInicioBloque} style={{
-              fontSize: `${fontSize}px`, color: 'var(--hx-2d2d2d)', lineHeight: 1.85,
+              fontSize: `${fontSize}px`, color: TEXT_PRIMARY, lineHeight: 1.85,
               letterSpacing: '0.01em', marginBottom: '14px',
               wordBreak: 'break-word', overflowWrap: 'anywhere',
               ...(bloque.negrita ? { fontWeight: 700 } : {}),
@@ -682,7 +669,7 @@ const updateProgreso = () => {
                 offsetItem += item.length + 2; // el join de items es con ". "
                 return (
                   <li key={i} data-bloque-offset={offsetInicioItem} style={{
-                    fontSize: `${fontSize}px`, color: 'var(--hx-2d2d2d)', lineHeight: 1.75,
+                    fontSize: `${fontSize}px`, color: TEXT_PRIMARY, lineHeight: 1.75,
                     marginBottom: '6px', wordBreak: 'break-word', overflowWrap: 'anywhere',
                   }}>
                     <BloqueTexto
@@ -704,13 +691,13 @@ const updateProgreso = () => {
         case 'articulo_legal':
           return (
             <div key={bloque.id} style={{
-              background: 'var(--hx-f0f7ff)', border: '1px solid var(--hx-bfdbfe)', borderRadius: '10px',
-              padding: '12px 14px', marginBottom: '14px',
+              background: 'var(--c-azul-bg)', border: 'none', borderRadius: 14,
+              padding: '12px 14px', marginBottom: 14,
             }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--hx-1f7cff)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--c-azul)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Artículo {bloque.numero}
               </div>
-              <div data-bloque-offset={offsetInicioBloque} style={{ fontSize: `${fontSize}px`, color: 'var(--hx-1e3a5f)', lineHeight: 1.8, wordBreak: 'break-word' }}>
+              <div data-bloque-offset={offsetInicioBloque} style={{ fontSize: `${fontSize}px`, color: TEXT_PRIMARY, lineHeight: 1.8, wordBreak: 'break-word' }}>
                 <BloqueTexto
                   texto={bloque.texto}
                   offsetBase={offsetInicioBloque}
@@ -736,23 +723,23 @@ const updateProgreso = () => {
     <div key={i} style={{ marginBottom: '28px' }}>
       {seccion.nivel === 1 ? (
         <div style={{
-          fontSize: '15px', fontWeight: 700, color: 'var(--hx-1a1a1a)',
-          marginBottom: '10px', paddingLeft: '10px',
-          borderLeft: '3px solid var(--hx-1f7cff)',
+          fontSize: 16, fontWeight: 800, color: TEXT_PRIMARY,
+          marginBottom: 10, paddingLeft: 10,
+          borderLeft: '3px solid var(--c-azul)',
         }}>
           {seccion.titulo}
         </div>
       ) : (
         <div style={{
-          fontSize: '13px', fontWeight: 600, color: 'var(--hx-4b5563)',
-          marginBottom: '8px', paddingLeft: '10px',
-          borderLeft: '2px solid var(--hx-e5e7eb)',
+          fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY,
+          marginBottom: 8, paddingLeft: 10,
+          borderLeft: '2px solid var(--c-borde)',
         }}>
           {seccion.titulo}
         </div>
       )}
       <div style={{
-        fontSize: `${fontSize}px`, color: 'var(--hx-2d2d2d)', lineHeight: 1.85,
+        fontSize: `${fontSize}px`, color: TEXT_PRIMARY, lineHeight: 1.85,
         letterSpacing: '0.01em', wordBreak: 'break-word', overflowWrap: 'anywhere',
       }}>
         {seccion.contenido}
@@ -760,13 +747,15 @@ const updateProgreso = () => {
     </div>
   ))
 ) : apunte?.textoCompleto ? (
-  <div style={{ fontSize: `${fontSize}px`, color: 'var(--hx-2d2d2d)', lineHeight: 1.85, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+  <div style={{ fontSize: `${fontSize}px`, color: TEXT_PRIMARY, lineHeight: 1.85, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
     {apunte.textoCompleto}
   </div>
 ) : (
-  <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-    <div style={{ fontSize: '32px', marginBottom: '12px' }}>📄</div>
-    <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)', marginBottom: '16px' }}>
+  <div style={{ textAlign: 'center', padding: '2.5rem 0' }}>
+    <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--c-azul-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+      <FileText size={22} color="var(--c-azul)" />
+    </div>
+    <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 16 }}>
       Este apunte todavía no se puede leer en la app
     </div>
     <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -776,14 +765,17 @@ const updateProgreso = () => {
 )}
 
 
+        </div>
+       </div>
+
         {/* Menú subrayar flotante */}
         {menuSubrayado && (
           <div style={{ position: 'fixed', left: menuSubrayado.x, top: menuSubrayado.y, transform: 'translateX(-50%)', zIndex: 50 }}>
             <button
               onClick={crearSubrayado}
-              style={{ background: 'var(--hx-fef08a)', border: '1px solid #eab308', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(15,23,42,0.25)', whiteSpace: 'nowrap' }}
             >
-              ✏️ Subrayar
+              <Highlighter size={14} /> Subrayar
             </button>
           </div>
         )}
@@ -791,65 +783,60 @@ const updateProgreso = () => {
 
       <FooterNavegacion usuario={usuario} oposicionId={oposicionId} activo="estudiar" />
       {articuloModal && (
-  <div
-    onClick={() => setArticuloModal(null)}
-    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{ background: 'var(--c-superficie)', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '480px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '1rem' }}>
-        <div style={{ minWidth: 0 }}>
-          {mapaNombresLey[articuloModal.versionLeyId] && (
-            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--hx-6b7280)', marginBottom: '8px', lineHeight: 1.45 }}>
-              {mapaNombresLey[articuloModal.versionLeyId]}
-            </div>
-          )}
-          {/* ⭐ Más aire entre el nombre de la ley y el número de artículo (antes iban pegados) */}
-          <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--hx-111827)', lineHeight: 1.3 }}>
-            Artículo {articuloModal.numero}
-          </div>
-        </div>
-        <button
+        <div
           onClick={() => setArticuloModal(null)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--hx-9ca3af)' }}
+          style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
         >
-          ×
-        </button>
-      </div>
-
-      {cargandoArticulo ? (
-        <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)', textAlign: 'center', padding: '2rem 0' }}>
-          Cargando artículo...
-        </div>
-      ) : articuloAbierto ? (
-        <>
-          {articuloAbierto.titulo && (
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--hx-374151)', marginBottom: '10px' }}>
-              {articuloAbierto.titulo}
-            </div>
-          )}
-          <div style={{ fontSize: '13px', color: 'var(--hx-374151)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-            {articuloAbierto.contenido}
-          </div>
-          <button
-            onClick={() => {
-              router.push(`/app/articulo/${articuloAbierto.id}?oposicionId=${apunte.oposicion?.id ?? ''}`);
-            }}
-            style={{ marginTop: '16px', width: '100%', padding: '10px', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: 'var(--c-superficie)', borderRadius: '22px 22px 0 0', padding: '16px 1.25rem', paddingBottom: 'calc(18px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 560, maxHeight: '82vh', overflowY: 'auto', boxShadow: '0 -8px 30px rgba(15,23,42,0.2)' }}
           >
-            Ver artículo en la ley →
-          </button>
-        </>
-      ) : (
-        <div style={{ fontSize: '13px', color: 'var(--hx-9ca3af)', textAlign: 'center', padding: '2rem 0' }}>
-          Artículo no encontrado
+            <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--c-borde)', margin: '0 auto 14px' }} />
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                {mapaNombresLey[articuloModal.versionLeyId] && (
+                  <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_MUTED, marginBottom: 6, lineHeight: 1.45 }}>
+                    {mapaNombresLey[articuloModal.versionLeyId]}
+                  </div>
+                )}
+                <div style={{ fontSize: 18, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
+                  Artículo {articuloModal.numero}
+                </div>
+              </div>
+              <button
+                onClick={() => setArticuloModal(null)}
+                aria-label="Cerrar"
+                style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'var(--c-superficie-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              >
+                <X size={16} color={TEXT_SECONDARY} />
+              </button>
+            </div>
+
+            {cargandoArticulo ? (
+              <div style={{ fontSize: 13, color: TEXT_MUTED, textAlign: 'center', padding: '2rem 0' }}>Cargando artículo…</div>
+            ) : articuloAbierto ? (
+              <>
+                {articuloAbierto.titulo && (
+                  <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 8 }}>{articuloAbierto.titulo}</div>
+                )}
+                <div style={{ fontSize: 14, color: TEXT_PRIMARY, lineHeight: 1.75, whiteSpace: 'pre-wrap', background: 'var(--c-superficie-2)', borderRadius: 14, padding: '12px 14px' }}>
+                  {articuloAbierto.contenido}
+                </div>
+                <button
+                  onClick={() => { router.push(`/app/articulo/${articuloAbierto.id}?oposicionId=${oposicionId ?? ''}`); }}
+                  style={{ marginTop: 14, width: '100%', height: 48, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                >
+                  Ver el artículo en la ley <ChevronRight size={16} />
+                </button>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: TEXT_MUTED, textAlign: 'center', padding: '2rem 0' }}>Artículo no encontrado</div>
+            )}
+          </div>
         </div>
       )}
-    </div>
-  </div>
-)}
     </div>
 
     
@@ -936,9 +923,9 @@ function BloqueTexto({
             {subrayadoSeleccionado === seg.subrayado.id && (
               <button
                 onClick={(e) => { e.stopPropagation(); onBorrarSubrayado(seg.subrayado.id); }}
-                style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
+                style={{ position: 'absolute', top: '-32px', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 4, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
               >
-                🗑 Borrar
+                <Trash2 size={12} /> Quitar
               </button>
             )}
           </mark>
@@ -947,3 +934,12 @@ function BloqueTexto({
     </>
   );
 }
+
+const botonLetra: React.CSSProperties = {
+  width: 32, height: 32, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--c-texto-2)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%',
+};
+const chipAudio: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 4, padding: '7px 9px', borderRadius: 999, border: 'none',
+  background: 'var(--c-superficie-2)', color: 'var(--c-texto-2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
+};
