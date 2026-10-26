@@ -40,7 +40,7 @@ const PRESET_POLICIA: Partial<Producto> = {
   edicion: 'Edición convocatoria 2026',
   paginas: 628,
   descripcion:
-    'Los 45 temas del Anexo I de la convocatoria, ordenados por bloques e impresos para subrayar y hacer esquemas.\n' +
+    'Los 45 temas del Anexo I de la convocatoria, ordenados por bloques e impresos para subrayar y anotar.\n' +
     'En cada tema: ideas clave, esquemas, trampas de examen y preguntas de los exámenes oficiales de 2020 a 2025 con su respuesta explicada.',
   imagenes: [1, 2, 3, 4, 5].map((n) => `/temario-papel/policia-nacional/pagina-${n}.webp`),
   opciones: [

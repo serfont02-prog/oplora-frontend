@@ -435,7 +435,7 @@ export default function ArticuloPage() {
             >
               <span style={{ ...iconoAccion, background: VERDE_BG }}><ClipboardCheck size={19} color={VERDE} /></span>
               <span style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Test</span>
-              <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.35 }}>15 preguntas de esta ley</span>
+              <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.35 }}>De los artículos de la ley que entran en tu temario</span>
             </button>
             <button
               onClick={() => router.push(`/app/flashcards/repasar?articuloId=${articulo.id}&leyId=${leyId ?? ''}&oposicionId=${oposicionId ?? ''}`)}

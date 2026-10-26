@@ -107,7 +107,15 @@ export default function TemarioOposicionPage() {
   const modoEstudiar = searchParams.get('modo') === 'estudiar';
   const { usuario, cargando } = useAuth();
 
-  const [tab, setTab] = useState<Tab>('programa');
+  // ⭐ La pestaña va en la URL (?tab=material): al volver desde una ley o desde el temario en
+  // papel se vuelve a la pestaña de la que se salió, no siempre a Programa.
+  const [tab, setTabEstado] = useState<Tab>(() => (searchParams.get('tab') === 'material' ? 'material' : 'programa'));
+  const setTab = (t: Tab) => {
+    setTabEstado(t);
+    const sp = new URLSearchParams(window.location.search);
+    sp.set('tab', t);
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${sp.toString()}`);
+  };
   const [busqueda, setBusqueda] = useState('');
   const [subiendoApunte, setSubiendoApunte] = useState(false);
   const [errorSubida, setErrorSubida] = useState('');

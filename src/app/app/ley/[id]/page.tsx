@@ -176,13 +176,14 @@ const toggleSeccion = async (seccionId: string) => {
           >
             <ArrowLeft size={18} color={TEXT_PRIMARY} />
           </button>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {ley.siglas || versionActiva?.tipoNorma || 'Normativa'}
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1.25, marginTop: 2, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>
-              {ley.nombre}
-            </div>
+          {/* ⭐ Las siglas van detrás del nombre (antes ocupaban una línea encima) */}
+          <div style={{ minWidth: 0, flex: 1, fontSize: 17, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1.3, wordBreak: 'break-word' }}>
+            {ley.nombre}
+            {ley.siglas && (
+              <span style={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: 8, fontSize: 11, fontWeight: 700, color: 'var(--c-azul)', background: 'var(--c-azul-bg)', borderRadius: 999, padding: '2px 8px', letterSpacing: '0.03em', lineHeight: 1.4 }}>
+                {ley.siglas}
+              </span>
+            )}
           </div>
         </div>
 
@@ -224,7 +225,7 @@ const toggleSeccion = async (seccionId: string) => {
             </span>
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Test de esta ley</span>
-              <span style={{ display: 'block', fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>15 preguntas de toda la ley</span>
+              <span style={{ display: 'block', fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>15 preguntas de los artículos que entran en tu temario</span>
             </span>
             <ChevronRight size={16} color="var(--c-chevron)" />
           </button>

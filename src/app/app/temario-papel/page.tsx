@@ -199,9 +199,9 @@ export default function TemarioPapelPage() {
                 <RefreshCw size={18} color="var(--c-verde)" />
               </span>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>El papel para estudiar, la app siempre al día</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Y en la app, siempre al día</div>
                 <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 3, lineHeight: 1.5 }}>
-                  Subraya y haz tus esquemas en el libro. Si cambia una ley, lo verás actualizado en la app, junto a los test, las flashcards y los retos.
+                  Si cambia una ley después de imprimirlo, lo verás actualizado en la app, junto a los test, las flashcards y los retos.
                 </div>
               </div>
             </div>

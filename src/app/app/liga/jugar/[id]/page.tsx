@@ -47,6 +47,15 @@ export default function JugarJornadaPage() {
 
   const [respuestas, setRespuestas] = useState<(number | null)[]>([]);
   const [actual, setActual] = useState(0);
+  // Centra en el mapa inferior la pregunta actual (solo al cambiar de pregunta)
+  const mapaRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const boton = mapaRef.current?.children[actual] as HTMLElement | undefined;
+    if (boton && mapaRef.current) {
+      const caja = mapaRef.current;
+      caja.scrollTo({ left: boton.offsetLeft - caja.clientWidth / 2 + boton.clientWidth / 2, behavior: 'smooth' });
+    }
+  }, [actual]);
   const [restante, setRestante] = useState<number | null>(null);
   const [confirmar, setConfirmar] = useState(false);
   const [salir, setSalir] = useState(false);
@@ -185,7 +194,7 @@ export default function JugarJornadaPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--c-bg-neutral)' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1rem 1.25rem 7rem', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1rem 1.25rem 11rem', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* Barra superior */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -235,7 +244,7 @@ export default function JugarJornadaPage() {
                   border: elegida ? `1.5px solid ${COLOR_LIGA}` : '1px solid var(--hx-e5e7eb)',
                 }}
               >
-                <span style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: elegida ? COLOR_LIGA : 'var(--hx-f3f4f6)', color: elegida ? 'white' : TEXT_MUTED }}>
+                <span style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: elegida ? COLOR_LIGA : 'var(--hx-f3f4f6)', color: elegida ? 'var(--c-primario-texto)' : TEXT_MUTED }}>
                   {LETRAS[i] ?? i + 1}
                 </span>
                 <span style={{ fontSize: 14, color: TEXT_PRIMARY, lineHeight: 1.45, paddingTop: 2 }}>{op}</span>
@@ -247,28 +256,30 @@ export default function JugarJornadaPage() {
           </div>
         </div>
 
-        {/* Mapa de preguntas */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
+      </div>
+
+      {/* Navegación inferior */}
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: 'var(--c-superficie)', borderTop: '1px solid var(--hx-f1f5f9)', padding: '10px 1.25rem calc(10px + env(safe-area-inset-bottom))' }}>
+        {/* ⭐ Mapa de preguntas fijo abajo: antes iba debajo de las respuestas y se movía con
+            el largo de cada pregunta. Se desliza en horizontal y centra la pregunta actual. */}
+        <div ref={mapaRef} style={{ position: 'relative', maxWidth: 560, margin: '0 auto 10px', display: 'flex', gap: 6, overflowX: 'auto', padding: '2px 2px 4px', scrollbarWidth: 'none' }}>
           {preguntas.map((_, i) => (
             <button
               key={i}
               onClick={() => setActual(i)}
               aria-label={`Ir a la pregunta ${i + 1}`}
+              aria-current={i === actual ? 'step' : undefined}
               style={{
-                width: 30, height: 30, borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 700,
-                border: i === actual ? `1.5px solid ${TEXT_PRIMARY}` : '1px solid var(--hx-e5e7eb)',
+                flex: '0 0 auto', width: 32, height: 32, borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                border: i === actual ? `2px solid ${TEXT_PRIMARY}` : '1px solid var(--hx-e5e7eb)',
                 background: respuestas[i] != null ? COLOR_LIGA : 'var(--c-superficie)',
-                color: respuestas[i] != null ? 'white' : TEXT_MUTED,
+                color: respuestas[i] != null ? 'var(--c-primario-texto)' : TEXT_MUTED,
               }}
             >
               {i + 1}
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Navegación inferior */}
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: 'var(--c-superficie)', borderTop: '1px solid var(--hx-f1f5f9)', padding: '10px 1.25rem calc(10px + env(safe-area-inset-bottom))' }}>
         <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', gap: 8 }}>
           <button
             onClick={() => setActual((a) => Math.max(0, a - 1))}
@@ -287,7 +298,7 @@ export default function JugarJornadaPage() {
           ) : (
             <button
               onClick={() => setConfirmar(true)}
-              style={{ flex: 1, border: 'none', background: COLOR_LIGA, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 700, color: 'white', cursor: 'pointer' }}
+              style={{ flex: 1, border: 'none', background: COLOR_LIGA, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 700, color: 'var(--c-primario-texto)', cursor: 'pointer' }}
             >
               Entregar
             </button>
@@ -323,7 +334,7 @@ export default function JugarJornadaPage() {
             <button
               onClick={() => entregar(false)}
               disabled={enviando}
-              style={{ flex: 1, border: 'none', background: COLOR_LIGA, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 700, color: 'white', cursor: 'pointer', opacity: enviando ? 0.6 : 1 }}
+              style={{ flex: 1, border: 'none', background: COLOR_LIGA, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 700, color: 'var(--c-primario-texto)', cursor: 'pointer', opacity: enviando ? 0.6 : 1 }}
             >
               {enviando ? 'Entregando…' : 'Entregar'}
             </button>
@@ -340,7 +351,7 @@ export default function JugarJornadaPage() {
               Ir a la liga
             </button>
             {!enviadoRef.current && (
-              <button onClick={() => entregar(true)} disabled={enviando} style={{ flex: 1, border: 'none', background: COLOR_LIGA, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 700, color: 'white', cursor: 'pointer' }}>
+              <button onClick={() => entregar(true)} disabled={enviando} style={{ flex: 1, border: 'none', background: COLOR_LIGA, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 700, color: 'var(--c-primario-texto)', cursor: 'pointer' }}>
                 Reintentar
               </button>
             )}

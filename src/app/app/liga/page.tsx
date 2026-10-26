@@ -195,7 +195,7 @@ function TarjetaJornada({ data }: { data: any }) {
       {estado.accion && (
         <button
           onClick={() => router.push(estado.accion!.href)}
-          style={{ width: '100%', border: 'none', borderRadius: 12, padding: 12, background: estado.destacado ? COLOR_LIGA : 'var(--hx-111827)', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+          style={{ width: '100%', border: 'none', borderRadius: 12, padding: 12, background: estado.destacado ? COLOR_LIGA : 'var(--c-primario)', color: 'var(--c-primario-texto)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
         >
           {estado.accion.label}
         </button>
