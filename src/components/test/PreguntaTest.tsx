@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, XCircle, X, Lightbulb } from 'lucide-react';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+import { BotonSalirTest, ConfirmacionInferior } from '@/components/test/SalirTest';
 
 const SOMBRA = 'var(--c-sombra)';
 const COLOR_TEST = 'var(--hx-4d7c0f)';
@@ -124,6 +125,13 @@ export default function PreguntaTest({
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 'calc(170px + env(safe-area-inset-bottom))' }}>
+      <ConfirmacionInferior
+        abierta={confirmarSalir}
+        titulo="¿Salir del test?"
+        texto={avisoSalir}
+        onCancelar={() => setConfirmarSalir(false)}
+        onConfirmar={salir}
+      />
 
       {/* Cabecera fija: salir, progreso y tiempo */}
       <div style={{ position: 'sticky', top: 0, zIndex: 10, background: BG_APP, padding: '12px 1.25rem 12px' }}>
@@ -156,22 +164,6 @@ export default function PreguntaTest({
       </div>
 
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '4px 1.25rem 0' }}>
-        {/* Confirmar salida, en la propia pantalla */}
-        {confirmarSalir && (
-          <div style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: 14, boxShadow: SOMBRA, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>¿Salir del test?</div>
-            <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 3 }}>{avisoSalir}</div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button onClick={() => setConfirmarSalir(false)} style={{ flex: 1, border: 'none', background: 'var(--hx-f3f4f6)', color: TEXT_SECONDARY, borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                Seguir
-              </button>
-              <button onClick={salir} style={{ flex: 1, border: 'none', background: '#DC2626', color: 'white', borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                Salir
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Enunciado */}
         <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 12 }}>
           {pregunta.imagenUrl && (
@@ -263,36 +255,43 @@ export default function PreguntaTest({
                   : 'Comprobar respuesta'}
               </button>
 
-              {permitirBlancos && dejarEnBlanco && (
-                <button
-                  disabled={enviando}
-                  onClick={() => {
-                    if (!mostrarExplicaciones) {
-                      dejarEnBlanco(false);
-                      setTimeout(siguiente, 100);
-                      return;
-                    }
-                    dejarEnBlanco();
-                  }}
-                  style={{
-                    width: '100%', height: 42, borderRadius: 12, border: 'none', boxShadow: SOMBRA,
-                    background: 'var(--c-superficie)', color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  }}
-                >
-                  Dejar en blanco
-                  <span style={{ fontSize: 11, color: restaBlanco ? 'var(--hx-d97706)' : 'var(--hx-16a34a)', marginLeft: 6, fontWeight: 500 }}>
-                    · {restaBlanco ? `resta ${restaBlanco}` : 'no resta'}
-                  </span>
-                </button>
-              )}
+              {/* ⭐ Salir desde abajo (antes había que subir hasta la X) y, si se puede, dejar en blanco */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <BotonSalirTest onClick={() => setConfirmarSalir(true)} />
+                {permitirBlancos && dejarEnBlanco && (
+                  <button
+                    disabled={enviando}
+                    onClick={() => {
+                      if (!mostrarExplicaciones) {
+                        dejarEnBlanco(false);
+                        setTimeout(siguiente, 100);
+                        return;
+                      }
+                      dejarEnBlanco();
+                    }}
+                    style={{
+                      flex: 1, height: 42, borderRadius: 12, border: 'none', boxShadow: SOMBRA,
+                      background: 'var(--c-superficie)', color: TEXT_SECONDARY, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    Dejar en blanco
+                    <span style={{ fontSize: 11, color: restaBlanco ? 'var(--hx-d97706)' : 'var(--hx-16a34a)', marginLeft: 6, fontWeight: 500 }}>
+                      · {restaBlanco ? `resta ${restaBlanco}` : 'no resta'}
+                    </span>
+                  </button>
+                )}
+              </div>
             </>
           ) : (
-            <button
-              onClick={siguiente}
-              style={{ width: '100%', height: 52, borderRadius: 14, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
-            >
-              {ultima ? 'Ver resultados' : 'Siguiente pregunta'}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <BotonSalirTest onClick={() => setConfirmarSalir(true)} alto={52} />
+              <button
+                onClick={siguiente}
+                style={{ flex: 1, height: 52, borderRadius: 14, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+              >
+                {ultima ? 'Ver resultados' : 'Siguiente pregunta'}
+              </button>
+            </div>
           )}
         </div>
       </div>

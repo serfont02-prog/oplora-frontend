@@ -12,6 +12,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, X, Clock, CheckCircle2, XCircle, Lightbulb, Medal } from 'lucide-react';
 import { IconoModalidad } from '@/components/psicotecnicos/iconos';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_PSICO, COLOR_PSICO_BG } from '@/styles/tokens';
+import { BotonSalirTest, ConfirmacionInferior } from '@/components/test/SalirTest';
 
 const SOMBRA = 'var(--c-sombra)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -308,13 +309,13 @@ export default function PsicotecnicoTipoPage() {
             </div>
           </div>
 
-          {confirmarSalida && (
-            <div style={{ background: 'var(--c-superficie)', borderRadius: 14, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ flex: 1, fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.4 }}>¿Salir? Este entrenamiento no se guardará.</div>
-              <button onClick={() => setConfirmarSalida(false)} style={{ border: 'none', background: 'var(--hx-f3f4f6)', color: TEXT_SECONDARY, borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Seguir</button>
-              <button onClick={() => { setFase('config'); setConfirmarSalida(false); }} style={{ border: 'none', background: '#DC2626', color: 'white', borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Salir</button>
-            </div>
-          )}
+          <ConfirmacionInferior
+            abierta={confirmarSalida}
+            titulo="¿Salir del entrenamiento?"
+            texto="Este entrenamiento no se guardará."
+            onCancelar={() => setConfirmarSalida(false)}
+            onConfirmar={() => { setFase('config'); setConfirmarSalida(false); }}
+          />
 
           <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 18, boxShadow: SOMBRA, marginBottom: 14 }}>
             {preguntaActual.imagenUrl && (
@@ -382,14 +383,24 @@ export default function PsicotecnicoTipoPage() {
                   No se ha podido guardar el resultado. Comprueba la conexión y vuelve a intentarlo.
                 </div>
               )}
+              <div style={{ display: 'flex', gap: 8 }}>
+              <BotonSalirTest onClick={() => setConfirmarSalida(true)} alto={48} />
               <button
                 onClick={siguiente}
                 disabled={enviarResultado.isPending}
-                style={{ width: '100%', padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: enviarResultado.isPending ? 'default' : 'pointer', opacity: enviarResultado.isPending ? 0.7 : 1 }}
+                style={{ flex: 1, padding: 14, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: enviarResultado.isPending ? 'default' : 'pointer', opacity: enviarResultado.isPending ? 0.7 : 1 }}
               >
                 {indice + 1 < preguntas.length ? 'Siguiente' : enviarResultado.isPending ? 'Guardando…' : enviarResultado.isError ? 'Reintentar' : 'Ver resultado'}
               </button>
+              </div>
             </>
+          )}
+
+          {/* ⭐ Salir desde abajo mientras se responde (antes solo con la X de arriba) */}
+          {!mostrarCorreccion && (
+            <div style={{ display: 'flex' }}>
+              <BotonSalirTest onClick={() => setConfirmarSalida(true)} />
+            </div>
           )}
         </div>
       </div>

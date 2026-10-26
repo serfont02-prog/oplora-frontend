@@ -17,6 +17,8 @@
 //     4/2015, de 30 de marzo…" → "LO4/2015"). Así "[LO 4/2015 Artículo 16]"
 //     funciona aunque en la app la ley tenga otras siglas.
 
+import type { ReactNode } from 'react';
+
 export type ParteReferencia = string | { siglas: string; numero: string };
 
 const SUFIJOS = '(?:bis|ter|qu[aá]ter|quinquies|sexies|septies|octies|nonies|decies)';
@@ -146,4 +148,69 @@ export function construirMapaNombres(leyesOposicion: any[]): Record<string, stri
     }
   }
   return mapa;
+}
+
+// ---------------------------------------------------------------------------
+// Referencias en los títulos de los apuntes. En los títulos los artículos van
+// en texto normal, sin corchetes: "2.1. Infracciones leves (art. 52 LOEx)",
+// "6. LOS DERECHOS Y DEBERES FUNDAMENTALES (TÍTULO I, ARTS. 10 A 55 CE)",
+// "2.3. Entrada y salida (arts. 4 y 5 RD 240/2007)". Se enlaza cada número
+// cuando las siglas que lo siguen corresponden a una ley de la oposición; si no,
+// el título se queda como texto.
+const NUM_TITULO = `\\d+(?:\\.\\d+)*(?:\\s+${SUFIJOS})?`;
+const REGEX_REFERENCIA_TITULO = new RegExp(
+  `\\b(arts?\\.\\s+)(${NUM_TITULO}(?:\\s*(?:,|-|–|\\s(?:y|a)\\s)\\s*${NUM_TITULO})*)` +
+    '\\s+([A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\\s+\\d+\\/\\d{4})?)(?![A-Za-zÁÉÍÓÚÑáéíóúñ0-9/])',
+  'gi',
+);
+
+export function renderReferenciasTitulo(
+  texto: string,
+  mapaSiglas: Record<string, string>,
+  onAbrirArticulo: (numero: string, versionLeyId: string) => void,
+  keyPrefix: string,
+) {
+  const regex = new RegExp(REGEX_REFERENCIA_TITULO.source, REGEX_REFERENCIA_TITULO.flags);
+  const salida: ReactNode[] = [];
+  let ultimo = 0;
+  let k = 0;
+  let match;
+  while ((match = regex.exec(texto)) !== null) {
+    const [entero, prefijo, numeros, siglas] = match;
+    const versionLeyId = mapaSiglas[normalizarSiglas(siglas)];
+    if (!versionLeyId) continue;
+    if (match.index > ultimo) salida.push(texto.slice(ultimo, match.index));
+    salida.push(prefijo);
+    // cada número es un enlace; los separadores ("y", "a", ",", "-") quedan como texto
+    const trozos = numeros.split(new RegExp(`(${NUM_TITULO})`, 'i'));
+    for (const trozo of trozos) {
+      if (!trozo) continue;
+      if (new RegExp(`^${NUM_TITULO}$`, 'i').test(trozo)) {
+        const numero = trozo.replace(/\s+/g, ' ').toLowerCase().replace('quáter', 'quater');
+        salida.push(
+          <button
+            key={`${keyPrefix}-t${k++}`}
+            title={`${siglas} · art. ${numero}`}
+            onClick={() => onAbrirArticulo(numero, versionLeyId)}
+            style={{
+              display: 'inline', background: 'none', border: 'none', padding: 0,
+              color: 'inherit', fontWeight: 'inherit', cursor: 'pointer',
+              textDecoration: 'underline', textDecorationStyle: 'dotted',
+              textDecorationColor: '#1F7CFF', textUnderlineOffset: '3px',
+              fontSize: 'inherit', fontFamily: 'inherit', textTransform: 'inherit',
+            }}
+          >
+            {trozo}
+          </button>,
+        );
+      } else {
+        salida.push(trozo);
+      }
+    }
+    salida.push(entero.slice(prefijo.length + numeros.length));
+    ultimo = match.index + entero.length;
+  }
+  if (!salida.length) return texto;
+  if (ultimo < texto.length) salida.push(texto.slice(ultimo));
+  return <>{salida.map((p, i) => (typeof p === 'string' ? <span key={`${keyPrefix}-s${i}`}>{p}</span> : p))}</>;
 }

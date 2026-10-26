@@ -6,10 +6,9 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { etiquetaArticulo } from '@/lib/articulos';
-import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Search } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Search, BookOpen, ClipboardCheck, CalendarClock } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
-import EmptyState from '@/components/ui/EmptyState';
-import { BG_NEUTRAL } from '@/styles/tokens';
+import { BG_TEMA as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA, VERDE, VERDE_BG } from '@/styles/tokens';
 
 function LeyPage() {
   const router = useRouter();
@@ -130,22 +129,21 @@ const toggleSeccion = async (seccionId: string) => {
 
   if (isLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: BG_NEUTRAL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: '13px', color: 'var(--hx-9ca3af)' }}>Cargando...</span>
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</span>
       </div>
     );
   }
 
   if (isError || !ley) {
     return (
-      <div style={{ minHeight: '100vh', background: BG_NEUTRAL, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '13px', color: 'var(--hx-dc2626)' }}>No se ha podido cargar la ley. Inténtalo de nuevo.</span>
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: 12 }}>
+        <span style={{ fontSize: 13, color: 'var(--hx-dc2626)' }}>No se ha podido cargar la ley. Inténtalo de nuevo.</span>
         <button
           onClick={() => router.back()}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--hx-6b7280)', background: 'none', border: 'none', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 999, border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, cursor: 'pointer' }}
         >
-          <ArrowLeft size={14} />
-          Volver
+          <ArrowLeft size={14} /> Volver
         </button>
       </div>
     );
@@ -156,310 +154,290 @@ const toggleSeccion = async (seccionId: string) => {
       a.numero?.includes(search) || a.contenido?.toLowerCase().includes(search.toLowerCase())
     );
 
+  const abrirArticulo = (art: any) => router.push(`/app/articulo/${art.id}?leyId=${id}&oposicionId=${oposicionId ?? ''}`);
+  const fechaActualizada = versionActiva?.fechaVigencia || versionActiva?.fechaPublicacion;
+  const datos = estadisticas ? [
+    { label: 'Títulos', value: estadisticas.titulos },
+    { label: 'Capítulos', value: estadisticas.capitulos },
+    { label: 'Artículos', value: estadisticas.articulos },
+    { label: 'Disposic.', value: estadisticas.disposiciones },
+  ].filter((d) => d.value > 0) : [];
+
   return (
-    <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: '72px' }}>
+    <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 96 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* Header */}
-      <div style={{ background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f3f4f6)', padding: '0 1.25rem', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
-        <button
-          onClick={() => router.back()}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--hx-6b7280)', background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          <ArrowLeft size={14} />
-          Volver
-        </button>
-        <span style={{ flex: 1, minWidth: 0, margin: '0 10px', textAlign: 'center', fontSize: '12px', fontWeight: 500, color: 'var(--hx-111827)', lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-          {ley.nombre}
-        </span>
-        <span style={{ width: '56px', flexShrink: 0 }} />
-      </div>
-
-      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.25rem' }}>
-
-        {/* Info ley */}
-<div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: '14px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
-    {versionActiva?.tipoNorma && (
-      <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: 'var(--hx-f3f4f6)', color: 'var(--hx-6b7280)' }}>
-        {versionActiva.tipoNorma}
-      </span>
-    )}
-    {versionActiva?.referenciaBoe && (
-      <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: 'var(--hx-e6f1fb)', color: 'var(--hx-185fa5)' }}>
-        {versionActiva.referenciaBoe}
-      </span>
-    )}
-    {versionActiva?.fechaPublicacion && (
-      <span style={{ fontSize: '11px', color: 'var(--hx-9ca3af)' }}>
-        {new Date(versionActiva.fechaPublicacion).toLocaleDateString('es-ES')}
-      </span>
-    )}
-  </div>
-    {estadisticas && (
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-        {[
-          { label: 'Títulos', value: estadisticas.titulos },
-          { label: 'Capítulos', value: estadisticas.capitulos },
-          { label: 'Artículos', value: estadisticas.articulos },
-          { label: 'Disposiciones', value: estadisticas.disposiciones },
-        ].filter((s) => s.value > 0).map(({ label, value }) => (
-          <div key={label} style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--hx-111827)' }}>{value}</div>
-            <div style={{ fontSize: '11px', color: 'var(--hx-9ca3af)' }}>{label}</div>
+        {/* Cabecera */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
+          <button
+            onClick={() => router.back()}
+            aria-label="Volver"
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+          >
+            <ArrowLeft size={18} color={TEXT_PRIMARY} />
+          </button>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              {ley.siglas || versionActiva?.tipoNorma || 'Normativa'}
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1.25, marginTop: 2, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>
+              {ley.nombre}
+            </div>
           </div>
-        ))}
-        {(versionActiva?.fechaVigencia || versionActiva?.fechaPublicacion) && (
-          <div style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--hx-9ca3af)' }}>
-            Actualizada: {new Date(versionActiva.fechaVigencia || versionActiva.fechaPublicacion).toLocaleDateString('es-ES')}
+        </div>
+
+        {/* Datos de la ley */}
+        {(versionActiva || datos.length > 0) && (
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {(versionActiva?.tipoNorma || versionActiva?.referenciaBoe || fechaActualizada) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                {versionActiva?.tipoNorma && <span style={{ ...chip, background: 'var(--c-superficie-2)', color: TEXT_SECONDARY }}>{versionActiva.tipoNorma}</span>}
+                {versionActiva?.referenciaBoe && <span style={{ ...chip, background: 'var(--c-azul-bg)', color: 'var(--c-azul)' }}>{versionActiva.referenciaBoe}</span>}
+                {fechaActualizada && (
+                  <span style={{ fontSize: 11, color: TEXT_MUTED, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <CalendarClock size={12} /> Actualizada el {new Date(fechaActualizada).toLocaleDateString('es-ES')}
+                  </span>
+                )}
+              </div>
+            )}
+            {datos.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${datos.length}, 1fr)`, gap: 8 }}>
+                {datos.map(({ label, value }) => (
+                  <div key={label} style={{ background: 'var(--c-superficie-2)', borderRadius: 12, padding: '10px 6px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1.1 }}>{value}</div>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
-      </div>
-    )}
-</div>  
+
+        {/* Test de la ley */}
+        {oposicionId && versionActiva?.id && (
+          <button
+            onClick={() => router.push(`/app/test/${oposicionId}?versionLeyId=${versionActiva.id}&n=15`)}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: 'var(--c-superficie)', border: 'none', borderRadius: 18, boxShadow: SOMBRA, cursor: 'pointer', textAlign: 'left' }}
+          >
+            <span style={{ width: 40, height: 40, borderRadius: 12, background: VERDE_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ClipboardCheck size={19} color={VERDE} />
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Test de esta ley</span>
+              <span style={{ display: 'block', fontSize: 12, color: TEXT_MUTED, marginTop: 1 }}>15 preguntas de toda la ley</span>
+            </span>
+            <ChevronRight size={16} color="var(--c-chevron)" />
+          </button>
+        )}
 
         {/* Buscador */}
-        <div style={{ position: 'relative', marginBottom: '1rem' }}>
-          <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--hx-9ca3af)' }} />
+        <div style={{ position: 'relative' }}>
+          <Search size={16} color={TEXT_MUTED} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="Buscar por número de artículo o texto..."
+            placeholder="Buscar por número de artículo o texto…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: '100%', padding: '10px 12px 10px 36px', fontSize: '13px', border: '1px solid var(--hx-e5e7eb)', borderRadius: '10px', outline: 'none', background: 'var(--c-superficie)', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '12px 14px 12px 40px', fontSize: 14, color: TEXT_PRIMARY, border: 'none', borderRadius: 14, outline: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, boxSizing: 'border-box' }}
           />
         </div>
 
-{/* Estructura */}
-{search.trim().length >= 2 ? (
-  <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: '12px', overflow: 'hidden' }}>
-    <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--hx-f9fafb)', fontSize: '11px', fontWeight: 500, color: 'var(--hx-9ca3af)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-      {resultadosBusqueda.length} resultado{resultadosBusqueda.length !== 1 ? 's' : ''}
-    </div>
-    {resultadosBusqueda.length === 0 ? (
-      <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: 'var(--hx-9ca3af)' }}>
-        No se encontraron artículos
-      </div>
-    ) : (
-      resultadosBusqueda.map((art: any, i: number) => (
-        <div
-          key={art.id}
-          onClick={() => router.push(`/app/articulo/${art.id}?leyId=${id}&oposicionId=${oposicionId ?? ''}`)}
-          style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: i < resultadosBusqueda.length - 1 ? '1px solid var(--hx-f9fafb)' : 'none' }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hx-f9fafb)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-superficie)')}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--hx-374151)', marginBottom: '1px' }}>
-              {etiquetaArticulo(art.numero)}
-              {art.titulo && <span style={{ color: 'var(--hx-9ca3af)', fontWeight: 400 }}> — {art.titulo}</span>}
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--hx-9ca3af)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {art.contenido?.slice(0, 80)}...
+        {/* Estructura / resultados */}
+        {search.trim().length >= 2 ? (
+          <div>
+            <div style={tituloSeccion}>{resultadosBusqueda.length} resultado{resultadosBusqueda.length !== 1 ? 's' : ''}</div>
+            <div style={caja}>
+              {resultadosBusqueda.length === 0 ? (
+                <div style={{ padding: 18, textAlign: 'center', fontSize: 13, color: TEXT_MUTED }}>No se han encontrado artículos</div>
+              ) : (
+                resultadosBusqueda.map((art: any, i: number) => (
+                  <FilaArticulo key={art.id} art={art} sangria={0} primera={i === 0} onClick={() => abrirArticulo(art)} />
+                ))
+              )}
             </div>
           </div>
-          <ChevronRight size={13} color="var(--hx-d1d5db)" style={{ flexShrink: 0, marginLeft: '8px' }} />
-        </div>
-      ))
-    )}
-  </div>
-) : loadingTitulos ? (
-  <div style={{ textAlign: 'center', padding: '2rem', fontSize: '13px', color: 'var(--hx-9ca3af)' }}>Cargando estructura...</div>
-) : titulos.length === 0 ? (
-  <EmptyState
-    icon={<span style={{ fontSize: '24px' }}>📖</span>}
-    title="Esta ley no tiene estructura cargada todavía"
-  />
-) : (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-    {agruparPorLibro(titulos).map((grupo, gi) => {
-      const claveLibro = grupo.libro?.id ?? `sin-libro-${gi}`;
-      const libroAbierto = !grupo.libro || librosAbiertos[claveLibro];
-      return (
-        <div key={claveLibro} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {grupo.libro && (
-            <button
-              onClick={() => setLibrosAbiertos((prev) => ({ ...prev, [claveLibro]: !prev[claveLibro] }))}
-              style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: 'var(--hx-eff6ff)', border: '1px solid var(--hx-dbeafe)', borderRadius: '12px', cursor: 'pointer', textAlign: 'left' }}
-            >
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--hx-1f7cff)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Libro {grupo.libro.numero}
-                </div>
-                {grupo.libro.nombre && (
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--hx-111827)', marginTop: '2px' }}>{grupo.libro.nombre}</div>
-                )}
-                <div style={{ fontSize: '11px', color: 'var(--hx-6b7280)', marginTop: '2px' }}>
-                  {grupo.titulos.length} {grupo.titulos.length === 1 ? 'título' : 'títulos'}
-                </div>
-              </div>
-              {libroAbierto ? <ChevronUp size={14} color="var(--hx-1f7cff)" /> : <ChevronDown size={14} color="var(--hx-1f7cff)" />}
-            </button>
-          )}
-          {libroAbierto && grupo.titulos.map((titulo: any) => (
-      <div key={titulo.id} style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: '12px', overflow: 'hidden' }}>
-        <button
-          onClick={() => toggleTitulo(titulo.id)}
-          style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-        >
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--hx-111827)' }}>
-            {[titulo.numero ? `Título ${titulo.numero}` : null, titulo.nombre].filter(Boolean).join(' — ')}
+        ) : loadingTitulos ? (
+          <div style={{ ...caja, padding: 18, textAlign: 'center', fontSize: 13, color: TEXT_MUTED }}>Cargando estructura…</div>
+        ) : titulos.length === 0 ? (
+          <div style={{ ...caja, padding: '22px 18px', textAlign: 'center' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--c-azul-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+              <BookOpen size={22} color="var(--c-azul)" />
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Esta ley todavía no tiene su estructura cargada</div>
           </div>
-          {titulosAbiertos[titulo.id] ? <ChevronUp size={14} color="var(--hx-9ca3af)" /> : <ChevronDown size={14} color="var(--hx-9ca3af)" />}
-        </button>
-
-        {titulosAbiertos[titulo.id] && (
-          <div style={{ borderTop: '1px solid var(--hx-f3f4f6)' }}>
-            {filtrarArticulos(articulosTitulo[titulo.id] ?? []).map((art: any) => (
-              <div
-                key={art.id}
-                onClick={() => router.push(`/app/articulo/${art.id}?leyId=${id}&oposicionId=${oposicionId ?? ''}`)}
-                style={{ padding: '9px 14px 9px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderTop: '1px solid var(--hx-f9fafb)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hx-f9fafb)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-superficie)')}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--hx-374151)', marginBottom: '1px' }}>
-                    {etiquetaArticulo(art.numero)}
-                    {art.titulo && <span style={{ color: 'var(--hx-9ca3af)', fontWeight: 400 }}> — {art.titulo}</span>}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--hx-9ca3af)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {art.contenido?.slice(0, 80)}...
-                  </div>
-                </div>
-                <ChevronRight size={13} color="var(--hx-d1d5db)" style={{ flexShrink: 0, marginLeft: '8px' }} />
-              </div>
-            ))}
-
-            {(capitulosPorTitulo[titulo.id] ?? []).map((capitulo: any) => (
-              <div key={capitulo.id} style={{ borderTop: '1px solid var(--hx-f9fafb)' }}>
-                <button
-                  onClick={() => toggleCapitulo(capitulo.id)}
-                  style={{ width: '100%', padding: '10px 14px 10px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: capitulosAbiertos[capitulo.id] ? 'var(--hx-f9fafb)' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                >
-                  <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--hx-374151)' }}>
-                    {capitulo.numero ? `Capítulo ${capitulo.numero}` : ''}{capitulo.nombre ? ` — ${capitulo.nombre}` : ''}
-                  </div>
-                  {capitulosAbiertos[capitulo.id] ? <ChevronUp size={13} color="var(--hx-9ca3af)" /> : <ChevronDown size={13} color="var(--hx-9ca3af)" />}
-                </button>
-
-                {capitulosAbiertos[capitulo.id] && filtrarArticulos(articulosCapitulo[capitulo.id] ?? []).map((art: any) => (
-                  <div
-                    key={art.id}
-                    onClick={() => router.push(`/app/articulo/${art.id}?leyId=${id}&oposicionId=${oposicionId ?? ''}`)}
-                    style={{ padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderTop: '1px solid var(--hx-f9fafb)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hx-f9fafb)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-superficie)')}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--hx-374151)', marginBottom: '1px' }}>
-                        {etiquetaArticulo(art.numero)}
-                        {art.titulo && <span style={{ color: 'var(--hx-9ca3af)', fontWeight: 400 }}> — {art.titulo}</span>}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--hx-9ca3af)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {art.contenido?.slice(0, 80)}...
-                      </div>
-                    </div>
-                    <ChevronRight size={13} color="var(--hx-d1d5db)" style={{ flexShrink: 0, marginLeft: '8px' }} />
-                  </div>
-                ))}
-
-                              {capitulosAbiertos[capitulo.id] && (seccionesPorCapitulo[capitulo.id] ?? []).map((seccion: any) => (
-                <div key={seccion.id} style={{ borderTop: '1px solid var(--hx-f9fafb)' }}>
-                  <button
-                    onClick={() => toggleSeccion(seccion.id)}
-                    style={{ width: '100%', padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: seccionesAbiertas[seccion.id] ? 'var(--hx-f9fafb)' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                  >
-                    <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--hx-6b7280)' }}>
-                      {seccion.numero ? `Sección ${seccion.numero}` : ''}{seccion.nombre ? ` — ${seccion.nombre}` : ''}
-                    </div>
-                    {seccionesAbiertas[seccion.id] ? <ChevronUp size={12} color="var(--hx-9ca3af)" /> : <ChevronDown size={12} color="var(--hx-9ca3af)" />}
-                  </button>
-
-                  {seccionesAbiertas[seccion.id] && filtrarArticulos(articulosSeccion[seccion.id] ?? []).map((art: any) => (
-                    <div
-                      key={art.id}
-                      onClick={() => router.push(`/app/articulo/${art.id}?leyId=${id}&oposicionId=${oposicionId ?? ''}`)}
-                      style={{ padding: '9px 14px 9px 56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderTop: '1px solid var(--hx-f9fafb)' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hx-f9fafb)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-superficie)')}
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ ...tituloSeccion, marginBottom: -2 }}>Índice</div>
+            {agruparPorLibro(titulos).map((grupo, gi) => {
+              const claveLibro = grupo.libro?.id ?? `sin-libro-${gi}`;
+              const libroAbierto = !grupo.libro || librosAbiertos[claveLibro];
+              return (
+                <div key={claveLibro} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {grupo.libro && (
+                    <button
+                      onClick={() => setLibrosAbiertos((prev) => ({ ...prev, [claveLibro]: !prev[claveLibro] }))}
+                      style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'var(--c-azul-bg)', border: 'none', borderRadius: 16, cursor: 'pointer', textAlign: 'left' }}
                     >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--hx-374151)', marginBottom: '1px' }}>
-                          {etiquetaArticulo(art.numero)}
-                          {art.titulo && <span style={{ color: 'var(--hx-9ca3af)', fontWeight: 400 }}> — {art.titulo}</span>}
-                        </div>
-                        <div style={{ fontSize: '11px', color: 'var(--hx-9ca3af)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {art.contenido?.slice(0, 80)}...
-                        </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-azul)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Libro {grupo.libro.numero}</div>
+                        {grupo.libro.nombre && <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 2, lineHeight: 1.3 }}>{grupo.libro.nombre}</div>}
+                        <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2 }}>{grupo.titulos.length} {grupo.titulos.length === 1 ? 'título' : 'títulos'}</div>
                       </div>
-                      <ChevronRight size={13} color="var(--hx-d1d5db)" style={{ flexShrink: 0, marginLeft: '8px' }} />
-                    </div>
-                  ))}
+                      {libroAbierto ? <ChevronUp size={16} color="var(--c-azul)" /> : <ChevronDown size={16} color="var(--c-azul)" />}
+                    </button>
+                  )}
+                  {libroAbierto && grupo.titulos.map((titulo: any) => {
+                    const abierto = !!titulosAbiertos[titulo.id];
+                    return (
+                      <div key={titulo.id} style={caja}>
+                        <button
+                          onClick={() => toggleTitulo(titulo.id)}
+                          style={{ width: '100%', padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {titulo.numero && <div style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Título {titulo.numero}</div>}
+                            <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3, marginTop: titulo.numero ? 2 : 0 }}>{titulo.nombre || `Título ${titulo.numero ?? ''}`}</div>
+                          </div>
+                          {abierto ? <ChevronUp size={16} color="var(--c-chevron)" /> : <ChevronDown size={16} color="var(--c-chevron)" />}
+                        </button>
+
+                        {abierto && (
+                          <div>
+                            {filtrarArticulos(articulosTitulo[titulo.id] ?? []).map((art: any) => (
+                              <FilaArticulo key={art.id} art={art} sangria={0} onClick={() => abrirArticulo(art)} />
+                            ))}
+
+                            {(capitulosPorTitulo[titulo.id] ?? []).map((capitulo: any) => {
+                              const capAbierto = !!capitulosAbiertos[capitulo.id];
+                              return (
+                                <div key={capitulo.id} style={{ borderTop: '1px solid var(--c-borde)' }}>
+                                  <button
+                                    onClick={() => toggleCapitulo(capitulo.id)}
+                                    style={{ width: '100%', padding: '11px 14px 11px 22px', display: 'flex', alignItems: 'center', gap: 10, background: capAbierto ? 'var(--c-superficie-2)' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                                  >
+                                    <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.35 }}>
+                                      {capitulo.numero && <span style={{ fontWeight: 700 }}>Capítulo {capitulo.numero}</span>}
+                                      {capitulo.nombre && <span style={{ color: TEXT_SECONDARY }}>{capitulo.numero ? ' · ' : ''}{capitulo.nombre}</span>}
+                                    </div>
+                                    {capAbierto ? <ChevronUp size={15} color="var(--c-chevron)" /> : <ChevronDown size={15} color="var(--c-chevron)" />}
+                                  </button>
+
+                                  {capAbierto && filtrarArticulos(articulosCapitulo[capitulo.id] ?? []).map((art: any) => (
+                                    <FilaArticulo key={art.id} art={art} sangria={1} onClick={() => abrirArticulo(art)} />
+                                  ))}
+
+                                  {capAbierto && (seccionesPorCapitulo[capitulo.id] ?? []).map((seccion: any) => {
+                                    const secAbierta = !!seccionesAbiertas[seccion.id];
+                                    return (
+                                      <div key={seccion.id} style={{ borderTop: '1px solid var(--c-borde)' }}>
+                                        <button
+                                          onClick={() => toggleSeccion(seccion.id)}
+                                          style={{ width: '100%', padding: '10px 14px 10px 34px', display: 'flex', alignItems: 'center', gap: 10, background: secAbierta ? 'var(--c-superficie-2)' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                                        >
+                                          <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: TEXT_SECONDARY, lineHeight: 1.35 }}>
+                                            {seccion.numero && <span style={{ fontWeight: 700 }}>Sección {seccion.numero}</span>}
+                                            {seccion.nombre && <span>{seccion.numero ? ' · ' : ''}{seccion.nombre}</span>}
+                                          </div>
+                                          {secAbierta ? <ChevronUp size={14} color="var(--c-chevron)" /> : <ChevronDown size={14} color="var(--c-chevron)" />}
+                                        </button>
+                                        {secAbierta && filtrarArticulos(articulosSeccion[seccion.id] ?? []).map((art: any) => (
+                                          <FilaArticulo key={art.id} art={art} sangria={2} onClick={() => abrirArticulo(art)} />
+                                        ))}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
-      </div>
-    ))}
-        </div>
-      );
-    })}
-  </div>
-)}
 
-          {disposiciones.length > 0 && (() => {
-            const categorias = ['adicional', 'transitoria', 'derogatoria', 'final'];
-            const labels: Record<string, string> = {
-              adicional: 'Disposiciones adicionales',
-              transitoria: 'Disposiciones transitorias',
-              derogatoria: 'Disposición derogatoria',
-              final: 'Disposición final',
-            };
-            return (
-              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {categorias.filter((cat) => disposiciones.some((d: any) => d.categoria === cat)).map((cat) => {
-                  const items = disposiciones.filter((d: any) => d.categoria === cat);
-                  const abierto = disposicionesAbiertas[cat];
-                  return (
-                    <div key={cat} style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: '12px', overflow: 'hidden' }}>
-                      <button
-                        onClick={() => setDisposicionesAbiertas((prev) => ({ ...prev, [cat]: !prev[cat] }))}
-                        style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                      >
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--hx-111827)' }}>{labels[cat]}</div>
-                        {abierto ? <ChevronUp size={14} color="var(--hx-9ca3af)" /> : <ChevronDown size={14} color="var(--hx-9ca3af)" />}
-                      </button>
-                      {abierto && (
-                        <div style={{ borderTop: '1px solid var(--hx-f3f4f6)' }}>
-                          {items.map((d: any) => (
-                            <div key={d.id} style={{ padding: '10px 14px 10px 28px', borderTop: '1px solid var(--hx-f9fafb)' }}>
-                              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--hx-374151)', marginBottom: '4px', textTransform: 'capitalize' }}>
-                                {d.etiqueta || cat}
-                              </div>
-                              <div style={{ fontSize: '12px', color: 'var(--hx-6b7280)', lineHeight: 1.6 }}>
-                                {d.contenido.split(/(?<=\.)\s+(?=[A-ZÁÉÍÓÚÑ0-9])/).map((frase: string, i: number) => (
-                                  <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{frase}</p>
-                                ))}
-                              </div>
-                            </div>
+        {disposiciones.length > 0 && (() => {
+          const categorias = ['adicional', 'transitoria', 'derogatoria', 'final'];
+          const labels: Record<string, string> = {
+            adicional: 'Disposiciones adicionales',
+            transitoria: 'Disposiciones transitorias',
+            derogatoria: 'Disposición derogatoria',
+            final: 'Disposiciones finales',
+          };
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ ...tituloSeccion, marginBottom: -2 }}>Disposiciones</div>
+              {categorias.filter((cat) => disposiciones.some((d: any) => d.categoria === cat)).map((cat) => {
+                const items = disposiciones.filter((d: any) => d.categoria === cat);
+                const abierto = disposicionesAbiertas[cat];
+                return (
+                  <div key={cat} style={caja}>
+                    <button
+                      onClick={() => setDisposicionesAbiertas((prev) => ({ ...prev, [cat]: !prev[cat] }))}
+                      style={{ width: '100%', padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <div style={{ flex: 1, fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>{labels[cat]}</div>
+                      <span style={{ fontSize: 12, color: TEXT_MUTED }}>{items.length}</span>
+                      {abierto ? <ChevronUp size={16} color="var(--c-chevron)" /> : <ChevronDown size={16} color="var(--c-chevron)" />}
+                    </button>
+                    {abierto && items.map((d: any) => (
+                      <div key={d.id} style={{ padding: '12px 14px 12px 22px', borderTop: '1px solid var(--c-borde)' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4, textTransform: 'capitalize' }}>{d.etiqueta || cat}</div>
+                        <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.6 }}>
+                          {d.contenido.split(/(?<=\.)\s+(?=[A-ZÁÉÍÓÚÑ0-9])/).map((frase: string, i: number) => (
+                            <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{frase}</p>
                           ))}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
-      </div> {/* cierre maxWidth */}
-
-
-                    
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
 
       <FooterNavegacion usuario={usuario} oposicionId={oposicionId ?? undefined} activo="estudiar" />
     </div>
+  );
+}
+
+const caja: React.CSSProperties = { background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' };
+const tituloSeccion: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, padding: '0 4px', marginBottom: 8 };
+const chip: React.CSSProperties = { fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 999 };
+
+/** Fila de un artículo en el índice: número en la insignia azul, título o comienzo del texto. */
+function FilaArticulo({ art, sangria, onClick, primera }: { art: any; sangria: number; onClick: () => void; primera?: boolean }) {
+  const numeroCorto = String(art.numero ?? '').replace(/^art(í|i)culo\s*/i, '');
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: `10px 14px 10px ${14 + sangria * 12}px`,
+        background: 'none', border: 'none', borderTop: primera ? 'none' : '1px solid var(--c-borde)', cursor: 'pointer', textAlign: 'left',
+      }}
+    >
+      <span style={{ minWidth: 36, height: 30, padding: '0 6px', borderRadius: 9, background: 'var(--c-azul-bg)', color: 'var(--c-azul)', fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxSizing: 'border-box' }}>
+        {numeroCorto.length > 6 ? numeroCorto.slice(0, 6) + '…' : numeroCorto}
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
+          {etiquetaArticulo(art.numero)}
+          {art.titulo && <span style={{ color: TEXT_SECONDARY, fontWeight: 500 }}> · {art.titulo}</span>}
+        </span>
+        {art.contenido && (
+          <span style={{ display: 'block', fontSize: 12, color: TEXT_MUTED, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {art.contenido.slice(0, 110)}
+          </span>
+        )}
+      </span>
+      <ChevronRight size={15} color="var(--c-chevron)" style={{ flexShrink: 0 }} />
+    </button>
   );
 }
 

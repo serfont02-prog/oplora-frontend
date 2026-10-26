@@ -995,6 +995,156 @@ const editarArticulo = useMutation({
             </div>
           )}
 
+          {/* ⭐ La estructura estaba fuera de esta zona con scroll: salía debajo de un hueco del
+              alto de la pantalla. Ahora va dentro, como el resto de pestañas. */}
+          {tab === 'estructura' && (
+  <div>
+    <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+      {!versionActiva && (
+        <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+          No hay versión activa
+        </div>
+      )}
+      {agruparPorLibro(titulosEstructura).map((grupo, gi) => {
+      const claveLibro = grupo.libro?.id ?? `sin-libro-${gi}`;
+      const libroAbierto = !grupo.libro || librosAbiertos[claveLibro];
+      return (
+        <div key={claveLibro}>
+          {grupo.libro && (
+            <button
+              onClick={() => setLibrosAbiertos((prev) => ({ ...prev, [claveLibro]: !prev[claveLibro] }))}
+              style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: '#EFF6FF', border: 'none', borderBottom: '1px solid #DBEAFE', cursor: 'pointer', textAlign: 'left' }}
+            >
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#1F7CFF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Libro {grupo.libro.numero}
+                </div>
+                {grupo.libro.nombre && (
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginTop: '2px' }}>{grupo.libro.nombre}</div>
+                )}
+                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                  {grupo.titulos.length} {grupo.titulos.length === 1 ? 'título' : 'títulos'}
+                </div>
+              </div>
+              {libroAbierto ? <ChevronUp size={14} color="#1F7CFF" /> : <ChevronDown size={14} color="#1F7CFF" />}
+            </button>
+          )}
+          {libroAbierto && grupo.titulos.map((titulo: any) => (
+      <div key={titulo.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+        <button
+          onClick={() => toggleTitulo(titulo.id)}
+          style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: titulosAbiertos[titulo.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+        >
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
+            {[titulo.numero ? `Título ${titulo.numero}` : null, titulo.nombre].filter(Boolean).join(' — ')}
+          </div>
+          {titulosAbiertos[titulo.id] ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
+        </button>
+
+        {titulosAbiertos[titulo.id] && (
+          <div>
+            {(articulosTitulo[titulo.id] ?? []).map((art: any) => (
+              <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
+            ))}
+
+            {(capitulosPorTitulo[titulo.id] ?? []).map((capitulo: any) => (
+              <div key={capitulo.id} style={{ borderTop: '1px solid #f9fafb' }}>
+                <button
+                  onClick={() => toggleCapitulo(capitulo.id)}
+                  style={{ width: '100%', padding: '9px 14px 9px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: capitulosAbiertos[capitulo.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>
+                    Capítulo {capitulo.numero}{capitulo.nombre ? ` — ${capitulo.nombre}` : ''}
+                  </div>
+                  {capitulosAbiertos[capitulo.id] ? <ChevronUp size={13} color="#9ca3af" /> : <ChevronDown size={13} color="#9ca3af" />}
+                </button>
+
+                {capitulosAbiertos[capitulo.id] && (
+                  <div>
+                    {(articulosCapitulo[capitulo.id] ?? []).map((art: any) => (
+                      <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
+                    ))}
+
+                    {(seccionesPorCapitulo[capitulo.id] ?? []).map((seccion: any) => (
+                      <div key={seccion.id} style={{ borderTop: '1px solid #f9fafb' }}>
+                        <button
+                          onClick={() => toggleSeccion(seccion.id)}
+                          style={{ width: '100%', padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: seccionesAbiertas[seccion.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                        >
+                          <div style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280' }}>
+                            {seccion.numero ? `Sección ${seccion.numero}` : ''}{seccion.nombre ? ` — ${seccion.nombre}` : ''}
+                          </div>
+                          {seccionesAbiertas[seccion.id] ? <ChevronUp size={12} color="#9ca3af" /> : <ChevronDown size={12} color="#9ca3af" />}
+                        </button>
+                        {seccionesAbiertas[seccion.id] && (articulosSeccion[seccion.id] ?? []).map((art: any) => (
+                          <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+        </div>
+      );
+    })}
+    </div>
+
+{disposiciones.length > 0 && (() => {
+      const categorias = ['adicional', 'transitoria', 'derogatoria', 'final'];
+      const labels: Record<string, string> = {
+        adicional: 'Disposiciones adicionales',
+        transitoria: 'Disposiciones transitorias',
+        derogatoria: 'Disposición derogatoria',
+        final: 'Disposición final',
+      };
+      return (
+        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {categorias.filter((cat) => disposiciones.some((d: any) => d.categoria === cat)).map((cat) => {
+            const items = disposiciones.filter((d: any) => d.categoria === cat);
+            const abierto = disposicionesAbiertas[cat];
+            return (
+              <div key={cat} style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
+                <button
+                  onClick={() => setDisposicionesAbiertas((prev) => ({ ...prev, [cat]: !prev[cat] }))}
+                  style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>{labels[cat]}</div>
+                  {abierto ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
+                </button>
+                {abierto && (
+                  <div style={{ borderTop: '1px solid #f3f4f6' }}>
+                    {items.map((d: any) => (
+                      <div
+                        key={d.id}
+                        onClick={() => abrirEditarDisposicion(d)}
+                        style={{ padding: '10px 14px 10px 28px', borderTop: '1px solid #f9fafb', cursor: 'pointer' }}
+                      >
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px', textTransform: 'capitalize' }}>
+                          {d.etiqueta || cat}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6 }}>
+                          {d.contenido.split(/(?<=\.)\s+(?=[A-ZÁÉÍÓÚÑ0-9])/).map((frase: string, i: number) => (
+                            <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{frase}</p>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    })()}
+  </div>
+)}
+
         </div>
       </div>
 
@@ -1371,154 +1521,6 @@ const editarArticulo = useMutation({
                     </div>
                   </div>
                 )}
-
-                {tab === 'estructura' && (
-  <div style={{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
-    <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
-      {!versionActiva && (
-        <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
-          No hay versión activa
-        </div>
-      )}
-      {agruparPorLibro(titulosEstructura).map((grupo, gi) => {
-      const claveLibro = grupo.libro?.id ?? `sin-libro-${gi}`;
-      const libroAbierto = !grupo.libro || librosAbiertos[claveLibro];
-      return (
-        <div key={claveLibro}>
-          {grupo.libro && (
-            <button
-              onClick={() => setLibrosAbiertos((prev) => ({ ...prev, [claveLibro]: !prev[claveLibro] }))}
-              style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: '#EFF6FF', border: 'none', borderBottom: '1px solid #DBEAFE', cursor: 'pointer', textAlign: 'left' }}
-            >
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#1F7CFF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Libro {grupo.libro.numero}
-                </div>
-                {grupo.libro.nombre && (
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginTop: '2px' }}>{grupo.libro.nombre}</div>
-                )}
-                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-                  {grupo.titulos.length} {grupo.titulos.length === 1 ? 'título' : 'títulos'}
-                </div>
-              </div>
-              {libroAbierto ? <ChevronUp size={14} color="#1F7CFF" /> : <ChevronDown size={14} color="#1F7CFF" />}
-            </button>
-          )}
-          {libroAbierto && grupo.titulos.map((titulo: any) => (
-      <div key={titulo.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-        <button
-          onClick={() => toggleTitulo(titulo.id)}
-          style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: titulosAbiertos[titulo.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-        >
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
-            {[titulo.numero ? `Título ${titulo.numero}` : null, titulo.nombre].filter(Boolean).join(' — ')}
-          </div>
-          {titulosAbiertos[titulo.id] ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
-        </button>
-
-        {titulosAbiertos[titulo.id] && (
-          <div>
-            {(articulosTitulo[titulo.id] ?? []).map((art: any) => (
-              <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
-            ))}
-
-            {(capitulosPorTitulo[titulo.id] ?? []).map((capitulo: any) => (
-              <div key={capitulo.id} style={{ borderTop: '1px solid #f9fafb' }}>
-                <button
-                  onClick={() => toggleCapitulo(capitulo.id)}
-                  style={{ width: '100%', padding: '9px 14px 9px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: capitulosAbiertos[capitulo.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                >
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>
-                    Capítulo {capitulo.numero}{capitulo.nombre ? ` — ${capitulo.nombre}` : ''}
-                  </div>
-                  {capitulosAbiertos[capitulo.id] ? <ChevronUp size={13} color="#9ca3af" /> : <ChevronDown size={13} color="#9ca3af" />}
-                </button>
-
-                {capitulosAbiertos[capitulo.id] && (
-                  <div>
-                    {(articulosCapitulo[capitulo.id] ?? []).map((art: any) => (
-                      <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
-                    ))}
-
-                    {(seccionesPorCapitulo[capitulo.id] ?? []).map((seccion: any) => (
-                      <div key={seccion.id} style={{ borderTop: '1px solid #f9fafb' }}>
-                        <button
-                          onClick={() => toggleSeccion(seccion.id)}
-                          style={{ width: '100%', padding: '9px 14px 9px 42px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: seccionesAbiertas[seccion.id] ? '#f9fafb' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                        >
-                          <div style={{ fontSize: '11px', fontWeight: 500, color: '#6b7280' }}>
-                            {seccion.numero ? `Sección ${seccion.numero}` : ''}{seccion.nombre ? ` — ${seccion.nombre}` : ''}
-                          </div>
-                          {seccionesAbiertas[seccion.id] ? <ChevronUp size={12} color="#9ca3af" /> : <ChevronDown size={12} color="#9ca3af" />}
-                        </button>
-                        {seccionesAbiertas[seccion.id] && (articulosSeccion[seccion.id] ?? []).map((art: any) => (
-                          <FilaArticulo key={art.id} art={art} onEditar={abrirEditarArticulo} />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    ))}
-        </div>
-      );
-    })}
-    </div>
-
-{disposiciones.length > 0 && (() => {
-      const categorias = ['adicional', 'transitoria', 'derogatoria', 'final'];
-      const labels: Record<string, string> = {
-        adicional: 'Disposiciones adicionales',
-        transitoria: 'Disposiciones transitorias',
-        derogatoria: 'Disposición derogatoria',
-        final: 'Disposición final',
-      };
-      return (
-        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {categorias.filter((cat) => disposiciones.some((d: any) => d.categoria === cat)).map((cat) => {
-            const items = disposiciones.filter((d: any) => d.categoria === cat);
-            const abierto = disposicionesAbiertas[cat];
-            return (
-              <div key={cat} style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px', overflow: 'hidden' }}>
-                <button
-                  onClick={() => setDisposicionesAbiertas((prev) => ({ ...prev, [cat]: !prev[cat] }))}
-                  style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                >
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>{labels[cat]}</div>
-                  {abierto ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
-                </button>
-                {abierto && (
-                  <div style={{ borderTop: '1px solid #f3f4f6' }}>
-                    {items.map((d: any) => (
-                      <div
-                        key={d.id}
-                        onClick={() => abrirEditarDisposicion(d)}
-                        style={{ padding: '10px 14px 10px 28px', borderTop: '1px solid #f9fafb', cursor: 'pointer' }}
-                      >
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px', textTransform: 'capitalize' }}>
-                          {d.etiqueta || cat}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6 }}>
-                          {d.contenido.split(/(?<=\.)\s+(?=[A-ZÁÉÍÓÚÑ0-9])/).map((frase: string, i: number) => (
-                            <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{frase}</p>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      );
-    })()}
-  </div>
-)}
 
 {articuloEditando && (
   <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>

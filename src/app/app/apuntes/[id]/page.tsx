@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, Play, Pause } from 'lucide-react';
 import { BotonEnPapel } from '@/components/temario/TemarioPapel';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
-import { renderReferencias, construirMapaSiglas, construirMapaNombres } from '@/lib/referenciasArticulos';
+import { renderReferencias, renderReferenciasTitulo, construirMapaSiglas, construirMapaNombres } from '@/lib/referenciasArticulos';
 import { BG_NEUTRAL } from '@/styles/tokens';
 
 // ⭐ Colores de las cajas destacadas (compartidos por las cajas y por la barra de filtros).
@@ -584,7 +584,7 @@ const updateProgreso = () => {
               marginTop: '32px', marginBottom: '14px',
               paddingLeft: '10px', borderLeft: '3px solid var(--hx-1f7cff)',
             }}>
-              {bloque.texto}
+              {renderReferenciasTitulo(bloque.texto, mapaSiglas, abrirArticulo, `t${bloque.id}`)}
             </div>
           ) : bloque.nivel === 2 ? (
             <div key={bloque.id} style={{
@@ -592,14 +592,14 @@ const updateProgreso = () => {
               marginTop: '22px', marginBottom: '10px',
               paddingLeft: '10px', borderLeft: '2px solid var(--hx-e5e7eb)',
             }}>
-              {bloque.texto}
+              {renderReferenciasTitulo(bloque.texto, mapaSiglas, abrirArticulo, `t${bloque.id}`)}
             </div>
           ) : (
             <div key={bloque.id} style={{
               fontSize: '13px', fontWeight: 700, color: 'var(--hx-1f7cff)',
               marginTop: '18px', marginBottom: '8px',
             }}>
-              {bloque.texto}
+              {renderReferenciasTitulo(bloque.texto, mapaSiglas, abrirArticulo, `t${bloque.id}`)}
             </div>
           );
 
@@ -789,7 +789,7 @@ const updateProgreso = () => {
         )}
       </div>
 
-      <FooterNavegacion usuario={usuario} oposicionId={apunte.tema?.convocatoria?.oposicion?.id} />
+      <FooterNavegacion usuario={usuario} oposicionId={oposicionId} activo="estudiar" />
       {articuloModal && (
   <div
     onClick={() => setArticuloModal(null)}

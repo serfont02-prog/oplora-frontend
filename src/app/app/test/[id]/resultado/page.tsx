@@ -9,7 +9,7 @@ import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Share2, ChevronDown, ChevronRight, X, CheckCircle2, XCircle, MinusCircle, Lightbulb, Target, Layers } from 'lucide-react';
+import { Share2, ChevronDown, ChevronRight, X, CheckCircle2, XCircle, MinusCircle, Lightbulb, Target, Layers, LogOut } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { PuntosGanadosCard } from '@/components/gamificacion/PuntosGanadosCard';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
@@ -324,12 +324,21 @@ export default function ResultadoTestPage() {
             >
               Hacer otro test
             </button>
-            <button
-              onClick={compartir}
-              style={{ width: '100%', padding: 13, background: 'var(--c-superficie)', border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: TEXT_PRIMARY }}
-            >
-              <Share2 size={15} /> Compartir resultado
-            </button>
+            {/* ⭐ Salir sin tener que subir hasta la X */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={compartir}
+                style={{ flex: 1, padding: 13, background: 'var(--c-superficie)', border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: TEXT_PRIMARY }}
+              >
+                <Share2 size={15} /> Compartir
+              </button>
+              <button
+                onClick={() => router.push('/app/entrenamiento')}
+                style={{ flex: 1, padding: 13, background: 'var(--c-superficie)', border: 'none', boxShadow: SOMBRA, borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: TEXT_PRIMARY }}
+              >
+                <LogOut size={15} /> Salir
+              </button>
+            </div>
           </div>
         )}
       </div>

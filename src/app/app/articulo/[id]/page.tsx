@@ -6,10 +6,10 @@ import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { etiquetaArticulo } from '@/lib/articulos';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, ListMusic, User, Highlighter, ClipboardCheck, Layers, Check, Trash2 } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 
-import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL as BG_APP } from '@/styles/tokens';
+import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA as BG_APP, SOMBRA, VERDE, VERDE_BG, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 
 export default function ArticuloPage() {
   const router = useRouter();
@@ -295,9 +295,9 @@ export default function ArticuloPage() {
               {subrayadoSeleccionado === parte.subrayado.id && (
                 <button
                   onClick={(e) => { e.stopPropagation(); borrarSubrayado(parte.subrayado.id); }}
-                  style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
+                  style={{ position: 'absolute', top: '-32px', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 4, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', zIndex: 20 }}
                 >
-                  🗑 Borrar
+                  <Trash2 size={12} /> Quitar
                 </button>
               )}
             </mark>
@@ -312,21 +312,17 @@ export default function ArticuloPage() {
   if (cargando || isLoading) {
     return (
       <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: '13px', color: TEXT_MUTED }}>Cargando...</span>
+        <span style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</span>
       </div>
     );
   }
 
   if (isError || !articulo) {
     return (
-      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '13px', color: 'var(--hx-dc2626)' }}>No se ha podido cargar el artículo. Inténtalo de nuevo.</span>
-        <button
-          onClick={() => router.back()}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          <ArrowLeft size={14} />
-          Volver
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', gap: 12 }}>
+        <span style={{ fontSize: 13, color: 'var(--hx-dc2626)' }}>No se ha podido cargar el artículo. Inténtalo de nuevo.</span>
+        <button onClick={() => router.back()} style={{ ...botonPildora, color: TEXT_SECONDARY }}>
+          <ArrowLeft size={14} /> Volver
         </button>
       </div>
     );
@@ -341,145 +337,168 @@ export default function ArticuloPage() {
     ?? articulo.tituloRef?.versionLey?.id
     ?? articulo.seccion?.capitulo?.tituloRef?.versionLey?.id;
 
+  const puedeTest = !!oposicionId && !!versionLeyId;
+  const sonando = reproduciendo && !modoContinuo;
+  const sonandoSeguido = reproduciendo && modoContinuo;
+
   return (
-    <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: '90px' }}>
-
-      {/* Header — volver + ley */}
-      <div style={{ background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f1f5f9)', padding: '0 1.25rem', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
-        <button
-          onClick={() => { pararAudio(); router.back(); }}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: TEXT_SECONDARY, background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          <ArrowLeft size={14} />
-          Volver
-        </button>
-        <span style={{ flex: 1, minWidth: 0, margin: '0 10px', textAlign: 'center', fontSize: '12.5px', fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-          {leyNombre}
-        </span>
-        <span style={{ width: '60px' }} />
-      </div>
-
-      {/* Navegación anterior / siguiente */}
-      <div style={{ background: 'var(--c-superficie)', borderBottom: '1px solid var(--hx-f1f5f9)', padding: '0 1rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: '48px', zIndex: 9 }}>
-        <button
-          onClick={irAnterior}
-          disabled={!navArticulos?.anterior}
-          style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: navArticulos?.anterior ? TEXT_SECONDARY : 'var(--hx-d1d5db)', background: 'none', border: 'none', cursor: navArticulos?.anterior ? 'pointer' : 'not-allowed', minWidth: '70px' }}
-        >
-          <ChevronLeft size={14} />
-          {navArticulos?.anterior ? `Art. ${navArticulos.anterior.numero}` : '—'}
-        </button>
-
-        <div style={{ fontSize: '13px', fontWeight: 700, color: TEXT_PRIMARY }}>
-          {etiquetaArticulo(articulo.numero)}
-        </div>
-
-        <button
-          onClick={irSiguiente}
-          disabled={!navArticulos?.siguiente}
-          style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: navArticulos?.siguiente ? TEXT_SECONDARY : 'var(--hx-d1d5db)', background: 'none', border: 'none', cursor: navArticulos?.siguiente ? 'pointer' : 'not-allowed', minWidth: '70px', justifyContent: 'flex-end' }}
-        >
-          {navArticulos?.siguiente ? `Art. ${navArticulos.siguiente.numero}` : '—'}
-          <ChevronRight size={14} />
-        </button>
-      </div>
-
-      {/* Contenido — con soporte de swipe */}
+    <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 96 }}>
       <div
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        style={{ maxWidth: '560px', margin: '0 auto', padding: '1.25rem', position: 'relative' }}
+        style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 14, position: 'relative' }}
       >
-        <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f1f5f9)', borderRadius: '16px', padding: '1.25rem', marginBottom: '12px' }}>
-
-          {/* Barra de audio — arriba del texto para que siempre sea visible sin hacer scroll */}
-          <div style={{ paddingBottom: '12px', marginBottom: '1rem', borderBottom: '1px solid var(--hx-f1f5f9)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button
-                onClick={() => { if (reproduciendo && !modoContinuo) pararAudio(); else { setModoContinuo(false); iniciarAudio(false); } }}
-                style={{ width: '36px', height: '36px', borderRadius: '50%', background: reproduciendo && !modoContinuo ? 'var(--hxbg-111827)' : 'var(--hx-f4f5f7)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-              >
-                {reproduciendo && !modoContinuo ? <Pause size={14} color="var(--c-primario-texto)" /> : <Play size={14} color="var(--hx-374151)" />}
-              </button>
-              <button
-                onClick={() => { if (reproduciendo && modoContinuo) pararAudio(); else { setModoContinuo(true); iniciarAudio(true); } }}
-                style={{ padding: '6px 10px', borderRadius: '8px', background: reproduciendo && modoContinuo ? 'var(--hxbg-111827)' : 'var(--hx-f4f5f7)', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: reproduciendo && modoContinuo ? 'var(--c-primario-texto)' : 'var(--hx-374151)', flexShrink: 0 }}
-              >
-                ⏩ Desde aquí
-              </button>
-              <div style={{ flex: 1 }} />
-              <button onClick={cambiarVoz} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', color: TEXT_SECONDARY }}>
-                {vozGenero === 'mujer' ? '👩' : '👨'}
-              </button>
-              <button onClick={cambiarVelocidad} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '1px solid var(--hx-e5e7eb)', background: 'var(--c-superficie)', cursor: 'pointer', color: TEXT_SECONDARY }}>
-                {velocidad}x
-              </button>
+        {/* Cabecera: volver, ley y número de artículo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 0' }}>
+          <button
+            onClick={() => { pararAudio(); router.back(); }}
+            aria-label="Volver"
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+          >
+            <ArrowLeft size={18} color={TEXT_PRIMARY} />
+          </button>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_MUTED, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>
+              {leyNombre}
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1.2, marginTop: 2 }}>
+              {etiquetaArticulo(articulo.numero)}
             </div>
           </div>
+        </div>
 
-          {/* Texto con subrayados */}
+        {/* Anterior / siguiente */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+          <button
+            onClick={irAnterior}
+            disabled={!navArticulos?.anterior}
+            style={{ ...botonPildora, opacity: navArticulos?.anterior ? 1 : 0.45, cursor: navArticulos?.anterior ? 'pointer' : 'default' }}
+          >
+            <ChevronLeft size={15} />
+            {navArticulos?.anterior ? `Art. ${navArticulos.anterior.numero}` : 'Anterior'}
+          </button>
+          <button
+            onClick={irSiguiente}
+            disabled={!navArticulos?.siguiente}
+            style={{ ...botonPildora, opacity: navArticulos?.siguiente ? 1 : 0.45, cursor: navArticulos?.siguiente ? 'pointer' : 'default' }}
+          >
+            {navArticulos?.siguiente ? `Art. ${navArticulos.siguiente.numero}` : 'Siguiente'}
+            <ChevronRight size={15} />
+          </button>
+        </div>
+
+        {/* Texto del artículo con el audio arriba */}
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 20, boxShadow: SOMBRA, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid var(--c-borde)' }}>
+            <button
+              onClick={() => { if (sonando) pararAudio(); else { setModoContinuo(false); iniciarAudio(false); } }}
+              aria-label={sonando ? 'Pausar' : 'Escuchar el artículo'}
+              style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: sonando ? 'var(--c-primario)' : 'var(--c-azul-bg)' }}
+            >
+              {sonando ? <Pause size={16} color="var(--c-primario-texto)" /> : <Play size={16} color="var(--c-azul)" style={{ marginLeft: 2 }} />}
+            </button>
+            <button
+              onClick={() => { if (sonandoSeguido) pararAudio(); else { setModoContinuo(true); iniciarAudio(true); } }}
+              title="Escuchar este artículo y seguir con los siguientes"
+              style={{ ...chip, background: sonandoSeguido ? 'var(--c-primario)' : 'var(--c-superficie-2)', color: sonandoSeguido ? 'var(--c-primario-texto)' : TEXT_SECONDARY }}
+            >
+              <ListMusic size={13} /> {sonandoSeguido ? 'Parar' : 'Seguidos'}
+            </button>
+            <div style={{ flex: 1 }} />
+            <button onClick={cambiarVoz} aria-label={vozGenero === 'mujer' ? 'Voz de mujer: cambiar' : 'Voz de hombre: cambiar'} style={{ ...chip, background: 'var(--c-superficie-2)', color: TEXT_SECONDARY }}>
+              <User size={13} /> {vozGenero === 'mujer' ? 'Mujer' : 'Hombre'}
+            </button>
+            <button onClick={cambiarVelocidad} aria-label="Cambiar velocidad" style={{ ...chip, background: 'var(--c-superficie-2)', color: TEXT_SECONDARY, minWidth: 44, justifyContent: 'center' }}>
+              {velocidad}x
+            </button>
+          </div>
+
           <div
             data-articulo-contenido
-            style={{ fontSize: '14px', color: 'var(--hx-374151)', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: '1rem', userSelect: 'text', position: 'relative' }}
+            style={{ padding: '16px 18px 18px', fontSize: 15, color: TEXT_PRIMARY, lineHeight: 1.8, whiteSpace: 'pre-wrap', userSelect: 'text', position: 'relative', wordBreak: 'break-word' }}
           >
             {renderTextoConSubrayados(articulo.contenido ?? '')}
           </div>
-
-          {/* Notas personales */}
-          <div style={{ borderTop: '1px solid var(--hx-f1f5f9)', paddingTop: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Mis notas
-              </div>
-              <div style={{ fontSize: '10px', color: notaGuardada ? 'var(--hx-15803d)' : TEXT_MUTED }}>
-                {notaGuardando ? 'Guardando...' : notaGuardada ? '✓ Guardado' : ''}
-              </div>
-            </div>
-            <textarea
-              value={notaTexto}
-              onChange={(e) => handleNotaChange(e.target.value)}
-              placeholder="Escribe aquí tus notas personales sobre este artículo..."
-              style={{ width: '100%', minHeight: '80px', padding: '10px', fontSize: '12px', color: 'var(--hx-374151)', border: '1px solid var(--hx-e5e7eb)', borderRadius: '10px', outline: 'none', resize: 'vertical', lineHeight: 1.6, background: 'var(--hx-fffbeb)', boxSizing: 'border-box', fontFamily: 'inherit' }}
-            />
+          <div style={{ padding: '0 18px 14px', fontSize: 11, color: TEXT_MUTED, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Highlighter size={12} /> Selecciona un texto para subrayarlo · desliza para cambiar de artículo
           </div>
+        </div>
 
-          {/* Test (de esta Ley) y Flashcard (de este artículo) */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+        {/* Practicar */}
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Practica este artículo</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <button
-              onClick={() => {
-                if (!oposicionId || !versionLeyId) return;
-                router.push(`/app/test/${oposicionId}?versionLeyId=${versionLeyId}&n=15`);
-              }}
-              disabled={!oposicionId || !versionLeyId}
-              style={{ flex: 1, padding: '11px', background: 'var(--hx-f4f5f7)', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: (!oposicionId || !versionLeyId) ? 'var(--hx-9ca3af)' : 'var(--hx-374151)', cursor: (!oposicionId || !versionLeyId) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+              onClick={() => { if (puedeTest) router.push(`/app/test/${oposicionId}?versionLeyId=${versionLeyId}&n=15`); }}
+              disabled={!puedeTest}
+              style={{ ...tarjetaAccion, opacity: puedeTest ? 1 : 0.5, cursor: puedeTest ? 'pointer' : 'default' }}
             >
-              🎯 Test de esta ley
+              <span style={{ ...iconoAccion, background: VERDE_BG }}><ClipboardCheck size={19} color={VERDE} /></span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Test</span>
+              <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.35 }}>15 preguntas de esta ley</span>
             </button>
             <button
               onClick={() => router.push(`/app/flashcards/repasar?articuloId=${articulo.id}&leyId=${leyId ?? ''}&oposicionId=${oposicionId ?? ''}`)}
-              style={{ flex: 1, padding: '11px', background: 'var(--hx-f4f5f7)', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: 'var(--hx-374151)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+              style={tarjetaAccion}
             >
-              🃏 Flashcard
+              <span style={{ ...iconoAccion, background: COLOR_FC_BG }}><Layers size={19} color={COLOR_FC} /></span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>Flashcards</span>
+              <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.35 }}>Repasa este artículo</span>
             </button>
           </div>
-
-          {menuSubrayado && (
-            <div style={{ position: 'fixed', left: menuSubrayado.x, top: menuSubrayado.y, transform: 'translateX(-50%)', zIndex: 50 }}>
-              <button
-                onClick={crearSubrayado}
-                style={{ background: 'var(--hx-fef08a)', border: '1px solid #eab308', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}
-              >
-                ✏️ Subrayar
-              </button>
-            </div>
-          )}
         </div>
+
+        {/* Notas personales */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>Mis notas</span>
+            <span style={{ fontSize: 11, color: notaGuardada ? 'var(--c-verde)' : TEXT_MUTED, display: 'flex', alignItems: 'center', gap: 4 }}>
+              {notaGuardando ? 'Guardando…' : notaGuardada ? <><Check size={12} /> Guardado</> : ''}
+            </span>
+          </div>
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 12 }}>
+            <textarea
+              value={notaTexto}
+              onChange={(e) => handleNotaChange(e.target.value)}
+              placeholder="Escribe tus notas sobre este artículo. Se guardan solas."
+              style={{ width: '100%', minHeight: 90, padding: '10px 12px', fontSize: 13, color: TEXT_PRIMARY, border: '1px solid var(--c-borde)', borderRadius: 12, outline: 'none', resize: 'vertical', lineHeight: 1.6, background: 'var(--c-superficie-2)', boxSizing: 'border-box', fontFamily: 'inherit' }}
+            />
+          </div>
+        </div>
+
+        {menuSubrayado && (
+          <div style={{ position: 'fixed', left: menuSubrayado.x, top: menuSubrayado.y, transform: 'translateX(-50%)', zIndex: 50 }}>
+            <button
+              onClick={crearSubrayado}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(15,23,42,0.25)', whiteSpace: 'nowrap' }}
+            >
+              <Highlighter size={14} /> Subrayar
+            </button>
+          </div>
+        )}
       </div>
 
       <FooterNavegacion usuario={usuario} oposicionId={oposicionId ?? undefined} activo="estudiar" />
     </div>
   );
 }
+
+const botonPildora: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 4, padding: '8px 14px', borderRadius: 999, border: 'none',
+  background: 'var(--c-superficie)', boxShadow: SOMBRA, fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, cursor: 'pointer',
+};
+const chip: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 4, padding: '7px 9px', borderRadius: 999, border: 'none',
+  fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
+};
+const tarjetaAccion: React.CSSProperties = {
+  display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, padding: 14, textAlign: 'left',
+  background: 'var(--c-superficie)', border: 'none', borderRadius: 18, boxShadow: SOMBRA, cursor: 'pointer',
+};
+const iconoAccion: React.CSSProperties = {
+  width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6,
+};
+
 // Recorre el contenedor dado (texto ya renderizado en el DOM) y calcula el
 // desplazamiento en caracteres del punto de inicio de `range` respecto al
 // principio de ese contenedor. Al basarse en el propio Range de la selección

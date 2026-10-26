@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, X, Clock, Timer, CheckCircle2, XCircle, MinusCircle, ChevronDown, Lightbulb, Grid3x3, Send, Ban, AlertTriangle, BookX } from 'lucide-react';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+import { BotonSalirTest, ConfirmacionInferior } from '@/components/test/SalirTest';
 
 export const COLOR_SIMULACRO = 'var(--hx-6b5f3e)';
 export const COLOR_SIMULACRO_BG = 'var(--hx-ede9dd)';
@@ -167,6 +168,18 @@ export default function ExamenSimulacro({
 
     return (
       <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 110 }}>
+        {/* Confirmaciones: hoja inferior, visible desde cualquier punto de la pantalla */}
+        <ConfirmacionInferior
+          abierta={!!confirmar}
+          titulo={confirmar === 'entregar' ? '¿Entregar el examen?' : '¿Salir del examen?'}
+          texto={confirmar === 'entregar'
+            ? (sinResponder > 0 ? `Te quedan ${sinResponder} ${sinResponder === 1 ? 'pregunta' : 'preguntas'} sin responder; contarán como en blanco.` : 'Has respondido todas las preguntas.')
+            : 'No se guardará nada de este intento.'}
+          textoConfirmar={confirmar === 'entregar' ? 'Entregar' : 'Salir'}
+          peligro={confirmar !== 'entregar'}
+          onCancelar={() => setConfirmar(null)}
+          onConfirmar={() => (confirmar === 'entregar' ? entregar() : onVolver())}
+        />
         {/* Barra superior fija */}
         <div style={{ position: 'sticky', top: 0, zIndex: 20, background: BG_APP, padding: '12px 1.25rem 10px' }}>
           <div style={{ maxWidth: 560, margin: '0 auto' }}>
@@ -201,34 +214,6 @@ export default function ExamenSimulacro({
         </div>
 
         <div style={{ maxWidth: 560, margin: '0 auto', padding: '6px 1.25rem 0' }}>
-          {/* Confirmaciones (en la propia pantalla, sin ventanas del navegador) */}
-          {confirmar && (
-            <div style={{ background: 'var(--c-superficie)', borderRadius: 16, padding: 14, boxShadow: SOMBRA, marginBottom: 14 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY }}>
-                {confirmar === 'entregar' ? '¿Entregar el examen?' : '¿Salir del examen?'}
-              </div>
-              <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 3, lineHeight: 1.45 }}>
-                {confirmar === 'entregar'
-                  ? (sinResponder > 0 ? `Te quedan ${sinResponder} ${sinResponder === 1 ? 'pregunta' : 'preguntas'} sin responder; contarán como en blanco.` : 'Has respondido todas las preguntas.')
-                  : 'No se guardará nada de este intento.'}
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button onClick={() => setConfirmar(null)} style={{ flex: 1, border: 'none', background: 'var(--hx-f3f4f6)', color: TEXT_SECONDARY, borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                  Seguir
-                </button>
-                {confirmar === 'entregar' ? (
-                  <button onClick={entregar} style={{ flex: 1, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                    Entregar
-                  </button>
-                ) : (
-                  <button onClick={onVolver} style={{ flex: 1, border: 'none', background: '#DC2626', color: 'white', borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                    Salir
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
           {(corrigiendo || errorCorregir) && (
             <div style={{ background: 'var(--c-superficie)', borderRadius: 14, padding: 12, boxShadow: SOMBRA, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: errorCorregir ? 'var(--hx-b91c1c)' : TEXT_SECONDARY }}>
               <span style={{ flex: 1 }}>{errorCorregir ? 'No se ha podido corregir el examen. Comprueba la conexión.' : 'Corrigiendo…'}</span>
@@ -309,6 +294,7 @@ export default function ExamenSimulacro({
         {/* Navegación inferior */}
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, padding: '12px 1.25rem', paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', background: `linear-gradient(to top, ${BG_APP} 70%, transparent)` }}>
           <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', gap: 8 }}>
+            <BotonSalirTest onClick={() => setConfirmar('salir')} alto={46} />
             <button
               onClick={() => setIndice((i) => Math.max(0, i - 1))}
               disabled={indice === 0}
