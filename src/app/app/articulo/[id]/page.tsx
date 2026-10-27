@@ -8,6 +8,7 @@ import { etiquetaArticulo } from '@/lib/articulos';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, ListMusic, User, Highlighter, ClipboardCheck, Layers, Check, Trash2 } from 'lucide-react';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { elegirVoz } from '@/lib/voces';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA as BG_APP, SOMBRA, VERDE, VERDE_BG, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 
@@ -139,14 +140,11 @@ export default function ArticuloPage() {
     }
   }, [autoplay, articulo, voces]);
 
-  const getVoz = (genero: 'mujer' | 'hombre') => {
-    if (voces.length === 0) return null;
-    const keysMujer = ['female', 'mujer', 'monica', 'paulina', 'lucia', 'woman', 'laura', 'maria', 'helena'];
-    const keysHombre = ['male', 'hombre', 'jorge', 'pablo', 'diego', 'carlos', 'juan'];
-    if (genero === 'mujer') {
-      return voces.find((v) => keysMujer.some((k) => v.name.toLowerCase().includes(k))) ?? voces[0];
-    }
-    return voces.find((v) => keysHombre.some((k) => v.name.toLowerCase().includes(k))) ?? voces[voces.length > 1 ? 1 : 0];
+  // ⭐ Voz según el sexo elegido (ver lib/voces.ts): si no hay voz de hombre, la misma más grave
+  const aplicarVoz = (u: SpeechSynthesisUtterance, genero: 'mujer' | 'hombre') => {
+    const { voz, pitch } = elegirVoz(voces, genero);
+    if (voz) { u.voice = voz; u.lang = voz.lang; }
+    u.pitch = pitch;
   };
 
   const iniciarAudio = (continuo = false) => {
@@ -155,8 +153,7 @@ export default function ArticuloPage() {
     const u = new SpeechSynthesisUtterance(`${etiquetaArticulo(articulo.numero)}. ${articulo.contenido}`);
     u.lang = 'es-ES';
     u.rate = velocidad;
-    const voz = getVoz(vozGenero);
-    if (voz) u.voice = voz;
+    aplicarVoz(u, vozGenero);
     u.onstart = () => setReproduciendo(true);
     u.onend = () => {
       setReproduciendo(false);
@@ -190,8 +187,7 @@ export default function ArticuloPage() {
         const u = new SpeechSynthesisUtterance(`${etiquetaArticulo(articulo.numero)}. ${articulo.contenido}`);
         u.lang = 'es-ES';
         u.rate = velocidad;
-        const voz = getVoz(nuevo);
-        if (voz) u.voice = voz;
+        aplicarVoz(u, nuevo);
         u.onstart = () => setReproduciendo(true);
         u.onend = () => {
           setReproduciendo(false);

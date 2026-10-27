@@ -563,7 +563,10 @@ export default function TemaPage() {
                 <Caja padding={14}><div style={{ fontSize: 13, color: 'var(--hx-b91c1c)' }}>No se ha podido cargar la normativa.</div></Caja>
               ) : Object.keys(normativaPorLey).length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {Object.entries(normativaPorLey).map(([leyNombre, data]: [string, any]) => (
+                  {/* ⭐ Primero la ley con más artículos vinculados: la más importante para el tema */}
+                  {Object.entries(normativaPorLey)
+                    .sort(([na, a]: [string, any], [nb, b]: [string, any]) => (b.articulos.length - a.articulos.length) || na.localeCompare(nb, 'es'))
+                    .map(([leyNombre, data]: [string, any]) => (
                     <Caja key={leyNombre}>
                       <FilaLista
                         ultima={false} Icon={Scale} color="var(--hx-7c3aed)" bg="var(--hx-f3f0fc)"

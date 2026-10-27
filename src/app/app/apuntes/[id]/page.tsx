@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ArrowLeft, Play, Pause, BookOpen, Lightbulb, Network, AlertTriangle, HelpCircle, Check, User, Highlighter, Trash2, X, ChevronRight, CheckCircle2, XCircle, FileText, Minus, Plus } from 'lucide-react';
 import { BotonEnPapel } from '@/components/temario/TemarioPapel';
+import { elegirVoz } from '@/lib/voces';
 import { FooterNavegacion } from '@/app/app/dashboard/page';
 import { renderReferencias, renderReferenciasTitulo, construirMapaSiglas, construirMapaNombres } from '@/lib/referenciasArticulos';
 import { BG_TEMA as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA } from '@/styles/tokens';
@@ -301,14 +302,11 @@ const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leye
     return () => { window.speechSynthesis.cancel(); };
   }, []);
 
-  const getVoz = (genero: 'mujer' | 'hombre') => {
-    if (voces.length === 0) return null;
-    const keysMujer = ['female', 'mujer', 'monica', 'paulina', 'lucia', 'woman', 'laura', 'maria', 'helena'];
-    const keysHombre = ['male', 'hombre', 'jorge', 'pablo', 'diego', 'carlos', 'juan'];
-    if (genero === 'mujer') {
-      return voces.find((v) => keysMujer.some((k) => v.name.toLowerCase().includes(k))) ?? voces[0];
-    }
-    return voces.find((v) => keysHombre.some((k) => v.name.toLowerCase().includes(k))) ?? voces[voces.length > 1 ? 1 : 0];
+  // ⭐ Voz según el sexo elegido (ver lib/voces.ts): si no hay voz de hombre, la misma más grave
+  const aplicarVoz = (u: SpeechSynthesisUtterance, genero: 'mujer' | 'hombre') => {
+    const { voz, pitch } = elegirVoz(voces, genero);
+    if (voz) { u.voice = voz; u.lang = voz.lang; }
+    u.pitch = pitch;
   };
 
   // ⭐ Audio por frases: antes se mandaba el apunte entero en una sola locución y Chrome en
@@ -338,8 +336,7 @@ const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leye
       const u = new SpeechSynthesisUtterance(f.texto);
       u.lang = 'es-ES';
       u.rate = rate;
-      const voz = getVoz(genero);
-      if (voz) u.voice = voz;
+      aplicarVoz(u, genero);
       u.onboundary = (e) => {
         if (sesion === sesionAudio.current) setAudioProgress(Math.round(((f.inicio + e.charIndex) / total) * 100));
       };
@@ -380,9 +377,20 @@ const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leye
 
 const tiempoInicioLectura = useRef(Date.now());
 
+// ⭐ La cabecera se recoge al bajar (más sitio para leer) y vuelve al subir
+const [cabeceraRecogida, setCabeceraRecogida] = useState(false);
+const ultimoScroll = useRef(0);
+
 const updateProgreso = () => {
   const el = contentRef.current;
   if (!el) return;
+
+  const y = el.scrollTop;
+  const delta = y - ultimoScroll.current;
+  if (y < 40) setCabeceraRecogida(false);
+  else if (delta > 8) setCabeceraRecogida(true);
+  else if (delta < -8) setCabeceraRecogida(false);
+  if (Math.abs(delta) > 8 || y < 40) ultimoScroll.current = y;
   
   const pctScroll = Math.round((el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100) || 0;
   const pctScrollLimitado = Math.min(100, pctScroll);
@@ -454,7 +462,7 @@ const updateProgreso = () => {
               <div style={{ fontSize: 11, fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 {numeroTema ? `Tema ${numeroTema} · Apuntes OPLORA` : 'Apuntes OPLORA'}
               </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: cabeceraRecogida ? 1 : 2, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }}>
                 {apunte.tema?.titulo || apunte.titulo}
               </div>
             </div>
@@ -463,6 +471,13 @@ const updateProgreso = () => {
             <BotonEnPapel oposicionId={oposicionId} />
           </div>
 
+          {/* Filtros, letra y progreso: se recogen al bajar y vuelven al subir */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 10,
+            maxHeight: cabeceraRecogida ? 0 : 120, minHeight: 0, flexShrink: 0, opacity: cabeceraRecogida ? 0 : 1,
+            marginTop: cabeceraRecogida ? -10 : 0, overflow: 'hidden',
+            transition: 'max-height .25s ease, opacity .2s ease, margin-top .25s ease',
+          }} aria-hidden={cabeceraRecogida}>
           {/* ⭐ Filtros: cada chip muestra u oculta un tipo de caja. Desmarcándolos todos quedan
               solo los apuntes (y los ejemplos). */}
           {esFormatoNuevo && (
@@ -509,6 +524,14 @@ const updateProgreso = () => {
             </div>
             <span style={{ fontSize: 12, fontWeight: 600, color: TEXT_MUTED, flexShrink: 0 }}>{progreso}% leído</span>
           </div>
+          </div>
+
+          {/* Recogida: solo una línea fina con el progreso */}
+          {cabeceraRecogida && (
+            <div style={{ height: 3, background: 'var(--c-pista)', borderRadius: 999, overflow: 'hidden', marginTop: -2 }}>
+              <div style={{ width: `${progreso}%`, height: '100%', background: 'var(--c-azul)' }} />
+            </div>
+          )}
         </div>
       </div>
 

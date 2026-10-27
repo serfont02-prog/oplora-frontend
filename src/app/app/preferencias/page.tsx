@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Shuffle, Bell, Swords, CalendarClock, Newspaper, Megaphone, Scale } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Shuffle, Bell, Swords, CalendarCheck, Newspaper, Megaphone, Scale } from 'lucide-react';
 import Interruptor from '@/components/ui/Interruptor';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -22,7 +22,7 @@ type Categoria = 'retos' | 'repasos' | 'noticias' | 'convocatoria' | 'normativa'
 
 const CATEGORIAS: { clave: Categoria; titulo: string; sub: string; icono: any; color: string; fondo: string }[] = [
   { clave: 'retos', titulo: 'Retos y duelos', sub: 'Cuando te retan y cuando termina un duelo', icono: Swords, color: COLOR_RETOS, fondo: COLOR_RETOS_BG },
-  { clave: 'repasos', titulo: 'Recordatorios de repaso', sub: 'Temas y flashcards que te toca repasar hoy', icono: CalendarClock, color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)' },
+  { clave: 'repasos', titulo: 'Recordatorios de repaso', sub: 'Temas y flashcards que te toca repasar hoy', icono: CalendarCheck, color: 'var(--c-azul)', fondo: 'var(--c-azul-bg)' },
   { clave: 'noticias', titulo: 'Noticias', sub: 'Nuevas noticias de tu oposición', icono: Newspaper, color: 'var(--hx-1f7cff)', fondo: 'var(--hx-eaf0ff)' },
   { clave: 'convocatoria', titulo: 'Tu convocatoria', sub: 'Nuevas convocatorias, documentos y listas', icono: Megaphone, color: 'var(--hx-4f46e5)', fondo: 'var(--hx-e0e7ff)' },
   { clave: 'normativa', titulo: 'Cambios en la normativa', sub: 'Cuando cambia una ley de tu temario', icono: Scale, color: 'var(--hx-6b5f3e)', fondo: 'var(--hx-ede9dd)' },

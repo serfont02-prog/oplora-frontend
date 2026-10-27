@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCheck, Bell, BellOff, CircleCheck, CircleX, FilePenLine, FileText, Megaphone, AlarmClock,
-  Zap, Swords, Flag, Award, Flame, Newspaper, LifeBuoy, Trophy, ChevronRight, RefreshCw,
+  Zap, Swords, Flag, Award, Flame, Newspaper, LifeBuoy, Trophy, ChevronRight, RefreshCw, CalendarCheck,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -54,6 +54,13 @@ const TIPO: Record<string, { icono: any; color: string; fondo: string }> = {
   respuesta_soporte: { icono: LifeBuoy, color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)' },
   liga: { icono: Trophy, ...ORO },
 };
+// ⭐ Los recordatorios de repaso (temas y flashcards) llegan con el tipo "reto_diario", igual
+// que el reto diario. Se distinguen por el título o el destino y llevan el icono de repaso
+// del resto de la app (calendario con check, en azul de Estudiar), no el rayo de los retos.
+const REPASO = { icono: CalendarCheck, color: 'var(--c-azul)', fondo: 'var(--c-azul-bg)' };
+const esRepaso = (n: Notificacion) =>
+  n.tipo === 'reto_diario' && (/repas/i.test(`${n.titulo} ${n.mensaje}`) || /^\/app\/(tema|flashcards)/.test(n.urlAccion ?? ''));
+
 const TIPO_DEFECTO = { icono: Bell, color: 'var(--hx-64748b)', fondo: 'var(--hx-f1f5f9)' };
 
 const EMOJIS = new RegExp('[\\p{Extended_Pictographic}\\u{1F1E6}-\\u{1F1FF}\\uFE0F\\u200D]', 'gu');
@@ -219,7 +226,7 @@ export default function AlertasPage() {
               </div>
               <div style={{ background: 'var(--c-superficie)', borderRadius: 24, boxShadow: SOMBRA, overflow: 'hidden' }}>
                 {items.map((n, i) => {
-                  const c = TIPO[n.tipo] ?? TIPO_DEFECTO;
+                  const c = esRepaso(n) ? REPASO : (TIPO[n.tipo] ?? TIPO_DEFECTO);
                   const Icono = c.icono;
                   const navegable = !!n.urlAccion?.trim().startsWith('/');
                   return (
