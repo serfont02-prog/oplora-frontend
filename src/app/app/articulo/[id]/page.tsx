@@ -11,6 +11,7 @@ import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { elegirVoz } from '@/lib/voces';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA as BG_APP, SOMBRA, VERDE, VERDE_BG, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
+import BotonSubrayar, { esPantallaTactil } from '@/components/estudio/BotonSubrayar';
 
 export default function ArticuloPage() {
   const router = useRouter();
@@ -82,7 +83,9 @@ export default function ArticuloPage() {
   }, [nota]);
 
   useEffect(() => {
-    const handleMouseUp = () => {
+    const handleMouseUp = (e?: Event) => {
+      // Pulsar el propio botón de subrayar no debe recalcular (ni borrar) la selección
+      if ((e?.target as Element | null)?.closest?.('[data-menu-subrayado]')) return;
       requestAnimationFrame(() => {
         const seleccion = window.getSelection();
         const texto = seleccion?.toString().trim() ?? '';
@@ -115,11 +118,22 @@ export default function ArticuloPage() {
         } catch {}
       });
     };
+    // ⭐ En el móvil la selección se ajusta con las asas y eso no siempre lanza touchend:
+    // se escucha también el cambio de selección (con una pequeña espera).
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    const alCambiarSeleccion = () => {
+      if (!esPantallaTactil()) return;
+      clearTimeout(espera);
+      espera = setTimeout(() => handleMouseUp(), 300);
+    };
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('touchend', handleMouseUp);
+    document.addEventListener('selectionchange', alCambiarSeleccion);
     return () => {
+      clearTimeout(espera);
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('touchend', handleMouseUp);
+      document.removeEventListener('selectionchange', alCambiarSeleccion);
     };
   }, []);
 
@@ -462,16 +476,11 @@ export default function ArticuloPage() {
           </div>
         </div>
 
-        {menuSubrayado && (
-          <div style={{ position: 'fixed', left: menuSubrayado.x, top: menuSubrayado.y, transform: 'translateX(-50%)', zIndex: 50 }}>
-            <button
-              onClick={crearSubrayado}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(15,23,42,0.25)', whiteSpace: 'nowrap' }}
-            >
-              <Highlighter size={14} /> Subrayar
-            </button>
-          </div>
-        )}
+        <BotonSubrayar
+          menu={menuSubrayado}
+          onSubrayar={crearSubrayado}
+          onCancelar={() => { setMenuSubrayado(null); window.getSelection()?.removeAllRanges(); }}
+        />
       </div>
 
       <FooterNavegacion usuario={usuario} oposicionId={oposicionId ?? undefined} activo="estudiar" />
