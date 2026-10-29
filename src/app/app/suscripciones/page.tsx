@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
-import {
-  ClipboardDocumentCheckIcon,
-} from '@heroicons/react/24/outline';
-
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import {
   ArrowLeft,
   Check,
@@ -19,6 +15,7 @@ import {
   Crown,
 } from 'lucide-react';
 import { BG_NEUTRAL } from '@/styles/tokens';
+import { ConfirmacionInferior } from '@/components/test/SalirTest';
 
 /* =========================================================
    SUSCRIPCIONES
@@ -98,6 +95,8 @@ export default function SuscripcionesPage() {
   const { usuario, cargando } = useAuth();
 
   const [suscripcionSeleccionada, setSuscripcionSeleccionada] = useState<string | null>(null);
+  // ⭐ Los pagos aún no están: antes salía un alert del navegador con "Stripe pendiente".
+  const [planPendiente, setPlanPendiente] = useState<string | null>(null);
 
   useEffect(() => {
     if (!cargando && !usuario) {
@@ -383,11 +382,7 @@ export default function SuscripcionesPage() {
                 onClick={(e) => {
                   e.stopPropagation();
 
-                  if (!esActual) {
-                    alert(
-                      `Stripe pendiente → suscripción seleccionada: ${suscripcion.nombre}`
-                    );
-                  }
+                  if (!esActual) setPlanPendiente(suscripcion.nombre);
                 }}
                 style={{
                   marginTop: 22,
@@ -491,6 +486,17 @@ export default function SuscripcionesPage() {
 
       {/* ⭐ Barra inferior común (antes enlazaba a /app, /app/estudiar y /app/tests, que no existen) */}
       <FooterNavegacion usuario={usuario} oposicionId={usuario?.oposicionActiva?.id} />
+
+      <ConfirmacionInferior
+        abierta={!!planPendiente}
+        titulo={`Plan ${planPendiente ?? ''}: muy pronto`}
+        texto="Estamos terminando de preparar los pagos y muy pronto podrás cambiar de plan desde aquí. Si quieres acceso anticipado, escríbenos desde Soporte."
+        textoCancelar="Entendido"
+        textoConfirmar="Escribir a Soporte"
+        peligro={false}
+        onCancelar={() => setPlanPendiente(null)}
+        onConfirmar={() => router.push('/app/soporte')}
+      />
     </div>
   );
 }

@@ -274,9 +274,12 @@ function OnboardingOposicionPage() {
           {pasoActual === 'resultado' && filtroCompleto && base.length === 0 && (
             <div style={{ textAlign: 'center', padding: '8px 0' }}>
               <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 14, lineHeight: 1.5 }}>
-                Todavía no tenemos oposiciones con estos criterios. Prueba con otra combinación o pídenos la tuya desde Soporte.
+                Todavía no tenemos oposiciones con estos criterios. Prueba con otra combinación o pídenos la tuya.
               </div>
-              <BotonAuth type="button" variante="secundario" onClick={() => limpiar('tipo')}>Empezar de nuevo</BotonAuth>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <BotonAuth type="button" onClick={() => router.push('/app/soporte')}>Pedir mi oposición</BotonAuth>
+                <BotonAuth type="button" variante="secundario" onClick={() => limpiar('tipo')}>Empezar de nuevo</BotonAuth>
+              </div>
             </div>
           )}
         </>

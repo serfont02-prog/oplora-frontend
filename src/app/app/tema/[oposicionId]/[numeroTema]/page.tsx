@@ -13,7 +13,7 @@ import {
   NotebookPen, BarChart3, Library, ClipboardCheck, Layers, CheckCircle2, Scale, X, Target, Flame, Clock,
 } from 'lucide-react';
 import ModalHacerTest from '@/components/entrenamiento/ModalHacerTest';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
 import { TarjetaTemarioPapel } from '@/components/temario/TemarioPapel';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';

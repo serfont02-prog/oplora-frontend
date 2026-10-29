@@ -975,6 +975,13 @@ const editarArticulo = useMutation({
                       <div style={{ fontSize: '11px', color: '#6b7280' }}>Errores</div>
                     </div>
                   </div>
+          {/* ⭐ Preguntas que ya estaban en el banco: ahora se vinculan en vez de rechazarse */}
+          {(resultadoPreguntas.vinculadas > 0 || resultadoPreguntas.yaEstaban > 0) && (
+            <div style={{ fontSize: '12px', color: '#1d4ed8', background: '#eff6ff', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px' }}>
+              {resultadoPreguntas.vinculadas > 0 && <>{resultadoPreguntas.vinculadas} ya existían en el banco y se han vinculado. </>}
+              {resultadoPreguntas.yaEstaban > 0 && <>{resultadoPreguntas.yaEstaban} ya existían y ya estaban vinculadas.</>}
+            </div>
+          )}
                   {resultadoPreguntas.errores?.length > 0 && (
                     <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '10px 12px' }}>
                       <div style={{ fontSize: '11px', fontWeight: 600, color: '#dc2626', marginBottom: '6px' }}>Errores:</div>

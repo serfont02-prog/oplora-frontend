@@ -5,7 +5,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { Landmark, Shuffle, ChevronRight } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import CabeceraPractica, { SOMBRA } from '@/components/entrenamiento/CabeceraPractica';
 import { COLOR_SIMULACRO, COLOR_SIMULACRO_BG } from '@/components/entrenamiento/ExamenSimulacro';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_MUTED, TEXT_SECONDARY } from '@/styles/tokens';

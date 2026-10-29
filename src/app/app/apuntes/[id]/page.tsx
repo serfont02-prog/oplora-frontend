@@ -8,9 +8,10 @@ import { api } from '@/lib/api';
 import { ArrowLeft, Play, Pause, BookOpen, Lightbulb, Network, AlertTriangle, HelpCircle, Check, User, Highlighter, Trash2, X, ChevronRight, CheckCircle2, XCircle, FileText, Minus, Plus } from 'lucide-react';
 import { BotonEnPapel } from '@/components/temario/TemarioPapel';
 import { elegirVoz } from '@/lib/voces';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { renderReferencias, renderReferenciasTitulo, construirMapaSiglas, construirMapaNombres } from '@/lib/referenciasArticulos';
 import { BG_TEMA as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 // ⭐ Colores de las cajas destacadas (compartidos por las cajas y por la barra de filtros).
 // "Idea" y "Regla de examen" se fusionan en una sola categoría visual ("Idea clave"): ambas
@@ -142,7 +143,7 @@ export default function ApunteOploraPage() {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
 
-  const { data: apunte, isLoading } = useQuery({
+  const { data: apunte, isLoading, isError, refetch } = useQuery({
     queryKey: ['apunte-oplora', id],
     queryFn: async () => {
       const res = await api.get(`/apuntes-oplora/${id}`);
@@ -424,6 +425,8 @@ const updateProgreso = () => {
       </div>
     );
   }
+
+  if (isError && !apunte) return <ErrorCarga pantalla fondo={BG_APP} onReintentar={() => refetch()} />;
 
   if (!apunte) {
     return (

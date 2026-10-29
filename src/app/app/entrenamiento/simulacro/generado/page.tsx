@@ -7,10 +7,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ChevronRight, Shuffle } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import CabeceraPractica, { SOMBRA } from '@/components/entrenamiento/CabeceraPractica';
 import { COLOR_SIMULACRO, COLOR_SIMULACRO_BG } from '@/components/entrenamiento/ExamenSimulacro';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 const TIPO_LABEL: Record<string, string> = { test: 'Test', desarrollo: 'Desarrollo', oral: 'Oral', practico: 'Práctico', mixto: 'Mixto' };
 
@@ -19,7 +20,7 @@ export default function SimulacroGeneradoSelectorPage() {
   const { usuario } = useAuth();
   const oposicionId = usuario?.oposicionActiva?.id;
 
-  const { data: convocatoria, isLoading } = useQuery({
+  const { data: convocatoria, isLoading, isError, refetch } = useQuery({
     queryKey: ['convocatoria-simulacro-generado', oposicionId],
     queryFn: async () => (await api.get(`/temas/examenes/mi-convocatoria/${oposicionId}`)).data.convocatoria,
     enabled: !!oposicionId,
@@ -35,9 +36,10 @@ export default function SimulacroGeneradoSelectorPage() {
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <CabeceraPractica eyebrow="Simulacro OPLORA" titulo="¿Qué ejercicio quieres simular?" onVolver={() => router.push('/app/entrenamiento/simulacro')} />
 
-        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
+        {isError && <ErrorCarga onReintentar={() => refetch()} />}
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden', display: isError ? 'none' : undefined }}>
           {isLoading && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
-          {!isLoading && ejercicios.length === 0 && (
+          {!isLoading && !isError && ejercicios.length === 0 && (
             <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
               Tu convocatoria todavía no tiene ejercicios tipo test configurados.
             </div>

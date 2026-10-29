@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { etiquetaArticulo } from '@/lib/articulos';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, ListMusic, User, Highlighter, ClipboardCheck, Layers, Check, Trash2 } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { elegirVoz } from '@/lib/voces';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA as BG_APP, SOMBRA, VERDE, VERDE_BG, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';

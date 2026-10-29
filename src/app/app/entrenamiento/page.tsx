@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import OnboardingEntrenamiento from '@/components/entrenamiento/OnboardingEntrenamiento';
 import EntrenamientoHub from '@/components/entrenamiento/EntrenamientoHub';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 
 export default function EntrenamientoPage() {
   const router = useRouter();

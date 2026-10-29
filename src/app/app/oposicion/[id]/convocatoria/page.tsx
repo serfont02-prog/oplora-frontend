@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, ExternalLink, FileText, ChevronRight, CalendarClock, X } from 'lucide-react';
 import { useState } from 'react';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 const TEXT_PRIMARY = 'var(--hx-111827)';
 const TEXT_SECONDARY = 'var(--hx-6b7280)';
@@ -42,7 +43,7 @@ const [modalTemas, setModalTemas] = useState(false);
 
 const convocatoriaActivaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
 
-const { data: convocatorias = [], isLoading } = useQuery({
+const { data: convocatorias = [], isLoading, isError, refetch } = useQuery({
   queryKey: ['convocatorias-ficha', oposicionId],
   queryFn: async () => {
     const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
@@ -79,6 +80,8 @@ const volver = () => router.push(convocatoriaIdParam ? `/app/oposicion/${oposici
 if (isLoading) {
   return <div style={{ minHeight: '100vh', background: BG_APP, display: 'grid', placeItems: 'center', fontSize: 13, color: TEXT_MUTED }}>Cargando convocatoria…</div>;
 }
+
+if (isError && !convocatorias.length) return <ErrorCarga pantalla fondo={BG_APP} onReintentar={() => refetch()} />;
 
 if (!convocatoria) {
   return (

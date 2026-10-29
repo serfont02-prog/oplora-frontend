@@ -6,8 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { BG_NEUTRAL } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 const tipoDocLabel: Record<string, string> = {
   resolucion_convocatoria: 'Convocatoria', // ⭐ antes 'Resolución'
@@ -48,7 +49,7 @@ export default function OposicionDocumentosPage() {
     if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
 
-  const { data: oposicion, isLoading } = useQuery({
+  const { data: oposicion, isLoading, isError, refetch } = useQuery({
     queryKey: ['oposicion-usuario', id],
     queryFn: async () => {
       const res = await api.get(`/oposiciones/${id}`);
@@ -87,6 +88,7 @@ export default function OposicionDocumentosPage() {
     </div>
   );
 
+  if (isError && !oposicion) return <ErrorCarga pantalla onReintentar={() => refetch()} />;
   if (!oposicion) return null;
 
   return (

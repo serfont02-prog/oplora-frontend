@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, ChevronRight, ChevronDown, Layers, CheckCircle2 } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_FC_BG, BG_FLASHCARDS } from '@/styles/tokens';

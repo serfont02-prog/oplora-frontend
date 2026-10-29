@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 const TEXT_PRIMARY = 'var(--hx-111827)';
 const TEXT_SECONDARY = 'var(--hx-6b7280)';
@@ -18,7 +19,7 @@ export default function CambiarConvocatoriaPage() {
   const { actualizarUsuario } = useAuth();
   const oposicionId = params.id as string;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['convocatorias-disponibles', oposicionId],
     queryFn: async () => {
       const res = await api.get(`/usuarios/convocatorias-disponibles/${oposicionId}`);
@@ -39,6 +40,7 @@ export default function CambiarConvocatoriaPage() {
   });
 
   if (isLoading) return null;
+  if (isError && !data) return <ErrorCarga pantalla fondo={BG_APP} onReintentar={() => refetch()} />;
 
   return (
     <div style={{ minHeight: '100vh', background: BG_APP, paddingBottom: 40 }}>

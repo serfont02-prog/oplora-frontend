@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { useMiLiga } from '@/components/liga/TarjetaLiga';
 import { COLOR_LIGA, mensajeError } from '@/components/liga/ligaUtils';
 import { Caja, ClasificacionMensual, ClasificacionGeneral, ClasificacionJornada } from '@/components/liga/Clasificaciones';

@@ -12,6 +12,7 @@ import { PuntosGanadosCard, GamificacionInfo } from '@/components/gamificacion/P
 type EstadoRepaso = 'pregunta' | 'respuesta' | 'fin';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 const BG_APP = 'var(--c-bg-flashcards)';
 
@@ -57,7 +58,7 @@ export default function RepasarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { data: flashcards = [], isLoading } = useQuery({
+  const { data: flashcards = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['fc-repaso', oposicionId, temaId, articuloId, numFlashcards],
     queryFn: async () => {
       if (temaId) {
@@ -147,6 +148,8 @@ export default function RepasarPage() {
   };
 
   if (cargando || isLoading) return null;
+
+  if (isError && flashcards.length === 0) return <ErrorCarga pantalla onReintentar={() => refetch()} />;
 
   if (flashcards.length === 0) {
     return (

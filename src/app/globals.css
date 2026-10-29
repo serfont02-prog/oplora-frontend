@@ -543,3 +543,11 @@ html[data-tema='oscuro'] {
 }
 
 
+
+/* ⭐ Zonas táctiles: en pantallas táctiles, los botones de solo icono (los que llevan aria-label,
+   como volver, cerrar, borrar búsqueda…) reciben 6 px más de zona pulsable alrededor sin cambiar
+   su tamaño visible. Así llegan a ~44-48 px, lo recomendado para el dedo. */
+@media (pointer: coarse) {
+  button[aria-label] { position: relative; }
+  button[aria-label]::after { content: ''; position: absolute; inset: -6px; }
+}

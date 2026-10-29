@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { etiquetaArticulo } from '@/lib/articulos';
 import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Search, BookOpen, ClipboardCheck, CalendarClock } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { BG_TEMA as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA, VERDE, VERDE_BG } from '@/styles/tokens';
 
 function LeyPage() {

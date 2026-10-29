@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Plus, ChevronRight, ChevronLeft, ChevronDown, Brain, Lock, Swords, Shuffle, Loader2, ClipboardCheck, Layers, Landmark, Scale, BookOpen, Clock, Handshake, Crown, X, AlertTriangle, Check, UserX, Ban, RotateCcw, Hourglass } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { IconoModalidad } from '@/components/psicotecnicos/iconos';
 import { ModalInvitar } from '@/components/invitar/FormInvitar';
@@ -1597,20 +1597,23 @@ export function DueloReto({ reto, usuarioActual, mostrarBarraTiempo = false, tip
 }
 
 function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
-  const [expandido, setExpandido] = useState(false);
-  const aMostrar = expandido ? retosCompletados : retosCompletados.slice(0, 3);
+  // ⭐ Paginado: se ven 3 y "Ver más" va añadiendo de 20 en 20 (antes se pintaban todos de golpe).
+  const [visibles, setVisibles] = useState(3);
+  const expandido = visibles > 3;
+  const aMostrar = retosCompletados.slice(0, visibles);
+  const quedan = retosCompletados.length - aMostrar.length;
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, paddingLeft: 4 }}>Últimos resultados</span>
-        {retosCompletados.length > 3 && (
+        {expandido && (
           <button
-            onClick={() => setExpandido(!expandido)}
-            style={{ fontSize: 12, color: COLOR_RETOS, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}
+            onClick={() => setVisibles(3)}
+            style={{ fontSize: 12, color: COLOR_RETOS, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, minHeight: 32 }}
           >
-            {expandido ? 'Ver menos' : `Ver los ${retosCompletados.length}`}
-            <ChevronDown size={14} style={{ transform: expandido ? 'rotate(180deg)' : 'none' }} />
+            Ver menos
+            <ChevronDown size={14} style={{ transform: 'rotate(180deg)' }} />
           </button>
         )}
       </div>
@@ -1653,6 +1656,15 @@ function WidgetHistorialRetos({ retosCompletados, usuario, onVer }: any) {
             </div>
           );
         })}
+        {quedan > 0 && (
+          <button
+            onClick={() => setVisibles((v) => (v === 3 ? 20 : v + 20))}
+            style={{ width: '100%', minHeight: 46, border: 'none', borderTop: '1px solid var(--hx-f5eeea)', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLOR_RETOS, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+          >
+            Ver más ({quedan})
+            <ChevronDown size={14} />
+          </button>
+        )}
       </div>
     </div>
   );

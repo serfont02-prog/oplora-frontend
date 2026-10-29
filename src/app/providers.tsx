@@ -1,6 +1,7 @@
 'use client';
 
-import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AvisoConexion, { EVENTO_ERROR_CARGA } from '@/components/ui/AvisoConexion';
 import { useState } from 'react';
 import { AuthProvider } from '@/lib/auth';
 import { ProveedorTema } from '@/lib/tema';
@@ -10,6 +11,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
     defaultOptions: {
       queries: { staleTime: 30000, retry: 1 },
     },
+    // ⭐ En la app: si una carga falla por la red o porque el servidor no responde (5xx) y no hay
+    // datos anteriores que enseñar, se muestra el aviso con "Reintentar" (AvisoConexion).
+    queryCache: new QueryCache({
+      onError: (error: any, query) => {
+        if (typeof window === 'undefined' || !window.location.pathname.startsWith('/app')) return;
+        if (query.state.data !== undefined) return;
+        const status = error?.response?.status;
+        if (status && status < 500) return; // 4xx: lo gestiona cada pantalla (límites, permisos…)
+        window.dispatchEvent(new Event(EVENTO_ERROR_CARGA));
+      },
+    }),
     // ⭐ En el panel de admin muchas acciones fallaban en silencio. Si una acción del admin
     // falla y su pantalla no gestiona el error, se muestra un aviso con el motivo.
     mutationCache: new MutationCache({
@@ -27,6 +39,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ProveedorTema>
         <AuthProvider>
           {children}
+          <AvisoConexion />
         </AuthProvider>
       </ProveedorTema>
     </QueryClientProvider>

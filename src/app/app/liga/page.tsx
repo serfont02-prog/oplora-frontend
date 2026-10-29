@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ChevronRight, Trophy, ArrowUp, BarChart3, Bell } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { useMiLiga } from '@/components/liga/TarjetaLiga';
 import {
   COLOR_LIGA, BG_LIGA,

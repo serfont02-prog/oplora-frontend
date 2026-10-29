@@ -11,10 +11,11 @@ import { useAuth } from '@/lib/auth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Search, CheckCircle2, ChevronRight, BookOpen, FileText, Upload, ListOrdered, Library, Scale, X, PlayCircle } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { TarjetaTemarioPapel } from '@/components/temario/TemarioPapel';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 type Tab = 'programa' | 'material';
 
@@ -139,7 +140,7 @@ export default function TemarioOposicionPage() {
     enabled: !!usuario,
   });
 
-  const { data: convocatorias = [], isPending: cargandoConvocatorias } = useQuery({
+  const { data: convocatorias = [], isPending: cargandoConvocatorias, isError: errorConvocatorias, refetch: reintentarConvocatorias } = useQuery({
     queryKey: ['convocatorias-temario', oposicionId],
     queryFn: async () => (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data,
     enabled: !!usuario,
@@ -150,7 +151,7 @@ export default function TemarioOposicionPage() {
     [convocatorias]
   );
 
-  const { data: temas = [], isPending: temasPendientes } = useQuery({
+  const { data: temas = [], isPending: temasPendientes, isError: errorTemas, refetch: reintentarTemas } = useQuery({
     queryKey: ['temas-temario', convocatoria?.id],
     queryFn: async () => (await api.get(`/temas/convocatoria/${convocatoria.id}`)).data,
     enabled: !!convocatoria?.id,
@@ -159,7 +160,9 @@ export default function TemarioOposicionPage() {
   // ⭐ Cargando = aún no sabemos la convocatoria, o la sabemos y sus temas no han llegado.
   // (Antes solo se miraba la consulta de temas, que estaba desactivada mientras cargaba la
   // convocatoria, y durante esos segundos se veía "Temario no disponible".)
-  const cargandoTemario = !usuario || cargandoConvocatorias || (!!convocatoria?.id && temasPendientes);
+  // ⭐ Si falla la carga se dice (antes salía "Temario en preparación" como si no hubiera temas)
+  const errorTemario = (errorConvocatorias && !convocatorias.length) || (errorTemas && !temas.length);
+  const cargandoTemario = !errorTemario && (!usuario || cargandoConvocatorias || (!!convocatoria?.id && temasPendientes));
 
   // Progreso detallado de todos los temas en una sola llamada
   const { data: progresoTemas = [] } = useQuery({
@@ -322,7 +325,9 @@ export default function TemarioOposicionPage() {
                 </div>
               )}
 
-              {cargandoTemario ? (
+              {errorTemario ? (
+                <ErrorCarga onReintentar={() => { if (errorConvocatorias) reintentarConvocatorias(); else reintentarTemas(); }} />
+              ) : cargandoTemario ? (
                 <CargandoTemas />
               ) : temas.length === 0 ? (
                 <Vacio

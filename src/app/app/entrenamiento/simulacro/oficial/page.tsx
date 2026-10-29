@@ -7,17 +7,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ChevronRight, FileText } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import CabeceraPractica, { SOMBRA } from '@/components/entrenamiento/CabeceraPractica';
 import { COLOR_SIMULACRO, COLOR_SIMULACRO_BG } from '@/components/entrenamiento/ExamenSimulacro';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 export default function SimulacroOficialPage() {
   const router = useRouter();
   const { usuario } = useAuth();
   const oposicionId = usuario?.oposicionActiva?.id;
 
-  const { data: examenes = [], isLoading } = useQuery({
+  const { data: examenes = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['examenes-oficiales-todos', oposicionId],
     queryFn: async () => (await api.get(`/temas/examenes/oposicion/${oposicionId}`)).data,
     enabled: !!oposicionId,
@@ -33,7 +34,8 @@ export default function SimulacroOficialPage() {
         <CabeceraPractica eyebrow="Simulacro oficial" titulo="Elige un examen real" onVolver={() => router.push('/app/entrenamiento/simulacro')} />
 
         {isLoading && <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
-        {!isLoading && examenes.length === 0 && (
+        {isError && <ErrorCarga onReintentar={() => refetch()} />}
+        {!isLoading && !isError && examenes.length === 0 && (
           <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
             Todavía no hay exámenes oficiales de tu oposición. Mientras tanto puedes hacer un simulacro OPLORA.
           </div>

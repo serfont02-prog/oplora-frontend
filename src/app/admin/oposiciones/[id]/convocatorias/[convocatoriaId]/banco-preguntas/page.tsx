@@ -1038,6 +1038,13 @@ function ImportarPreguntasJson({
               <div style={{ fontSize: '11px', color: '#6b7280' }}>Errores</div>
             </div>
           </div>
+          {/* ⭐ Preguntas que ya estaban en el banco: ahora se vinculan en vez de rechazarse */}
+          {(resultado.vinculadas > 0 || resultado.yaEstaban > 0) && (
+            <div style={{ fontSize: '12px', color: '#1d4ed8', background: '#eff6ff', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px' }}>
+              {resultado.vinculadas > 0 && <>{resultado.vinculadas} ya existían en el banco y se han vinculado. </>}
+              {resultado.yaEstaban > 0 && <>{resultado.yaEstaban} ya existían y ya estaban vinculadas.</>}
+            </div>
+          )}
           {resultado.errores?.length > 0 && (
             <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '10px 12px' }}>
               <div style={{ fontSize: '11px', fontWeight: 600, color: '#dc2626', marginBottom: '6px' }}>Errores:</div>

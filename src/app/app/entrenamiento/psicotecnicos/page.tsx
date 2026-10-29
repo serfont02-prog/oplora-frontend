@@ -9,10 +9,11 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
-import { FooterNavegacion } from '@/app/app/dashboard/page';
+import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { IconoModalidad } from '@/components/psicotecnicos/iconos';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_PSICO } from '@/styles/tokens';
+import ErrorCarga from '@/components/ui/ErrorCarga';
 
 const SOMBRA = 'var(--c-sombra)';
 const BORDER = 'var(--hx-eef0f3)';
@@ -54,7 +55,7 @@ export default function PsicotecnicosHubPage() {
   const oposicionId = usuario?.oposicionActiva?.id;
   const convocatoriaId = usuario?.oposicionActiva?.convocatoriaActiva?.id;
 
-  const { data: modalidades = [], isLoading } = useQuery({
+  const { data: modalidades = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['psicotecnicos-config', oposicionId, convocatoriaId],
     queryFn: async () => (await api.get(`/psicotecnicos/config/${oposicionId}`, {
       params: convocatoriaId ? { convocatoriaId } : {},
@@ -134,7 +135,8 @@ export default function PsicotecnicosHubPage() {
           <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY, marginBottom: 8, padding: '0 4px' }}>Elige una modalidad</div>
           <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
             {isLoading && <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>}
-            {!isLoading && modalidades.length === 0 && (
+            {isError && <div style={{ padding: 12 }}><ErrorCarga onReintentar={() => refetch()} /></div>}
+            {!isLoading && !isError && modalidades.length === 0 && (
               <div style={{ padding: 16, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
                 Tu convocatoria no tiene psicotécnicos o todavía no se han configurado.
               </div>

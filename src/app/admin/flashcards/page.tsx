@@ -5,12 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import { BG_NEUTRAL } from '@/styles/tokens';
+import GestionFlashcards from '@/components/admin/GestionFlashcards';
 
 const TIPOS = ['vf', 'hueco', 'trampa', 'articulo'];
 const NIVELES = ['basico', 'medio', 'alto'];
 
 export default function FlashcardsAdminPage() {
-  const [tab, setTab] = useState<'importar' | 'manual'>('importar');
+  const [tab, setTab] = useState<'gestionar' | 'importar' | 'manual'>('gestionar');
   const [jsonTexto, setJsonTexto] = useState('');
   const [resultado, setResultado] = useState<{ importadas: number; errores?: string[]; sinVincular?: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -213,13 +214,14 @@ const guardarManual = async () => {
       <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f3f4f6', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontSize: '15px', fontWeight: 600, color: '#111827' }}>Flashcards</div>
-          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>Importa o crea flashcards para el repaso espaciado SM-2</div>
+          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>Busca, corrige, importa o crea flashcards para el repaso espaciado SM-2</div>
         </div>
       </div>
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #f3f4f6', background: 'white', padding: '0 1.5rem' }}>
         {[
+          { key: 'gestionar', label: 'Gestionar' },
           { key: 'importar', label: 'Importar JSON' },
           { key: 'manual', label: 'Crear manual' },
         ].map(({ key, label }) => (
@@ -239,7 +241,10 @@ const guardarManual = async () => {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: BG_NEUTRAL }}>
-        <div style={{ maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ maxWidth: tab === 'gestionar' ? '1000px' : '720px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* TAB: Gestionar (buscar, corregir, activar/desactivar y borrar) */}
+          {tab === 'gestionar' && <GestionFlashcards />}
 
           {/* Resultado */}
           {resultado && (
