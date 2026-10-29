@@ -84,9 +84,14 @@ export default function RetoDetallePage() {
   const [resultadoFinal, setResultadoFinal] = useState<any>(null);
   const [tiempoFinal, setTiempoFinal] = useState<number | null>(null);
   const yaEnviado = useRef(false);
+  // ⭐ El servidor mide el tiempo del duelo (desempate) desde aquí; solo cuenta la primera vez.
+  const avisarInicio = () => { api.post(`/duelos/test/${id}/empezar`).catch(() => {}); };
 
   useEffect(() => {
-    if (directo && estado === 'jugando' && tiempoInicio === 0) setTiempoInicio(Date.now());
+    if (directo && estado === 'jugando' && tiempoInicio === 0) {
+      setTiempoInicio(Date.now());
+      avisarInicio();
+    }
   }, [directo, estado, tiempoInicio]);
 
   useEffect(() => {
@@ -138,6 +143,7 @@ export default function RetoDetallePage() {
       return res.data;
     },
     onSuccess: (data) => {
+      if (typeof data?.tiempoSegundos === 'number') setTiempoFinal(data.tiempoSegundos);
       setResultadoFinal(data);
       queryClient.invalidateQueries({ queryKey: ['mis-retos'] });
       queryClient.invalidateQueries({ queryKey: ['retos-pendientes'] });
@@ -195,6 +201,7 @@ export default function RetoDetallePage() {
     setSeleccionada(null);
     setEstado('jugando');
     setTiempoInicio(Date.now());
+    avisarInicio();
   };
 
   if (cargando || !usuario) return null;
@@ -311,7 +318,7 @@ export default function RetoDetallePage() {
           convocatoria={convocatoria}
           titulo={`Duelo contra ${nombreRival}`}
           color={COLOR_RETOS}
-          avisoSalir="Si sales ahora, podrás volver a empezar el duelo mientras no se acabe el plazo."
+          avisoSalir="Si sales ahora, podrás volver a entrar mientras no se acabe el plazo, pero el tiempo sigue contando desde que empezaste."
           onSalir={volver}
           enviando={completar.isPending}
         />

@@ -14,7 +14,7 @@ import { useMiLiga } from '@/components/liga/TarjetaLiga';
 import { CopaEnAvatar, CopaBadge, COLOR_LIGA, BG_LIGA, nombreMes } from '@/components/liga/ligaUtils';
 import {
   ArrowLeft, ChevronRight, ChevronDown, Camera, Image as ImageIcon, Bell, Settings, CreditCard, GraduationCap, ShieldCheck,
-  LifeBuoy, LogOut, Flame, Check, Trophy, Lock, BookCopy,
+  LifeBuoy, LogOut, Flame, Check, Trophy, Lock, BookCopy, Trash2,
 } from 'lucide-react';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_NEUTRAL } from '@/styles/tokens';
 import SelectorApariencia from '@/components/ui/SelectorApariencia';
@@ -32,6 +32,26 @@ const NIVELES = [
   { nivel: 4, nombre: 'Experto', puntosMin: 701, puntosMax: 1500 },
   { nivel: 5, nombre: 'Élite', puntosMin: 1501, puntosMax: null },
 ];
+
+// ⭐ Reduce la foto en el móvil antes de subirla (el servidor solo acepta JPG/PNG/WEBP de hasta 5 MB y
+// las fotos del móvil suelen pasar de eso). Para un avatar basta con 640 px.
+async function prepararFoto(file: File): Promise<Blob> {
+  try {
+    const url = URL.createObjectURL(file);
+    const img = await new Promise<HTMLImageElement>((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    const lado = 640;
+    const escala = Math.min(1, lado / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * escala));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * escala));
+    canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/jpeg', 0.85));
+    return blob ?? file;
+  } catch {
+    return file;
+  }
+}
 
 const PLAN: Record<string, string> = { gratuito: 'Gratuito', esencial: 'Esencial', profesional: 'Profesional' };
 
@@ -74,6 +94,7 @@ export default function PerfilPage() {
   const [subiendo, setSubiendo] = useState(false);
   const [errorAvatar, setErrorAvatar] = useState('');
   const [verNiveles, setVerNiveles] = useState(false);
+  const [modalBorrar, setModalBorrar] = useState(false);
   const inputGaleria = useRef<HTMLInputElement>(null);
   const inputCamara = useRef<HTMLInputElement>(null);
   const { data: temarioPapel } = useTemarioPapel(usuario?.oposicionActiva?.id);
@@ -96,7 +117,7 @@ export default function PerfilPage() {
     setErrorAvatar('');
     try {
       const formData = new FormData();
-      formData.append('archivo', file);
+      formData.append('archivo', await prepararFoto(file), 'avatar.jpg');
       const res = await api.post('/usuarios/avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       actualizarUsuario(res.data);
       setModalAvatar(false);
@@ -277,7 +298,18 @@ export default function PerfilPage() {
         <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, overflow: 'hidden' }}>
           <Fila Icon={LogOut} color="var(--hx-dc2626)" bg="var(--hx-fef2f2)" titulo="Cerrar sesión" onClick={logout} peligro ultima />
         </div>
+
+        {usuario.rol !== 'admin' && (
+          <button
+            onClick={() => setModalBorrar(true)}
+            style={{ alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 14px', background: 'none', border: 'none', color: TEXT_MUTED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <Trash2 size={14} /> Borrar mi cuenta
+          </button>
+        )}
       </div>
+
+      {modalBorrar && <ModalBorrarCuenta onCerrar={() => setModalBorrar(false)} onBorrada={logout} />}
 
       {/* Foto de perfil */}
       {modalAvatar && (
@@ -311,6 +343,71 @@ export default function PerfilPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------
+   BORRAR MI CUENTA (RGPD)
+------------------------------------------------------- */
+
+function ModalBorrarCuenta({ onCerrar, onBorrada }: { onCerrar: () => void; onBorrada: () => void }) {
+  const [password, setPassword] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState('');
+
+  const borrar = async () => {
+    if (!password || enviando) return;
+    setEnviando(true);
+    setError('');
+    try {
+      await api.delete('/usuarios/me', { data: { password } });
+      onBorrada();
+    } catch (e: any) {
+      const m = e?.response?.data?.message;
+      setError(typeof m === 'string' ? m : 'No se ha podido borrar la cuenta. Inténtalo de nuevo.');
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div onClick={() => !enviando && onCerrar()} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
+      <div
+        role="dialog" aria-modal="true" aria-label="Borrar mi cuenta"
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: 'var(--c-superficie)', borderRadius: '22px 22px 0 0', padding: '18px 1.25rem', paddingBottom: 'calc(18px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 560 }}
+      >
+        <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--c-borde)', margin: '0 auto 14px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--hx-fef2f2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Trash2 size={19} color="var(--hx-dc2626)" />
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: TEXT_PRIMARY }}>Borrar mi cuenta</div>
+        </div>
+        <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.55, marginTop: 12 }}>
+          Se borrarán tus datos personales (nombre, email, nick, foto), tus notas, subrayados, apuntes y avisos.
+          Tus resultados en duelos y en la Liga se quedan de forma anónima para no romper el historial de otros
+          opositores. <b style={{ color: TEXT_PRIMARY }}>No se puede deshacer.</b>
+        </div>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SECONDARY, marginTop: 16, marginBottom: 6 }}>
+          Escribe tu contraseña para confirmar
+        </label>
+        <input
+          type="password" autoComplete="current-password" value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') borrar(); }}
+          style={{ width: '100%', height: 46, borderRadius: 12, border: '1px solid var(--c-borde)', background: 'var(--c-superficie-2)', color: TEXT_PRIMARY, padding: '0 12px', fontSize: 15, boxSizing: 'border-box' }}
+        />
+        {error && <div style={{ fontSize: 12, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 10, padding: '8px 10px', marginTop: 10 }}>{error}</div>}
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <button onClick={onCerrar} disabled={enviando} style={{ flex: 1, height: 48, border: 'none', background: 'var(--c-superficie-2)', color: TEXT_PRIMARY, borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            Cancelar
+          </button>
+          <button onClick={borrar} disabled={!password || enviando} style={{ flex: 1, height: 48, border: 'none', background: '#DC2626', color: 'white', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: password && !enviando ? 'pointer' : 'default', opacity: password && !enviando ? 1 : 0.5 }}>
+            {enviando ? 'Borrando…' : 'Borrar para siempre'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

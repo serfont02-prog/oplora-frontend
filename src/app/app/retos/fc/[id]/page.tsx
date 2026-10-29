@@ -39,6 +39,8 @@ export default function RetoFCDetallePage() {
   const [indice, setIndice] = useState(0);
   const [tiempoInicioTarjeta, setTiempoInicioTarjeta] = useState(0);
   const [tiempoInicioReto, setTiempoInicioReto] = useState(0);
+  // ⭐ El servidor mide el tiempo del duelo (desempate) desde aquí; solo cuenta la primera vez.
+  const avisarInicio = () => { api.post(`/duelos/fc/${id}/empezar`).catch(() => {}); };
   const [respuestas, setRespuestas] = useState<{ flashcardId: string; respuesta: boolean; tiempoRespuesta: number }[]>([]);
   const [resultadoFinal, setResultadoFinal] = useState<{ aciertos: number; fallos: number; tiempoTotal: number; posicion: number | null } | null>(null);
   const yaEnviado = useRef(false);
@@ -53,6 +55,7 @@ export default function RetoFCDetallePage() {
     if (directo && estado === 'jugando' && tiempoInicioReto === 0) {
       setTiempoInicioReto(Date.now());
       setTiempoInicioTarjeta(Date.now());
+      avisarInicio();
     }
   }, [directo, estado, tiempoInicioReto]);
 
@@ -128,6 +131,7 @@ export default function RetoFCDetallePage() {
     setEstado('jugando');
     setTiempoInicioReto(Date.now());
     setTiempoInicioTarjeta(Date.now());
+    avisarInicio();
   };
 
   // ⭐ Corrección en servidor (como test): se envía lo contestado y se pasa a la siguiente

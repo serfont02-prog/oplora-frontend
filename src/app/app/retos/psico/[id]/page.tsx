@@ -77,6 +77,8 @@ export default function RetoPsicoDetallePage() {
   // Lo elegido en cada pregunta (null = en blanco) y el tiempo empleado en ella
   const respuestasRef = useRef<{ texto: string | null; tiempo: number }[]>([]);
   const inicioPregunta = useRef(0);
+  // ⭐ El servidor mide el tiempo del duelo (desempate) desde aquí; solo cuenta la primera vez.
+  const avisarInicio = () => { api.post(`/duelos/psico/${id}/empezar`).catch(() => {}); };
   const [tiempoInicioReto, setTiempoInicioReto] = useState(0);
   const [resultadoFinal, setResultadoFinal] = useState<any>(null);
   const yaEnviado = useRef(false);
@@ -89,6 +91,7 @@ export default function RetoPsicoDetallePage() {
     if (directo && estado === 'jugando' && tiempoInicioReto === 0) {
       setTiempoInicioReto(Date.now());
       inicioPregunta.current = Date.now();
+      avisarInicio();
     }
   }, [directo, estado, tiempoInicioReto]);
 
@@ -150,6 +153,7 @@ export default function RetoPsicoDetallePage() {
     setEstado('jugando');
     setTiempoInicioReto(Date.now());
     inicioPregunta.current = Date.now();
+    avisarInicio();
   };
 
   // Callbacks para la pantalla de pregunta de Practicar (PreguntaTest)
@@ -302,7 +306,7 @@ export default function RetoPsicoDetallePage() {
           dejarEnBlanco={dejarEnBlanco}
           titulo={`Duelo contra ${nombreRival}`}
           color={COLOR_PSICO}
-          avisoSalir="Si sales ahora, podrás volver a empezar el duelo mientras no se acabe el plazo."
+          avisoSalir="Si sales ahora, podrás volver a entrar mientras no se acabe el plazo, pero el tiempo sigue contando desde que empezaste."
           onSalir={volver}
           enviando={completar.isPending}
         />
