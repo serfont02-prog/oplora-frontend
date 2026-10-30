@@ -13,6 +13,8 @@ import { renderReferencias, renderReferenciasTitulo, construirMapaSiglas, constr
 import { BG_TEMA as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA } from '@/styles/tokens';
 import ErrorCarga from '@/components/ui/ErrorCarga';
 import BotonSubrayar, { esPantallaTactil } from '@/components/estudio/BotonSubrayar';
+import { useSeleccionTactil } from '@/components/estudio/useSeleccionTactil';
+import CargaLibro from '@/components/marca/CargaLibro';
 
 // ⭐ Colores de las cajas destacadas (compartidos por las cajas y por la barra de filtros).
 // "Idea" y "Regla de examen" se fusionan en una sola categoría visual ("Idea clave"): ambas
@@ -226,67 +228,28 @@ const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leye
     };
   }, [id, progreso]);
 
-  // Selección de texto para subrayar
+  // Selección de texto para subrayar.
+  // ⭐ Ordenador: selección normal del navegador. Móvil: selección propia (useSeleccionTactil)
+  // para que no aparezca el menú de Chrome encima del botón "Subrayar".
   useEffect(() => {
     const handleMouseUp = (e?: Event) => {
-      // Pulsar el propio botón de subrayar no debe recalcular (ni borrar) la selección
+      if (esPantallaTactil()) return;
       if ((e?.target as Element | null)?.closest?.('[data-menu-subrayado]')) return;
       requestAnimationFrame(() => {
         const seleccion = window.getSelection();
-        const texto = seleccion?.toString().trim() ?? '';
-        if (!texto || texto.length < 3 || !seleccion || seleccion.rangeCount === 0) {
-          setMenuSubrayado(null);
-          return;
-        }
-
-        try {
-          const range = seleccion.getRangeAt(0);
-          // Buscamos el bloque (párrafo, ítem de lista o artículo) que lleva
-          // registrado su desplazamiento (data-bloque-offset) dentro del texto
-          // completo del apunte. Si la selección cae fuera de un bloque con ese
-          // atributo (p. ej. en un título o un destacado), no se puede subrayar.
-          const nodoInicio = range.startContainer;
-          const elementoInicio = nodoInicio.nodeType === Node.ELEMENT_NODE
-            ? (nodoInicio as Element)
-            : nodoInicio.parentElement;
-          const contenedor = elementoInicio?.closest('[data-bloque-offset]');
-          if (!contenedor) { setMenuSubrayado(null); return; }
-
-          const base = parseInt(contenedor.getAttribute('data-bloque-offset') || '0', 10);
-          const offsetLocal = calcularOffsetEnContenedor(contenedor, range);
-          const inicio = base + offsetLocal;
-          const fin = inicio + texto.length;
-
-          const rect = range.getBoundingClientRect();
-          if (rect.width === 0) return;
-          setMenuSubrayado({
-            x: rect.left + rect.width / 2,
-            y: rect.top - 50,
-            inicio,
-            fin,
-            texto,
-          });
-        } catch (e) {}
+        if (!seleccion || seleccion.rangeCount === 0) { setMenuSubrayado(null); return; }
+        setMenuSubrayado(menuDesdeRango(seleccion.getRangeAt(0)));
       });
     };
-    // ⭐ En el móvil la selección se ajusta con las asas y eso no siempre lanza touchend:
-    // se escucha también el cambio de selección (con una pequeña espera).
-    let espera: ReturnType<typeof setTimeout> | undefined;
-    const alCambiarSeleccion = () => {
-      if (!esPantallaTactil()) return;
-      clearTimeout(espera);
-      espera = setTimeout(() => handleMouseUp(), 300);
-    };
     document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchend', handleMouseUp);
-    document.addEventListener('selectionchange', alCambiarSeleccion);
-    return () => {
-      clearTimeout(espera);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchend', handleMouseUp);
-      document.removeEventListener('selectionchange', alCambiarSeleccion);
-    };
+    return () => document.removeEventListener('mouseup', handleMouseUp);
   }, []);
+
+  const seleccionTactil = useSeleccionTactil({
+    obtenerContenedor: (el) => el.closest('[data-bloque-offset]'),
+    onSeleccion: (rango) => setMenuSubrayado(menuDesdeRango(rango)),
+    onLimpiar: () => setMenuSubrayado(null),
+  });
 
   const crearSubrayado = async () => {
     if (!menuSubrayado) return;
@@ -298,6 +261,7 @@ const mapaNombresLey = useMemo(() => construirMapaNombres(leyesOposicion), [leye
     });
     setMenuSubrayado(null);
     window.getSelection()?.removeAllRanges();
+    seleccionTactil.quitarResaltado();
     refetchSubrayados();
   };
 
@@ -434,9 +398,7 @@ const updateProgreso = () => {
 
   if (cargando || isLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_APP }}>
-        <div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando apunte…</div>
-      </div>
+      <CargaLibro fondo={BG_APP} texto="Abriendo apunte…" />
     );
   }
 
@@ -812,7 +774,7 @@ const updateProgreso = () => {
         <BotonSubrayar
           menu={menuSubrayado}
           onSubrayar={crearSubrayado}
-          onCancelar={() => { setMenuSubrayado(null); window.getSelection()?.removeAllRanges(); }}
+          onCancelar={() => { setMenuSubrayado(null); window.getSelection()?.removeAllRanges(); seleccionTactil.quitarResaltado(); }}
         />
       </div>
 
@@ -885,6 +847,27 @@ const updateProgreso = () => {
 // principio de ese contenedor. Al basarse en el propio Range de la selección
 // (y no en buscar el texto seleccionado con indexOf sobre la cadena completa),
 // no falla cuando la frase seleccionada se repite en otra parte del apunte.
+// Convierte un rango (de la selección del navegador o de la selección táctil propia) en el
+// menú de subrayado: posición en el texto completo del apunte y dónde pintar el botón.
+// Solo vale dentro de un bloque con data-bloque-offset (párrafo, ítem de lista o artículo).
+function menuDesdeRango(range: Range): { x: number; y: number; inicio: number; fin: number; texto: string } | null {
+  try {
+    const texto = range.toString().trim();
+    if (!texto || texto.length < 2) return null;
+    const nodoInicio = range.startContainer;
+    const elementoInicio = nodoInicio.nodeType === Node.ELEMENT_NODE ? (nodoInicio as Element) : nodoInicio.parentElement;
+    const contenedor = elementoInicio?.closest('[data-bloque-offset]');
+    if (!contenedor) return null;
+    const base = parseInt(contenedor.getAttribute('data-bloque-offset') || '0', 10);
+    const inicio = base + calcularOffsetEnContenedor(contenedor, range);
+    const rect = range.getBoundingClientRect();
+    if (rect.width === 0) return null;
+    return { x: rect.left + rect.width / 2, y: rect.top, inicio, fin: inicio + texto.length, texto };
+  } catch {
+    return null;
+  }
+}
+
 function calcularOffsetEnContenedor(contenedor: Node, range: Range): number {
   let offset = 0;
   const walker = document.createTreeWalker(contenedor, NodeFilter.SHOW_TEXT);
@@ -952,7 +935,7 @@ function BloqueTexto({
           <mark
             key={i}
             onClick={() => onToggleSubrayado(subrayadoSeleccionado === seg.subrayado.id ? null : seg.subrayado.id)}
-            style={{ background: 'var(--hx-fef08a)', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
+            style={{ background: 'var(--c-subrayado)', color: 'var(--c-subrayado-texto)', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
           >
             {contenido}
             {subrayadoSeleccionado === seg.subrayado.id && (

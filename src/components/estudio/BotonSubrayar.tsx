@@ -1,9 +1,8 @@
 'use client';
 
-// ⭐ Botón "Subrayar" para apuntes y artículos.
-// En el móvil, el menú del sistema (Copiar, Seleccionar todo…) aparece encima del texto
-// seleccionado y tapaba el botón de la app. Por eso, en pantallas táctiles el botón va en una
-// barra fija abajo (encima de la navegación) y en el ordenador sigue flotando sobre la selección.
+// ⭐ Botón "Subrayar" flotando sobre el texto seleccionado (apuntes y artículos).
+// En el móvil la selección la hace la propia app (useSeleccionTactil), así que ya no aparece
+// el menú de Chrome encima y el botón vuelve a estar junto al texto, con una ✕ para cancelar.
 // Actúa al pulsar (pointerdown) para no perder la selección antes de guardarla.
 
 import { useEffect, useState } from 'react';
@@ -18,6 +17,7 @@ export default function BotonSubrayar({
   onSubrayar,
   onCancelar,
 }: {
+  /** x: centro de la selección; y: borde superior de la selección (coordenadas de pantalla). */
   menu: { x: number; y: number } | null;
   onSubrayar: () => void;
   onCancelar: () => void;
@@ -32,43 +32,39 @@ export default function BotonSubrayar({
     accion();
   };
 
-  if (tactil) {
-    return (
-      <div
-        data-menu-subrayado
+  // Encima de la selección; si no cabe (muy arriba), debajo. Sin salirse por los lados.
+  const ancho = typeof window !== 'undefined' ? window.innerWidth : 400;
+  const x = Math.min(Math.max(menu.x, 80), ancho - 80);
+  const top = menu.y > 70 ? menu.y - (tactil ? 56 : 46) : menu.y + 34;
+
+  return (
+    <div
+      data-menu-subrayado
+      style={{
+        position: 'fixed', left: x, top, transform: 'translateX(-50%)', zIndex: 70,
+        display: 'flex', alignItems: 'center', gap: 2, background: 'var(--c-primario)', borderRadius: 999,
+        boxShadow: '0 6px 18px rgba(15,23,42,0.28)', padding: 2, animation: 'oplora-aparecer-subrayar .14s ease-out',
+      }}
+    >
+      <style>{`@keyframes oplora-aparecer-subrayar { from { transform: translate(-50%, 6px); opacity: .4 } to { transform: translate(-50%, 0); opacity: 1 } }`}</style>
+      <button
+        onPointerDown={pulsar(onSubrayar)}
         style={{
-          position: 'fixed', left: 12, right: 12, bottom: 'calc(76px + env(safe-area-inset-bottom))', zIndex: 70,
-          maxWidth: 520, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 8,
-          background: 'var(--c-superficie)', borderRadius: 16, padding: 8, boxShadow: '0 8px 28px rgba(15,23,42,0.22)',
-          animation: 'oplora-subir-subrayar .16s ease-out',
+          display: 'flex', alignItems: 'center', gap: 6, background: 'none', color: 'var(--c-primario-texto)', border: 'none',
+          borderRadius: 999, padding: tactil ? '10px 16px' : '6px 12px', fontSize: tactil ? 14 : 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
         }}
       >
-        <style>{`@keyframes oplora-subir-subrayar { from { transform: translateY(12px); opacity: .5 } to { transform: none; opacity: 1 } }`}</style>
-        <button
-          onPointerDown={pulsar(onSubrayar)}
-          style={{ flex: 1, height: 46, border: 'none', borderRadius: 12, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-        >
-          <Highlighter size={17} /> Subrayar selección
-        </button>
+        <Highlighter size={tactil ? 16 : 14} /> Subrayar
+      </button>
+      {tactil && (
         <button
           onPointerDown={pulsar(onCancelar)}
           aria-label="Cancelar subrayado"
-          style={{ width: 46, height: 46, border: 'none', borderRadius: 12, background: 'var(--c-superficie-2)', color: 'var(--c-texto-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          style={{ width: 38, height: 38, borderRadius: 999, border: 'none', background: 'none', color: 'var(--c-primario-texto)', opacity: 0.75, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <X size={18} />
+          <X size={16} />
         </button>
-      </div>
-    );
-  }
-
-  return (
-    <div data-menu-subrayado style={{ position: 'fixed', left: menu.x, top: menu.y, transform: 'translateX(-50%)', zIndex: 50 }}>
-      <button
-        onPointerDown={pulsar(onSubrayar)}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-primario)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(15,23,42,0.25)', whiteSpace: 'nowrap' }}
-      >
-        <Highlighter size={14} /> Subrayar
-      </button>
+      )}
     </div>
   );
 }

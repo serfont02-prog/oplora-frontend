@@ -17,6 +17,7 @@ import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
 import { TarjetaTemarioPapel } from '@/components/temario/TemarioPapel';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
+import CargaLibro from '@/components/marca/CargaLibro';
 
 type TabTema = 'material' | 'mi-estudio' | 'progreso';
 
@@ -372,12 +373,7 @@ export default function TemaPage() {
 
   if (cargandoTema) {
     return (
-      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-        <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <BookOpen size={24} color="var(--hx-8b7355)" />
-        </div>
-        <span style={{ fontSize: 13, color: TEXT_SECONDARY, fontWeight: 600 }}>Cargando tema…</span>
-      </div>
+      <CargaLibro fondo={BG_APP} texto="Cargando tema…" />
     );
   }
 

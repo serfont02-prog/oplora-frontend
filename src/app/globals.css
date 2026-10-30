@@ -124,6 +124,12 @@ textarea {
    ========================================================================== */
 :root,
 .op-claro {
+  /* ⭐ Subrayado del usuario y selección propia del móvil */
+  --c-subrayado: #FEF08A;
+  --c-subrayado-texto: #0F172A;
+  --c-seleccion: rgba(31, 124, 255, 0.24);
+  --c-libro-pagina: #FFFFFF;      /* carga de Estudiar (CargaLibro) */
+  --c-libro-linea: #D5DAE3;
   --c-bg-dashboard: #EAF0FF;
   --c-bg-retos: #FCEEE8;
   --c-bg-flashcards: #FDF4FE;
@@ -335,6 +341,13 @@ textarea {
 }
 
 html[data-tema='oscuro'] {
+  /* ⭐ En oscuro el amarillo translúcido dejaba el texto negro (estilo de <mark>) y poco legible:
+     ámbar oscuro de fondo con el texto claro */
+  --c-subrayado: #5E4E12;
+  --c-subrayado-texto: #FFF4CF;
+  --c-seleccion: rgba(96, 165, 250, 0.38);
+  --c-libro-pagina: #E4E9F2;
+  --c-libro-linea: #A9B4C6;
   --c-bg-dashboard: #0E1626;
   --c-bg-retos: #17110F;
   --c-bg-flashcards: #160F1C;
@@ -550,4 +563,18 @@ html[data-tema='oscuro'] {
 @media (pointer: coarse) {
   button[aria-label] { position: relative; }
   button[aria-label]::after { content: ''; position: absolute; inset: -6px; }
+}
+
+/* ⭐ Subrayar en el móvil: en apuntes y artículos el texto no se selecciona con el sistema
+   (para que no salga el menú de Chrome); la app hace su propia selección (useSeleccionTactil)
+   y la pinta con este resaltado. */
+@media (pointer: coarse) {
+  [data-bloque-offset], [data-articulo-contenido] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+::highlight(oplora-seleccion) {
+  background-color: var(--c-seleccion);
 }

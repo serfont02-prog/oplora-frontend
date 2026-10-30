@@ -12,6 +12,7 @@ import { elegirVoz } from '@/lib/voces';
 
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA as BG_APP, SOMBRA, VERDE, VERDE_BG, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 import BotonSubrayar, { esPantallaTactil } from '@/components/estudio/BotonSubrayar';
+import { useSeleccionTactil } from '@/components/estudio/useSeleccionTactil';
 
 export default function ArticuloPage() {
   const router = useRouter();
@@ -82,60 +83,27 @@ export default function ArticuloPage() {
     if (nota?.contenido) setNotaTexto(nota.contenido);
   }, [nota]);
 
+  // ⭐ Ordenador: selección normal del navegador. Móvil: selección propia (useSeleccionTactil)
+  // para que no aparezca el menú de Chrome encima del botón "Subrayar".
   useEffect(() => {
     const handleMouseUp = (e?: Event) => {
-      // Pulsar el propio botón de subrayar no debe recalcular (ni borrar) la selección
+      if (esPantallaTactil()) return;
       if ((e?.target as Element | null)?.closest?.('[data-menu-subrayado]')) return;
       requestAnimationFrame(() => {
         const seleccion = window.getSelection();
-        const texto = seleccion?.toString().trim() ?? '';
-        if (!texto || texto.length < 3 || !seleccion || seleccion.rangeCount === 0) {
-          setMenuSubrayado(null);
-          return;
-        }
-
-        try {
-          const range = seleccion.getRangeAt(0);
-          // La posición se calcula recorriendo el propio Range del navegador dentro
-          // del contenedor del artículo, no buscando el texto seleccionado con
-          // indexOf sobre todo el contenido: así no falla cuando la frase elegida
-          // se repite en otra parte del artículo (muy habitual en texto legal).
-          const contenedor = document.querySelector('[data-articulo-contenido]');
-          if (!contenedor || !contenedor.contains(range.startContainer)) {
-            setMenuSubrayado(null);
-            return;
-          }
-          const inicio = calcularOffsetEnContenedor(contenedor, range);
-          const fin = inicio + texto.length;
-
-          const rect = range.getBoundingClientRect();
-          if (rect.width === 0) return;
-          setMenuSubrayado({
-            x: rect.left + rect.width / 2,
-            y: rect.top - 50,
-            inicio, fin, texto,
-          });
-        } catch {}
+        if (!seleccion || seleccion.rangeCount === 0) { setMenuSubrayado(null); return; }
+        setMenuSubrayado(menuDesdeRango(seleccion.getRangeAt(0)));
       });
     };
-    // ⭐ En el móvil la selección se ajusta con las asas y eso no siempre lanza touchend:
-    // se escucha también el cambio de selección (con una pequeña espera).
-    let espera: ReturnType<typeof setTimeout> | undefined;
-    const alCambiarSeleccion = () => {
-      if (!esPantallaTactil()) return;
-      clearTimeout(espera);
-      espera = setTimeout(() => handleMouseUp(), 300);
-    };
     document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchend', handleMouseUp);
-    document.addEventListener('selectionchange', alCambiarSeleccion);
-    return () => {
-      clearTimeout(espera);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchend', handleMouseUp);
-      document.removeEventListener('selectionchange', alCambiarSeleccion);
-    };
+    return () => document.removeEventListener('mouseup', handleMouseUp);
   }, []);
+
+  const seleccionTactil = useSeleccionTactil({
+    obtenerContenedor: (el) => el.closest('[data-articulo-contenido]'),
+    onSeleccion: (rango) => setMenuSubrayado(menuDesdeRango(rango)),
+    onLimpiar: () => setMenuSubrayado(null),
+  });
 
   useEffect(() => {
     const cargarVoces = () => {
@@ -234,6 +202,8 @@ export default function ArticuloPage() {
   };
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
+    // Mientras se selecciona texto para subrayar no se cambia de artículo
+    if (seleccionTactil.seleccionando.current) { touchStartX.current = null; return; }
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     const UMBRAL = 60;
     if (deltaX > UMBRAL) irAnterior();
@@ -269,6 +239,7 @@ export default function ArticuloPage() {
     });
     setMenuSubrayado(null);
     window.getSelection()?.removeAllRanges();
+    seleccionTactil.quitarResaltado();
     refetchSubrayados();
   };
 
@@ -299,7 +270,7 @@ export default function ArticuloPage() {
             <mark
               key={i}
               onClick={() => setSubrayadoSeleccionado(subrayadoSeleccionado === parte.subrayado.id ? null : parte.subrayado.id)}
-              style={{ background: 'var(--hx-fef08a)', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
+              style={{ background: 'var(--c-subrayado)', color: 'var(--c-subrayado-texto)', cursor: 'pointer', borderRadius: '2px', position: 'relative' }}
             >
               {parte.texto}
               {subrayadoSeleccionado === parte.subrayado.id && (
@@ -479,7 +450,7 @@ export default function ArticuloPage() {
         <BotonSubrayar
           menu={menuSubrayado}
           onSubrayar={crearSubrayado}
-          onCancelar={() => { setMenuSubrayado(null); window.getSelection()?.removeAllRanges(); }}
+          onCancelar={() => { setMenuSubrayado(null); window.getSelection()?.removeAllRanges(); seleccionTactil.quitarResaltado(); }}
         />
       </div>
 
@@ -509,6 +480,24 @@ const iconoAccion: React.CSSProperties = {
 // principio de ese contenedor. Al basarse en el propio Range de la selección
 // (y no en buscar el texto seleccionado con indexOf sobre la cadena completa),
 // no falla cuando la frase seleccionada se repite en otra parte del artículo.
+// Convierte un rango (selección del navegador o selección táctil propia) en el menú de subrayado.
+// Se calcula recorriendo el propio Range dentro del contenedor del artículo (no con indexOf),
+// así no falla cuando la frase se repite en otra parte del artículo.
+function menuDesdeRango(range: Range): { x: number; y: number; inicio: number; fin: number; texto: string } | null {
+  try {
+    const texto = range.toString().trim();
+    if (!texto || texto.length < 2) return null;
+    const contenedor = document.querySelector('[data-articulo-contenido]');
+    if (!contenedor || !contenedor.contains(range.startContainer)) return null;
+    const inicio = calcularOffsetEnContenedor(contenedor, range);
+    const rect = range.getBoundingClientRect();
+    if (rect.width === 0) return null;
+    return { x: rect.left + rect.width / 2, y: rect.top, inicio, fin: inicio + texto.length, texto };
+  } catch {
+    return null;
+  }
+}
+
 function calcularOffsetEnContenedor(contenedor: Node, range: Range): number {
   let offset = 0;
   const walker = document.createTreeWalker(contenedor, NodeFilter.SHOW_TEXT);
