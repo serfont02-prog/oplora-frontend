@@ -9,6 +9,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { BG_NEUTRAL } from '@/styles/tokens';
 import ErrorCarga from '@/components/ui/ErrorCarga';
+import CargaEsqueleto from '@/components/marca/CargaEsqueleto';
 
 const tipoDocLabel: Record<string, string> = {
   resolucion_convocatoria: 'Convocatoria', // ⭐ antes 'Resolución'
@@ -82,11 +83,7 @@ export default function OposicionDocumentosPage() {
   });
 
  
-    if (cargando || isLoading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG_NEUTRAL }}>
-      <div style={{ fontSize: '14px', color: 'var(--hx-9ca3af)' }}>Cargando...</div>
-    </div>
-  );
+    if (cargando || isLoading) return <CargaEsqueleto variante="ficha" fondo={BG_NEUTRAL} texto="Cargando oposición" />;
 
   if (isError && !oposicion) return <ErrorCarga pantalla onReintentar={() => refetch()} />;
   if (!oposicion) return null;

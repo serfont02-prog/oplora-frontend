@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { etiquetaArticulo } from '@/lib/articulos';
 import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Search, BookOpen, ClipboardCheck, CalendarClock } from 'lucide-react';
 import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
+import CargaEsqueleto from '@/components/marca/CargaEsqueleto';
 import { BG_TEMA as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA, VERDE, VERDE_BG } from '@/styles/tokens';
 
 function LeyPage() {
@@ -128,11 +129,7 @@ const toggleSeccion = async (seccionId: string) => {
 };
 
   if (isLoading) {
-    return (
-      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</span>
-      </div>
-    );
+    return <CargaEsqueleto variante="apunte" fondo={BG_APP} texto="Cargando ley" />;
   }
 
   if (isError || !ley) {

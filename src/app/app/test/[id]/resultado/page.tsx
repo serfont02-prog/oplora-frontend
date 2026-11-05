@@ -14,6 +14,7 @@ import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { PuntosGanadosCard } from '@/components/gamificacion/PuntosGanadosCard';
 import { BG_DASHBOARD as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 import ErrorCarga from '@/components/ui/ErrorCarga';
+import CargaEsqueleto from '@/components/marca/CargaEsqueleto';
 
 const SOMBRA = 'var(--c-sombra)';
 const COLOR_TEST = 'var(--hx-4d7c0f)';
@@ -92,11 +93,7 @@ export default function ResultadoTestPage() {
   }
 
   if (isLoading || !resultado) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: BG_APP }}>
-        <div style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando resultado…</div>
-      </div>
-    );
+    return <CargaEsqueleto variante="resultado" fondo={BG_APP} texto="Cargando resultado" />;
   }
 
   const total = resultado.totalPreguntas ?? 0;

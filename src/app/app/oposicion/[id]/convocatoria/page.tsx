@@ -8,6 +8,7 @@ import { ArrowLeft, ExternalLink, FileText, ChevronRight, CalendarClock, X } fro
 import { useState } from 'react';
 import { BG_NEUTRAL as BG_APP } from '@/styles/tokens';
 import ErrorCarga from '@/components/ui/ErrorCarga';
+import CargaEsqueleto from '@/components/marca/CargaEsqueleto';
 
 const TEXT_PRIMARY = 'var(--hx-111827)';
 const TEXT_SECONDARY = 'var(--hx-6b7280)';
@@ -78,7 +79,7 @@ const { data: temasModal = [] } = useQuery({
 const volver = () => router.push(convocatoriaIdParam ? `/app/oposicion/${oposicionId}/historial` : '/app/dashboard');
 
 if (isLoading) {
-  return <div style={{ minHeight: '100vh', background: BG_APP, display: 'grid', placeItems: 'center', fontSize: 13, color: TEXT_MUTED }}>Cargando convocatoria…</div>;
+  return <CargaEsqueleto variante="ficha" fondo={BG_APP} texto="Cargando convocatoria" />;
 }
 
 if (isError && !convocatorias.length) return <ErrorCarga pantalla fondo={BG_APP} onReintentar={() => refetch()} />;

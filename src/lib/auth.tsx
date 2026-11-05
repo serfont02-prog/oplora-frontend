@@ -69,6 +69,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// ⭐ Copia del usuario en el móvil para entrar al momento: al abrir la app se enseña el inicio con
+// lo guardado y la sesión se comprueba por detrás (si ha caducado, se va al login como siempre).
+const CLAVE_USUARIO = 'oplora-usuario';
+function leerUsuarioGuardado(): Usuario | null {
+  try {
+    const t = localStorage.getItem(CLAVE_USUARIO);
+    return t ? (JSON.parse(t) as Usuario) : null;
+  } catch {
+    return null;
+  }
+}
+function guardarUsuario(u: Usuario | null) {
+  try {
+    if (u) localStorage.setItem(CLAVE_USUARIO, JSON.stringify(u));
+    else localStorage.removeItem(CLAVE_USUARIO);
+  } catch { /* sin almacenamiento: solo se pierde la entrada rápida */ }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -78,28 +96,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario((prev) => (prev ? { ...prev, ...data } : prev));
   };
 
+  // Cada vez que cambian los datos del usuario se actualiza la copia guardada.
   useEffect(() => {
-  const tokenGuardado = localStorage.getItem('token');
+    if (usuario) guardarUsuario(usuario);
+  }, [usuario]);
 
-  if (tokenGuardado) {
+  useEffect(() => {
+    const tokenGuardado = localStorage.getItem('token');
+
+    if (!tokenGuardado) {
+      guardarUsuario(null);
+      setCargando(false);
+      return;
+    }
+
     setToken(tokenGuardado);
     api.defaults.headers.common['Authorization'] = `Bearer ${tokenGuardado}`;
 
+    // Si ya había entrado antes en este móvil, se entra al momento con lo guardado.
+    const guardado = leerUsuarioGuardado();
+    if (guardado) {
+      setUsuario(guardado);
+      setCargando(false);
+    }
+
     api
-      .get('/usuarios/me') 
-      .then((res) => {
-  setUsuario(res.data);
-})
-      .catch(() => {
+      .get('/usuarios/me')
+      .then((res) => setUsuario(res.data))
+      .catch((err) => {
+        const status = err?.response?.status;
+        // Sin conexión o servidor caído con datos guardados: se sigue con ellos.
+        if (guardado && (!status || status >= 500)) return;
         localStorage.removeItem('token');
         document.cookie = 'token=; path=/; max-age=0';
+        guardarUsuario(null);
         setToken(null);
+        setUsuario(null);
       })
       .finally(() => setCargando(false));
-  } else {
-    setCargando(false);
-  }
-}, []);
+  }, []);
 
 
   // LOGIN
@@ -139,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // LOGOUT
   const logout = () => {
     localStorage.removeItem('token');
+    guardarUsuario(null);
     document.cookie = 'token=; path=/; max-age=0';
     delete api.defaults.headers.common['Authorization'];
     setToken(null);

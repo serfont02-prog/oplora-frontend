@@ -19,14 +19,15 @@ const PATHS_TEXTO = [
   'M3295 764 c-33 -8 -95 -37 -95 -44 0 -4 8 -14 18 -23 17 -16 22 -16 59 -1 70 28 133 4 133 -50 0 -12 -11 -16 -46 -16 -136 0 -212 -67 -173 -153 25 -56 140 -78 192 -37 25 20 25 20 30 -1 4 -16 12 -20 34 -17 l28 3 3 111 c3 125 -9 177 -48 205 -26 19 -99 32 -135 23z m115 -208 c0 -61 -84 -105 -135 -72 -29 19 -32 47 -7 68 21 19 44 25 100 27 38 1 42 -1 42 -23z',
 ];
 
-const VIEWBOX = { completo: '11 42 339 83', icono: '11 52 123 73' } as const;
-const PROPORCION = { completo: 339 / 83, icono: 123 / 73 } as const;
+const VIEWBOX = { completo: '11 42 339 83', icono: '11 52 123 73', texto: '142 42 208 83' } as const;
+const PROPORCION = { completo: 339 / 83, icono: 123 / 73, texto: 208 / 83 } as const;
 
 export const COLOR_MARCA = '#1F7CFF';
 export const COLOR_MARCA_TEXTO = '#0f172a';
 
 type Props = {
-  variante?: 'completo' | 'icono';
+  /** 'texto' es solo el nombre, sin la pincelada. */
+  variante?: 'completo' | 'icono' | 'texto';
   /** Alto en píxeles; el ancho se calcula para mantener la proporción. */
   alto?: number;
   colorIcono?: string;
@@ -51,10 +52,12 @@ export default function LogoOplora({
       style={{ display: 'block', flexShrink: 0, ...style }}
     >
       <g transform="translate(0,139) scale(0.1,-0.1)">
-        <g fill={colorIcono}>
-          {PATHS_ICONO.map((d, i) => <path key={i} d={d} />)}
-        </g>
-        {variante === 'completo' && (
+        {variante !== 'texto' && (
+          <g fill={colorIcono}>
+            {PATHS_ICONO.map((d, i) => <path key={i} d={d} />)}
+          </g>
+        )}
+        {variante !== 'icono' && (
           <g fill={colorTexto}>
             {PATHS_TEXTO.map((d, i) => <path key={i} d={d} />)}
           </g>

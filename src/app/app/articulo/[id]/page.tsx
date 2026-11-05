@@ -13,6 +13,7 @@ import { elegirVoz } from '@/lib/voces';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA as BG_APP, SOMBRA, VERDE, VERDE_BG, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
 import BotonSubrayar, { esPantallaTactil } from '@/components/estudio/BotonSubrayar';
 import { useSeleccionTactil } from '@/components/estudio/useSeleccionTactil';
+import CargaEsqueleto from '@/components/marca/CargaEsqueleto';
 
 export default function ArticuloPage() {
   const router = useRouter();
@@ -291,11 +292,7 @@ export default function ArticuloPage() {
   };
 
   if (cargando || isLoading) {
-    return (
-      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: 13, color: TEXT_MUTED }}>Cargando…</span>
-      </div>
-    );
+    return <CargaEsqueleto variante="apunte" fondo={BG_APP} texto="Cargando artículo" />;
   }
 
   if (isError || !articulo) {

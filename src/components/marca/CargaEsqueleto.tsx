@@ -5,7 +5,7 @@
 // Es lo que usan las apps profesionales: parece que el contenido va apareciendo, no una espera.
 // Sin colores propios (usa los de la tarjeta), así que vale en claro y en oscuro.
 
-type Variante = 'apunte' | 'tema';
+type Variante = 'apunte' | 'tema' | 'ficha' | 'resultado';
 
 export default function CargaEsqueleto({
   variante,
@@ -30,7 +30,7 @@ export default function CargaEsqueleto({
           </div>
         </div>
 
-        {variante === 'tema' ? <Tema /> : <Apunte />}
+        {variante === 'tema' ? <Tema /> : variante === 'ficha' ? <Ficha /> : variante === 'resultado' ? <Resultado /> : <Apunte />}
       </div>
     </div>
   );
@@ -93,6 +93,52 @@ function Tema() {
           </div>
         ))}
       </Tarjeta>
+    </>
+  );
+}
+
+function Ficha() {
+  return (
+    <>
+      {/* Tarjeta principal (datos destacados) */}
+      <Tarjeta padding={18}>
+        <div className="oe-bloque" style={{ width: '55%', height: 16, marginBottom: 16 }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="oe-bloque" style={{ width: '70%', height: 18 }} />
+              <div className="oe-bloque" style={{ width: '90%', height: 9 }} />
+            </div>
+          ))}
+        </div>
+      </Tarjeta>
+      {/* Bloques de información */}
+      {[0, 1].map((t) => (
+        <Tarjeta key={t} padding={18}>
+          <div className="oe-bloque" style={{ width: t ? '38%' : '46%', height: 14, marginBottom: 14 }} />
+          <Lineas anchos={t ? [96, 88, 60] : [100, 92, 97, 70]} alto={10} />
+        </Tarjeta>
+      ))}
+      <div className="oe-bloque" style={{ width: '100%', height: 46, borderRadius: 14 }} />
+    </>
+  );
+}
+
+function Resultado() {
+  return (
+    <>
+      <Tarjeta padding={22}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+          <div className="oe-bloque" style={{ width: 120, height: 120, borderRadius: '50%' }} />
+          <div className="oe-bloque" style={{ width: '50%', height: 16 }} />
+          <div className="oe-bloque" style={{ width: '70%', height: 10 }} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
+          {[0, 1, 2].map((i) => <div key={i} className="oe-bloque" style={{ height: 54, borderRadius: 12 }} />)}
+        </div>
+      </Tarjeta>
+      <Tarjeta padding={16}><Lineas anchos={[60, 90]} alto={11} /></Tarjeta>
+      <div className="oe-bloque" style={{ width: '100%', height: 46, borderRadius: 14 }} />
     </>
   );
 }

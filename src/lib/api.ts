@@ -24,6 +24,7 @@
         if (teniaSesion && !redirigiendo) {
           redirigiendo = true;
           localStorage.removeItem('token');
+          localStorage.removeItem('oplora-usuario');
           document.cookie = 'token=; path=/; max-age=0';
           delete api.defaults.headers.common['Authorization'];
           const m = error?.response?.data?.message;
