@@ -128,8 +128,7 @@ textarea {
   --c-subrayado: #FEF08A;
   --c-subrayado-texto: #0F172A;
   --c-seleccion: rgba(31, 124, 255, 0.24);
-  --c-libro-pagina: #FFFFFF;      /* carga de Estudiar (CargaLibro) */
-  --c-libro-linea: #D5DAE3;
+  --c-esqueleto-brillo: rgba(255, 255, 255, 0.65); /* carga con esqueleto (CargaEsqueleto) */
   --c-bg-dashboard: #EAF0FF;
   --c-bg-retos: #FCEEE8;
   --c-bg-flashcards: #FDF4FE;
@@ -346,8 +345,7 @@ html[data-tema='oscuro'] {
   --c-subrayado: #5E4E12;
   --c-subrayado-texto: #FFF4CF;
   --c-seleccion: rgba(96, 165, 250, 0.38);
-  --c-libro-pagina: #E4E9F2;
-  --c-libro-linea: #A9B4C6;
+  --c-esqueleto-brillo: rgba(255, 255, 255, 0.06);
   --c-bg-dashboard: #0E1626;
   --c-bg-retos: #17110F;
   --c-bg-flashcards: #160F1C;

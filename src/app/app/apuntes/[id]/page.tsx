@@ -14,7 +14,7 @@ import { BG_TEMA as BG_APP, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA } f
 import ErrorCarga from '@/components/ui/ErrorCarga';
 import BotonSubrayar, { esPantallaTactil } from '@/components/estudio/BotonSubrayar';
 import { useSeleccionTactil } from '@/components/estudio/useSeleccionTactil';
-import CargaLibro from '@/components/marca/CargaLibro';
+import CargaEsqueleto from '@/components/marca/CargaEsqueleto';
 
 // ⭐ Colores de las cajas destacadas (compartidos por las cajas y por la barra de filtros).
 // "Idea" y "Regla de examen" se fusionan en una sola categoría visual ("Idea clave"): ambas
@@ -398,7 +398,7 @@ const updateProgreso = () => {
 
   if (cargando || isLoading) {
     return (
-      <CargaLibro fondo={BG_APP} texto="Abriendo apunte…" />
+      <CargaEsqueleto variante="apunte" fondo={BG_APP} texto="Abriendo apunte" />
     );
   }
 

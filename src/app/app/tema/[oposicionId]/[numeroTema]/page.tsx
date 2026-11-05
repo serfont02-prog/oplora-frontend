@@ -17,7 +17,7 @@ import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { renderReferencias, construirMapaSiglas } from '@/lib/referenciasArticulos';
 import { TarjetaTemarioPapel } from '@/components/temario/TemarioPapel';
 import { TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, BG_TEMA, COLOR_FC, COLOR_FC_BG } from '@/styles/tokens';
-import CargaLibro from '@/components/marca/CargaLibro';
+import CargaEsqueleto from '@/components/marca/CargaEsqueleto';
 
 type TabTema = 'material' | 'mi-estudio' | 'progreso';
 
@@ -373,7 +373,7 @@ export default function TemaPage() {
 
   if (cargandoTema) {
     return (
-      <CargaLibro fondo={BG_APP} texto="Cargando tema…" />
+      <CargaEsqueleto variante="tema" fondo={BG_APP} texto="Cargando tema" />
     );
   }
 
