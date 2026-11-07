@@ -284,10 +284,12 @@ export { FooterNavegacion };
 function Widget({ titulo, accion, children, sinCaja = false }: { titulo?: string; accion?: { label: string; onClick: () => void }; children: React.ReactNode; sinCaja?: boolean }) {
   // ⭐ Antes: fondo azul + caja gris + tarjeta blanca + título en mayúsculas. Ahora la tarjeta
   // blanca va directamente sobre el fondo, con la sombra común, y el título es una línea suave.
+  // ⭐ El título va pegado a su tarjeta (10 px) y separado de lo anterior (16 + 10 px), para que se
+  // lea como cabecera de lo que viene y no quede flotando entre dos bloques. Alineado con el borde.
   return (
-    <section>
+    <section style={{ marginTop: titulo ? 10 : 0 }}>
       {(titulo || accion) && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, padding: '0 2px' }}>
           {titulo && <span style={{ fontSize: 13, fontWeight: 600, color: TEXT_SECONDARY }}>{titulo}</span>}
           {accion && (
             <button onClick={accion.onClick} style={{ fontSize: 12, color: 'var(--c-azul)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -567,6 +569,9 @@ function WidgetNoticias({ oposicionId, convocatoriaId, router }: any) {
 // noticias: se queda hasta que el tema se marca como repasado (botón "Hecho" en el tema).
 // Con varios repasos se muestra UNA tarjeta con los 2 primeros y "ver todos" para desplegar,
 // así no se llena Inicio de avisos.
+// Quita el punto final del título: si no, al recortarlo salía «Policía.…».
+const sinPuntoFinal = (t?: string) => (t ?? '').replace(/[.\s]+$/, '');
+
 function WidgetRepasosHoy({ oposicionId, router }: any) {
   const [abierto, setAbierto] = useState(false);
   const { data: repasos = [] } = useQuery({
@@ -600,7 +605,7 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
           </div>
           {uno ? (
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.35, marginTop: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              Tema {repasos[0].numero}: {repasos[0].titulo}
+              Tema {repasos[0].numero}: {sinPuntoFinal(repasos[0].titulo)}
             </div>
           ) : (
             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, marginTop: 2 }}>Tienes temas programados para repasar</div>
@@ -622,7 +627,7 @@ function WidgetRepasosHoy({ oposicionId, router }: any) {
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid var(--c-borde)', cursor: 'pointer', textAlign: 'left' }}
             >
               <span style={{ width: 34, textAlign: 'center', fontSize: 12, fontWeight: 800, color: TEXT_SECONDARY, flexShrink: 0 }}>T{r.numero}</span>
-              <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.titulo}</span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sinPuntoFinal(r.titulo)}</span>
               {r.atrasado && <span style={{ fontSize: 10, color: 'var(--c-ambar)', fontWeight: 700, flexShrink: 0 }}>Atrasado</span>}
               <ChevronRight size={15} color="var(--c-chevron)" style={{ flexShrink: 0 }} />
             </button>
@@ -695,7 +700,7 @@ function WidgetSeguirEstudiando({ oposicionId, router }: any) {
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
           }}>
-            {ultimoTema.tituloTema}
+            {sinPuntoFinal(ultimoTema.tituloTema)}
           </div>
         </div>
 
