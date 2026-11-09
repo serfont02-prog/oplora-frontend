@@ -54,6 +54,8 @@ export default function OposicionDetallePage() {
     fasesTexto: '',
     puestosTexto: '',
     bloquesTemarioTexto: '',
+    tienePsicotecnicos: true,
+    numOpcionesPsicotecnico: '',
     numOpcionesTest: '',
   });
 
@@ -216,6 +218,10 @@ const crearConv = useMutation({
         : undefined,
         fraccionPenalizacion: formNuevaConv.fraccionPenalizacion || undefined,
         numOpcionesTest: formNuevaConv.numOpcionesTest ? parseInt(formNuevaConv.numOpcionesTest) : undefined,
+        tienePsicotecnicos: formNuevaConv.tienePsicotecnicos,
+        numOpcionesPsicotecnico: formNuevaConv.tienePsicotecnicos && formNuevaConv.numOpcionesPsicotecnico
+          ? parseInt(formNuevaConv.numOpcionesPsicotecnico)
+          : undefined,
         permiteBlancos: formNuevaConv.permiteBlancos,
         fraccionPenalizacionBlanco: formNuevaConv.permiteBlancos ? undefined : (formNuevaConv.fraccionPenalizacionBlanco || undefined),
         notaMinimaAprobado: formNuevaConv.notaMinimaAprobado ? parseFloat(formNuevaConv.notaMinimaAprobado) : undefined,
@@ -248,6 +254,7 @@ const crearConv = useMutation({
         descripcionAdicional: '', generaBolsaEmpleo: false, bolsaEmpleoDescripcion: '',
         plazasLibres: '', plazasPromocionInterna: '', plazasMilitares: '', plazasDiscapacidad: '',
         fasesTexto: '', puestosTexto: '', bloquesTemarioTexto: '', numOpcionesTest: '',
+        tienePsicotecnicos: true, numOpcionesPsicotecnico: '',
       });
     },
   });
@@ -831,6 +838,32 @@ const crearConv = useMutation({
                     <option value="4">4 opciones</option>
                     <option value="5">5 opciones</option>
                   </select>
+                </div>
+
+                {/* ⭐ Psicotécnicos: antes solo estaban en "Editar convocatoria" (por eso aparecían al abrirla otra vez) */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '13px', color: '#374151', marginBottom: formNuevaConv.tienePsicotecnicos ? '10px' : 0, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formNuevaConv.tienePsicotecnicos}
+                      onChange={(e) => setFormNuevaConv({ ...formNuevaConv, tienePsicotecnicos: e.target.checked })}
+                    />
+                    ¿Tiene psicotécnicos esta convocatoria?
+                  </label>
+                  {formNuevaConv.tienePsicotecnicos && (
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#6b7280', display: 'block', marginBottom: '4px' }}>Número de opciones en psicotécnicos</label>
+                      <select
+                        value={formNuevaConv.numOpcionesPsicotecnico}
+                        onChange={(e) => setFormNuevaConv({ ...formNuevaConv, numOpcionesPsicotecnico: e.target.value })}
+                        style={{ width: '100%', padding: '9px 12px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
+                      >
+                        <option value="">Todas las guardadas (sin recortar)</option>
+                        <option value="3">3 opciones</option>
+                        <option value="4">4 opciones</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: formNuevaConv.permiteBlancos ? '1fr' : '1fr 1fr', gap: '10px' }}>

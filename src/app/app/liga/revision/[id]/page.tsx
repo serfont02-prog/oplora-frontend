@@ -15,6 +15,8 @@ const TEXT_MUTED = 'var(--hx-6b7280)';
 const VERDE = 'var(--hx-16a34a)';
 const ROJO = 'var(--hx-dc2626)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
+// Algunas preguntas guardan la letra dentro del texto («a) …»): se quita para no mostrarla dos veces.
+const limpiar = (op?: string) => (op ?? '').replace(/^[a-fA-F]\)\s*/, '');
 
 type Filtro = 'todas' | 'fallos' | 'blanco';
 
@@ -133,7 +135,8 @@ export default function RevisionJornadaPage() {
                     {(p.opciones ?? []).map((op: string, i: number) => {
                       const esCorrecta = i === p.correcta;
                       const esTuya = i === p.tuRespuesta;
-                      const fondo = esCorrecta ? 'var(--hx-f0fdf4)' : esTuya ? 'var(--hx-fef2f2)' : 'white';
+                      // ⭐ Antes las no marcadas iban en 'white' fijo: en oscuro el texto claro casi no se leía.
+                      const fondo = esCorrecta ? 'var(--hx-f0fdf4)' : esTuya ? 'var(--hx-fef2f2)' : 'var(--c-superficie)';
                       const linea = esCorrecta ? VERDE : esTuya ? ROJO : 'var(--hx-e5e7eb)';
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 11px', borderRadius: 11, background: fondo, border: `1px solid ${linea}` }}>
@@ -141,7 +144,7 @@ export default function RevisionJornadaPage() {
                             {esCorrecta ? <Check size={13} /> : esTuya ? <XIcon size={13} /> : LETRAS[i] ?? i + 1}
                           </span>
                           <span style={{ fontSize: 13, color: TEXT_PRIMARY, lineHeight: 1.45, paddingTop: 1 }}>
-                            {op}
+                            {limpiar(op)}
                             {esTuya && <span style={{ fontSize: 11, color: esCorrecta ? VERDE : ROJO, fontWeight: 700 }}> · tu respuesta</span>}
                           </span>
                         </div>

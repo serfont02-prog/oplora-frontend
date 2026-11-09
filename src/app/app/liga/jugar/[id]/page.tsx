@@ -15,6 +15,8 @@ import { COLOR_LIGA, BG_LIGA, formatoNota, formatoTiempo, diaHora, mensajeError 
 const TEXT_PRIMARY = 'var(--hx-111827)';
 const TEXT_MUTED = 'var(--hx-6b7280)';
 const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F'];
+// Algunas preguntas guardan la letra dentro del texto («a) …»): se quita para no mostrarla dos veces.
+const limpiar = (op?: string) => (op ?? '').replace(/^[a-fA-F]\)\s*/, '');
 
 type Resultado = {
   nota: number;
@@ -247,7 +249,7 @@ export default function JugarJornadaPage() {
                 <span style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: elegida ? COLOR_LIGA : 'var(--hx-f3f4f6)', color: elegida ? 'var(--c-primario-texto)' : TEXT_MUTED }}>
                   {LETRAS[i] ?? i + 1}
                 </span>
-                <span style={{ fontSize: 14, color: TEXT_PRIMARY, lineHeight: 1.45, paddingTop: 2 }}>{op}</span>
+                <span style={{ fontSize: 14, color: TEXT_PRIMARY, lineHeight: 1.45, paddingTop: 2 }}>{limpiar(op)}</span>
               </button>
             );
           })}
