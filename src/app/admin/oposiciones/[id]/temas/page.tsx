@@ -576,7 +576,7 @@ const importarTemario = async () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                {['Nº', 'Título', 'Bloque', ''].map((h) => (
+                {['Nº', 'Título', 'Bloque', 'Artículos', ''].map((h) => (
                   <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontSize: '11px', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', background: '#f9fafb' }}>
                     {h}
                   </th>
@@ -599,6 +599,31 @@ const importarTemario = async () => {
                   <td style={{ padding: '11px 16px', fontSize: '12px', color: tema.bloque ? '#374151' : '#d1d5db' }}>
                     {tema.bloque ?? '—'}
                   </td> 
+                  {/* ⭐ Nº de artículos vinculados; en ámbar si no tiene ninguno. Al pulsar, abre "Vincular artículos". */}
+                  {(() => {
+                    const n = (tema.normativas ?? []).filter((tn: any) => tn.articulo).length;
+                    return (
+                      <td style={{ padding: '11px 16px', width: '90px' }}>
+                        <button
+                          onClick={() => {
+                            const temaFresco = temas.find((t: any) => t.id === tema.id) ?? tema;
+                            setTemaVinculando(temaFresco);
+                            setModalVincular(true);
+                          }}
+                          title={n ? `${n} artículo${n === 1 ? '' : 's'} vinculado${n === 1 ? '' : 's'}` : 'Sin artículos vinculados'}
+                          style={{
+                            minWidth: '34px', padding: '3px 9px', borderRadius: '999px', cursor: 'pointer',
+                            fontSize: '12px', fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+                            border: `1px solid ${n ? '#dbeafe' : '#fde68a'}`,
+                            background: n ? '#eff6ff' : '#fffbeb',
+                            color: n ? '#1d4ed8' : '#b45309',
+                          }}
+                        >
+                          {n}
+                        </button>
+                      </td>
+                    );
+                  })()}
                   <td style={{ padding: '11px 16px' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
                       <button
