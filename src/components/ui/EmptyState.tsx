@@ -33,8 +33,10 @@ export default function EmptyState({
         style={{
           borderRadius: 'var(--op-radius-xl)',
           padding: 'clamp(24px, 6vw, 36px)',
+          // ⭐ Antes era un crema fijo (rgba(255,253,248)): en oscuro dejaba el texto claro sobre
+          // fondo claro. Ahora usa la superficie del tema, con el mismo toque azul en la esquina.
           background:
-            'linear-gradient(180deg, rgba(255,253,248,0.98), rgba(255,253,248,0.94)), radial-gradient(circle at top left, rgba(31,124,255,0.14), transparent 38%)',
+            'radial-gradient(circle at top left, rgba(31,124,255,0.10), transparent 45%), var(--op-color-surface)',
         }}
       >
         {icon ? (
