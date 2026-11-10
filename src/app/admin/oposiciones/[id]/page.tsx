@@ -204,8 +204,8 @@ const crearConv = useMutation({
         fechaConvocatoria: formNuevaConv.fechaConvocatoria || undefined,
         plazoInscripcionInicio: formNuevaConv.plazoInscripcionInicio || undefined,
         plazoInscripcionFin: formNuevaConv.plazoInscripcionFin || undefined,
-        numeroSolicitudes: formNuevaConv.numeroSolicitudes||undefined,
-        numeroPresentados: formNuevaConv.numeroPresentados||undefined,
+        numeroSolicitudes: formNuevaConv.numeroSolicitudes ? parseInt(String(formNuevaConv.numeroSolicitudes).replace(/\D/g, '')) : undefined,
+        numeroPresentados: formNuevaConv.numeroPresentados ? parseInt(String(formNuevaConv.numeroPresentados).replace(/\D/g, '')) : undefined,
         fechaExamen: formNuevaConv.fechaExamen || undefined,
         ejercicios: formNuevaConv.ejercicios.length > 0
         ? formNuevaConv.ejercicios.map((ej) => ({
@@ -292,8 +292,8 @@ const crearConv = useMutation({
           fechaConvocatoria: formEditarConv.fechaConvocatoria || undefined,
           plazoInscripcionInicio: formEditarConv.plazoInscripcionInicio || '',
           plazoInscripcionFin: formEditarConv.plazoInscripcionFin || '',
-          numeroSolicitudes: formEditarConv.numeroSolicitudes||undefined,
-          numeroPresentados: formEditarConv.numeroPresentados||undefined,
+          numeroSolicitudes: formEditarConv.numeroSolicitudes ? parseInt(String(formEditarConv.numeroSolicitudes).replace(/\D/g, '')) : undefined,
+          numeroPresentados: formEditarConv.numeroPresentados ? parseInt(String(formEditarConv.numeroPresentados).replace(/\D/g, '')) : undefined,
           fechaExamen: formEditarConv.fechaExamen || undefined,
           ejercicios: formEditarConv.ejercicios.length > 0
           ? formEditarConv.ejercicios.map((ej) => ({
@@ -357,8 +357,8 @@ const crearConv = useMutation({
       fechaConvocatoria: c.fechaConvocatoria??``,
       plazoInscripcionInicio: c.plazoInscripcionInicio ? new Date(c.plazoInscripcionInicio).toISOString().split('T')[0] : '',
       plazoInscripcionFin: c.plazoInscripcionFin ? new Date(c.plazoInscripcionFin).toISOString().split('T')[0] : '',
-      numeroSolicitudes: c.numeroSolicitudes??'',
-      numeroPresentados: c.numeroPresentados??'',
+      numeroSolicitudes: c.numeroSolicitudes?.toString() ?? '',
+      numeroPresentados: c.numeroPresentados?.toString() ?? '',
       fechaExamen: c.fechaExamen ? new Date(c.fechaExamen).toISOString().split('T')[0] : '',
       ejercicios: (c.ejercicios ?? []).map((ej: any) => ({
         numero: ej.numero,
