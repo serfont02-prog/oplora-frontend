@@ -34,7 +34,9 @@ export default function BotonSubrayar({
 
   // Encima de la selección; si no cabe (muy arriba), debajo. Sin salirse por los lados.
   const ancho = typeof window !== 'undefined' ? window.innerWidth : 400;
-  const x = Math.min(Math.max(menu.x, 80), ancho - 80);
+  // En el móvil el botón (Subrayar + ✕) mide unos 190 px: medio botón más un margen de 12
+  const margen = tactil ? 108 : 80;
+  const x = Math.min(Math.max(menu.x, margen), ancho - margen);
   const top = menu.y > 70 ? menu.y - (tactil ? 56 : 46) : menu.y + 34;
 
   return (

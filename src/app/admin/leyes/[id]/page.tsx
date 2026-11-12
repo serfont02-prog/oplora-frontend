@@ -1380,8 +1380,9 @@ const editarArticulo = useMutation({
           <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '100%', maxWidth: '760px', maxHeight: '88vh', overflowY: 'auto' }}>
             <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Actualizar desde JSON</div>
             <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '14px', lineHeight: 1.5 }}>
-              Corrige el texto y la rúbrica de los artículos (y las disposiciones) emparejando por número.
-              No borra nada: se mantienen preguntas, flashcards, notas, subrayados y vínculos con temas.
+              Corrige el texto y la rúbrica de los artículos (y las disposiciones) emparejando por número,
+              y crea los artículos que falten junto a su vecino. No borra nada: se mantienen preguntas,
+              flashcards, notas, subrayados y vínculos con temas.
             </div>
 
             {!actJson.resultado?.aplicado && (
@@ -1405,7 +1406,8 @@ const editarArticulo = useMutation({
                     {r.articulos.rubricasCambiadas > 0 && <> ({r.articulos.rubricasCambiadas} con rúbrica nueva)</>} · ya iguales: {r.articulos.sinCambios}<br />
                     Disposiciones: {r.disposiciones.aCambiar} a corregir · {r.disposiciones.nuevas} nuevas · {r.disposiciones.sinCambios} iguales
                     {r.aplicado && <><br />Subrayados recolocados: {r.subrayados.recolocados}{r.subrayados.noEncontrados > 0 && ` (${r.subrayados.noEncontrados} no encontrados en el texto nuevo)`}</>}
-                    {r.articulos.soloEnJson.length > 0 && <><br /><span style={{ color: '#b45309' }}>En el JSON pero no en la app (no se crean): {r.articulos.soloEnJson.join(', ')}</span></>}
+                    {(r.articulos.creados ?? []).length > 0 && <><br />{r.aplicado ? 'Artículos nuevos creados' : 'Se crearán (no existían)'}: <strong>{r.articulos.creados.join(', ')}</strong></>}
+                    {r.articulos.soloEnJson.length > 0 && <><br /><span style={{ color: '#b45309' }}>En el JSON pero no en la app (no se pueden colocar: su vecino está en otro título, capítulo o sección; usa Importar JSON): {r.articulos.soloEnJson.join(', ')}</span></>}
                     {r.articulos.soloEnApp.length > 0 && <><br /><span style={{ color: '#b45309' }}>En la app pero no en el JSON (no se tocan): {r.articulos.soloEnApp.join(', ')}</span></>}
                     {r.disposiciones.soloEnApp.length > 0 && <><br />Disposiciones solo en la app (no se tocan): {r.disposiciones.soloEnApp.join(', ')}</>}
                   </div>
@@ -1428,7 +1430,7 @@ const editarArticulo = useMutation({
                   {actualizarJson.isPending ? 'Procesando...' : 'Previsualizar'}
                 </button>
               )}
-              {actJson.resultado && !actJson.resultado.aplicado && (actJson.resultado.articulos.aCambiar + actJson.resultado.disposiciones.aCambiar + actJson.resultado.disposiciones.nuevas) > 0 && (
+              {actJson.resultado && !actJson.resultado.aplicado && (actJson.resultado.articulos.aCambiar + (actJson.resultado.articulos.creados ?? []).length + actJson.resultado.disposiciones.aCambiar + actJson.resultado.disposiciones.nuevas) > 0 && (
                 <button onClick={() => actualizarJson.mutate(true)} disabled={actualizarJson.isPending} style={{ padding: '9px 18px', background: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
                   Aplicar cambios
                 </button>

@@ -15,6 +15,7 @@ import ErrorCarga from '@/components/ui/ErrorCarga';
 import BotonSubrayar, { esPantallaTactil } from '@/components/estudio/BotonSubrayar';
 import { useSeleccionTactil } from '@/components/estudio/useSeleccionTactil';
 import CargaEsqueleto from '@/components/marca/CargaEsqueleto';
+import AvisoFlashcardsTema from '@/components/estudio/AvisoFlashcardsTema';
 
 // ⭐ Colores de las cajas destacadas (compartidos por las cajas y por la barra de filtros).
 // "Idea" y "Regla de examen" se fusionan en una sola categoría visual ("Idea clave"): ambas
@@ -769,6 +770,11 @@ const updateProgreso = () => {
 
         </div>
        </div>
+
+       {/* ⭐ Al llegar al final: recordatorio de las flashcards sin estrenar del tema */}
+       {(apunte?.contenidoEstructurado || apunte?.textoCompleto) && (
+         <AvisoFlashcardsTema temaId={apunte?.tema?.id} oposicionId={oposicionId} numeroTema={apunte?.tema?.numero} />
+       )}
 
         {/* Menú subrayar flotante */}
         <BotonSubrayar

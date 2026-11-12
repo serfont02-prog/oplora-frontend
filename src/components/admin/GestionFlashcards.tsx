@@ -22,6 +22,7 @@ function textoError(e: any, porDefecto: string) {
 export default function GestionFlashcards() {
   const qc = useQueryClient();
   const [oposicionId, setOposicionId] = useState('');
+  const [temaId, setTemaId] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [q, setQ] = useState('');
   const [tipo, setTipo] = useState('');
@@ -41,9 +42,17 @@ export default function GestionFlashcards() {
     queryFn: async () => (await api.get('/oposiciones')).data,
   });
 
+  // Temas de la oposición elegida que tienen flashcards (con cuántas)
+  const { data: datosTemas } = useQuery({
+    queryKey: ['admin-flashcards-temas', oposicionId],
+    queryFn: async () => (await api.get('/flashcards/admin/temas', { params: { oposicionId } })).data as { temas: { id: string; numero: number; titulo: string; n: number }[]; sinTema: number },
+    enabled: !!oposicionId,
+  });
+  const temasFC = datosTemas?.temas ?? [];
+
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['admin-flashcards', oposicionId, q, tipo, estado, pagina],
-    queryFn: async () => (await api.get('/flashcards/admin/lista', { params: { oposicionId: oposicionId || undefined, q: q || undefined, tipo: tipo || undefined, estado: estado || undefined, pagina } })).data,
+    queryKey: ['admin-flashcards', oposicionId, temaId, q, tipo, estado, pagina],
+    queryFn: async () => (await api.get('/flashcards/admin/lista', { params: { oposicionId: oposicionId || undefined, temaId: temaId || undefined, q: q || undefined, tipo: tipo || undefined, estado: estado || undefined, pagina } })).data,
     placeholderData: (prev: any) => prev,
   });
 
@@ -61,6 +70,31 @@ export default function GestionFlashcards() {
     onError: (e: any) => mostrar('error', textoError(e, 'No se ha podido borrar')),
   });
 
+  // ⭐ Borrado masivo: todas las flashcards oficiales de la oposición elegida, o solo las del tema.
+  // Las personales que se crean los usuarios no se tocan. Hay que escribir BORRAR para confirmar.
+  const borrarMasivo = useMutation({
+    mutationFn: async () => (await api.delete('/flashcards/admin/masivo', { params: { oposicionId, temaId: temaId || undefined } })).data,
+    onSuccess: (r: any) => {
+      qc.invalidateQueries({ queryKey: ['admin-flashcards'] });
+      qc.invalidateQueries({ queryKey: ['admin-flashcards-temas'] });
+      setTemaId('');
+      setPagina(1);
+      mostrar('ok', `${(r?.borradas ?? 0).toLocaleString('es-ES')} flashcards borradas`);
+    },
+    onError: (e: any) => mostrar('error', textoError(e, 'No se han podido borrar')),
+  });
+  const temaElegido = temasFC.find((t) => t.id === temaId);
+  const nOposicion = temasFC.reduce((s, t) => s + t.n, 0) + (datosTemas?.sinTema ?? 0);
+  const nABorrar = temaId ? temaElegido?.n ?? 0 : nOposicion;
+  const pedirBorradoMasivo = () => {
+    const nombreOpo = oposiciones.find((o: any) => o.id === oposicionId)?.nombre ?? 'esta oposición';
+    const ambito = temaElegido ? `del Tema ${temaElegido.numero} de ${nombreOpo}` : `de toda la oposición ${nombreOpo}`;
+    const escrito = window.prompt(
+      `Vas a borrar ${nABorrar.toLocaleString('es-ES')} flashcards ${ambito}, con el progreso de repaso que tengan los usuarios. No se puede deshacer.\n\nEscribe BORRAR para confirmar:`,
+    );
+    if (escrito?.trim().toUpperCase() === 'BORRAR') borrarMasivo.mutate();
+  };
+
   const pedirBorrado = (fc: any) => {
     const extra = fc.repasos > 0 ? `\n\n${fc.repasos} usuario(s) la tienen en su repaso; se les quitará. Si solo quieres ocultarla, desactívala.` : '';
     if (window.confirm(`¿Borrar esta flashcard para siempre?${extra}`)) borrar.mutate(fc.id);
@@ -76,10 +110,16 @@ export default function GestionFlashcards() {
           <Search size={14} color="#9ca3af" style={{ position: 'absolute', left: 10, top: 10 }} />
           <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar en pregunta, respuesta o explicación" style={{ ...input, width: '100%', paddingLeft: 30, boxSizing: 'border-box' }} />
         </div>
-        <select value={oposicionId} onChange={(e) => { setOposicionId(e.target.value); setPagina(1); }} style={input}>
+        <select value={oposicionId} onChange={(e) => { setOposicionId(e.target.value); setTemaId(''); setPagina(1); }} style={input}>
           <option value="">Todas las oposiciones</option>
           {oposiciones.map((o: any) => <option key={o.id} value={o.id}>{o.nombre}</option>)}
         </select>
+        {oposicionId && (
+          <select value={temaId} onChange={(e) => { setTemaId(e.target.value); setPagina(1); }} style={{ ...input, maxWidth: 260 }}>
+            <option value="">Todos los temas</option>
+            {temasFC.map((t) => <option key={t.id} value={t.id}>Tema {t.numero} ({t.n})</option>)}
+          </select>
+        )}
         <select value={tipo} onChange={(e) => { setTipo(e.target.value); setPagina(1); }} style={input}>
           <option value="">Todos los tipos</option>
           {Object.entries(TIPOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -91,6 +131,23 @@ export default function GestionFlashcards() {
           <option value="duelo">Válidas para duelo</option>
         </select>
       </div>
+
+      {oposicionId && nABorrar > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={pedirBorradoMasivo}
+            disabled={borrarMasivo.isPending}
+            style={{ ...boton, borderColor: '#fecaca', color: '#b91c1c', background: '#fef2f2' }}
+          >
+            <Trash2 size={13} />
+            {borrarMasivo.isPending
+              ? 'Borrando…'
+              : temaElegido
+                ? `Borrar las ${nABorrar.toLocaleString('es-ES')} del Tema ${temaElegido.numero}`
+                : `Borrar las ${nABorrar.toLocaleString('es-ES')} de esta oposición`}
+          </button>
+        </div>
+      )}
 
       {aviso && (
         <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, background: aviso.tipo === 'ok' ? '#f0fdf4' : '#fef2f2', color: aviso.tipo === 'ok' ? '#15803d' : '#b91c1c' }}>{aviso.texto}</div>

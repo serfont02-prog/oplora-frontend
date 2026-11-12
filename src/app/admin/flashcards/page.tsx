@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, FileJson } from 'lucide-react';
 import { BG_NEUTRAL } from '@/styles/tokens';
 import GestionFlashcards from '@/components/admin/GestionFlashcards';
 
@@ -16,6 +16,28 @@ export default function FlashcardsAdminPage() {
   const [resultado, setResultado] = useState<{ importadas: number; errores?: string[]; sinVincular?: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
+  const [archivosCargados, setArchivosCargados] = useState<string[]>([]);
+  const [arrastrandoArchivo, setArrastrandoArchivo] = useState(false);
+
+  // ⭐ Cargar uno o varios .json desde el ordenador (también arrastrándolos al cuadro).
+  // Si son varios, se juntan en una sola lista. El contenido queda en el cuadro por si se quiere revisar.
+  const cargarArchivos = async (lista: FileList | null) => {
+    const archivos = Array.from(lista ?? []).filter((f) => f.name.toLowerCase().endsWith('.json') || f.type === 'application/json');
+    if (!archivos.length) { setError('Elige un archivo .json'); return; }
+    setError(null);
+    setResultado(null);
+    try {
+      const contenidos = await Promise.all(archivos.map(async (f) => {
+        const datos = JSON.parse(await f.text());
+        return Array.isArray(datos) ? datos : Array.isArray(datos?.flashcards) ? datos.flashcards : [datos];
+      }));
+      const todas = contenidos.flat();
+      setJsonTexto(JSON.stringify(todas, null, 2));
+      setArchivosCargados(archivos.map((f) => `${f.name} (${contenidos[archivos.indexOf(f)].length})`));
+    } catch {
+      setError('Algún archivo no es un JSON válido. Revisa que esté bien formado.');
+    }
+  };
   const [vinculacion, setVinculacion] = useState<'ninguna' | 'tema' | 'articulo'>('ninguna');
 const [leyId, setLeyId] = useState('');
 const [versionLeyId, setVersionLeyId] = useState('');
@@ -129,7 +151,7 @@ const { data: temasList = [] } = useQuery({
           `Aviso: ${res.data.sinVincular} de ${res.data.importadas} flashcards importadas quedaron SIN vincular a ningún tema ni artículo. No aparecerán en el repaso por tema.`
         );
       }
-      if (!res.data?.errores?.length) setJsonTexto('');
+      if (!res.data?.errores?.length) { setJsonTexto(''); setArchivosCargados([]); }
     } catch (e: any) {
       setError(e.message ?? 'Error al importar');
     } finally {
@@ -526,14 +548,34 @@ const guardarManual = async () => {
 
               {/* Editor JSON */}
               <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: '14px', overflow: 'hidden' }}>
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f3f4f6' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>JSON a importar</span>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827', flex: 1 }}>JSON a importar</span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#374151', cursor: 'pointer', background: '#f9fafb' }}>
+                    <FileJson size={14} /> Subir archivo .json
+                    <input
+                      type="file"
+                      accept=".json,application/json"
+                      multiple
+                      style={{ display: 'none' }}
+                      onChange={(e) => { cargarArchivos(e.target.files); e.target.value = ''; }}
+                    />
+                  </label>
                 </div>
-                <div style={{ padding: '12px 16px' }}>
+                <div
+                  style={{ padding: '12px 16px', outline: arrastrandoArchivo ? '2px dashed #3b82f6' : 'none', outlineOffset: '-6px' }}
+                  onDragOver={(e) => { e.preventDefault(); setArrastrandoArchivo(true); }}
+                  onDragLeave={() => setArrastrandoArchivo(false)}
+                  onDrop={(e) => { e.preventDefault(); setArrastrandoArchivo(false); cargarArchivos(e.dataTransfer.files); }}
+                >
+                  {archivosCargados.length > 0 && (
+                    <div style={{ fontSize: '12px', color: '#1d4ed8', background: '#eff6ff', border: '1px solid #dbeafe', borderRadius: '8px', padding: '7px 10px', marginBottom: '10px' }}>
+                      Cargado: {archivosCargados.join(' · ')}
+                    </div>
+                  )}
                   <textarea
                     value={jsonTexto}
-                    onChange={(e) => setJsonTexto(e.target.value)}
-                    placeholder='[{"tipo": "vf", "nivel": "basico", "pregunta": "...", "respuesta": "true", "oposicionId": "..."}]'
+                    onChange={(e) => { setJsonTexto(e.target.value); setArchivosCargados([]); }}
+                    placeholder={'Sube un archivo, arrástralo aquí o pega el JSON:\n[{"tipo": "vf", "nivel": "basico", "pregunta": "...", "respuesta": "true", "oposicionId": "..."}]'}
                     style={{
                       width: '100%', minHeight: '300px', padding: '12px',
                       fontSize: '12px', fontFamily: 'monospace',

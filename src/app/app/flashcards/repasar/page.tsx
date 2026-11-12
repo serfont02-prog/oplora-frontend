@@ -34,8 +34,11 @@ export default function RepasarPage() {
   const [errorRegistro, setErrorRegistro] = useState('');
   const [gamificacionInfo, setGamificacionInfo] = useState<GamificacionInfo | null>(null);
   const numeroTema = searchParams.get('numeroTema');
-  // ⭐ Si se entra desde el hub de Flashcards ("Practicar por tema"), volver lleva al hub y no al tema.
+  // ⭐ Si se entra desde el hub de Flashcards ("Por temas"), volver lleva al hub y no al tema.
   const desdeHub = searchParams.get('origen') === 'flashcards';
+  // ⭐ Modo de la sesión con tema: 'nuevas' (las N primeras sin ver), 'repasar' (las que tocan
+  // de ese tema) o, sin modo, todas las del tema (repasar el tema entero).
+  const modo = searchParams.get('modo');
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/app/login');
@@ -43,7 +46,7 @@ export default function RepasarPage() {
 
   // Todo lo que muestra el estado de las flashcards (hub, atajo de Inicio, Practicar y límites).
   const invalidarEstadoFC = () => {
-    for (const k of ['pendientes-fc', 'stats-fc', 'fc-pendientes-widget', 'fc-periodo', 'limites']) {
+    for (const k of ['pendientes-fc', 'stats-fc', 'fc-pendientes-widget', 'fc-periodo', 'limites', 'resumen-temas-fc']) {
       queryClient.invalidateQueries({ queryKey: [k] });
     }
   };
@@ -59,8 +62,14 @@ export default function RepasarPage() {
   }, []);
 
   const { data: flashcards = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['fc-repaso', oposicionId, temaId, articuloId, numFlashcards],
+    queryKey: ['fc-repaso', oposicionId, temaId, articuloId, numFlashcards, modo],
     queryFn: async () => {
+      if (temaId && modo === 'nuevas') {
+        return (await api.get(`/flashcards/tema/${temaId}/nuevas`, { params: { limite: numFlashcards } })).data;
+      }
+      if (temaId && modo === 'repasar' && oposicionId) {
+        return (await api.get(`/flashcards/pendientes/${oposicionId}`, { params: { limite: numFlashcards, temaId } })).data;
+      }
       if (temaId) {
         const res = await api.get(`/flashcards/tema/${temaId}`);
         return res.data;
@@ -157,9 +166,13 @@ export default function RepasarPage() {
         <EmptyState
           icon={<Layers size={28} />}
           eyebrow="Flashcards"
-          title={temaId || articuloId ? 'Sin flashcards' : '¡Todo al día!'}
+          title={modo === 'repasar' ? '¡Todo al día!' : modo === 'nuevas' ? 'No quedan nuevas' : temaId || articuloId ? 'Sin flashcards' : '¡Todo al día!'}
           description={
-            temaId
+            modo === 'repasar'
+              ? 'De este tema no te toca repasar ninguna hoy.'
+              : modo === 'nuevas'
+              ? 'Ya has empezado todas las flashcards de este tema.'
+              : temaId
               ? 'Este tema no tiene flashcards disponibles todavía.'
               : articuloId
               ? 'Este artículo no tiene flashcards disponibles todavía.'
@@ -210,9 +223,13 @@ export default function RepasarPage() {
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--c-superficie)', boxShadow: 'var(--c-sombra)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
               <PartyPopper size={28} color={COLOR_FC} />
             </div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>¡Repaso completado!</div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>
+              {modo === 'nuevas' ? '¡Tanda completada!' : '¡Repaso completado!'}
+            </div>
             <div style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 20 }}>
-              {resultados.length} flashcards repasadas
+              {modo === 'nuevas'
+                ? `${resultados.length} ${resultados.length === 1 ? 'flashcard nueva' : 'flashcards nuevas'}. Volverán mañana para su primer repaso.`
+                : `${resultados.length} flashcards repasadas`}
             </div>
 
             {gamificacionInfo && (
@@ -244,6 +261,16 @@ export default function RepasarPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* ⭐ Tras una tanda de nuevas: volver a la ficha del tema para elegir otra tanda
+                  (repetir las mismas hoy las daría por sabidas demasiado pronto). */}
+              {modo === 'nuevas' && temaId ? (
+                <button
+                  onClick={() => router.push(`/app/flashcards?tema=${temaId}`)}
+                  style={{ width: '100%', padding: 13, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Seguir con más nuevas
+                </button>
+              ) : (
               <button
                 onClick={() => {
                   setIndice(0);
@@ -258,6 +285,7 @@ export default function RepasarPage() {
               >
                 Repasar de nuevo
               </button>
+              )}
               <button
                 onClick={volver}
                 style={{ width: '100%', padding: 13, background: 'var(--c-superficie)', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
@@ -288,6 +316,12 @@ export default function RepasarPage() {
               <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'var(--c-superficie)', color: NIVEL_COLOR[fc.nivel] ?? TEXT_SECONDARY, fontWeight: 500 }}>
                 {fc.nivel}
               </span>
+              {/* ⭐ De qué tema es la tarjeta (en el repaso general se mezclan temas) */}
+              {(fc.tema?.numero ?? numeroTema) && (
+                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'var(--c-superficie)', color: TEXT_SECONDARY, fontWeight: 600 }}>
+                  Tema {fc.tema?.numero ?? numeroTema}
+                </span>
+              )}
               {fc.articulo && (
                 <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'var(--hx-e6f1fb)', color: 'var(--hx-185fa5)', fontWeight: 500 }}>
                   Art. {fc.articulo.numero}
@@ -405,8 +439,8 @@ export default function RepasarPage() {
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                   {[
-                    { cal: 0, label: 'Nada', sub: 'Hoy', color: 'var(--hx-dc2626)', bg: 'var(--hx-fef2f2)', border: 'var(--hx-fca5a5)' },
-                    { cal: 2, label: 'Difícil', sub: '1 día', color: 'var(--hx-d97706)', bg: 'var(--hx-fffbeb)', border: 'var(--hx-fde68a)' },
+                    { cal: 0, label: 'Nada', sub: 'Mañana', color: 'var(--hx-dc2626)', bg: 'var(--hx-fef2f2)', border: 'var(--hx-fca5a5)' },
+                    { cal: 2, label: 'Difícil', sub: 'Mañana', color: 'var(--hx-d97706)', bg: 'var(--hx-fffbeb)', border: 'var(--hx-fde68a)' },
                     { cal: 3, label: 'Bien', sub: 'Varios días', color: 'var(--hx-2563eb)', bg: 'var(--hx-eff6ff)', border: 'var(--hx-bfdbfe)' },
                     { cal: 5, label: 'Fácil', sub: 'Semanas', color: 'var(--hx-15803d)', bg: 'var(--hx-f0fdf4)', border: 'var(--hx-86efac)' },
                   ].map(({ cal, label, sub, color, bg, border }) => (

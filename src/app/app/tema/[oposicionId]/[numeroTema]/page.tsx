@@ -500,7 +500,7 @@ export default function TemaPage() {
           <Acceso label="Test" sub="Del tema" Icon={ClipboardCheck} color={COLOR_TEST} onClick={() => setModalTest(true)} />
           <Acceso
             label="Flashcards" sub={totalFC > 0 ? `${totalFC} tarjetas` : 'Repasar'} Icon={Layers} color={COLOR_FC}
-            onClick={() => router.push(`/app/flashcards/repasar?temaId=${tema.id}&oposicionId=${oposicionId}&numeroTema=${numeroTema}`)}
+            onClick={() => router.push(`/app/flashcards?tema=${tema.id}`)}
           />
           <Acceso label="Notas" sub={notaTexto ? 'Escritas' : 'Escribir'} Icon={NotebookPen} color="var(--hx-8b7355)" onClick={() => abrirSeccion('notas')} />
           <Acceso

@@ -202,7 +202,7 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
   // Misma consulta que el atajo de Flashcards de Inicio (comparte caché).
   const { data: pendientesFC = [] } = useQuery({
     queryKey: ['fc-pendientes-widget', oposicion?.id],
-    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicion.id}`)).data,
+    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicion.id}`, { params: { limite: 99 } })).data,
     enabled: !!oposicion?.id,
   });
   const nFC = Array.isArray(pendientesFC) ? pendientesFC.length : 0;
@@ -217,9 +217,9 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
   const filas: Fila[] = [
     {
       clave: 'flashcards', titulo: 'Flashcards', Icon: Layers, color: COLOR_FC, bg: COLOR_FC_BG,
-      descripcion: nFC > 0 ? `${nFC} ${nFC === 1 ? 'tarjeta pendiente' : 'tarjetas pendientes'} de repaso` : 'Repasa con tarjetas de memoria',
+      descripcion: nFC > 0 ? `${nFC >= 99 ? 'Más de 99' : nFC} ${nFC === 1 ? 'tarjeta' : 'tarjetas'} por repasar hoy` : 'Repasa con tarjetas de memoria',
       badge: nFC,
-      onClick: () => router.push(nFC > 0 ? `/app/flashcards/repasar?oposicionId=${oposicion.id}` : '/app/flashcards'),
+      onClick: () => router.push(nFC > 0 ? `/app/flashcards/repasar?oposicionId=${oposicion.id}&n=${Math.min(nFC, 50)}` : '/app/flashcards'),
     },
     (() => {
       const porNivel = nivel < 2;

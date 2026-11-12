@@ -757,7 +757,8 @@ function WidgetAccionesRapidas({ usuario, oposicionId, router }: any) {
 
   const { data: pendientesFC = [] } = useQuery({
     queryKey: ['fc-pendientes-widget', oposicionId],
-    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicionId}`)).data,
+    // ⭐ Solo repasos que tocan hoy (las nuevas se empiezan desde cada tema)
+    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicionId}`, { params: { limite: 99 } })).data,
     enabled: !!oposicionId,
   });
 
@@ -779,8 +780,8 @@ function WidgetAccionesRapidas({ usuario, oposicionId, router }: any) {
   const acciones = [
     { label: 'Test', sub: 'Empezar ya', Icon: ClipboardDocumentCheckIcon, color: COLOR_PRACTICAR, badge: 0, onClick: () => setModalTest(true) },
     {
-      label: 'Flashcards', sub: nFC > 0 ? `${nFC} pendientes` : 'Al día', Icon: ArrowPathIcon, color: 'var(--c-fc)', badge: nFC,
-      onClick: () => router.push(nFC > 0 ? `/app/flashcards/repasar?oposicionId=${oposicionId}` : '/app/flashcards'),
+      label: 'Flashcards', sub: nFC > 0 ? `${nFC >= 99 ? '+99' : nFC} por repasar` : 'Al día', Icon: ArrowPathIcon, color: 'var(--c-fc)', badge: nFC,
+      onClick: () => router.push(nFC > 0 ? `/app/flashcards/repasar?oposicionId=${oposicionId}&n=${Math.min(nFC, 50)}` : '/app/flashcards'),
     },
     {
       label: 'Retos', sub: nRetos > 0 ? `${nRetos} por jugar` : 'Lanza uno', Icon: FireIcon, color: COLOR_RETOS, badge: nRetos,
