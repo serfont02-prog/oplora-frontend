@@ -7,13 +7,17 @@ import { Upload, CheckCircle, AlertCircle, FileJson } from 'lucide-react';
 import { BG_NEUTRAL } from '@/styles/tokens';
 import GestionFlashcards from '@/components/admin/GestionFlashcards';
 
-const TIPOS = ['vf', 'hueco', 'trampa', 'articulo'];
+const TIPOS = ['vf', 'hueco', 'trampa', 'articulo', 'supuesto'];
 const NIVELES = ['basico', 'medio', 'alto'];
 
 export default function FlashcardsAdminPage() {
   const [tab, setTab] = useState<'gestionar' | 'importar' | 'manual'>('gestionar');
   const [jsonTexto, setJsonTexto] = useState('');
-  const [resultado, setResultado] = useState<{ importadas: number; errores?: string[]; sinVincular?: number } | null>(null);
+  const [resultado, setResultado] = useState<{
+    importadas: number; enlazadas?: number; pendientesRevision?: number; errores?: string[]; sinVincular?: number;
+    noEnlazadas?: { fila: number; pregunta: string; referencia: string }[];
+    duplicadas?: { fila: number; pregunta: string }[];
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
   const [archivosCargados, setArchivosCargados] = useState<string[]>([]);
@@ -121,8 +125,10 @@ const { data: temasList = [] } = useQuery({
     setResultado(null);
     setImportando(true);
     try {
-      const flashcardsBrutas = JSON.parse(jsonTexto);
-      if (!Array.isArray(flashcardsBrutas)) throw new Error('El JSON debe ser un array');
+      const datos = JSON.parse(jsonTexto);
+      // ⭐ Se acepta la lista sola o el formato estándar { "flashcards": [ ... ] }
+      const flashcardsBrutas = Array.isArray(datos) ? datos : Array.isArray(datos?.flashcards) ? datos.flashcards : null;
+      if (!flashcardsBrutas) throw new Error('El JSON debe ser una lista o { "flashcards": [ ... ] }');
       // ⭐ Antes se enviaba el JSON tal cual se pegaba, y esta pestaña ("Importar JSON") no
       // tenía ningún selector de tema/artículo ni lo mencionaba en el ejemplo — es la vía real
       // por la que se suben lotes grandes de flashcards, así que si el JSON pegado no traía su
@@ -146,11 +152,6 @@ const { data: temasList = [] } = useQuery({
       // por una sola fila mala — devuelve {importadas, errores, sinVincular}.
       const res = await api.post('/flashcards/importar', { flashcards });
       setResultado(res.data);
-      if (res.data?.sinVincular > 0) {
-        setError(
-          `Aviso: ${res.data.sinVincular} de ${res.data.importadas} flashcards importadas quedaron SIN vincular a ningún tema ni artículo. No aparecerán en el repaso por tema.`
-        );
-      }
       if (!res.data?.errores?.length) { setJsonTexto(''); setArchivosCargados([]); }
     } catch (e: any) {
       setError(e.message ?? 'Error al importar');
@@ -167,7 +168,7 @@ const guardarManual = async () => {
   setGuardando(true);
   setError(null);
   try {
-    await api.post('/flashcards/importar', {
+    const res = await api.post('/flashcards/importar', {
       flashcards: [{
         tipo: form.tipo,
         nivel: form.nivel,
@@ -179,6 +180,13 @@ const guardarManual = async () => {
         articuloId: articuloSeleccionado?.id || undefined, // ⭐
       }],
     });
+    // ⭐ La importación no falla entera por una fila: hay que mirar si esta se ha guardado
+    if (!res.data?.importadas) {
+      const motivo = res.data?.errores?.[0]?.replace(/^Fila 1: /, '')
+        ?? (res.data?.duplicadas?.length ? 'Ya existe una flashcard con esa pregunta en la oposición' : 'No se ha guardado');
+      setError(motivo);
+      return;
+    }
     setGuardado(true);
     setForm({ tipo: 'vf', nivel: 'basico', pregunta: '', respuesta: '', explicacion: '', oposicionId: form.oposicionId });
     setTemaSeleccionado(null);
@@ -192,42 +200,38 @@ const guardarManual = async () => {
   }
 };
 
-  const EJEMPLO_JSON = JSON.stringify([
+  // ⭐ Formato estándar (nov 2026). La oposición y el tema pueden venir en cada fila o elegirse
+  // arriba para todo el lote. "tema" es el NÚMERO del tema en la convocatoria activa.
+  const EJEMPLO_JSON = JSON.stringify({ flashcards: [
     {
-      tipo: 'vf',
-      nivel: 'basico',
-      pregunta: 'El artículo 14 CE reconoce el principio de igualdad ante la ley',
+      tipo: 'vf', nivel: 'basico', tema: 1, bloque: 'Nacionalidad',
+      pregunta: 'Para adquirir la nacionalidad por residencia se exige, como regla general, residencia legal de diez años.',
       respuesta: 'true',
-      explicacion: 'El artículo 14 CE establece que los españoles son iguales ante la ley',
-      oposicionId: 'UUID-de-la-oposicion',
-      // ⭐ Opcional: si lo indicas aquí por pregunta, tiene prioridad sobre el selector
-      // "Vincular este lote a" de arriba. Si lo dejas fuera, se usa lo que hayas elegido allí.
-      temaId: 'UUID-del-tema (opcional, o usa el selector de arriba)',
+      explicacion: 'Regla general del art. 22.1 CC; hay plazos más cortos para algunos casos.',
+      norma: 'CC', articulo: '22', apartado: '1', fechaReferencia: '2026-11-12',
+      fuenteValidacion: 'BOE-A-1889-4763 (consolidado)', fechaRevision: '2026-11-12',
     },
     {
-      tipo: 'hueco',
-      nivel: 'medio',
-      pregunta: 'El artículo 14 CE establece que los españoles son iguales ante la ___, sin discriminación',
-      respuesta: 'ley',
-      explicacion: 'La igualdad ante la ley es uno de los principios fundamentales',
-      oposicionId: 'UUID-de-la-oposicion',
+      tipo: 'hueco', nivel: 'medio', tema: 1,
+      pregunta: 'Los españoles son iguales ante la ___ (art. 14 CE).',
+      respuesta: 'ley', norma: 'CE', articulo: '14',
     },
     {
-      tipo: 'articulo',
-      nivel: 'medio',
-      pregunta: '¿Qué artículo de la CE reconoce el principio de igualdad ante la ley?',
-      respuesta: 'Artículo 14',
-      oposicionId: 'UUID-de-la-oposicion',
+      tipo: 'supuesto', nivel: 'alto', tema: 1,
+      pregunta: 'Ana nace en Madrid de padres extranjeros nacidos fuera de España. ¿Es española de origen?',
+      respuesta: 'No, salvo que ninguno de los padres le atribuya nacionalidad (apatridia).',
+      norma: 'CC', articulo: '17', apartado: '1.c',
     },
     {
-      tipo: 'trampa',
-      nivel: 'alto',
-      pregunta: 'El artículo 14 CE reconoce la igualdad ante la ley SOLO para los ciudadanos españoles mayores de edad',
-      respuesta: 'false',
-      explicacion: 'El artículo 14 CE no limita la igualdad a mayores de edad',
-      oposicionId: 'UUID-de-la-oposicion',
+      tipo: 'comparativa', nivel: 'medio', tema: 1,
+      pregunta: 'Nacionalidad de origen frente a nacionalidad derivativa',
+      respuesta: 'La de origen no se puede perder por privación; la derivativa sí.',
+      comparativa: { conceptoA: 'De origen', conceptoB: 'Derivativa', diferencias: [
+        { aspecto: 'Cómo se adquiere', a: 'Por filiación o nacimiento', b: 'Residencia, opción o carta' },
+        { aspecto: 'Privación', a: 'No (art. 11.2 CE)', b: 'Sí, en los casos del art. 25 CC' },
+      ] },
     },
-  ], null, 2);
+  ] }, null, 2);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -268,30 +272,40 @@ const guardarManual = async () => {
           {/* TAB: Gestionar (buscar, corregir, activar/desactivar y borrar) */}
           {tab === 'gestionar' && <GestionFlashcards />}
 
-          {/* Resultado */}
+          {/* Resultado de la importación */}
           {resultado && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '10px' }}>
-                <CheckCircle size={16} color="#15803d" />
-                <span style={{ fontSize: '13px', color: '#15803d', fontWeight: 500 }}>
-                  {resultado.importadas} flashcards importadas correctamente
-                </span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                {[
+                  { n: resultado.importadas, t: 'importadas', c: '#15803d', bg: '#f0fdf4', b: '#86efac' },
+                  { n: resultado.enlazadas ?? 0, t: 'enlazadas a su artículo', c: '#1d4ed8', bg: '#eff6ff', b: '#bfdbfe' },
+                  { n: resultado.noEnlazadas?.length ?? 0, t: 'sin enlazar (pendientes)', c: '#b45309', bg: '#fffbeb', b: '#fde68a' },
+                  { n: resultado.duplicadas?.length ?? 0, t: 'duplicadas (no se suben)', c: '#6b7280', bg: '#f9fafb', b: '#e5e7eb' },
+                  { n: resultado.errores?.length ?? 0, t: 'con errores', c: '#dc2626', bg: '#fef2f2', b: '#fca5a5' },
+                ].map(({ n, t, c, bg, b }) => (
+                  <div key={t} style={{ padding: '10px 12px', background: bg, border: `1px solid ${b}`, borderRadius: '10px' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: c }}>{n.toLocaleString('es-ES')}</div>
+                    <div style={{ fontSize: '11px', color: c }}>{t}</div>
+                  </div>
+                ))}
               </div>
-              {!!resultado.errores?.length && (
-                <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <AlertCircle size={16} color="#dc2626" />
-                    <span style={{ fontSize: '13px', color: '#dc2626', fontWeight: 600 }}>
-                      {resultado.errores.length} fila(s) NO importadas
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '220px', overflowY: 'auto' }}>
-                    {resultado.errores.map((err, i) => (
-                      <div key={i} style={{ fontSize: '12px', color: '#991b1b' }}>{err}</div>
-                    ))}
-                  </div>
+              {!!resultado.pendientesRevision && (
+                <div style={{ fontSize: '12px', color: '#92400e', padding: '8px 12px', background: '#fffbeb', borderRadius: '8px' }}>
+                  {resultado.pendientesRevision} quedan como <strong>pendientes de revisión</strong> y no saldrán en la app hasta que las valides en «Gestionar».
                 </div>
               )}
+              {[
+                { titulo: 'Sin enlazar a su artículo (revisa la norma o el número)', filas: (resultado.noEnlazadas ?? []).map((x) => `Fila ${x.fila} · ${x.referencia} · ${x.pregunta}`), color: '#92400e', bg: '#fffbeb', borde: '#fde68a' },
+                { titulo: 'Duplicadas: ya existen en la oposición', filas: (resultado.duplicadas ?? []).map((x) => `Fila ${x.fila} · ${x.pregunta}`), color: '#4b5563', bg: '#f9fafb', borde: '#e5e7eb' },
+                { titulo: 'Errores (estas filas no se han subido)', filas: resultado.errores ?? [], color: '#991b1b', bg: '#fef2f2', borde: '#fca5a5' },
+              ].filter((g) => g.filas.length).map((g) => (
+                <div key={g.titulo} style={{ padding: '10px 14px', background: g.bg, border: `1px solid ${g.borde}`, borderRadius: '10px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: g.color, marginBottom: '6px' }}>{g.titulo} ({g.filas.length})</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '200px', overflowY: 'auto' }}>
+                    {g.filas.map((f, i) => <div key={i} style={{ fontSize: '12px', color: g.color }}>{f}</div>)}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -323,9 +337,11 @@ const guardarManual = async () => {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                     {[
                       { tipo: 'vf', desc: 'respuesta: "true" o "false"' },
-                      { tipo: 'hueco', desc: 'respuesta: palabra o frase a completar' },
-                      { tipo: 'trampa', desc: 'respuesta: "true" si es trampa, "false" si no' },
+                      { tipo: 'trampa', desc: 'respuesta: "true" o "false" (la afirmación puede ser verdadera)' },
+                      { tipo: 'hueco', desc: 'la pregunta lleva ___ ; respuesta: lo que falta' },
                       { tipo: 'articulo', desc: 'respuesta: "Artículo X de la Y"' },
+                      { tipo: 'supuesto', desc: 'caso práctico; respuesta: la solución breve' },
+                      { tipo: 'comparativa', desc: '"comparativa": { conceptoA, conceptoB, diferencias: [{ aspecto, a, b }] }' },
                     ].map(({ tipo, desc }) => (
                       <div key={tipo} style={{ padding: '8px 10px', background: '#f9fafb', borderRadius: '8px' }}>
                         <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '2px' }}>{tipo.toUpperCase()}</div>
@@ -334,8 +350,9 @@ const guardarManual = async () => {
                     ))}
                   </div>
                   <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '10px', lineHeight: 1.5 }}>
-                    Cada flashcard admite además <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>temaId</code> o <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>articuloId</code> propios.
-                    Si no los incluyes, se usará lo que elijas en "Vincular este lote a" más abajo — sin ninguno de los dos, la flashcard queda <strong>sin vincular a ningún tema</strong> y no aparecerá en el repaso por tema.
+                    Cada flashcard necesita su <strong>oposición</strong> (en la fila o elegida en «Vincular este lote a»). El tema va con <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>tema</code> (número) o <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>temaId</code>.
+                    Con <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>norma</code> (siglas) y <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>articulo</code> se enlaza sola al artículo de la versión vigente; si no se encuentra, queda <strong>pendiente de revisión</strong>.
+                    Las que entran bien quedan <strong>validadas</strong> (salvo que indiques otro <code style={{ background: '#f3f4f6', padding: '1px 4px', borderRadius: '4px' }}>estado</code>).
                   </div>
                 </div>
               </div>
@@ -382,7 +399,7 @@ const guardarManual = async () => {
                       onChange={(e) => setForm(f => ({ ...f, oposicionId: e.target.value }))}
                       style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', color: '#374151' }}
                     >
-                      <option value="">Sin oposición</option>
+                      <option value="">Elige la oposición (o indícala en cada fila)</option>
                       {oposiciones.map((op: any) => (
                         <option key={op.id} value={op.id}>{op.nombre}</option>
                       ))}

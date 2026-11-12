@@ -6,10 +6,18 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Search, Pencil, Trash2, ChevronLeft, ChevronRight, X, Eye, EyeOff } from 'lucide-react';
+import { Search, Pencil, Trash2, ChevronLeft, ChevronRight, X, Eye, EyeOff, CheckCircle2, Archive, Link2 } from 'lucide-react';
 
-const TIPOS: Record<string, string> = { vf: 'Verdadero/falso', hueco: 'Hueco', trampa: 'Trampa', articulo: 'Artículo' };
-const NIVELES: Record<string, string> = { basico: 'Básico', medio: 'Medio', alto: 'Alto' };
+const TIPOS: Record<string, string> = { vf: 'Verdadero/falso', hueco: 'Hueco', trampa: 'Trampa', articulo: 'Artículo', supuesto: 'Supuesto', comparativa: 'Comparativa' };
+const NIVELES: Record<string, string> = { basico: 'Básico', medio: 'Medio', alto: 'Avanzado' };
+// Estado editorial: en la app solo salen las validadas
+const ESTADOS: { k: string; label: string; color: string; bg: string }[] = [
+  { k: 'validada', label: 'Validadas', color: '#15803d', bg: '#f0fdf4' },
+  { k: 'pendiente_revision', label: 'Pendientes', color: '#b45309', bg: '#fffbeb' },
+  { k: 'borrador', label: 'Borrador', color: '#4b5563', bg: '#f3f4f6' },
+  { k: 'obsoleta', label: 'Obsoletas', color: '#b91c1c', bg: '#fef2f2' },
+];
+const ESTADO_UNO: Record<string, string> = { validada: 'Validada', pendiente_revision: 'Pendiente', borrador: 'Borrador', obsoleta: 'Obsoleta' };
 
 const input: React.CSSProperties = { padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, background: 'white', color: '#111827' };
 const boton: React.CSSProperties = { padding: '7px 12px', border: '1px solid #e5e7eb', borderRadius: 8, background: 'white', fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 };
@@ -23,6 +31,7 @@ export default function GestionFlashcards() {
   const qc = useQueryClient();
   const [oposicionId, setOposicionId] = useState('');
   const [temaId, setTemaId] = useState('');
+  const [revision, setRevision] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [q, setQ] = useState('');
   const [tipo, setTipo] = useState('');
@@ -51,8 +60,8 @@ export default function GestionFlashcards() {
   const temasFC = datosTemas?.temas ?? [];
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['admin-flashcards', oposicionId, temaId, q, tipo, estado, pagina],
-    queryFn: async () => (await api.get('/flashcards/admin/lista', { params: { oposicionId: oposicionId || undefined, temaId: temaId || undefined, q: q || undefined, tipo: tipo || undefined, estado: estado || undefined, pagina } })).data,
+    queryKey: ['admin-flashcards', oposicionId, temaId, q, tipo, estado, revision, pagina],
+    queryFn: async () => (await api.get('/flashcards/admin/lista', { params: { oposicionId: oposicionId || undefined, temaId: temaId || undefined, q: q || undefined, tipo: tipo || undefined, estado: estado || undefined, revision: revision || undefined, pagina } })).data,
     placeholderData: (prev: any) => prev,
   });
 
@@ -94,6 +103,30 @@ export default function GestionFlashcards() {
     );
     if (escrito?.trim().toUpperCase() === 'BORRAR') borrarMasivo.mutate();
   };
+
+  // ⭐ Estado editorial: validar u obsoleta (con motivo)
+  const cambiarEstado = useMutation({
+    mutationFn: async ({ id, estado, motivo }: { id: string; estado: string; motivo?: string }) =>
+      (await api.patch(`/flashcards/admin/${id}`, { estado, motivoObsolescencia: motivo })).data,
+    onSuccess: (_r: any, v) => {
+      qc.invalidateQueries({ queryKey: ['admin-flashcards'] });
+      mostrar('ok', v.estado === 'validada' ? 'Flashcard validada: ya sale en la app' : v.estado === 'obsoleta' ? 'Marcada como obsoleta' : 'Estado cambiado');
+    },
+    onError: (e: any) => mostrar('error', textoError(e, 'No se ha podido cambiar el estado')),
+  });
+  const marcarObsoleta = (fc: any) => {
+    const motivo = window.prompt('¿Por qué queda obsoleta? (p. ej. «Reforma de la Ley 8/2021»)', fc.motivoObsolescencia ?? '');
+    if (motivo && motivo.trim()) cambiarEstado.mutate({ id: fc.id, estado: 'obsoleta', motivo: motivo.trim() });
+  };
+
+  const reenlazar = useMutation({
+    mutationFn: async () => (await api.post('/flashcards/admin/reenlazar', { oposicionId })).data,
+    onSuccess: (r: any) => {
+      qc.invalidateQueries({ queryKey: ['admin-flashcards'] });
+      mostrar('ok', r?.revisadas ? `${r.enlazadas} de ${r.revisadas} flashcards enlazadas con su artículo` : 'No hay flashcards sin enlazar que tengan norma y artículo');
+    },
+    onError: (e: any) => mostrar('error', textoError(e, 'No se ha podido volver a enlazar')),
+  });
 
   const pedirBorrado = (fc: any) => {
     const extra = fc.repasos > 0 ? `\n\n${fc.repasos} usuario(s) la tienen en su repaso; se les quitará. Si solo quieres ocultarla, desactívala.` : '';
@@ -149,6 +182,26 @@ export default function GestionFlashcards() {
         </div>
       )}
 
+      {/* Estado editorial (con recuentos) y reenlazar */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        {[{ k: '', label: 'Todas', color: '#111827', bg: '#f3f4f6' }, ...ESTADOS].map((e) => {
+          const activo = revision === e.k;
+          const n = e.k ? data?.porEstado?.[e.k] ?? 0 : Object.values(data?.porEstado ?? {}).reduce((s: number, x: any) => s + Number(x), 0);
+          return (
+            <button key={e.k || 'todas'} onClick={() => { setRevision(e.k); setPagina(1); }}
+              style={{ ...boton, borderColor: activo ? e.color : '#e5e7eb', background: activo ? e.bg : 'white', color: activo ? e.color : '#374151' }}>
+              {e.label} <span style={{ opacity: 0.7 }}>{Number(n).toLocaleString('es-ES')}</span>
+            </button>
+          );
+        })}
+        {oposicionId && (
+          <button onClick={() => reenlazar.mutate()} disabled={reenlazar.isPending} style={{ ...boton, marginLeft: 'auto' }}
+            title="Busca de nuevo el artículo de las flashcards que tienen norma y número pero no están enlazadas (por ejemplo, tras reimportar una ley)">
+            <Link2 size={13} /> {reenlazar.isPending ? 'Enlazando…' : 'Volver a enlazar artículos'}
+          </button>
+        )}
+      </div>
+
       {aviso && (
         <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, background: aviso.tipo === 'ok' ? '#f0fdf4' : '#fef2f2', color: aviso.tipo === 'ok' ? '#15803d' : '#b91c1c' }}>{aviso.texto}</div>
       )}
@@ -182,15 +235,41 @@ export default function GestionFlashcards() {
                 <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: '#f3f4f6', color: '#4b5563' }}>{NIVELES[fc.nivel] ?? fc.nivel}</span>
                 {fc.esParaDuelo && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: '#fff7ed', color: '#c2410c' }}>Duelo</span>}
                 {!fc.activa && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c' }}>Inactiva</span>}
+                {(() => { const e = ESTADOS.find((x) => x.k === fc.estado); return e ? <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: e.bg, color: e.color }}>{ESTADO_UNO[fc.estado]}</span> : null; })()}
+                {fc.normaSiglas && !fc.articulo && <span title="Tiene norma y artículo pero no se ha encontrado en la versión vigente" style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: '#fffbeb', color: '#b45309' }}>Sin enlazar</span>}
                 <span style={{ fontSize: 11, color: '#9ca3af' }}>
-                  {[fc.oposicion?.nombre, fc.tema ? `Tema ${fc.tema.numero}` : null, fc.articulo ? `Art. ${fc.articulo.numero}` : null].filter(Boolean).join(' · ')}
+                  {[fc.oposicion?.nombre, fc.tema ? `Tema ${fc.tema.numero}` : null, fc.bloque, fc.referencia ?? (fc.articulo ? `Art. ${fc.articulo.numero}` : null)].filter(Boolean).join(' · ')}
                   {fc.repasos > 0 ? ` · ${fc.repasos} en repaso` : ''}
                 </span>
               </div>
               <div style={{ fontSize: 13, color: '#111827', fontWeight: 500, lineHeight: 1.45 }}>{fc.pregunta}</div>
               <div style={{ fontSize: 12, color: '#4b5563', marginTop: 3 }}><b>Respuesta:</b> {fc.respuesta}</div>
+              {fc.tipo === 'comparativa' && fc.estructura && (
+                <div style={{ fontSize: 11.5, color: '#4b5563', marginTop: 4 }}>
+                  <b>{fc.estructura.conceptoA}</b> vs <b>{fc.estructura.conceptoB}</b> · {fc.estructura.diferencias?.length ?? 0} diferencias
+                </div>
+              )}
+              {fc.estado === 'obsoleta' && fc.motivoObsolescencia && (
+                <div style={{ fontSize: 11.5, color: '#b91c1c', marginTop: 4 }}><b>Motivo:</b> {fc.motivoObsolescencia}</div>
+              )}
+              {(fc.fuenteValidacion || fc.fechaRevision) && (
+                <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 3 }}>
+                  {[fc.fuenteValidacion, fc.fechaRevision ? `revisada el ${new Date(fc.fechaRevision).toLocaleDateString('es-ES')}` : null].filter(Boolean).join(' · ')}
+                </div>
+              )}
             </div>
-            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 220 }}>
+              {fc.estado !== 'validada' && (
+                <button style={{ ...boton, color: '#15803d', borderColor: '#86efac' }} title="Validar: pasa a mostrarse en la app"
+                  disabled={cambiarEstado.isPending} onClick={() => cambiarEstado.mutate({ id: fc.id, estado: 'validada' })}>
+                  <CheckCircle2 size={13} /> Validar
+                </button>
+              )}
+              {fc.estado !== 'obsoleta' && (
+                <button style={boton} title="Marcar como obsoleta (deja de mostrarse)" disabled={cambiarEstado.isPending} onClick={() => marcarObsoleta(fc)}>
+                  <Archive size={13} />
+                </button>
+              )}
               <button style={boton} title={fc.activa ? 'Desactivar' : 'Activar'} onClick={() => guardar.mutate({ id: fc.id, cambios: { activa: !fc.activa } })}>
                 {fc.activa ? <EyeOff size={13} /> : <Eye size={13} />}
               </button>
