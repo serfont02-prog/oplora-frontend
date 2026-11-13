@@ -65,8 +65,14 @@ export default function NuevaLeyPage() {
       return res.data;
     },
       onSuccess: (data) => {
-        setResultado(data);
         queryClient.invalidateQueries({ queryKey: ['leyes'] });
+        // ⭐ Al terminar, directo al detalle de la ley recién creada (para subirle el JSON).
+        // Si por lo que sea no llega el id, se muestra la pantalla de "Ley subida" de siempre.
+        if (data?.ley?.id) {
+          router.replace(`/admin/leyes/${data.ley.id}`);
+          return;
+        }
+        setResultado(data);
       },
     });
 
