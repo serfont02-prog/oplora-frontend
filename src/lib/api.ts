@@ -41,6 +41,20 @@
           }
         }
       }
+      // ⭐ «Esto es de OPLORA»: si el servidor dice que hace falta suscripción (acabada la prueba,
+      // solo el Tema 1), se abre la hoja de planes. Una petición puede pedir que no se abra
+      // (sinHojaSuscripcion) si su pantalla ya lo explica.
+      if (status === 403 && typeof window !== 'undefined' && !(error?.config as any)?.sinHojaSuscripcion) {
+        const m = error?.response?.data?.message;
+        if (typeof m === 'string' && m.startsWith('{')) {
+          try {
+            const d = JSON.parse(m);
+            if (d?.motivo === 'requiere_suscripcion' || d?.motivo === 'tema_bloqueado') {
+              window.dispatchEvent(new CustomEvent('oplora:suscripcion', { detail: d }));
+            }
+          } catch { /* no es JSON */ }
+        }
+      }
       return Promise.reject(error);
     },
   );

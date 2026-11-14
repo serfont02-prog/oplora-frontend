@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 
 type TipoAdministracion = 
@@ -87,7 +88,19 @@ function guardarUsuario(u: Usuario | null) {
   } catch { /* sin almacenamiento: solo se pierde la entrada rápida */ }
 }
 
+// ⭐ La cookie solo sirve para que proxy.ts sepa que hay sesión. Antes se escribía una vez, al
+// iniciar sesión, y a los 7 días la app instalada pedía entrar de nuevo aunque la sesión siguiera
+// viva. Ahora se renueva cada vez que el servidor confirma la sesión.
+const DIAS_COOKIE = 30;
+function ponerCookieSesion(token: string) {
+  const segura = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `token=${token}; path=/; max-age=${DIAS_COOKIE * 24 * 60 * 60}; SameSite=Lax${segura}`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // ⭐ Al cambiar de cuenta se vacía la caché de datos: muchas consultas no llevan el usuario en su
+  // clave y la cuenta siguiente veía durante unos segundos notas y datos de la anterior.
+  const queryClient = useQueryClient();
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -116,13 +129,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Si ya había entrado antes en este móvil, se entra al momento con lo guardado.
     const guardado = leerUsuarioGuardado();
     if (guardado) {
+      ponerCookieSesion(tokenGuardado); // si la sesión ya no vale, el 401 de abajo la borra
       setUsuario(guardado);
       setCargando(false);
     }
 
     api
       .get('/usuarios/me')
-      .then((res) => setUsuario(res.data))
+      .then((res) => {
+        setUsuario(res.data);
+        ponerCookieSesion(tokenGuardado);
+      })
       .catch((err) => {
         const status = err?.response?.status;
         // Sin conexión o servidor caído con datos guardados: se sigue con ellos.
@@ -143,11 +160,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { token } = res.data;
 
     localStorage.setItem('token', token);
-    document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}`;
+    ponerCookieSesion(token);
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     const perfil = await api.get('/usuarios/me');
 
+    queryClient.clear();
     setToken(token);
     setUsuario(perfil.data);
 
@@ -160,11 +178,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { token } = res.data;
 
     localStorage.setItem('token', token);
-    document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}`;
+    ponerCookieSesion(token);
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     const perfil = await api.get('/usuarios/me');
 
+    queryClient.clear();
     setToken(token);
     setUsuario(perfil.data);
 
@@ -177,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     guardarUsuario(null);
     document.cookie = 'token=; path=/; max-age=0';
     delete api.defaults.headers.common['Authorization'];
+    queryClient.clear();
     setToken(null);
     setUsuario(null);
   };

@@ -2,6 +2,7 @@
 
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AvisoConexion, { EVENTO_ERROR_CARGA } from '@/components/ui/AvisoConexion';
+import HojaSuscripcion from '@/components/ui/HojaSuscripcion';
 import { useState } from 'react';
 import { AuthProvider } from '@/lib/auth';
 import { ProveedorTema } from '@/lib/tema';
@@ -40,6 +41,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthProvider>
           {children}
           <AvisoConexion />
+          <HojaSuscripcion />
         </AuthProvider>
       </ProveedorTema>
     </QueryClientProvider>

@@ -9,12 +9,13 @@
 //  · Las nuevas se empiezan desde cada tema, eligiendo cuántas. Si ese día se pasan de 15, se
 //    avisa (no se bloquea): cada nueva vuelve al día siguiente y el trabajo se amontona.
 
+import { useAcceso, temaBloqueado, pedirSuscripcion } from '@/lib/acceso';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ArrowLeft, ChevronRight, ChevronDown, Layers, CheckCircle2, X, Sparkles, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ChevronDown, Layers, CheckCircle2, X, Sparkles, AlertTriangle, Lock } from 'lucide-react';
 import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 
@@ -75,6 +76,7 @@ function Flashcards() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { usuario, cargando } = useAuth();
+  const { acceso } = useAcceso(!!usuario);
   const [verTodos, setVerTodos] = useState(false);
   const [temaAbierto, setTemaAbierto] = useState<any>(null);
   const oposicionId = usuario?.oposicionActiva?.id;
@@ -266,7 +268,7 @@ function Flashcards() {
               return (
                 <button
                   key={t.id}
-                  onClick={() => setTemaAbierto(t)}
+                  onClick={() => (temaBloqueado(acceso, t.numero) ? pedirSuscripcion('tema_bloqueado') : setTemaAbierto(t))}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
                     border: 'none', borderBottom: i < temasVisibles.length - 1 || temasConFC.length > TEMAS_VISIBLES ? `1px solid ${BORDER}` : 'none',
@@ -294,7 +296,9 @@ function Flashcards() {
                       <div style={{ width: `${Math.round((r.dominadas / r.total) * 100)}%`, height: '100%', background: COLOR_FC, borderRadius: 999 }} />
                     </div>
                   </div>
-                  <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />
+                  {temaBloqueado(acceso, t.numero)
+                    ? <Lock size={15} color="var(--hx-9ca3af)" style={{ flexShrink: 0 }} />
+                    : <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />}
                 </button>
               );
             })}

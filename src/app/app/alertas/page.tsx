@@ -11,8 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCheck, Bell, BellOff, CircleCheck, CircleX, FilePenLine, FileText, Megaphone, AlarmClock,
-  Zap, Swords, Flag, Award, Flame, Newspaper, LifeBuoy, Trophy, ChevronRight, RefreshCw, CalendarCheck,
-} from 'lucide-react';
+  Zap, Swords, Flag, Award, Flame, Newspaper, LifeBuoy, Trophy, ChevronRight, RefreshCw, CalendarCheck, Crown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
@@ -53,6 +52,7 @@ const TIPO: Record<string, { icono: any; color: string; fondo: string }> = {
   nueva_noticia: { icono: Newspaper, ...AZUL_SUAVE },
   respuesta_soporte: { icono: LifeBuoy, color: 'var(--hx-4d7c0f)', fondo: 'var(--hx-ecfccb)' },
   liga: { icono: Trophy, ...ORO },
+  suscripcion: { icono: Crown, color: 'var(--c-azul)', fondo: 'var(--c-azul-bg)' },
 };
 // ⭐ Los recordatorios de repaso (temas y flashcards) llegan con el tipo "reto_diario", igual
 // que el reto diario. Se distinguen por el título o el destino y llevan el icono de repaso

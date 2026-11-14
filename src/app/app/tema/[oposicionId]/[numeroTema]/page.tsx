@@ -3,6 +3,7 @@
 // ⭐ Página de un tema — mismo sistema que el resto de la app: botones redondos, accesos en círculos
 // flotantes, tarjetas blancas con la sombra común, títulos suaves y solo iconos lucide.
 
+import { useAcceso, temaBloqueado } from '@/lib/acceso';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
@@ -141,6 +142,7 @@ export default function TemaPage() {
   const oposicionId = params.oposicionId as string;
   const numeroTema = params.numeroTema as string;
   const { usuario, cargando } = useAuth();
+  const { acceso } = useAcceso(!!usuario);
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<TabTema>('material');
@@ -390,6 +392,26 @@ export default function TemaPage() {
           </div>
           <button onClick={() => router.push(`/app/tema/${oposicionId}?modo=estudiar`)} style={{ width: '100%', padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             Ir al temario
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ⭐ Sin suscripción solo se estudia el Tema 1 (el servidor lo protege igualmente)
+  if (temaBloqueado(acceso, num)) {
+    return (
+      <div style={{ minHeight: '100vh', background: BG_APP, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem' }}>
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 20, padding: '1.75rem 1.5rem', maxWidth: 380, width: '100%', textAlign: 'center', boxShadow: SOMBRA }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 6 }}>Gratis tienes el Tema 1</div>
+          <div style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 16, lineHeight: 1.5 }}>
+            El Tema {numeroTema} está incluido en OPLORA, con todo el temario, tests, flashcards y simulacros.
+          </div>
+          <button onClick={() => router.push('/app/suscripciones')} style={{ width: '100%', padding: 12, background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
+            Ver OPLORA
+          </button>
+          <button onClick={() => router.push(`/app/tema/${oposicionId}/1`)} style={{ width: '100%', padding: 12, background: 'none', color: TEXT_SECONDARY, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            Ir al Tema 1
           </button>
         </div>
       </div>

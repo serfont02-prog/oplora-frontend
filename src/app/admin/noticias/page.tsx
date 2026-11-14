@@ -20,7 +20,8 @@ interface Noticia {
   convocatoria?: { id: string; anyo: number } | null;
   oposicion?: { id: string; nombre: string } | null;
   ley?: { id: string; nombre: string } | null;
-  versionLey?: { id: string; version: string } | null;
+  versionLey?: { id: string; version: string; fechaPublicacion?: string | null } | null;
+  documentoConvocatoria?: { id: string; fechaPublicacion?: string | null; fechaPublicacionTexto?: string | null } | null;
   destacada: boolean;
   prioridad: PrioridadNoticia;
   publicada: boolean;
@@ -77,6 +78,7 @@ interface FormState {
   destacada: boolean;
   prioridad: PrioridadNoticia;
   fechaProgramada: string;
+  fechaPublicacion: string;
   publicada?: boolean;
   origen?: OrigenNoticia;
 }
@@ -93,6 +95,7 @@ const FORM_VACIO: FormState = {
   destacada: false,
   prioridad: 'media',
   fechaProgramada: '',
+  fechaPublicacion: '',
 };
 
 function ModalContenido({ noticia, onClose }: { noticia: Noticia; onClose: () => void }) {
@@ -114,7 +117,10 @@ function ModalContenido({ noticia, onClose }: { noticia: Noticia; onClose: () =>
         style={{ background: 'white', borderRadius: 14, padding: 24, width: '100%', maxWidth: 520, maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box' }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', lineHeight: 1.35 }}>{noticia.titulo}</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', lineHeight: 1.35 }}>{noticia.titulo}</div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}><TextoFechas n={noticia} /></div>
+          </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 2, display: 'flex' }} aria-label="Cerrar">
             <X size={18} color="#9ca3af" />
           </button>
@@ -129,8 +135,35 @@ function ModalContenido({ noticia, onClose }: { noticia: Noticia; onClose: () =>
 
 function formatearFecha(fecha?: string | null): string {
   if (!fecha) return '—';
+  // Las columnas «date» llegan como 'AAAA-MM-DD': se leen tal cual para no restar un día por la zona horaria
+  const soloDia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha);
+  if (soloDia) return `${soloDia[3]}-${soloDia[2]}-${soloDia[1]}`;
   const d = new Date(fecha);
+  if (isNaN(d.getTime())) return fecha;
   return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+}
+
+/** ⭐ De cuándo es la noticia: la fecha del documento o de la ley de origen; si no, la fecha editorial. */
+function fechaDeLaNoticia(n: Noticia): string | null {
+  const doc = n.documentoConvocatoria;
+  if (doc?.fechaPublicacion) return formatearFecha(doc.fechaPublicacion);
+  if (doc?.fechaPublicacionTexto) return doc.fechaPublicacionTexto;
+  if (n.versionLey?.fechaPublicacion) return formatearFecha(n.versionLey.fechaPublicacion);
+  if (n.fechaPublicacion) return formatearFecha(n.fechaPublicacion);
+  return null;
+}
+
+function TextoFechas({ n }: { n: Noticia }) {
+  const fecha = fechaDeLaNoticia(n);
+  const automatica = n.origen === 'scraper_boe' || n.origen === 'cambio_normativa';
+  return (
+    <>
+      <span style={{ color: fecha ? '#374151' : '#b45309', fontWeight: 600 }}>
+        {fecha ? `Fecha: ${fecha}` : 'Fecha de origen desconocida'}
+      </span>
+      {(automatica || !fecha) && ` · ${automatica ? 'Detectada' : 'Creada'} el ${formatearFecha(n.creadoEn)}`}
+    </>
+  );
 }
 
 export default function AdminNoticiasPage() {
@@ -207,6 +240,7 @@ export default function AdminNoticiasPage() {
       destacada: n.destacada,
       prioridad: n.prioridad,
       fechaProgramada: n.fechaProgramada ? n.fechaProgramada.slice(0, 16) : '',
+      fechaPublicacion: n.fechaPublicacion ? n.fechaPublicacion.slice(0, 10) : '',
       publicada: n.publicada,
       origen: n.origen,
     });
@@ -228,6 +262,8 @@ export default function AdminNoticiasPage() {
       destacada: form.destacada,
       prioridad: form.prioridad,
       fechaProgramada: form.fechaProgramada || undefined,
+      // Fecha que verá el usuario; vacía al crear = hoy al publicar
+      fechaPublicacion: form.fechaPublicacion ? `${form.fechaPublicacion}T12:00:00` : undefined,
       convocatoriaId: form.ambito === 'convocatoria' ? form.convocatoriaId || undefined : undefined,
       oposicionId: form.ambito === 'oposicion' ? form.oposicionId || undefined : undefined,
     };
@@ -263,7 +299,7 @@ export default function AdminNoticiasPage() {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{n.titulo}</div>
                   <div style={{ fontSize: 11, color: '#9ca3af' }}>
-                    {TIPO_LABEL[n.tipo]} · {ORIGEN_LABEL[n.origen]} · {n.convocatoria ? `Convocatoria ${n.convocatoria.anyo}` : n.oposicion?.nombre ?? 'Global'}
+                    <TextoFechas n={n} /> · {TIPO_LABEL[n.tipo]} · {ORIGEN_LABEL[n.origen]} · {n.convocatoria ? `Convocatoria ${n.convocatoria.anyo}` : n.oposicion?.nombre ?? 'Global'}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
@@ -321,7 +357,7 @@ export default function AdminNoticiasPage() {
                     <span style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{n.titulo}</span>
                   </div>
                   <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
-                    {TIPO_LABEL[n.tipo]} · {ORIGEN_LABEL[n.origen]} · {n.convocatoria ? `Convocatoria ${n.convocatoria.anyo}` : n.oposicion ? n.oposicion.nombre : 'Global'} · {formatearFecha(n.fechaPublicacion ?? n.creadoEn)}
+                    <TextoFechas n={n} /> · {TIPO_LABEL[n.tipo]} · {ORIGEN_LABEL[n.origen]} · {n.convocatoria ? `Convocatoria ${n.convocatoria.anyo}` : n.oposicion ? n.oposicion.nombre : 'Global'}
                     {n.fechaProgramada && new Date(n.fechaProgramada) > new Date() && ` · Programada ${formatearFecha(n.fechaProgramada)}`}
                   </div>
                 </div>
@@ -449,6 +485,12 @@ export default function AdminNoticiasPage() {
                   <option value="media">Media</option>
                   <option value="baja">Baja</option>
                 </select>
+              </label>
+
+              <label style={labelEstilo}>
+                Fecha de la noticia
+                <input type="date" value={form.fechaPublicacion} onChange={(e) => setForm({ ...form, fechaPublicacion: e.target.value })} style={inputEstilo} />
+                <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>La que verá el usuario. Si la dejas vacía, se pone la del día en que se publique.</span>
               </label>
 
               <label style={labelEstilo}>

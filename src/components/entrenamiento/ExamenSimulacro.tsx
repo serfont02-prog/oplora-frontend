@@ -514,7 +514,7 @@ function AvisoPregunta({ Icono, color, fondo, texto }: { Icono: any; color: stri
 /** Pantalla cuando no se puede cargar el simulacro (plan sin simulacros, sin preguntas, error). */
 export function SimulacroNoDisponible({ error, onVolver, onPlanes }: { error: any; onVolver: () => void; onPlanes: () => void }) {
   let bloqueado = false;
-  try { bloqueado = JSON.parse(error?.response?.data?.message ?? '{}')?.motivo === 'simulacro_bloqueado'; } catch { /* mensaje normal */ }
+  try { bloqueado = ['simulacro_bloqueado', 'requiere_suscripcion'].includes(JSON.parse(error?.response?.data?.message ?? '{}')?.motivo); } catch { /* mensaje normal */ }
   const mensaje = typeof error?.response?.data?.message === 'string' && !bloqueado && !error.response.data.message.startsWith('{')
     ? error.response.data.message
     : null;

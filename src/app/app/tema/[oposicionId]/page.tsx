@@ -5,12 +5,13 @@
 // Mientras se cargan la convocatoria y los temas se muestra "Cargando temas…" (antes salía unos
 // segundos "Temario no disponible" porque la consulta de temas aún no había empezado).
 
+import { useAcceso, temaBloqueado, pedirSuscripcion } from '@/lib/acceso';
 import { useState, useMemo } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Search, CheckCircle2, ChevronRight, BookOpen, FileText, Upload, ListOrdered, Library, Scale, X, PlayCircle } from 'lucide-react';
+import { Search, CheckCircle2, ChevronRight, BookOpen, FileText, Upload, ListOrdered, Library, Scale, X, PlayCircle, Lock } from 'lucide-react';
 import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { AvatarPerfil } from '@/components/AvatarUsuarioPerfil';
 import { TarjetaTemarioPapel } from '@/components/temario/TemarioPapel';
@@ -107,6 +108,7 @@ export default function TemarioOposicionPage() {
   const oposicionId = params.oposicionId as string;
   const modoEstudiar = searchParams.get('modo') === 'estudiar';
   const { usuario, cargando } = useAuth();
+  const { acceso } = useAcceso(!!usuario);
 
   // ⭐ La pestaña va en la URL (?tab=material): al volver desde una ley o desde el temario en
   // papel se vuelve a la pestaña de la que se salió, no siempre a Programa.
@@ -204,7 +206,10 @@ export default function TemarioOposicionPage() {
 
   if (cargando) return null;
 
-  const irATema = (numero: number) => router.push(`/app/tema/${oposicionId}/${numero}`);
+  // ⭐ Sin suscripción (acabada la prueba), solo el Tema 1: el resto abre la hoja de planes
+  const irATema = (numero: number) => temaBloqueado(acceso, numero)
+    ? pedirSuscripcion('tema_bloqueado')
+    : router.push(`/app/tema/${oposicionId}/${numero}`);
   const progUltimo = ultimoTema?.temaId ? progresoPorTemaId[ultimoTema.temaId]?.porcentajeTotal ?? 0 : 0;
 
   return (
@@ -379,7 +384,9 @@ export default function TemarioOposicionPage() {
                             </div>
                           )}
                         </div>
-                        {modoEstudiar && <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />}
+                        {temaBloqueado(acceso, tema.numero)
+                          ? <Lock size={15} color="var(--hx-9ca3af)" style={{ flexShrink: 0 }} />
+                          : modoEstudiar && <ChevronRight size={16} color="var(--hx-c4c9d2)" style={{ flexShrink: 0 }} />}
                       </button>
                     );
                   })}

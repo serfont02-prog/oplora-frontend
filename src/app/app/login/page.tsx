@@ -12,7 +12,7 @@ import { PantallaAuth, CampoAuth, BotonAuth, AvisoAuth, EnlaceAuth, COLOR_ENLACE
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, usuario, cargando: cargandoSesion } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +27,13 @@ export default function LoginPage() {
       if (m) { setAviso(m); sessionStorage.removeItem('oplora-aviso-login'); }
     } catch { /* sin sessionStorage */ }
   }, []);
+
+  // ⭐ Si ya hay una sesión guardada (p. ej. la cookie caducó pero la sesión sigue viva), se entra
+  // directamente en vez de pedir otra vez la contraseña.
+  useEffect(() => {
+    if (cargandoSesion || cargando || !usuario) return;
+    router.replace(usuario.onboardingGeneralCompletado ? '/app/dashboard' : '/app/onboarding/objetivo');
+  }, [cargandoSesion, cargando, usuario, router]);
 
   const entrar = async () => {
     if (!email.trim() || !password) {

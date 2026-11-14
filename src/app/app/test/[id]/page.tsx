@@ -87,7 +87,7 @@ export default function TestPage({ params }: TestPageProps) {
       nivel,
       temasIds: temasIds.length > 0 ? temasIds : undefined,
       versionLeyId,
-    });
+    }, { sinHojaSuscripcion: true } as any);
     return res.data;
   },
   enabled: !!usuario,
@@ -272,23 +272,29 @@ export default function TestPage({ params }: TestPageProps) {
       else if (typeof m === 'string') textoError = m;
     } catch { /* sin detalle */ }
     const esLimite = !!motivo && motivo !== 'simulacro_bloqueado';
+    // ⭐ Planes de nov 2026: sin suscripción solo el Tema 1 (y sin simulacros ni repaso)
+    const esSuscripcion = motivo === 'requiere_suscripcion' || motivo === 'tema_bloqueado' || motivo === 'simulacro_bloqueado';
     return (
       <main style={{ minHeight: '100vh', padding: '24px 18px 96px', display: 'grid', placeItems: 'center', background: 'var(--c-bg-dashboard)' }}>
         <EmptyState
           icon={<Lock size={28} />}
           eyebrow={titulo}
-          title={esLimite ? 'Has llegado al límite de tu plan' : 'No se ha podido preparar el test'}
-          description={esLimite
-            ? 'Con tu plan no puedes hacer más preguntas hoy (o tantas en un solo test). Mañana se renueva el límite, o puedes mejorar tu plan.'
+          title={esSuscripcion ? (motivo === 'tema_bloqueado' ? 'Gratis tienes el Tema 1' : 'Incluido en OPLORA') : esLimite ? 'Demasiadas preguntas para un test' : 'No se ha podido preparar el test'}
+          description={esSuscripcion
+            ? (motivo === 'tema_bloqueado'
+              ? 'Sin suscripción puedes practicar el Tema 1 de cualquier oposición. Con OPLORA, todos los temas sin límite.'
+              : 'Este modo de práctica está incluido en OPLORA, junto con todos los temas y simulacros.')
+            : esLimite
+            ? 'Elige un número menor de preguntas para este test.'
             : textoError ?? 'Inténtalo de nuevo en unos minutos.'}
           actions={
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
-              {esLimite && (
+              {esSuscripcion && (
                 <Button variant="primary" size="lg" style={{ width: '100%' }} onClick={() => router.push('/app/suscripciones')}>
-                  Ver planes
+                  Ver OPLORA
                 </Button>
               )}
-              <Button variant={esLimite ? 'secondary' : 'primary'} size="lg" iconBefore={<Home size={18} />} style={{ width: '100%' }} onClick={() => router.push('/app/entrenamiento')}>
+              <Button variant={esSuscripcion ? 'secondary' : 'primary'} size="lg" iconBefore={<Home size={18} />} style={{ width: '100%' }} onClick={() => router.push('/app/entrenamiento')}>
                 Volver a Practicar
               </Button>
             </div>

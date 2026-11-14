@@ -1,5 +1,6 @@
 'use client';
 
+import BannerAcceso from '@/components/ui/BannerAcceso';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -320,7 +321,8 @@ function DashboardNuevo({ usuario, oposicionId }: any) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-    <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
+    <BannerAcceso />
+      <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
       <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
 
       {/* Hero — CTA principal */}
@@ -403,6 +405,7 @@ export function DashboardActivo({ usuario, oposicionId }: { usuario: any; oposic
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+      <BannerAcceso />
       <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
       <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
       <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />
@@ -435,6 +438,7 @@ export function DashboardInactivo({ usuario, oposicionId }: { usuario: any; opos
         </button>
       </div>
 
+      <BannerAcceso />
       <WidgetRepasosHoy oposicionId={oposicionId} router={router} />
       <WidgetNoticias oposicionId={oposicionId} convocatoriaId={usuario?.oposicionActiva?.convocatoriaActiva?.id} router={router} />
       <WidgetSeguirEstudiando oposicionId={oposicionId} router={router} />

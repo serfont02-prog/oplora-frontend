@@ -517,14 +517,8 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
   {excedeMaxPorTest && (
     <div style={{ marginTop: '10px', padding: '12px', background: 'var(--c-superficie)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
       <div style={{ fontSize: '12px', color: TEXT_SECONDARY }}>
-        Ese número supera el máximo de tu plan ({maxPorTest} preguntas por test)
+        Como máximo {maxPorTest} preguntas por test
       </div>
-      <button
-        onClick={() => router.push('/app/suscripciones')}
-        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
-      >
-        Cambiar plan
-      </button>
     </div>
   )}
 
@@ -542,12 +536,6 @@ const titulo = paso === 'tipo' ? 'Elige el tipo de test'
       <div style={{ fontSize: '12px', color: TEXT_SECONDARY }}>
         Solo te quedan {restantesDia} preguntas hoy
       </div>
-      <button
-        onClick={() => router.push('/app/suscripciones')}
-        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none', background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
-      >
-        Cambiar plan
-      </button>
     </div>
   )}
 </div>

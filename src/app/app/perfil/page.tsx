@@ -4,6 +4,7 @@
 // sombra común, títulos suaves, solo iconos lucide y sin emojis. Nivel, puntos y racha aparecen una
 // sola vez (antes salían en la cabecera y otra vez en la tarjeta de progreso).
 
+import { useAcceso, diasHasta } from '@/lib/acceso';
 import { useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
@@ -89,6 +90,7 @@ function Fila({ Icon, color, bg, titulo, sub, onClick, ultima = false, peligro =
 
 export default function PerfilPage() {
   const { usuario, logout, actualizarUsuario } = useAuth();
+  const { acceso } = useAcceso(!!usuario);
   const router = useRouter();
   const [modalAvatar, setModalAvatar] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
@@ -111,6 +113,11 @@ export default function PerfilPage() {
     : 100;
   const puntosParaSiguiente = nivelSiguiente ? Math.max(0, nivelSiguiente.puntosMin - puntos) : 0;
   const plan = PLAN[usuario.suscripcion ?? 'gratuito'] ?? 'Gratuito';
+  const textoAcceso = !acceso ? 'Ver OPLORA'
+    : acceso.motivo === 'pago' ? `OPLORA activo hasta el ${new Date(acceso.accesoHasta!).toLocaleDateString('es-ES')}`
+    : acceso.motivo === 'prueba' ? `Prueba gratuita · quedan ${diasHasta(acceso.pruebaHasta)} días`
+    : acceso.motivo === 'gratis' ? 'Tema 1 gratis · Ver OPLORA'
+    : 'Acceso completo';
 
   const subirImagen = async (file: File) => {
     setSubiendo(true);
@@ -263,7 +270,7 @@ export default function PerfilPage() {
           {/* ⭐ Antes decía "Plan Profesional" para cualquier plan de pago, también el Esencial */}
           <Fila
             Icon={CreditCard} color="var(--hx-4d7c0f)" bg="var(--hx-f3fae9)"
-            titulo="Mi suscripción" sub={plan === 'Gratuito' ? 'Plan gratuito · Ver planes' : `Plan ${plan}`}
+            titulo="Mi suscripción" sub={textoAcceso}
             onClick={() => router.push('/app/suscripciones')}
           />
           {visibleEn(temarioPapel?.producto, 'perfil') && (

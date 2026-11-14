@@ -6,10 +6,12 @@
 //   Test → ClipboardCheck (verde) · Flashcards → Layers (morado) · Psicotécnicos → Brain (índigo)
 //   Simulacro → Timer · Repaso → Target · Racha → Flame
 
+import { pedirSuscripcion } from '@/lib/acceso';
+import BannerAcceso from '@/components/ui/BannerAcceso';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardCheck, Layers, Brain, Timer, Target, Flame, Crown, ChevronRight, Lock } from 'lucide-react';
+import { ClipboardCheck, Layers, Brain, Timer, Target, Flame, ChevronRight, Lock } from 'lucide-react';
 import { api } from '@/lib/api';
 import WidgetProgresoGlobal from '@/components/widgets/WidgetProgreso';
 import ModalHacerTest from './ModalHacerTest';
@@ -63,7 +65,7 @@ export default function EntrenamientoHub({ usuario, oposicion, convocatoria, lim
           router={router}
         />
 
-        <UpsellPremium suscripcion={usuario.suscripcion} router={router} />
+        <BannerAcceso />
       </div>
 
       {modalTest && (
@@ -137,7 +139,7 @@ function AvisoRacha({ onClick }: { onClick: () => void }) {
   );
 }
 
-/** Acción principal de la pantalla: hacer un test. Muestra el límite diario si el plan lo tiene. */
+/** Acción principal de la pantalla: hacer un test. Sin cupos diarios desde los planes de nov 2026. */
 function TarjetaTest({ limites, router, onEmpezar }: any) {
   const limiteDiario = limites?.limites?.preguntasTestDia;
   const preguntasHoy = limites?.consumo?.preguntasTestHoy ?? 0;
@@ -188,6 +190,8 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
   const preguntasHoy = limites?.consumo?.preguntasTestHoy ?? 0;
   const limiteAgotado = limiteDiario !== null && limiteDiario !== undefined && preguntasHoy >= limiteDiario;
   const conSimulacros = !!limites?.limites?.simulacros;
+  // ⭐ Acceso completo (prueba o pago). Mientras carga, sin candados.
+  const completo = limites?.acceso ? !!limites.acceso.completo : true;
 
   const { data: configPsicotecnicos = [] } = useQuery({
     queryKey: ['psicotecnicos-config', oposicion?.id, convocatoria?.id],
@@ -223,13 +227,14 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
     },
     (() => {
       const porNivel = nivel < 2;
-      const bloqueado = porNivel || limiteAgotado;
+      const bloqueado = porNivel || limiteAgotado || !completo;
       return {
         clave: 'repaso', titulo: 'Repaso inteligente', Icon: Target, color: COLOR_TEST, bg: COLOR_TEST_BG,
-        descripcion: porNivel ? 'Se desbloquea al llegar al nivel 2' : limiteAgotado ? 'Límite de preguntas de hoy alcanzado' : 'Refuerza las preguntas que más fallas',
+        descripcion: porNivel ? 'Se desbloquea al llegar al nivel 2' : !completo ? 'Incluido en OPLORA' : limiteAgotado ? 'Límite de preguntas de hoy alcanzado' : 'Refuerza las preguntas que más fallas',
         bloqueado,
         onClick: () => {
           if (porNivel) return;
+          if (!completo) { pedirSuscripcion(); return; }
           if (limiteAgotado) { router.push('/app/suscripciones'); return; }
           router.push(`/app/test/${oposicion.id}?modo=repaso&n=10`);
         },
@@ -237,16 +242,18 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
     })(),
     {
       clave: 'simulacro', titulo: 'Simulacro de examen', Icon: Timer, color: COLOR_SIMULACRO, bg: COLOR_SIMULACRO_BG,
-      descripcion: conSimulacros ? 'Examen completo con el tiempo real' : 'Disponible desde el plan Esencial',
+      descripcion: conSimulacros ? 'Examen completo con el tiempo real' : 'Incluido en OPLORA',
       bloqueado: !conSimulacros,
-      etiqueta: conSimulacros ? undefined : 'Esencial',
-      onClick: () => router.push(conSimulacros ? '/app/entrenamiento/simulacro' : '/app/suscripciones'),
+      etiqueta: conSimulacros ? undefined : 'OPLORA',
+      onClick: () => (conSimulacros ? router.push('/app/entrenamiento/simulacro') : pedirSuscripcion()),
     },
     ...(configPsicotecnicos.length > 0 ? [{
-      // Los psicotécnicos no consumen el límite diario de preguntas de test.
+      // Los psicotécnicos están incluidos en OPLORA (sin suscripción, bloqueados).
       clave: 'psicotecnicos', titulo: 'Psicotécnicos', Icon: Brain, color: COLOR_PSICO, bg: COLOR_PSICO_BG,
-      descripcion: 'Numérico, verbal, lógico y más',
-      onClick: () => router.push('/app/entrenamiento/psicotecnicos'),
+      descripcion: completo ? 'Numérico, verbal, lógico y más' : 'Incluido en OPLORA',
+      bloqueado: !completo,
+      etiqueta: completo ? undefined : 'OPLORA',
+      onClick: () => (completo ? router.push('/app/entrenamiento/psicotecnicos') : pedirSuscripcion()),
     }] : []),
   ];
 
@@ -284,27 +291,5 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
         ))}
       </div>
     </section>
-  );
-}
-
-function UpsellPremium({ suscripcion, router }: any) {
-  if (suscripcion !== 'gratuito') return null;
-
-  return (
-    <div style={{ background: 'var(--c-superficie)', borderRadius: 18, padding: 16, boxShadow: SOMBRA, display: 'flex', alignItems: 'center', gap: 14 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--hxbg-0f172a)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Crown size={19} color="var(--c-primario-texto)" />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 2 }}>Practica sin límites</div>
-        <div style={{ fontSize: 12, color: TEXT_MUTED }}>Más preguntas al día, simulacros y análisis detallado</div>
-      </div>
-      <button
-        onClick={() => router.push('/app/suscripciones')}
-        style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-      >
-        Ver planes
-      </button>
-    </div>
   );
 }

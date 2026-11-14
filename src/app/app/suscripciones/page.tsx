@@ -1,516 +1,270 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+// ⭐ OPLORA (planes de nov 2026): un único plan con todo y sin límites diarios.
+//  · Prueba de 5 días sin tarjeta; después, gratis el Tema 1 de cada oposición.
+//  · Pago único por periodo (1, 6 o 12 meses) con tarjeta o Bizum, sin renovación automática.
+//  · O mensual con renovación automática (tarjeta), cancelable desde el portal de Stripe.
+
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Check, Crown, ShieldCheck, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
+import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useAcceso, diasHasta, TEMA_GRATIS } from '@/lib/acceso';
 import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
-import {
-  ArrowLeft,
-  Check,
-  X,
-  Home,
-  BookOpen,
-  Bell,
-  Flame,
-  Crown,
-} from 'lucide-react';
-import { BG_NEUTRAL } from '@/styles/tokens';
 import { ConfirmacionInferior } from '@/components/test/SalirTest';
+import { BG_NEUTRAL, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, SOMBRA } from '@/styles/tokens';
 
-/* =========================================================
-   SUSCRIPCIONES
-========================================================= */
+type IdPlan = 'mes' | 'semestre' | 'anual' | 'mensual_auto';
 
-const SUSCRIPCIONES = [
-  {
-    id: 'gratuito',
-    nombre: 'Gratuito',
-    precio: '0€',
-    descripcion: 'Empieza a preparar tu oposición',
-    recomendado: false,
-
-    features: [
-      { texto: '1 oposición activa', incluido: true },
-      { texto: 'Tests diarios limitados', incluido: true },
-      { texto: 'Flashcards limitadas', incluido: true },
-      { texto: '1 reto diario', incluido: true },
-      { texto: 'Alertas básicas', incluido: true },
-      { texto: 'Progreso básico', incluido: true },
-
-      { texto: 'IA avanzada', incluido: false },
-      { texto: 'Simulacros completos', incluido: false },
-      { texto: 'Varias oposiciones', incluido: false },
-    ],
-  },
-
-  {
-    id: 'esencial',
-    nombre: 'Esencial',
-    precio: '6,99€',
-    descripcion: 'Para opositores constantes',
-    recomendado: false,
-
-    features: [
-      { texto: '1 oposición activa', incluido: true },
-      { texto: 'Tests amplios', incluido: true },
-      { texto: 'Flashcards amplias', incluido: true },
-      { texto: 'Retos diarios', incluido: true },
-      { texto: 'Alertas completas', incluido: true },
-      { texto: 'Rachas y progreso', incluido: true },
-      { texto: 'IA básica', incluido: true },
-
-      { texto: 'IA avanzada', incluido: false },
-      { texto: 'Varias oposiciones', incluido: false },
-    ],
-  },
-
-  {
-    id: 'profesional',
-    nombre: 'Profesional',
-    precio: '14,99€',
-    descripcion: 'Todo ilimitado para ir en serio',
-    recomendado: true,
-
-    features: [
-      { texto: 'Oposiciones ilimitadas', incluido: true },
-      { texto: 'Tests ilimitados', incluido: true },
-      { texto: 'Flashcards ilimitadas', incluido: true },
-      { texto: 'IA avanzada', incluido: true },
-      { texto: 'Simulacros completos', incluido: true },
-      { texto: 'Estadísticas avanzadas', incluido: true },
-      { texto: 'Personalización inteligente', incluido: true },
-      { texto: 'Retos avanzados', incluido: true },
-      { texto: 'Alertas premium', incluido: true },
-    ],
-  },
+const UNICOS: { id: IdPlan; titulo: string; precio: string; detalle: string; etiqueta?: string }[] = [
+  { id: 'mes', titulo: '1 mes', precio: '9,95 €', detalle: 'Pago único' },
+  { id: 'semestre', titulo: '6 meses', precio: '49,95 €', detalle: '8,33 €/mes · ahorras un 16 %' },
+  { id: 'anual', titulo: '12 meses', precio: '79,95 €', detalle: '6,66 €/mes · ahorras un 33 %', etiqueta: 'Mejor precio' },
 ];
 
-/* =========================================================
-   PAGE
-========================================================= */
+const INCLUIDO = [
+  'Todo el temario de tu oposición, tema a tema',
+  'Tests sin límite, simulacros y exámenes oficiales',
+  'Flashcards con repaso inteligente',
+  'Psicotécnicos',
+  'Duelos con otros opositores y la Liga OPLORA',
+  'Cambia de oposición cuando quieras',
+];
+
+const fechaLarga = (f: string | null | undefined) =>
+  f ? new Date(f).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
 export default function SuscripcionesPage() {
+  return <Suspense fallback={null}><Suscripciones /></Suspense>;
+}
+
+function Suscripciones() {
   const router = useRouter();
-
+  const searchParams = useSearchParams();
+  const qc = useQueryClient();
   const { usuario, cargando } = useAuth();
-
-  const [suscripcionSeleccionada, setSuscripcionSeleccionada] = useState<string | null>(null);
-  // ⭐ Los pagos aún no están: antes salía un alert del navegador con "Stripe pendiente".
-  const [planPendiente, setPlanPendiente] = useState<string | null>(null);
+  const { acceso, refetch } = useAcceso(!!usuario);
+  const [elegido, setElegido] = useState<IdPlan>('anual');
+  const [prontoAbierto, setProntoAbierto] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const resultadoPago = searchParams.get('pago');
 
   useEffect(() => {
-    if (!cargando && !usuario) {
-      router.push('/app/login');
-    }
+    if (!cargando && !usuario) router.push('/app/login');
   }, [usuario, cargando, router]);
 
-  if (cargando) return null;
+  const { data: infoPlanes } = useQuery({
+    queryKey: ['pagos-planes'],
+    queryFn: async () => (await api.get('/pagos/planes')).data as { activos: boolean },
+  });
 
-  const suscripcionActual = usuario?.suscripcion || 'gratuito';
+  const { data: pagos = [] } = useQuery({
+    queryKey: ['pagos-mios'],
+    queryFn: async () => (await api.get('/pagos/mios')).data as any[],
+    enabled: !!usuario && !!infoPlanes?.activos,
+  });
+
+  // ⭐ Al volver de Stripe, el aviso del pago puede tardar unos segundos: se vuelve a mirar
+  useEffect(() => {
+    if (resultadoPago !== 'ok') return;
+    let veces = 0;
+    const id = setInterval(async () => {
+      veces++;
+      const r = await refetch();
+      qc.invalidateQueries({ queryKey: ['pagos-mios'] });
+      if (r.data?.acceso?.motivo === 'pago' || veces >= 10) clearInterval(id);
+    }, 2000);
+    return () => clearInterval(id);
+  }, [resultadoPago, refetch, qc]);
+
+  const pagar = useMutation({
+    mutationFn: async (plan: IdPlan) => (await api.post('/pagos/checkout', { plan })).data as { url: string },
+    onSuccess: (r) => { if (r?.url) window.location.href = r.url; },
+    onError: (e: any) => setError(e?.response?.data?.message ?? 'No se ha podido iniciar el pago'),
+  });
+  const portal = useMutation({
+    mutationFn: async () => (await api.post('/pagos/portal')).data as { url: string },
+    onSuccess: (r) => { if (r?.url) window.location.href = r.url; },
+    onError: (e: any) => setError(e?.response?.data?.message ?? 'No se ha podido abrir la gestión de tu suscripción'),
+  });
+
+  const empezarPago = (plan: IdPlan) => {
+    setError(null);
+    if (!infoPlanes?.activos) { setProntoAbierto(true); return; }
+    pagar.mutate(plan);
+  };
+
+  if (cargando || !usuario) return null;
+
+  const motivo = acceso?.motivo;
+  const diasPrueba = diasHasta(acceso?.pruebaHasta);
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: BG_NEUTRAL,
-        paddingBottom: 100,
-      }}
-    >
-      {/* =========================================================
-          TOP BAR
-      ========================================================= */}
-
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-          background: 'color-mix(in srgb, var(--c-superficie) 92%, transparent)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid var(--hx-e5e7eb)',
-        }}
-      >
-        {/* VOLVER */}
-        <div
-          style={{
-            height: 52,
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 1rem',
-          }}
-        >
-          <button
-            onClick={() => router.push('/app/dashboard')}
-            style={{
-              border: 'none',
-              background: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              cursor: 'pointer',
-              color: 'var(--hx-6b7280)',
-              fontSize: 13,
-              fontWeight: 500,
-            }}
-          >
-            <ArrowLeft size={16} />
-            Volver
+    <div style={{ minHeight: '100vh', background: BG_NEUTRAL, paddingBottom: 110 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '0 1rem' }}>
+        <div style={{ height: 56, display: 'flex', alignItems: 'center' }}>
+          <button onClick={() => router.push('/app/perfil')} aria-label="Volver"
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'var(--c-superficie)', boxShadow: SOMBRA, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <ArrowLeft size={17} color={TEXT_SECONDARY} />
           </button>
         </div>
 
-        {/* HERO */}
-        <div
-          style={{
-            padding: '0 1.4rem 1.4rem',
-          }}
-        >
-          {/* SUSCRIPCION ACTUAL */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              borderRadius: 999,
-              background: 'var(--hx-eef2ff)',
-              color: 'var(--hx-4338ca)',
-              fontSize: 12,
-              fontWeight: 700,
-              marginBottom: 14,
-            }}
-          >
-            <Crown size={14} />
-            Suscripción actual:{' '}
-            {SUSCRIPCIONES.find((s) => s.id === suscripcionActual)?.nombre || 'Gratuito'}
-          </div>
-
-          <h1
-            style={{
-              fontSize: 30,
-              lineHeight: 1.1,
-              fontWeight: 800,
-              color: 'var(--hx-0f172a)',
-              margin: 0,
-              marginBottom: 10,
-            }}
-          >
-            Elige cómo quieres preparar tu oposición
-          </h1>
-
-          <p
-            style={{
-              margin: 0,
-              color: 'var(--hx-64748b)',
-              fontSize: 14,
-              lineHeight: 1.5,
-            }}
-          >
-            Sin permanencia · Cancela cuando quieras
-          </p>
-        </div>
-      </div>
-
-      {/* =========================================================
-          CONTENIDO
-      ========================================================= */}
-
-      <div
-        style={{
-          maxWidth: 620,
-          margin: '0 auto',
-          padding: '1.4rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 18,
-        }}
-      >
-        {SUSCRIPCIONES.map((suscripcion) => {
-          const esActual = suscripcion.id === suscripcionActual;
-          const seleccionada = suscripcionSeleccionada === suscripcion.id;
-
-          return (
-            <div
-              key={suscripcion.id}
-              onClick={() => setSuscripcionSeleccionada(suscripcion.id)}
-              style={{
-                position: 'relative',
-                background: 'var(--c-superficie)',
-                borderRadius: 22,
-                border: seleccionada
-                  ? '2px solid var(--hx-0f172a)'
-                  : suscripcion.recomendado
-                  ? '2px solid var(--hx-1f7cff)'
-                  : '1px solid var(--hx-e5e7eb)',
-                padding: '1.4rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
-              }}
-            >
-              {/* RECOMENDADO */}
-              {suscripcion.recomendado && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: -12,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: '#1F7CFF',
-                    color: 'white',
-                    padding: '5px 14px',
-                    borderRadius: 999,
-                    fontSize: 11,
-                    fontWeight: 700,
-                  }}
-                >
-                  RECOMENDADO
-                </div>
-              )}
-
-              {/* SUSCRIPCION ACTUAL */}
-              {esActual && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 14,
-                    right: 14,
-                    background: 'var(--hx-dcfce7)',
-                    color: 'var(--hx-15803d)',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: '4px 10px',
-                    borderRadius: 999,
-                  }}
-                >
-                  ACTUAL
-                </div>
-              )}
-
-              {/* HEADER */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: 18,
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 800,
-                      color: 'var(--hx-0f172a)',
-                    }}
-                  >
-                    {suscripcion.nombre}
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: 'var(--hx-64748b)',
-                      marginTop: 4,
-                    }}
-                  >
-                    {suscripcion.descripcion}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <div
-                    style={{
-                      fontSize: 34,
-                      fontWeight: 800,
-                      color: 'var(--hx-0f172a)',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {suscripcion.precio}
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--hx-94a3b8)',
-                      marginTop: 4,
-                    }}
-                  >
-                    /mes
-                  </div>
-                </div>
-              </div>
-
-              {/* FEATURES */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10,
-                }}
-              >
-                {suscripcion.features.map((f, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      opacity: f.incluido ? 1 : 0.45,
-                    }}
-                  >
-                    {f.incluido ? (
-                      <Check size={15} color="var(--hx-16a34a)" />
-                    ) : (
-                      <X size={15} color="var(--hx-94a3b8)" />
-                    )}
-
-                    <span
-                      style={{
-                        fontSize: 14,
-                        color: 'var(--hx-334155)',
-                      }}
-                    >
-                      {f.texto}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* CTA */}
-              <button
-                disabled={esActual}
-                onClick={(e) => {
-                  e.stopPropagation();
-
-                  if (!esActual) setPlanPendiente(suscripcion.nombre);
-                }}
-                style={{
-                  marginTop: 22,
-                  width: '100%',
-                  height: 48,
-                  borderRadius: 14,
-                  border: 'none',
-                  background: esActual
-                    ? 'var(--hx-e5e7eb)'
-                    : suscripcion.recomendado
-                    ? 'var(--hx-1f7cff)'
-                    : 'var(--hxbg-0f172a)',
-                  color: esActual ? 'var(--hx-64748b)' : 'var(--c-primario-texto)',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  cursor: esActual ? 'default' : 'pointer',
-                }}
-              >
-                {esActual
-                  ? 'Tu suscripción actual'
-                  : suscripcion.id === 'gratuito'
-                  ? 'Incluido al registrarte'
-                  : `Elegir ${suscripcion.nombre}`}
-              </button>
+        {/* Vuelta de Stripe */}
+        {resultadoPago === 'ok' && (
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--hx-f0fdf4)', border: '1px solid var(--hx-86efac)', borderRadius: 14, padding: '12px 14px', marginBottom: 14 }}>
+            <CheckCircle2 size={18} color="var(--hx-15803d)" style={{ flexShrink: 0, marginTop: 1 }} />
+            <div style={{ fontSize: 13, color: 'var(--hx-15803d)', lineHeight: 1.5 }}>
+              <b>¡Gracias!</b> {motivo === 'pago' ? 'Tu acceso a OPLORA ya está activo.' : 'Estamos confirmando el pago; tardará unos segundos.'}
             </div>
-          );
-        })}
-
-        {/* FAQ */}
-        <div
-          style={{
-            background: 'var(--c-superficie)',
-            border: '1px solid var(--hx-e5e7eb)',
-            borderRadius: 18,
-            padding: '1.2rem',
-            marginTop: 4,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 15,
-              fontWeight: 700,
-              color: 'var(--hx-0f172a)',
-              marginBottom: 14,
-            }}
-          >
-            Preguntas frecuentes
           </div>
+        )}
+        {resultadoPago === 'cancelado' && (
+          <div style={{ fontSize: 13, color: TEXT_SECONDARY, background: 'var(--c-superficie)', borderRadius: 14, padding: '12px 14px', marginBottom: 14 }}>
+            No se ha hecho ningún cargo. Cuando quieras, puedes volver a intentarlo.
+          </div>
+        )}
 
-          {[
-            {
-              p: '¿Puedo cambiar de suscripción?',
-              r: 'Sí. Puedes subir o bajar de suscripción cuando quieras.',
-            },
-            {
-              p: '¿Puedo cancelar?',
-              r: 'Sí. No hay permanencia.',
-            },
-            {
-              p: '¿Qué pasa si bajo de suscripción?',
-              r: 'Mantendrás tus datos y se aplicarán los nuevos límites.',
-            },
-          ].map((faq, i) => (
-            <div
-              key={i}
-              style={{
-                paddingBottom: 14,
-                marginBottom: 14,
-                borderBottom:
-                  i !== 2 ? '1px solid var(--hx-f1f5f9)' : 'none',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: 'var(--hx-0f172a)',
-                  marginBottom: 6,
-                }}
-              >
-                {faq.p}
-              </div>
+        {/* Estado */}
+        <div style={{ background: 'var(--c-hero, var(--hxbg-0f172a))', color: 'var(--c-primario-texto)', borderRadius: 22, padding: '20px 18px', marginBottom: 16, boxShadow: SOMBRA }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <Crown size={15} /> OPLORA
+          </div>
+          <div style={{ fontSize: 21, fontWeight: 800, marginTop: 8, lineHeight: 1.25 }}>
+            {motivo === 'pago' && 'Tienes OPLORA activo'}
+            {motivo === 'prueba' && (diasPrueba <= 1 ? 'Tu prueba termina hoy' : `Te quedan ${diasPrueba} días de prueba`)}
+            {(motivo === 'regalo' || motivo === 'admin') && 'Tienes acceso completo'}
+            {motivo === 'gratis' && 'Tu prueba ha terminado'}
+            {!motivo && 'Todo para aprobar, en una app'}
+          </div>
+          <div style={{ fontSize: 13, opacity: 0.85, marginTop: 6, lineHeight: 1.5 }}>
+            {motivo === 'pago' && (acceso?.renovacionAutomatica
+              ? `Se renueva cada mes. Próximo cobro alrededor del ${fechaLarga(acceso?.accesoHasta)}.`
+              : `Hasta el ${fechaLarga(acceso?.accesoHasta)}. No se renueva sola: te avisaremos antes.`)}
+            {motivo === 'prueba' && `Tienes todo desbloqueado hasta el ${fechaLarga(acceso?.pruebaHasta)}. Sin tarjeta y sin compromiso.`}
+            {motivo === 'gratis' && `Sigues teniendo gratis el Tema ${TEMA_GRATIS} de cada oposición. Con OPLORA, todo lo demás.`}
+          </div>
+          {motivo === 'pago' && acceso?.renovacionAutomatica && (
+            <button onClick={() => portal.mutate()} disabled={portal.isPending}
+              style={{ marginTop: 14, padding: '9px 14px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.35)', background: 'transparent', color: 'inherit', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+              {portal.isPending ? 'Abriendo…' : 'Gestionar o cancelar la suscripción'}
+            </button>
+          )}
+        </div>
 
-              <div
-                style={{
-                  fontSize: 13,
-                  color: 'var(--hx-64748b)',
-                  lineHeight: 1.5,
-                }}
-              >
-                {faq.r}
-              </div>
+        {/* Qué incluye */}
+        <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: '16px 16px 14px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: TEXT_PRIMARY }}>Todo incluido, sin límites</div>
+            <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--c-azul)', background: 'var(--c-azul-bg)', borderRadius: 999, padding: '3px 8px', whiteSpace: 'nowrap' }}>
+              Precio de lanzamiento
+            </span>
+          </div>
+          {INCLUIDO.map((t) => (
+            <div key={t} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13.5, color: TEXT_PRIMARY, padding: '5px 0', lineHeight: 1.4 }}>
+              <Check size={16} color="var(--c-verde)" style={{ flexShrink: 0, marginTop: 1 }} /> {t}
             </div>
           ))}
+          {/* ⭐ Precio de lanzamiento: que quede claro que no cambia durante la suscripción */}
+          <div style={{ display: 'flex', gap: 10, marginTop: 12, padding: '11px 12px', borderRadius: 12, background: 'var(--c-azul-bg)' }}>
+            <ShieldCheck size={17} color="var(--c-azul)" style={{ flexShrink: 0, marginTop: 1 }} />
+            <div style={{ fontSize: 12.5, color: TEXT_PRIMARY, lineHeight: 1.45 }}>
+              <div style={{ fontWeight: 800, marginBottom: 2 }}>Precio de lanzamiento garantizado</div>
+              El precio que pagas hoy no cambia mientras dure tu suscripción. Con el mensual automático sigues pagando 9,95 € al mes mientras no lo canceles, aunque el precio suba para quien llegue después.
+            </div>
+          </div>
+        </div>
+
+        {/* Pago único */}
+        <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_SECONDARY, margin: '4px 4px 8px' }}>
+          {motivo === 'pago' ? 'Añadir más tiempo' : 'Elige tu plan'} · tarjeta o Bizum
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
+          {UNICOS.map((p) => {
+            const activo = elegido === p.id;
+            return (
+              <button key={p.id} onClick={() => setElegido(p.id)} aria-pressed={activo}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '14px 14px', borderRadius: 16, cursor: 'pointer', textAlign: 'left',
+                  background: 'var(--c-superficie)', boxShadow: SOMBRA, border: `2px solid ${activo ? 'var(--c-azul)' : 'transparent'}`,
+                }}>
+                <span style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${activo ? 'var(--c-azul)' : 'var(--hx-d1d5db)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {activo && <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--c-azul)' }} />}
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 15, fontWeight: 800, color: TEXT_PRIMARY }}>{p.titulo}</span>
+                    {p.etiqueta && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--c-verde)', background: 'var(--c-verde-bg)', borderRadius: 999, padding: '2px 7px' }}>{p.etiqueta}</span>}
+                  </span>
+                  <span style={{ display: 'block', fontSize: 12, color: TEXT_MUTED, marginTop: 2 }}>{p.detalle}</span>
+                </span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: TEXT_PRIMARY }}>{p.precio}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button onClick={() => empezarPago(elegido)} disabled={pagar.isPending}
+          style={{ width: '100%', padding: 15, borderRadius: 14, border: 'none', background: 'var(--hxbg-0f172a)', color: 'var(--c-primario-texto)', fontSize: 14.5, fontWeight: 800, cursor: pagar.isPending ? 'wait' : 'pointer', opacity: pagar.isPending ? 0.7 : 1 }}>
+          {pagar.isPending ? 'Abriendo el pago…' : `Pagar ${UNICOS.find((p) => p.id === elegido)?.precio} con tarjeta o Bizum`}
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 11.5, color: TEXT_MUTED, margin: '8px 0 22px' }}>
+          <ShieldCheck size={13} /> Sin permanencia y sin renovaciones automáticas · IVA incluido
+        </div>
+
+        {/* Mensual automático */}
+        {!(motivo === 'pago' && acceso?.renovacionAutomatica) && (
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: 16, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 800, color: TEXT_PRIMARY }}>
+              <RefreshCw size={16} color="var(--c-azul)" /> Mensual con renovación automática
+            </div>
+            <div style={{ fontSize: 12.5, color: TEXT_SECONDARY, lineHeight: 1.5, margin: '6px 0 12px' }}>
+              9,95 €/mes con tarjeta, precio de lanzamiento fijo mientras no canceles. Para no tener que acordarte de renovar. Cancelas en un clic desde aquí y mantienes el acceso hasta final de mes.
+            </div>
+            <button onClick={() => empezarPago('mensual_auto')} disabled={pagar.isPending}
+              style={{ width: '100%', padding: 12, borderRadius: 12, border: '1.5px solid var(--c-azul)', background: 'transparent', color: 'var(--c-azul)', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
+              Suscribirme por 9,95 €/mes
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div style={{ fontSize: 12.5, color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)', borderRadius: 12, padding: '10px 12px', marginBottom: 14 }}>{error}</div>
+        )}
+
+        {pagos.length > 0 && (
+          <div style={{ background: 'var(--c-superficie)', borderRadius: 18, boxShadow: SOMBRA, padding: '14px 16px', marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: TEXT_PRIMARY, marginBottom: 8 }}>Tus pagos</div>
+            {pagos.map((p: any) => (
+              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12.5, color: TEXT_SECONDARY, padding: '6px 0', borderTop: '1px solid var(--hx-f1f5f9)' }}>
+                <span>{new Date(p.creadoEn).toLocaleDateString('es-ES')} · {p.tipo === 'suscripcion' ? 'Mensual' : `${p.meses} ${p.meses === 1 ? 'mes' : 'meses'}`}</span>
+                <span style={{ fontWeight: 700, color: TEXT_PRIMARY }}>{(p.importeCentimos / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+              </div>
+            ))}
+            <button onClick={() => portal.mutate()} style={{ marginTop: 8, border: 'none', background: 'none', color: 'var(--c-azul)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+              Ver facturas
+            </button>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, fontSize: 12, color: TEXT_MUTED, lineHeight: 1.5, padding: '0 4px' }}>
+          <Sparkles size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+          <span>Los pagos únicos no se renuevan solos: te avisamos 5 días y 1 día antes de que terminen. El pago lo gestiona Stripe: OPLORA no ve ni guarda los datos de tu tarjeta.</span>
         </div>
       </div>
 
-      {/* =========================================================
-          FOOTER APP
-      ========================================================= */}
-
-      {/* ⭐ Barra inferior común (antes enlazaba a /app, /app/estudiar y /app/tests, que no existen) */}
-      <FooterNavegacion usuario={usuario} oposicionId={usuario?.oposicionActiva?.id} />
-
       <ConfirmacionInferior
-        abierta={!!planPendiente}
-        titulo={`Plan ${planPendiente ?? ''}: muy pronto`}
-        texto="Estamos terminando de preparar los pagos y muy pronto podrás cambiar de plan desde aquí. Si quieres acceso anticipado, escríbenos desde Soporte."
-        textoCancelar="Entendido"
+        abierta={prontoAbierto}
+        titulo="Los pagos llegan muy pronto"
+        texto="Estamos terminando de activar el pago con tarjeta y Bizum. Si quieres OPLORA ya, escríbenos y te lo activamos."
         textoConfirmar="Escribir a Soporte"
+        textoCancelar="Vale"
         peligro={false}
-        onCancelar={() => setPlanPendiente(null)}
-        onConfirmar={() => router.push('/app/soporte')}
+        onCancelar={() => setProntoAbierto(false)}
+        onConfirmar={() => { setProntoAbierto(false); router.push('/app/soporte'); }}
       />
+
+      <FooterNavegacion usuario={usuario} oposicionId={usuario?.oposicionActiva?.id} />
     </div>
   );
 }
-
-/* =========================================================
-   FOOTER BTN
-========================================================= */
-
-const footerBtn: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: 2,
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-};
