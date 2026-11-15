@@ -204,12 +204,12 @@ function MasFormasDePracticar({ usuario, oposicion, convocatoria, limites, route
   });
 
   // Misma consulta que el atajo de Flashcards de Inicio (comparte caché).
-  const { data: pendientesFC = [] } = useQuery({
-    queryKey: ['fc-pendientes-widget', oposicion?.id],
-    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicion.id}`, { params: { limite: 99 } })).data,
+  // ⭐ Solo el número (antes se descargaban hasta 99 tarjetas para contarlas)
+  const { data: nFC = 0 } = useQuery({
+    queryKey: ['fc-pendientes-widget', oposicion?.id, 'total'],
+    queryFn: async () => Number((await api.get(`/flashcards/pendientes/${oposicion.id}/total`)).data?.total ?? 0),
     enabled: !!oposicion?.id,
   });
-  const nFC = Array.isArray(pendientesFC) ? pendientesFC.length : 0;
 
   if (!oposicion?.id) return null;
 

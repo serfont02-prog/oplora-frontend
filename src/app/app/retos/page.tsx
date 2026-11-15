@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { elegirConvocatoria } from '@/lib/convocatoria';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Plus, ChevronRight, ChevronLeft, ChevronDown, Brain, Lock, Swords, Shuffle, Loader2, ClipboardCheck, Layers, Landmark, Scale, BookOpen, Clock, Handshake, Crown, X, AlertTriangle, Check, UserX, Ban, RotateCcw, Hourglass } from 'lucide-react';
@@ -355,7 +356,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
     enabled: !!oposicionId && modalAbierto,
   });
 
-  const convocatoriaReto = convocatoriasReto.find((c: any) => c.estado === 'activa') ?? convocatoriasReto[0];
+  // ⭐ La convocatoria es la del usuario, no la «activa» de la lista (ver lib/convocatoria.ts)
+  const convocatoriaReto = elegirConvocatoria<any>(convocatoriasReto, usuario, oposicionId);
 
   const { data: temas = [] } = useQuery({
     queryKey: ['temas-reto', convocatoriaReto?.id],
@@ -821,7 +823,7 @@ const oposicionId = usuario?.oposicionActiva?.id;
                   type="text"
                   value={form.retadoNickOEmail}
                   onChange={(e) => setForm({ ...form, retadoNickOEmail: e.target.value })}
-                  placeholder="Su nick o su email"
+                  placeholder="Su nick"
                   style={{ width: '100%', padding: '12px 14px', fontSize: '14px', border: 'none', borderRadius: '12px', outline: 'none', boxSizing: 'border-box', background: 'var(--c-superficie)', boxShadow: SOMBRA }}
                 />
                 {validando && (

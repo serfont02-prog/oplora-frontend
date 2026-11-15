@@ -81,10 +81,35 @@ function crearAsa(lado: 'inicio' | 'fin'): HTMLDivElement {
   return zona;
 }
 
+// ⭐ En navegadores sin resaltados de CSS (Safari anterior a 17.2, Firefox antiguo) la selección
+// no se veía: solo salían las asas. Ahí se pinta con rectángulos propios sobre el texto.
+let capaRespaldo: HTMLDivElement | null = null;
+function pintarRespaldo(rango: Range | null) {
+  if (!rango) { capaRespaldo?.remove(); capaRespaldo = null; return; }
+  if (!capaRespaldo) {
+    capaRespaldo = document.createElement('div');
+    capaRespaldo.setAttribute('aria-hidden', 'true');
+    Object.assign(capaRespaldo.style, { position: 'fixed', inset: '0', pointerEvents: 'none', zIndex: '55' });
+    document.body.appendChild(capaRespaldo);
+  }
+  capaRespaldo.replaceChildren(
+    ...Array.from(rango.getClientRects())
+      .filter((r) => r.width > 0 && r.height > 0)
+      .map((r) => {
+        const d = document.createElement('div');
+        Object.assign(d.style, {
+          position: 'absolute', left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`,
+          background: 'var(--c-seleccion)',
+        });
+        return d;
+      }),
+  );
+}
+
 function pintar(rango: Range | null) {
   const css = (window as any).CSS;
   const H = (window as any).Highlight;
-  if (!css?.highlights || !H) return;
+  if (!css?.highlights || !H) { pintarRespaldo(rango); return; }
   if (rango) css.highlights.set(NOMBRE_RESALTADO, new H(rango));
   else css.highlights.delete(NOMBRE_RESALTADO);
 }
@@ -103,6 +128,9 @@ export function useSeleccionTactil({
   cb.current = { obtenerContenedor, onSeleccion, onLimpiar };
   /** true mientras se está seleccionando (para que, p. ej., el deslizar entre artículos no actúe). */
   const seleccionando = useRef(false);
+  // ⭐ Borra también el estado interno (rango y asas). Antes «quitar resaltado» solo ocultaba las
+  // asas, y al desplazar la página volvían a aparecer sin selección.
+  const limpiarInterno = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!esPantallaTactil()) return;
@@ -134,6 +162,15 @@ export function useSeleccionTactil({
       arrastrando = null;
       colocarAsas();
       if (hayRango) { hayRango = false; cb.current.onLimpiar(); }
+    };
+
+    limpiarInterno.current = () => {
+      pintar(null);
+      rango = null;
+      hayRango = false;
+      arrastrando = null;
+      ancla = null;
+      colocarAsas();
     };
 
     const extremos = (r: Range) => ({
@@ -237,11 +274,16 @@ export function useSeleccionTactil({
     document.addEventListener('touchcancel', alSoltar, { passive: false });
     document.addEventListener('contextmenu', alMenuContextual);
     // Si la página se desplaza o cambia de tamaño, las asas siguen al texto
-    const recolocar = () => { if (rango) colocarAsas(); };
+    const recolocar = () => {
+      if (!rango) return;
+      colocarAsas();
+      if (capaRespaldo) pintarRespaldo(rango); // el respaldo va en coordenadas de pantalla
+    };
     window.addEventListener('scroll', recolocar, { passive: true, capture: true });
     window.addEventListener('resize', recolocar);
     return () => {
       clearTimeout(timer);
+      limpiarInterno.current = () => {};
       pintar(null);
       asas.inicio.remove();
       asas.fin.remove();
@@ -258,6 +300,7 @@ export function useSeleccionTactil({
   return {
     seleccionando,
     quitarResaltado: () => {
+      limpiarInterno.current();
       pintar(null);
       document.querySelectorAll<HTMLElement>('[data-asa-subrayado]').forEach((a) => { a.style.display = 'none'; });
     },

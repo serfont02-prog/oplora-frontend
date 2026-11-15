@@ -232,12 +232,14 @@ export default function ArticuloPage() {
 
   const crearSubrayado = async () => {
     if (!menuSubrayado) return;
-    await api.post(`/normativa/subrayados/${id}`, {
-      inicio: menuSubrayado.inicio,
-      fin: menuSubrayado.fin,
-      textoSeleccionado: menuSubrayado.texto,
-      color: 'amarillo',
-    });
+    try {
+      await api.post(`/normativa/subrayados/${id}`, {
+        inicio: menuSubrayado.inicio,
+        fin: menuSubrayado.fin,
+        textoSeleccionado: menuSubrayado.texto,
+        color: 'amarillo',
+      });
+    } catch { /* si falla, se quita la selección igualmente; el aviso general ya informa */ }
     setMenuSubrayado(null);
     window.getSelection()?.removeAllRanges();
     seleccionTactil.quitarResaltado();
@@ -257,10 +259,15 @@ export default function ArticuloPage() {
     let pos = 0;
     const ordenados = [...subrayados].sort((a: any, b: any) => a.inicio - b.inicio);
 
+    // ⭐ Si dos subrayados se pisan (los antiguos; los nuevos ya se unen al guardarlos), el segundo
+    // empieza donde acabó el anterior. Antes ese trozo de texto salía repetido.
     for (const sub of ordenados) {
-      if (sub.inicio > pos) partes.push({ texto: texto.slice(pos, sub.inicio) });
-      partes.push({ texto: texto.slice(sub.inicio, sub.fin), subrayado: sub });
-      pos = sub.fin;
+      const inicio = Math.max(sub.inicio, pos);
+      const fin = Math.min(sub.fin, texto.length);
+      if (fin <= inicio) continue;
+      if (inicio > pos) partes.push({ texto: texto.slice(pos, inicio) });
+      partes.push({ texto: texto.slice(inicio, fin), subrayado: sub });
+      pos = fin;
     }
     if (pos < texto.length) partes.push({ texto: texto.slice(pos) });
 

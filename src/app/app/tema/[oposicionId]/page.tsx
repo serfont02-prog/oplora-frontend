@@ -9,6 +9,7 @@ import { useAcceso, temaBloqueado, pedirSuscripcion } from '@/lib/acceso';
 import { useState, useMemo } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { elegirConvocatoria } from '@/lib/convocatoria';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Search, CheckCircle2, ChevronRight, BookOpen, FileText, Upload, ListOrdered, Library, Scale, X, PlayCircle, Lock } from 'lucide-react';
@@ -149,7 +150,8 @@ export default function TemarioOposicionPage() {
   });
 
   const convocatoria = useMemo(
-    () => convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0],
+    // ⭐ la del usuario, no la «activa» de la lista (ver lib/convocatoria.ts)
+    () => elegirConvocatoria<any>(convocatorias, usuario, oposicionId),
     [convocatorias]
   );
 
@@ -456,7 +458,7 @@ export default function TemarioOposicionPage() {
                 <input
                   id="apunte-oposicion-input"
                   type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
                   style={{ display: 'none' }}
                   onChange={async (e) => {
                     const file = e.target.files?.[0];

@@ -78,7 +78,17 @@ export default function RetoPsicoDetallePage() {
   const respuestasRef = useRef<{ texto: string | null; tiempo: number }[]>([]);
   const inicioPregunta = useRef(0);
   // ⭐ El servidor mide el tiempo del duelo (desempate) desde aquí; solo cuenta la primera vez.
-  const avisarInicio = () => { api.post(`/duelos/psico/${id}/empezar`).catch(() => {}); };
+  // ⭐ Auditoría M2: las preguntas solo llegan después de «Empezar», así que se espera a que el
+  // servidor lo apunte y se vuelve a pedir el duelo. Si falla, se vuelve a la portada del duelo.
+  const avisarInicio = async () => {
+    try {
+      await api.post(`/duelos/psico/${id}/empezar`);
+    } catch {
+      setEstado('intro');
+      return;
+    }
+    await refetchRetos();
+  };
   const [tiempoInicioReto, setTiempoInicioReto] = useState(0);
   const [resultadoFinal, setResultadoFinal] = useState<any>(null);
   const yaEnviado = useRef(false);
@@ -95,7 +105,7 @@ export default function RetoPsicoDetallePage() {
     }
   }, [directo, estado, tiempoInicioReto]);
 
-  const { data: misRetosPsico = [], isLoading } = useQuery({
+  const { data: misRetosPsico = [], isLoading, refetch: refetchRetos } = useQuery({
     queryKey: ['mis-retos-psico'],
     queryFn: async () => (await api.get('/psicotecnicos/mis-retos')).data,
     enabled: !!usuario,
@@ -284,6 +294,10 @@ export default function RetoPsicoDetallePage() {
   }
 
   /* ─────────────── JUGANDO ─────────────── */
+  if (estado === 'jugando' && preguntas.some((p: any) => p?.oculta)) {
+    return <CargandoTest total={total} texto="Preparando el duelo…" subtexto="Cargando las preguntas" />;
+  }
+
   if (estado === 'jugando' && total > 0) {
     if (completar.isPending) return <CargandoTest total={total} texto="Corrigiendo duelo…" subtexto="Calculando tu resultado" />;
     return (

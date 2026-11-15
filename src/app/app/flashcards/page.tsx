@@ -13,6 +13,7 @@ import { useAcceso, temaBloqueado, pedirSuscripcion } from '@/lib/acceso';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { elegirConvocatoria } from '@/lib/convocatoria';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ArrowLeft, ChevronRight, ChevronDown, Layers, CheckCircle2, X, Sparkles, AlertTriangle, Lock } from 'lucide-react';
@@ -90,7 +91,8 @@ function Flashcards() {
     queryFn: async () => (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data,
     enabled: !!oposicionId,
   });
-  const convocatoria = convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0];
+  // ⭐ La convocatoria es la del usuario, no la «activa» de la lista (ver lib/convocatoria.ts)
+  const convocatoria = elegirConvocatoria<any>(convocatorias, usuario, oposicionId);
 
   const { data: temas = [], isLoading: cargandoTemas } = useQuery({
     queryKey: ['temas-fc', convocatoria?.id],
@@ -104,9 +106,10 @@ function Flashcards() {
     enabled: !!oposicionId,
   });
 
-  const { data: pendientes = [] } = useQuery({
-    queryKey: ['pendientes-fc', oposicionId],
-    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicionId}?limite=${MAX_CONTEO}`)).data,
+  // ⭐ Solo el número (antes se descargaban hasta 99 tarjetas para contarlas)
+  const { data: nPendientes = 0 } = useQuery({
+    queryKey: ['pendientes-fc', oposicionId, 'total'],
+    queryFn: async () => Number((await api.get(`/flashcards/pendientes/${oposicionId}/total`)).data?.total ?? 0),
     enabled: !!oposicionId,
   });
 
@@ -139,7 +142,6 @@ function Flashcards() {
   const restantesHoy = conLimite ? Math.max(0, limiteDia - hechasHoy) : Infinity;
   const limiteAgotado = conLimite && restantesHoy === 0;
 
-  const nPendientes = Array.isArray(pendientes) ? pendientes.length : 0;
   // La sesión pide exactamente las que se anuncian en el botón (antes decía "Repasar 37" y salían 10).
   const nSesion = Math.min(nPendientes, MAX_SESION, restantesHoy);
 

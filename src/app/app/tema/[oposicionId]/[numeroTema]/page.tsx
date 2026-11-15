@@ -7,6 +7,7 @@ import { useAcceso, temaBloqueado } from '@/lib/acceso';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { elegirConvocatoria } from '@/lib/convocatoria';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import {
@@ -189,7 +190,8 @@ export default function TemaPage() {
     queryFn: async () => (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data,
     enabled: !!usuario,
   });
-  const convocatoria = convocatorias.find((c: any) => c.estado === 'activa') ?? convocatorias[0];
+  // ⭐ La convocatoria es la del usuario, no la «activa» de la lista (ver lib/convocatoria.ts)
+  const convocatoria = elegirConvocatoria<any>(convocatorias, usuario, oposicionId);
 
   const { data: temas = [], isPending: temasPendiente, isError: temasError } = useQuery({
     queryKey: ['temas-tema', convocatoria?.id],
@@ -634,7 +636,7 @@ export default function TemaPage() {
                 <input
                   id="apunte-input"
                   type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
                   style={{ display: 'none' }}
                   onChange={async (e) => {
                     const file = e.target.files?.[0];

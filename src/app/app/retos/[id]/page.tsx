@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { elegirConvocatoria } from '@/lib/convocatoria';
 import { DueloReto } from '@/app/app/retos/page';
 import PreguntaTest from '@/components/test/PreguntaTest';
 import CargandoTest from '@/components/test/CargandoTest';
@@ -85,7 +86,17 @@ export default function RetoDetallePage() {
   const [tiempoFinal, setTiempoFinal] = useState<number | null>(null);
   const yaEnviado = useRef(false);
   // ⭐ El servidor mide el tiempo del duelo (desempate) desde aquí; solo cuenta la primera vez.
-  const avisarInicio = () => { api.post(`/duelos/test/${id}/empezar`).catch(() => {}); };
+  // ⭐ Auditoría M2: las preguntas solo llegan después de «Empezar», así que se espera a que el
+  // servidor lo apunte y se vuelve a pedir el duelo. Si falla, se vuelve a la portada del duelo.
+  const avisarInicio = async () => {
+    try {
+      await api.post(`/duelos/test/${id}/empezar`);
+    } catch {
+      setEstado('intro');
+      return;
+    }
+    await refetch();
+  };
 
   useEffect(() => {
     if (directo && estado === 'jugando' && tiempoInicio === 0) {
@@ -106,10 +117,11 @@ export default function RetoDetallePage() {
 
   // Convocatoria: para indicar si dejar en blanco resta (igual que en Practicar)
   const { data: convocatoria } = useQuery({
-    queryKey: ['convocatoria-test', reto?.oposicion?.id],
+    // ⭐ la convocatoria del usuario, no la «activa» de la lista (ver lib/convocatoria.ts)
+    queryKey: ['convocatoria-test', reto?.oposicion?.id, usuario?.oposicionActiva?.convocatoriaActiva?.id ?? null],
     queryFn: async () => {
       const lista = (await api.get(`/convocatorias/oposicion/${reto.oposicion.id}`)).data;
-      return lista.find((c: any) => c.estado === 'activa') ?? lista[0] ?? null;
+      return elegirConvocatoria<any>(lista, usuario, reto.oposicion.id);
     },
     enabled: !!reto?.oposicion?.id,
   });
@@ -295,6 +307,10 @@ export default function RetoDetallePage() {
   }
 
   /* ─────────────── JUGANDO (igual que un test de Practicar, sin corrección hasta el final) ─────────────── */
+  if (estado === 'jugando' && preguntas.some((p: any) => p?.oculta)) {
+    return <CargandoTest total={preguntas.length} texto="Preparando el duelo…" subtexto="Cargando las preguntas" />;
+  }
+
   if (estado === 'jugando' && preguntas.length > 0) {
     if (completar.isPending) return <CargandoTest total={preguntas.length} texto="Corrigiendo duelo…" subtexto="Calculando tu resultado" />;
     return (

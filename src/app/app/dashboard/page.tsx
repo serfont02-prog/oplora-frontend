@@ -759,10 +759,10 @@ function WidgetAccionesRapidas({ usuario, oposicionId, router }: any) {
     enabled: !!usuario,
   });
 
-  const { data: pendientesFC = [] } = useQuery({
-    queryKey: ['fc-pendientes-widget', oposicionId],
-    // ⭐ Solo repasos que tocan hoy (las nuevas se empiezan desde cada tema)
-    queryFn: async () => (await api.get(`/flashcards/pendientes/${oposicionId}`, { params: { limite: 99 } })).data,
+  const { data: nFC = 0 } = useQuery({
+    queryKey: ['fc-pendientes-widget', oposicionId, 'total'],
+    // ⭐ Solo repasos que tocan hoy (las nuevas se empiezan desde cada tema). Solo el número.
+    queryFn: async () => Number((await api.get(`/flashcards/pendientes/${oposicionId}/total`)).data?.total ?? 0),
     enabled: !!oposicionId,
   });
 
@@ -776,7 +776,6 @@ function WidgetAccionesRapidas({ usuario, oposicionId, router }: any) {
 
   if (!oposicionId) return null;
 
-  const nFC = pendientesFC.length;
   const nRetos = retosPend?.total ?? 0;
 
   // ⭐ Atajos directos: el test abre la elección sin pasar por Practicar; las flashcards van al

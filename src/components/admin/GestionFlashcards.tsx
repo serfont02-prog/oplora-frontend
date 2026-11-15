@@ -12,15 +12,15 @@ const TIPOS: Record<string, string> = { vf: 'Verdadero/falso', hueco: 'Hueco', t
 const NIVELES: Record<string, string> = { basico: 'Básico', medio: 'Medio', alto: 'Avanzado' };
 // Estado editorial: en la app solo salen las validadas
 const ESTADOS: { k: string; label: string; color: string; bg: string }[] = [
-  { k: 'validada', label: 'Validadas', color: '#15803d', bg: '#f0fdf4' },
-  { k: 'pendiente_revision', label: 'Pendientes', color: '#b45309', bg: '#fffbeb' },
-  { k: 'borrador', label: 'Borrador', color: '#4b5563', bg: '#f3f4f6' },
-  { k: 'obsoleta', label: 'Obsoletas', color: '#b91c1c', bg: '#fef2f2' },
+  { k: 'validada', label: 'Validadas', color: 'var(--hx-15803d)', bg: 'var(--hx-f0fdf4)' },
+  { k: 'pendiente_revision', label: 'Pendientes', color: 'var(--hx-b45309)', bg: 'var(--hx-fffbeb)' },
+  { k: 'borrador', label: 'Borrador', color: 'var(--hx-4b5563)', bg: 'var(--hx-f3f4f6)' },
+  { k: 'obsoleta', label: 'Obsoletas', color: 'var(--hx-b91c1c)', bg: 'var(--hx-fef2f2)' },
 ];
 const ESTADO_UNO: Record<string, string> = { validada: 'Validada', pendiente_revision: 'Pendiente', borrador: 'Borrador', obsoleta: 'Obsoleta' };
 
-const input: React.CSSProperties = { padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, background: 'white', color: '#111827' };
-const boton: React.CSSProperties = { padding: '7px 12px', border: '1px solid #e5e7eb', borderRadius: 8, background: 'white', fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 };
+const input: React.CSSProperties = { padding: '8px 10px', border: '1px solid var(--hx-e5e7eb)', borderRadius: 8, fontSize: 13, background: 'var(--c-superficie)', color: 'var(--hx-111827)' };
+const boton: React.CSSProperties = { padding: '7px 12px', border: '1px solid var(--hx-e5e7eb)', borderRadius: 8, background: 'var(--c-superficie)', fontSize: 12, fontWeight: 600, color: 'var(--hx-374151)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 };
 
 function textoError(e: any, porDefecto: string) {
   const m = e?.response?.data?.message;
@@ -128,10 +128,9 @@ export default function GestionFlashcards() {
     onError: (e: any) => mostrar('error', textoError(e, 'No se ha podido volver a enlazar')),
   });
 
-  const pedirBorrado = (fc: any) => {
-    const extra = fc.repasos > 0 ? `\n\n${fc.repasos} usuario(s) la tienen en su repaso; se les quitará. Si solo quieres ocultarla, desactívala.` : '';
-    if (window.confirm(`¿Borrar esta flashcard para siempre?${extra}`)) borrar.mutate(fc.id);
-  };
+  // ⭐ Confirmación dentro de la app (antes window.confirm, que no sigue el estilo ni el modo oscuro)
+  const [porBorrar, setPorBorrar] = useState<any>(null);
+  const pedirBorrado = (fc: any) => setPorBorrar(fc);
 
   const items: any[] = data?.items ?? [];
 
@@ -140,7 +139,7 @@ export default function GestionFlashcards() {
       {/* Filtros */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: '1 1 240px' }}>
-          <Search size={14} color="#9ca3af" style={{ position: 'absolute', left: 10, top: 10 }} />
+          <Search size={14} color="var(--hx-9ca3af)" style={{ position: 'absolute', left: 10, top: 10 }} />
           <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar en pregunta, respuesta o explicación" style={{ ...input, width: '100%', paddingLeft: 30, boxSizing: 'border-box' }} />
         </div>
         <select value={oposicionId} onChange={(e) => { setOposicionId(e.target.value); setTemaId(''); setPagina(1); }} style={input}>
@@ -170,7 +169,7 @@ export default function GestionFlashcards() {
           <button
             onClick={pedirBorradoMasivo}
             disabled={borrarMasivo.isPending}
-            style={{ ...boton, borderColor: '#fecaca', color: '#b91c1c', background: '#fef2f2' }}
+            style={{ ...boton, borderColor: 'var(--hx-fecaca)', color: 'var(--hx-b91c1c)', background: 'var(--hx-fef2f2)' }}
           >
             <Trash2 size={13} />
             {borrarMasivo.isPending
@@ -184,12 +183,12 @@ export default function GestionFlashcards() {
 
       {/* Estado editorial (con recuentos) y reenlazar */}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        {[{ k: '', label: 'Todas', color: '#111827', bg: '#f3f4f6' }, ...ESTADOS].map((e) => {
+        {[{ k: '', label: 'Todas', color: 'var(--hx-111827)', bg: 'var(--hx-f3f4f6)' }, ...ESTADOS].map((e) => {
           const activo = revision === e.k;
           const n = e.k ? data?.porEstado?.[e.k] ?? 0 : Object.values(data?.porEstado ?? {}).reduce((s: number, x: any) => s + Number(x), 0);
           return (
             <button key={e.k || 'todas'} onClick={() => { setRevision(e.k); setPagina(1); }}
-              style={{ ...boton, borderColor: activo ? e.color : '#e5e7eb', background: activo ? e.bg : 'white', color: activo ? e.color : '#374151' }}>
+              style={{ ...boton, borderColor: activo ? e.color : 'var(--hx-e5e7eb)', background: activo ? e.bg : 'var(--c-superficie)', color: activo ? e.color : 'var(--hx-374151)' }}>
               {e.label} <span style={{ opacity: 0.7 }}>{Number(n).toLocaleString('es-ES')}</span>
             </button>
           );
@@ -203,12 +202,12 @@ export default function GestionFlashcards() {
       </div>
 
       {aviso && (
-        <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, background: aviso.tipo === 'ok' ? '#f0fdf4' : '#fef2f2', color: aviso.tipo === 'ok' ? '#15803d' : '#b91c1c' }}>{aviso.texto}</div>
+        <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, background: aviso.tipo === 'ok' ? 'var(--hx-f0fdf4)' : 'var(--hx-fef2f2)', color: aviso.tipo === 'ok' ? 'var(--hx-15803d)' : 'var(--hx-b91c1c)' }}>{aviso.texto}</div>
       )}
 
       {/* Lista */}
-      <div style={{ background: 'white', border: '1px solid #f3f4f6', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid #f3f4f6', fontSize: 12, color: '#6b7280' }}>
+      <div style={{ background: 'var(--c-superficie)', border: '1px solid var(--hx-f3f4f6)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid var(--hx-f3f4f6)', fontSize: 12, color: 'var(--hx-6b7280)' }}>
           <span>{data ? `${data.total.toLocaleString('es-ES')} flashcards` : ' '}</span>
           {data && data.paginas > 1 && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -219,48 +218,48 @@ export default function GestionFlashcards() {
           )}
         </div>
 
-        {isLoading && <div style={{ padding: 24, fontSize: 13, color: '#9ca3af' }}>Cargando…</div>}
+        {isLoading && <div style={{ padding: 24, fontSize: 13, color: 'var(--hx-9ca3af)' }}>Cargando…</div>}
         {isError && (
-          <div style={{ padding: 24, fontSize: 13, color: '#b91c1c', display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ padding: 24, fontSize: 13, color: 'var(--hx-b91c1c)', display: 'flex', gap: 10, alignItems: 'center' }}>
             No se han podido cargar las flashcards. <button style={boton} onClick={() => refetch()}>Reintentar</button>
           </div>
         )}
-        {!isLoading && !isError && items.length === 0 && <div style={{ padding: 24, fontSize: 13, color: '#9ca3af' }}>No hay flashcards con esos filtros.</div>}
+        {!isLoading && !isError && items.length === 0 && <div style={{ padding: 24, fontSize: 13, color: 'var(--hx-9ca3af)' }}>No hay flashcards con esos filtros.</div>}
 
         {items.map((fc) => (
-          <div key={fc.id} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderBottom: '1px solid #f9fafb', alignItems: 'flex-start', opacity: fc.activa ? 1 : 0.55 }}>
+          <div key={fc.id} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderBottom: '1px solid var(--hx-f9fafb)', alignItems: 'flex-start', opacity: fc.activa ? 1 : 0.55 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: '#eef2ff', color: '#4338ca' }}>{TIPOS[fc.tipo] ?? fc.tipo}</span>
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: '#f3f4f6', color: '#4b5563' }}>{NIVELES[fc.nivel] ?? fc.nivel}</span>
-                {fc.esParaDuelo && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: '#fff7ed', color: '#c2410c' }}>Duelo</span>}
-                {!fc.activa && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c' }}>Inactiva</span>}
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: 'var(--hx-eef2ff)', color: 'var(--hx-4338ca)' }}>{TIPOS[fc.tipo] ?? fc.tipo}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'var(--hx-f3f4f6)', color: 'var(--hx-4b5563)' }}>{NIVELES[fc.nivel] ?? fc.nivel}</span>
+                {fc.esParaDuelo && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'var(--hx-fff7ed)', color: 'var(--hx-c2410c)' }}>Duelo</span>}
+                {!fc.activa && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'var(--hx-fef2f2)', color: 'var(--hx-b91c1c)' }}>Inactiva</span>}
                 {(() => { const e = ESTADOS.find((x) => x.k === fc.estado); return e ? <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: e.bg, color: e.color }}>{ESTADO_UNO[fc.estado]}</span> : null; })()}
-                {fc.normaSiglas && !fc.articulo && <span title="Tiene norma y artículo pero no se ha encontrado en la versión vigente" style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: '#fffbeb', color: '#b45309' }}>Sin enlazar</span>}
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                {fc.normaSiglas && !fc.articulo && <span title="Tiene norma y artículo pero no se ha encontrado en la versión vigente" style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'var(--hx-fffbeb)', color: 'var(--hx-b45309)' }}>Sin enlazar</span>}
+                <span style={{ fontSize: 11, color: 'var(--hx-9ca3af)' }}>
                   {[fc.oposicion?.nombre, fc.tema ? `Tema ${fc.tema.numero}` : null, fc.bloque, fc.referencia ?? (fc.articulo ? `Art. ${fc.articulo.numero}` : null)].filter(Boolean).join(' · ')}
                   {fc.repasos > 0 ? ` · ${fc.repasos} en repaso` : ''}
                 </span>
               </div>
-              <div style={{ fontSize: 13, color: '#111827', fontWeight: 500, lineHeight: 1.45 }}>{fc.pregunta}</div>
-              <div style={{ fontSize: 12, color: '#4b5563', marginTop: 3 }}><b>Respuesta:</b> {fc.respuesta}</div>
+              <div style={{ fontSize: 13, color: 'var(--hx-111827)', fontWeight: 500, lineHeight: 1.45 }}>{fc.pregunta}</div>
+              <div style={{ fontSize: 12, color: 'var(--hx-4b5563)', marginTop: 3 }}><b>Respuesta:</b> {fc.respuesta}</div>
               {fc.tipo === 'comparativa' && fc.estructura && (
-                <div style={{ fontSize: 11.5, color: '#4b5563', marginTop: 4 }}>
+                <div style={{ fontSize: 11.5, color: 'var(--hx-4b5563)', marginTop: 4 }}>
                   <b>{fc.estructura.conceptoA}</b> vs <b>{fc.estructura.conceptoB}</b> · {fc.estructura.diferencias?.length ?? 0} diferencias
                 </div>
               )}
               {fc.estado === 'obsoleta' && fc.motivoObsolescencia && (
-                <div style={{ fontSize: 11.5, color: '#b91c1c', marginTop: 4 }}><b>Motivo:</b> {fc.motivoObsolescencia}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--hx-b91c1c)', marginTop: 4 }}><b>Motivo:</b> {fc.motivoObsolescencia}</div>
               )}
               {(fc.fuenteValidacion || fc.fechaRevision) && (
-                <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 3 }}>
+                <div style={{ fontSize: 11, color: 'var(--hx-9ca3af)', marginTop: 3 }}>
                   {[fc.fuenteValidacion, fc.fechaRevision ? `revisada el ${new Date(fc.fechaRevision).toLocaleDateString('es-ES')}` : null].filter(Boolean).join(' · ')}
                 </div>
               )}
             </div>
             <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 220 }}>
               {fc.estado !== 'validada' && (
-                <button style={{ ...boton, color: '#15803d', borderColor: '#86efac' }} title="Validar: pasa a mostrarse en la app"
+                <button style={{ ...boton, color: 'var(--hx-15803d)', borderColor: 'var(--hx-86efac)' }} title="Validar: pasa a mostrarse en la app"
                   disabled={cambiarEstado.isPending} onClick={() => cambiarEstado.mutate({ id: fc.id, estado: 'validada' })}>
                   <CheckCircle2 size={13} /> Validar
                 </button>
@@ -274,19 +273,42 @@ export default function GestionFlashcards() {
                 {fc.activa ? <EyeOff size={13} /> : <Eye size={13} />}
               </button>
               <button style={boton} title="Editar" onClick={() => setEditando({ ...fc, explicacion: fc.explicacion ?? '' })}><Pencil size={13} /></button>
-              <button style={{ ...boton, color: '#b91c1c' }} title="Borrar" onClick={() => pedirBorrado(fc)}><Trash2 size={13} /></button>
+              <button style={{ ...boton, color: 'var(--hx-b91c1c)' }} title="Borrar" onClick={() => pedirBorrado(fc)}><Trash2 size={13} /></button>
             </div>
           </div>
         ))}
       </div>
 
+      {/* Confirmar borrado */}
+      {porBorrar && (
+        <div onClick={() => setPorBorrar(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 90, padding: 16 }}>
+          <div role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', borderRadius: 14, padding: 20, width: '100%', maxWidth: 420 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--hx-111827)', marginBottom: 8 }}>¿Borrar esta flashcard para siempre?</div>
+            {porBorrar.repasos > 0 && (
+              <div style={{ fontSize: 13, color: 'var(--hx-4b5563)', marginBottom: 8, lineHeight: 1.45 }}>
+                {porBorrar.repasos} usuario(s) la tienen en su repaso; se les quitará. Si solo quieres ocultarla, desactívala.
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14 }}>
+              <button style={boton} onClick={() => setPorBorrar(null)}>Cancelar</button>
+              <button
+                style={{ ...boton, color: 'var(--hx-b91c1c)', borderColor: 'var(--hx-fecaca)', background: 'var(--hx-fef2f2)' }}
+                onClick={() => { borrar.mutate(porBorrar.id); setPorBorrar(null); }}
+              >
+                <Trash2 size={13} /> Borrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edición */}
       {editando && (
         <div onClick={() => !guardar.isPending && setEditando(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 80, padding: 16 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: 14, padding: 20, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', borderRadius: 14, padding: 20, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Editar flashcard</div>
-              <button onClick={() => setEditando(null)} style={{ border: 'none', background: 'none', cursor: 'pointer' }} aria-label="Cerrar"><X size={18} color="#6b7280" /></button>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--hx-111827)' }}>Editar flashcard</div>
+              <button onClick={() => setEditando(null)} style={{ border: 'none', background: 'none', cursor: 'pointer' }} aria-label="Cerrar"><X size={18} color="var(--hx-6b7280)" /></button>
             </div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
               <select value={editando.tipo} onChange={(e) => setEditando({ ...editando, tipo: e.target.value })} style={{ ...input, flex: 1 }}>
@@ -296,26 +318,26 @@ export default function GestionFlashcards() {
                 {Object.entries(NIVELES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Pregunta</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--hx-374151)' }}>Pregunta</label>
             <textarea value={editando.pregunta} onChange={(e) => setEditando({ ...editando, pregunta: e.target.value })} rows={3} style={{ ...input, width: '100%', boxSizing: 'border-box', marginTop: 4, marginBottom: 10, resize: 'vertical' }} />
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>
-              Respuesta {(editando.tipo === 'vf' || editando.tipo === 'trampa') && <span style={{ fontWeight: 400, color: '#9ca3af' }}>(true o false)</span>}
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--hx-374151)' }}>
+              Respuesta {(editando.tipo === 'vf' || editando.tipo === 'trampa') && <span style={{ fontWeight: 400, color: 'var(--hx-9ca3af)' }}>(true o false)</span>}
             </label>
             <input value={editando.respuesta} onChange={(e) => setEditando({ ...editando, respuesta: e.target.value })} style={{ ...input, width: '100%', boxSizing: 'border-box', marginTop: 4, marginBottom: 10 }} />
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Explicación (opcional)</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--hx-374151)' }}>Explicación (opcional)</label>
             <textarea value={editando.explicacion} onChange={(e) => setEditando({ ...editando, explicacion: e.target.value })} rows={3} style={{ ...input, width: '100%', boxSizing: 'border-box', marginTop: 4, marginBottom: 10, resize: 'vertical' }} />
-            <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#374151', marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--hx-374151)', marginBottom: 16 }}>
               <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" checked={editando.activa} onChange={(e) => setEditando({ ...editando, activa: e.target.checked })} /> Activa</label>
               <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" checked={editando.esParaDuelo} onChange={(e) => setEditando({ ...editando, esParaDuelo: e.target.checked })} /> Válida para duelo</label>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-              <button style={{ ...boton, color: '#b91c1c' }} onClick={() => pedirBorrado(editando)}><Trash2 size={13} /> Borrar</button>
+              <button style={{ ...boton, color: 'var(--hx-b91c1c)' }} onClick={() => pedirBorrado(editando)}><Trash2 size={13} /> Borrar</button>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button style={boton} onClick={() => setEditando(null)}>Cancelar</button>
                 <button
                   disabled={guardar.isPending}
                   onClick={() => guardar.mutate({ id: editando.id, cambios: { tipo: editando.tipo, nivel: editando.nivel, pregunta: editando.pregunta, respuesta: editando.respuesta, explicacion: editando.explicacion, activa: editando.activa, esParaDuelo: editando.esParaDuelo } })}
-                  style={{ ...boton, background: '#111827', color: 'white', borderColor: '#111827' }}
+                  style={{ ...boton, background: 'var(--hxbg-111827)', color: 'var(--c-primario-texto)', borderColor: 'var(--hxbg-111827)' }}
                 >
                   {guardar.isPending ? 'Guardando…' : 'Guardar'}
                 </button>

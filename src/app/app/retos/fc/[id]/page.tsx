@@ -40,7 +40,17 @@ export default function RetoFCDetallePage() {
   const [tiempoInicioTarjeta, setTiempoInicioTarjeta] = useState(0);
   const [tiempoInicioReto, setTiempoInicioReto] = useState(0);
   // ⭐ El servidor mide el tiempo del duelo (desempate) desde aquí; solo cuenta la primera vez.
-  const avisarInicio = () => { api.post(`/duelos/fc/${id}/empezar`).catch(() => {}); };
+  // ⭐ Auditoría M2: las tarjetas solo llegan después de «Empezar», así que se espera a que el
+  // servidor lo apunte y se vuelve a pedir el duelo. Si falla, se vuelve a la portada del duelo.
+  const avisarInicio = async () => {
+    try {
+      await api.post(`/duelos/fc/${id}/empezar`);
+    } catch {
+      setEstado('intro');
+      return;
+    }
+    await refetchRetos();
+  };
   const [respuestas, setRespuestas] = useState<{ flashcardId: string; respuesta: boolean; tiempoRespuesta: number }[]>([]);
   const [resultadoFinal, setResultadoFinal] = useState<{ aciertos: number; fallos: number; tiempoTotal: number; posicion: number | null } | null>(null);
   const yaEnviado = useRef(false);
@@ -59,7 +69,7 @@ export default function RetoFCDetallePage() {
     }
   }, [directo, estado, tiempoInicioReto]);
 
-  const { data: misRetosFC = [], isLoading } = useQuery({
+  const { data: misRetosFC = [], isLoading, refetch: refetchRetos } = useQuery({
     queryKey: ['mis-retos-fc'],
     queryFn: async () => {
       const res = await api.get('/flashcards/mis-retos');
@@ -259,7 +269,12 @@ export default function RetoFCDetallePage() {
         )}
 
         {/* JUGANDO */}
-        {estado === 'jugando' && fc && (
+        {estado === 'jugando' && fc?.oculta && (
+          <div style={{ textAlign: 'center', padding: '48px 0', fontSize: 14, color: TEXT_SECONDARY }}>
+            Preparando el duelo…
+          </div>
+        )}
+        {estado === 'jugando' && fc && !fc.oculta && (
           <div>
             <div style={{ height: 4, background: 'var(--hx-eedcf0)', borderRadius: 2, overflow: 'hidden', marginBottom: 18 }}>
               <div style={{

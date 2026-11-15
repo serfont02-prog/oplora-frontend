@@ -9,6 +9,7 @@ import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { elegirConvocatoria } from '@/lib/convocatoria';
 import { Share2, ChevronDown, ChevronRight, X, CheckCircle2, XCircle, MinusCircle, Lightbulb, Target, Layers, LogOut } from 'lucide-react';
 import { FooterNavegacion } from '@/components/ui/FooterNavegacion';
 import { PuntosGanadosCard } from '@/components/gamificacion/PuntosGanadosCard';
@@ -58,10 +59,11 @@ export default function ResultadoTestPage() {
   });
 
   const { data: convocatoria } = useQuery({
-    queryKey: ['convocatoria-test', oposicionId],
+    // ⭐ la convocatoria del usuario, no la «activa» de la lista (ver lib/convocatoria.ts)
+    queryKey: ['convocatoria-test', oposicionId, usuario?.oposicionActiva?.convocatoriaActiva?.id ?? null],
     queryFn: async () => {
       const lista = (await api.get(`/convocatorias/oposicion/${oposicionId}`)).data;
-      return lista.find((c: any) => c.estado === 'activa') ?? lista[0] ?? null;
+      return elegirConvocatoria<any>(lista, usuario, oposicionId);
     },
     enabled: !!usuario && !!oposicionId,
   });

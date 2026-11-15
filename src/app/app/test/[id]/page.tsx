@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, ClipboardList, Database, Home, Sparkles, Target, Lock } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { elegirConvocatoria } from '@/lib/convocatoria';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import CargandoTest from '@/components/test/CargandoTest';
@@ -103,11 +104,12 @@ export default function TestPage({ params }: TestPageProps) {
 
   // ⭐ movida aquí arriba antes de cualquier return
   const { data: convocatoria } = useQuery({
-    queryKey: ['convocatoria-test', oposicionId],
+    // ⭐ la convocatoria del usuario, no la «activa» de la lista (ver lib/convocatoria.ts)
+    queryKey: ['convocatoria-test', oposicionId, usuario?.oposicionActiva?.convocatoriaActiva?.id ?? null],
     queryFn: async () => {
       const res = await api.get(`/convocatorias/oposicion/${oposicionId}`);
       const lista = res.data;
-      return lista.find((c: any) => c.estado === 'activa') ?? lista[0] ?? null;
+      return elegirConvocatoria<any>(lista, usuario, oposicionId);
     },
     enabled: !!usuario,
   });
