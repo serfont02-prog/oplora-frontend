@@ -277,7 +277,7 @@ const toggleSeccion = async (seccionId: string) => {
                       style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'var(--c-azul-bg)', border: 'none', borderRadius: 16, cursor: 'pointer', textAlign: 'left' }}
                     >
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-azul)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Libro {grupo.libro.numero}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-azul)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{/parte$/i.test(String(grupo.libro.numero ?? '')) ? grupo.libro.numero : `Libro ${grupo.libro.numero}`}</div>
                         {grupo.libro.nombre && <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 2, lineHeight: 1.3 }}>{grupo.libro.nombre}</div>}
                         <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 2 }}>{grupo.titulos.length} {grupo.titulos.length === 1 ? 'título' : 'títulos'}</div>
                       </div>
