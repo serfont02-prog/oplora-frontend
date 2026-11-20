@@ -547,14 +547,14 @@ const crearConv = useMutation({
                         <FileText size={12} />
                       </button>
                       <button
-                          onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/examenes`)}
+                          onClick={() => router.push(`/admin/test?tab=examenes&oposicion=${id}&convocatoria=${c.id}`)}
                           style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }}
                           title="Exámenes oficiales (crear examen con sus preguntas)"
                         >
                           <ClipboardCheck size={12} />
                         </button>
                       <button
-                          onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/banco-preguntas`)}
+                          onClick={() => router.push(`/admin/test?tab=banco&oposicion=${id}&convocatoria=${c.id}`)}
                           style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', color: '#6b7280' }}
                           title="Banco de preguntas"
                         >
@@ -598,7 +598,7 @@ const crearConv = useMutation({
                       const conPreguntas = ex && ex.preguntas > 0;
                       return (
                         <button
-                          onClick={() => router.push(`/admin/oposiciones/${id}/convocatorias/${c.id}/examenes`)}
+                          onClick={() => router.push(`/admin/test?tab=examenes&oposicion=${id}&convocatoria=${c.id}`)}
                           title="Ir a los exámenes de esta convocatoria"
                           style={{
                             border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 500, borderRadius: '20px', padding: '1px 8px',
