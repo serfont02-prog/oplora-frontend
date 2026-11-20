@@ -17,7 +17,7 @@ const navItems = [
   { href: '/admin/estadisticas', label: 'Estadísticas', icon: BarChart2 },
   { href: '/admin/boe', label: 'BOE', icon: ScrollText },
   { href: '/admin/flashcards', label: 'Flashcards', icon: Layers },
-  { href: '/admin/importar-test', label: 'Importar test', icon: ClipboardList },
+  { href: '/admin/test', label: 'Test', icon: ClipboardList },
   { href: '/admin/psicotecnicos', label: 'Psicotécnicos', icon: Brain },
   { href: '/admin/liga', label: 'Liga Oplora', icon: Trophy },
   { href: '/admin/apuntes', label: 'Apuntes OPLORA', icon: BookMarked },
@@ -29,7 +29,7 @@ const navItems = [
 const NOMBRES_RUTA: Record<string, string> = {
   admin: 'Admin', nueva: 'Nueva', temas: 'Temas', convocatorias: 'Convocatorias',
   'banco-preguntas': 'Banco de preguntas', documentos: 'Documentos', examenes: 'Exámenes',
-  preguntas: 'Preguntas', ...Object.fromEntries(navItems.map((n) => [n.href.split('/').pop() as string, n.label])),
+  preguntas: 'Preguntas', 'importar-test': 'Importar test', ...Object.fromEntries(navItems.map((n) => [n.href.split('/').pop() as string, n.label])),
 };
 function nombreSegmento(seg: string): string {
   if (NOMBRES_RUTA[seg]) return NOMBRES_RUTA[seg];
