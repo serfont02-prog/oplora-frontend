@@ -43,7 +43,7 @@ export default function LeyesPage() {
           <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
           <input
             type="text"
-            placeholder="Buscar ley..."
+            placeholder="Buscar por nombre o siglas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ width: '100%', paddingLeft: '32px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', fontSize: '13px', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }}
@@ -70,8 +70,8 @@ export default function LeyesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                {['Nombre', 'Tipo', 'Última modificación', 'Versión activa', 'Versiones', 'Oposiciones', ''].map((h) => (
-                  <th key={h} style={{ textAlign: ['Versión activa', 'Versiones', 'Oposiciones'].includes(h) ? 'center' : 'left', padding: '10px 16px', fontSize: '11px', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', background: '#f9fafb' }}>
+                {['Nombre', 'Siglas', 'Última modificación', 'Versión activa', 'Versiones', 'Artículos vinculados', 'Oposiciones', ''].map((h) => (
+                  <th key={h} style={{ textAlign: ['Versión activa', 'Versiones', 'Artículos vinculados', 'Oposiciones'].includes(h) ? 'center' : 'left', padding: '10px 16px', fontSize: '11px', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', background: '#f9fafb' }}>
                     {h}
                   </th>
                 ))}
@@ -95,12 +95,12 @@ export default function LeyesPage() {
                         <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{ley.descripcion}</div>
                       )}
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      {versionActiva?.tipoNorma ? (
-                        <span style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '20px', background: '#fffbeb', color: '#92400e', fontWeight: 500 }}>
-                          {versionActiva.tipoNorma}
+                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                      {ley.siglas ? (
+                        <span style={{ fontSize: '12px', padding: '3px 9px', borderRadius: '6px', background: '#f3f4f6', color: '#111827', fontWeight: 600, fontFamily: 'ui-monospace, monospace' }}>
+                          {ley.siglas}
                         </span>
-                      ) : <span style={{ fontSize: '13px', color: '#9ca3af' }}>—</span>}
+                      ) : <span style={{ fontSize: '12px', color: '#dc2626' }}>Sin siglas</span>}
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#6b7280' }}>
                       {versionActiva?.fechaVigencia
@@ -120,6 +120,16 @@ export default function LeyesPage() {
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: '13px', color: '#111827', fontWeight: 500 }}>
                       {totalVersiones}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                      {(ley.articulosTotal ?? 0) === 0 ? (
+                        <span style={{ fontSize: '12px', color: '#d1d5db' }}>Sin artículos</span>
+                      ) : (
+                        <span title={`${ley.articulosVinculados} de ${ley.articulosTotal} artículos de la versión activa vinculados a algún tema`}>
+                          <span style={{ fontWeight: 600, color: ley.articulosVinculados > 0 ? '#111827' : '#9ca3af' }}>{ley.articulosVinculados}</span>
+                          <span style={{ color: '#9ca3af' }}> / {ley.articulosTotal}</span>
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: '13px', color: '#111827', fontWeight: 500 }}>
                       {ley.oposicionLeyes?.length ?? 0}
