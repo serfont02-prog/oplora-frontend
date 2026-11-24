@@ -154,9 +154,13 @@ const toggleSeccion = async (seccionId: string) => {
       await api.patch(`/leyes/versiones/${versionEditando.id}`, formEditarVersion);
     },
     onSuccess: () => {
+      // ⭐ La lista de versiones usa la clave ['versiones', id]: sin invalidarla seguía mostrando
+      // (y volvía a cargar en el formulario) la fecha antigua aunque el cambio sí se guardaba.
+      queryClient.invalidateQueries({ queryKey: ['versiones', id] });
       queryClient.invalidateQueries({ queryKey: ['ley', id] });
       setVersionEditando(null);
     },
+    onError: (e: any) => alert('No se ha podido guardar la versión: ' + (e?.response?.data?.message ?? e?.message ?? 'error desconocido')),
   });
 
   const [archivoPreguntas, setArchivoPreguntas] = useState<File | null>(null);
