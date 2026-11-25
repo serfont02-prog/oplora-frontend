@@ -39,6 +39,8 @@ function Donut({ porcentaje, color, size, grosor }: { porcentaje: number; color:
 }
 
 function CirculoDato({ porcentaje, color, label, sub, sinDatos }: { porcentaje: number; color: string; label: string; sub: string; sinDatos: boolean }) {
+  // ⭐ Menos de un 1 % (pero algo) se enseña como «<1%», no como 0 %
+  const texto = porcentaje > 0 && porcentaje < 1 ? '<1%' : `${Math.round(porcentaje)}%`;
   const D = 78;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
@@ -47,7 +49,7 @@ function CirculoDato({ porcentaje, color, label, sub, sinDatos }: { porcentaje: 
           <Donut porcentaje={sinDatos ? 0 : porcentaje} color={color} size={D - 12} grosor={6} />
         </div>
         <span style={{ position: 'relative', fontSize: 16, fontWeight: 800, color: sinDatos ? TEXT_MUTED : TEXT_PRIMARY }}>
-          {sinDatos ? '—' : `${porcentaje}%`}
+          {sinDatos ? '—' : texto}
         </span>
       </div>
       <span style={{ fontSize: 12, color: TEXT_PRIMARY, fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{label}</span>
@@ -122,6 +124,7 @@ export default function WidgetProgreso({
 
   const nTest = Number(test.totalPreguntas ?? 0);
   const nDominadas = Number(fc.dominadas ?? 0);
+  const nBanco = Number(fc.totalBanco ?? 0);
   const nPsico = Number(psico.totalPreguntas ?? 0);
 
   const items = [
@@ -132,8 +135,9 @@ export default function WidgetProgreso({
     },
     {
       key: 'fc', label: 'Flashcards dominadas', color: COLOR_FC,
-      porcentaje: Math.round(Number(fc.porcentajeDominadas ?? 0)), sinDatos: !fcPeriodo,
-      sub: plural(nDominadas, 'dominada', 'dominadas'),
+      porcentaje: Number(fc.porcentajeDominadas ?? 0), sinDatos: !fcPeriodo,
+      // ⭐ «6 de 1.245»: el porcentaje es sobre todas las flashcards de la oposición
+      sub: nBanco > 0 ? `${nDominadas.toLocaleString('es-ES')} de ${nBanco.toLocaleString('es-ES')}` : plural(nDominadas, 'dominada', 'dominadas'),
     },
     ...(hayPsicotecnicos ? [{
       key: 'psico', label: 'Acierto en psicotécnicos', color: COLOR_PSICO,
