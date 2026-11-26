@@ -60,19 +60,31 @@ const oposicionId = searchParams.get('oposicionId');
   enabled: !!versionActiva?.id,
 });
 
-const { data: disposiciones = [] } = useQuery({
+// ⭐ Al abrir la ley solo se piden las categorías de disposiciones (sin texto); el texto llega
+// al abrir una categoría. Antes se descargaban todas las disposiciones completas de entrada.
+const { data: disposicionesResumen = [] } = useQuery({
+  queryKey: ['disposiciones-ley-resumen', versionActiva?.id],
+  queryFn: async () => {
+    const res = await api.get(`/normativa/disposiciones/${versionActiva.id}?resumen=1`);
+    return res.data;
+  },
+  enabled: !!versionActiva?.id,
+});
+const [disposicionesAbiertas, setDisposicionesAbiertas] = useState<Record<string, boolean>>({});
+const algunaDisposicionAbierta = Object.values(disposicionesAbiertas).some(Boolean);
+const { data: disposicionesCompletas, isLoading: cargandoDisposiciones } = useQuery({
   queryKey: ['disposiciones-ley', versionActiva?.id],
   queryFn: async () => {
     const res = await api.get(`/normativa/disposiciones/${versionActiva.id}`);
     return res.data;
   },
-  enabled: !!versionActiva?.id,
+  enabled: !!versionActiva?.id && algunaDisposicionAbierta,
 });
+const disposiciones: any[] = disposicionesCompletas ?? disposicionesResumen;
 
 const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>({});
 const [articulosSeccion, setArticulosSeccion] = useState<Record<string, any[]>>({});
 const [seccionesPorCapitulo, setSeccionesPorCapitulo] = useState<Record<string, any[]>>({});
-const [disposicionesAbiertas, setDisposicionesAbiertas] = useState<Record<string, boolean>>({});
 
   const { data: resultadosBusqueda = [] } = useQuery({
   queryKey: ['buscar-articulos', versionActiva?.id, search],
@@ -382,7 +394,10 @@ const toggleSeccion = async (seccionId: string) => {
                       <span style={{ fontSize: 12, color: TEXT_MUTED }}>{items.length}</span>
                       {abierto ? <ChevronUp size={16} color="var(--c-chevron)" /> : <ChevronDown size={16} color="var(--c-chevron)" />}
                     </button>
-                    {abierto && items.map((d: any) => (
+                    {abierto && !disposicionesCompletas && cargandoDisposiciones && (
+                      <div style={{ padding: '12px 14px 12px 22px', borderTop: '1px solid var(--c-borde)', fontSize: 13, color: TEXT_MUTED }}>Cargando…</div>
+                    )}
+                    {abierto && disposicionesCompletas && items.map((d: any) => (
                       <div key={d.id} style={{ padding: '12px 14px 12px 22px', borderTop: '1px solid var(--c-borde)' }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4, textTransform: 'capitalize' }}>{d.etiqueta || cat}</div>
                         <div style={{ fontSize: 13, color: TEXT_SECONDARY, lineHeight: 1.6 }}>
