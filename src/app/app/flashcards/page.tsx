@@ -373,10 +373,11 @@ function FichaTema({ tema, resumen, nuevasHoy, restantesHoy, onCerrar, onIr, url
     <div role="dialog" aria-modal="true" aria-label={`Flashcards del tema ${tema.numero}`}
       style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <style>{`@keyframes fc-hoja { from { transform: translateY(100%); } to { transform: none; } } @keyframes fc-velo { from { opacity: 0; } to { opacity: 1; } }`}</style>
-      <div onClick={onCerrar} style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.45)', animation: 'fc-velo .2s ease both' }} />
+      <div onClick={onCerrar} style={{ position: 'absolute', inset: 0, background: 'rgba(2,6,23,0.6)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', animation: 'fc-velo .2s ease both' }} />
       <div style={{
         position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto',
-        background: 'var(--c-superficie)', borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 30px rgba(0,0,0,0.18)',
+        // ⭐ Velo más oscuro con desenfoque y borde superior: antes la hoja se confundía con las tarjetas del fondo
+        background: 'var(--c-superficie)', borderRadius: '22px 22px 0 0', borderTop: '1px solid var(--c-borde)', boxShadow: '0 -12px 40px rgba(0,0,0,0.35)',
         padding: '10px 18px calc(18px + env(safe-area-inset-bottom))', animation: 'fc-hoja .25s cubic-bezier(.2,.8,.2,1) both',
       }}>
         <div style={{ width: 38, height: 4, borderRadius: 999, background: 'var(--hx-d1d5db)', margin: '0 auto 12px' }} />
