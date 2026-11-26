@@ -146,11 +146,11 @@ const esLaMia = convocatoria.id === convocatoriaActivaId;
         {modalTemas && (
         <div
             onClick={() => setModalTemas(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
+            style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
         >
             <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.5rem', width: '100%', maxWidth: 560, maxHeight: '75vh', overflowY: 'auto' }}
+            style={{ background: BG_APP, border: '1px solid var(--c-borde)', borderRadius: '20px 20px 0 0', padding: '1.5rem', width: '100%', maxWidth: 560, maxHeight: '75vh', overflowY: 'auto' }}
             >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>Temas de la convocatoria{temasModal.length ? ` · ${temasModal.length}` : ''}</div>

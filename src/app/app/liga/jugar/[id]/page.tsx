@@ -407,8 +407,8 @@ function BotonPrincipal({ children, onClick }: { children: React.ReactNode; onCl
 
 function Modal({ children, onCerrar }: { children: React.ReactNode; onCerrar: () => void }) {
   return (
-    <div onClick={onCerrar} style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50, padding: 12 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', borderRadius: 20, padding: 20, width: '100%', maxWidth: 520, marginBottom: 'env(safe-area-inset-bottom)' }}>
+    <div onClick={onCerrar} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50, padding: 12 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', border: '1px solid var(--c-borde)', borderRadius: 20, padding: 20, width: '100%', maxWidth: 520, marginBottom: 'env(safe-area-inset-bottom)' }}>
         {children}
       </div>
     </div>

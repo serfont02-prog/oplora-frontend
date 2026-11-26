@@ -153,7 +153,7 @@ textarea {
   --c-primario-texto: #FFFFFF;
   --c-boton-claro: #FFFFFF;       /* botón claro sobre la tarjeta oscura */
   --c-hero: #0f172a;              /* tarjeta oscura destacada (Mi oposición…) */
-  --c-overlay: rgba(0, 0, 0, 0.5);
+  --c-overlay: rgba(2, 6, 23, 0.55);  /* velo de ventanas: se usa con desenfoque */
 
   --c-azul: #1F7CFF;
   --c-azul-bg: #EAF0FF;
@@ -370,7 +370,7 @@ html[data-tema='oscuro'] {
   --c-primario-texto: #0B1220;
   --c-boton-claro: #E8ECF3;
   --c-hero: #1B2A47;
-  --c-overlay: rgba(0, 0, 0, 0.65);
+  --c-overlay: rgba(2, 6, 23, 0.65);
 
   --c-azul: #5A9CFF;
   --c-azul-bg: rgba(90, 156, 255, 0.16);

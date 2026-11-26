@@ -35,7 +35,7 @@ export function ConfirmacionInferior({
   return (
     <div
       onClick={onCancelar}
-      style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', zIndex: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', zIndex: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
     >
       <div
         role="dialog"
@@ -43,7 +43,7 @@ export function ConfirmacionInferior({
         aria-label={titulo}
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 560, background: 'var(--c-superficie)', borderRadius: '22px 22px 0 0',
+          width: '100%', maxWidth: 560, background: 'var(--c-superficie)', border: '1px solid var(--c-borde)', borderRadius: '22px 22px 0 0',
           padding: '18px 1.25rem', paddingBottom: 'calc(18px + env(safe-area-inset-bottom))',
           boxShadow: '0 -8px 30px rgba(15,23,42,0.18)', animation: 'oplora-subir .18s ease-out',
         }}

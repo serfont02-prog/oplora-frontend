@@ -34,9 +34,9 @@ export default function HojaSuscripcion() {
   return (
     <div role="dialog" aria-modal="true" aria-label="Hazte de OPLORA" style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <style>{`@keyframes hs-sube { from { transform: translateY(100%); } to { transform: none; } }`}</style>
-      <div onClick={() => setAbierta(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.45)' }} />
+      <div onClick={() => setAbierta(null)} style={{ position: 'absolute', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)' }} />
       <div style={{
-        position: 'relative', width: '100%', maxWidth: 520, background: 'var(--c-superficie)', borderRadius: '22px 22px 0 0',
+        position: 'relative', width: '100%', maxWidth: 520, background: 'var(--c-superficie)', border: '1px solid var(--c-borde)', borderRadius: '22px 22px 0 0',
         padding: '10px 20px calc(20px + env(safe-area-inset-bottom))', boxShadow: '0 -8px 30px rgba(0,0,0,0.18)', animation: 'hs-sube .25s cubic-bezier(.2,.8,.2,1) both',
       }}>
         <div style={{ width: 38, height: 4, borderRadius: 999, background: 'var(--hx-d1d5db)', margin: '0 auto 16px' }} />

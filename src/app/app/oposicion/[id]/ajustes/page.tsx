@@ -203,8 +203,8 @@ export default function AjustesOposicionPage() {
 
       {/* Reiniciar progreso */}
       {modalResetear && (
-        <div onClick={() => setModalResetear(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
+        <div onClick={() => setModalResetear(false)} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, border: '1px solid var(--c-borde)', borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--hx-fef6e4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <RotateCcw size={20} color="var(--hx-d97706)" />
@@ -267,8 +267,8 @@ export default function AjustesOposicionPage() {
 
       {/* Abandonar oposición */}
       {modalAbandonar && (
-        <div onClick={() => setModalAbandonar(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', borderRadius: 20, padding: '1.5rem', width: '100%', maxWidth: 360, textAlign: 'center' }}>
+        <div onClick={() => setModalAbandonar(false)} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', border: '1px solid var(--c-borde)', borderRadius: 20, padding: '1.5rem', width: '100%', maxWidth: 360, textAlign: 'center' }}>
             <div style={{ width: 52, height: 52, borderRadius: 16, background: 'var(--hx-fef2f2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
               <AlertTriangle size={24} color="var(--hx-dc2626)" />
             </div>

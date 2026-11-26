@@ -373,7 +373,7 @@ function FichaTema({ tema, resumen, nuevasHoy, restantesHoy, onCerrar, onIr, url
     <div role="dialog" aria-modal="true" aria-label={`Flashcards del tema ${tema.numero}`}
       style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <style>{`@keyframes fc-hoja { from { transform: translateY(100%); } to { transform: none; } } @keyframes fc-velo { from { opacity: 0; } to { opacity: 1; } }`}</style>
-      <div onClick={onCerrar} style={{ position: 'absolute', inset: 0, background: 'rgba(2,6,23,0.6)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', animation: 'fc-velo .2s ease both' }} />
+      <div onClick={onCerrar} style={{ position: 'absolute', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', animation: 'fc-velo .2s ease both' }} />
       <div style={{
         position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto',
         // ⭐ Velo más oscuro con desenfoque y borde superior: antes la hoja se confundía con las tarjetas del fondo

@@ -574,9 +574,9 @@ function HojaArticulo({ articulo, oposicionId, onCerrar, onAbrirEnLey }: {
   return (
     <div role="dialog" aria-modal="true" aria-label={`Artículo ${articulo.numero ?? ''}`} style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <style>{`@keyframes fc-hoja-art { from { transform: translateY(100%); } to { transform: none; } }`}</style>
-      <div onClick={onCerrar} style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.45)' }} />
+      <div onClick={onCerrar} style={{ position: 'absolute', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)' }} />
       <div style={{
-        position: 'relative', width: '100%', maxWidth: 560, maxHeight: '82vh', overflowY: 'auto', background: 'var(--c-superficie)',
+        position: 'relative', width: '100%', maxWidth: 560, maxHeight: '82vh', overflowY: 'auto', background: 'var(--c-superficie)', border: '1px solid var(--c-borde)',
         borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 30px rgba(0,0,0,0.18)', padding: '10px 18px calc(18px + env(safe-area-inset-bottom))',
         animation: 'fc-hoja-art .25s cubic-bezier(.2,.8,.2,1) both',
       }}>

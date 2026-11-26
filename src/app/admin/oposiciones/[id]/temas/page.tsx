@@ -195,7 +195,7 @@ const { data: articulosBusqueda = [] } = useQuery({
   const { data: temas = [], isLoading } = useQuery({
     queryKey: ['temas-admin', convocatoriaId],
     queryFn: async () => {
-      const res = await api.get(`/temas/convocatoria/${convocatoriaId}`);
+      const res = await api.get(`/temas/convocatoria/${convocatoriaId}?normativa=1`);
       return res.data;
     },
     enabled: !!convocatoriaId,

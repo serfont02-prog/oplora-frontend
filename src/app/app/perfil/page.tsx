@@ -320,8 +320,8 @@ export default function PerfilPage() {
 
       {/* Foto de perfil */}
       {modalAvatar && (
-        <div onClick={() => !subiendo && setModalAvatar(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 480 }}>
+        <div onClick={() => !subiendo && setModalAvatar(false)} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, border: '1px solid var(--c-borde)', borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 480 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 14, textAlign: 'center' }}>Foto de perfil</div>
 
             <input ref={inputCamara} type="file" accept="image/*" capture="user" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) subirImagen(f); }} />
@@ -378,11 +378,11 @@ function ModalBorrarCuenta({ onCerrar, onBorrada }: { onCerrar: () => void; onBo
   };
 
   return (
-    <div onClick={() => !enviando && onCerrar()} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
+    <div onClick={() => !enviando && onCerrar()} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}>
       <div
         role="dialog" aria-modal="true" aria-label="Borrar mi cuenta"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--c-superficie)', borderRadius: '22px 22px 0 0', padding: '18px 1.25rem', paddingBottom: 'calc(18px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 560 }}
+        style={{ background: 'var(--c-superficie)', border: '1px solid var(--c-borde)', borderRadius: '22px 22px 0 0', padding: '18px 1.25rem', paddingBottom: 'calc(18px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 560 }}
       >
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--c-borde)', margin: '0 auto 14px' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

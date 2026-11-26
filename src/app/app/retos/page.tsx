@@ -697,8 +697,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
 
       {/* Modal crear reto — wizard paso a paso, pantalla completa por paso */}
       {modalAbierto && (
-        <div onClick={() => { setModalAbierto(false); setError(''); setPaso('retado'); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: '20px', width: '100%', maxWidth: '400px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div onClick={() => { setModalAbierto(false); setError(''); setPaso('retado'); }} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, border: '1px solid var(--c-borde)', borderRadius: '20px', width: '100%', maxWidth: '400px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
             <style>{`@keyframes oplora-paso-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } } @keyframes oplora-girar { to { transform: rotate(360deg); } }`}</style>
 
@@ -1148,11 +1148,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
       {retoRecienCreado && (
         <div
           onClick={() => setRetoRecienCreado(null)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}
+          style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: BG_APP, borderRadius: '20px', padding: '1.75rem 1.5rem', width: '100%', maxWidth: '360px', textAlign: 'center' }}
+            style={{ background: BG_APP, border: '1px solid var(--c-borde)', borderRadius: '20px', padding: '1.75rem 1.5rem', width: '100%', maxWidth: '360px', textAlign: 'center' }}
           >
             <div style={{
               width: '56px', height: '56px', borderRadius: '50%',
@@ -1232,8 +1232,8 @@ const oposicionId = usuario?.oposicionActiva?.id;
           : caducadoPreview ? 'var(--hx-fee2e2)' : !miParticipacion?.completado ? COLOR_RETOS_BG : 'var(--hx-f1f5f9)';
 
         return (
-          <div onClick={cerrarModalPreview} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, borderRadius: 24, width: '100%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 20px 50px rgba(15,23,42,0.25)' }}>
+          <div onClick={cerrarModalPreview} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: BG_APP, border: '1px solid var(--c-borde)', borderRadius: 24, width: '100%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 20px 50px rgba(15,23,42,0.25)' }}>
 
               {/* Cabecera */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 14px' }}>
@@ -1353,11 +1353,11 @@ const oposicionId = usuario?.oposicionActiva?.id;
       {confirmacion && (
       <div
         onClick={() => { setConfirmacion(null); setErrorAccion(null); }}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: '1rem' }}
+        style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: '1rem' }}
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          style={{ background: BG_APP, borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '340px', textAlign: 'center' }}
+          style={{ background: BG_APP, border: '1px solid var(--c-borde)', borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '340px', textAlign: 'center' }}
         >
           {errorAccion ? (
             <>

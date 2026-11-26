@@ -154,7 +154,7 @@ export default function FormInvitar({
 /** Ventana con el formulario (para usarla desde Retos). */
 export function ModalInvitar({ onClose, ...props }: React.ComponentProps<typeof FormInvitar> & { onClose: () => void }) {
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: '1rem' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: '1rem' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--hx-fceee8)', borderRadius: 20, padding: '1.25rem', width: '100%', maxWidth: 400, maxHeight: '88vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: COLOR_RETOS_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

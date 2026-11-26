@@ -788,13 +788,13 @@ const updateProgreso = () => {
       {articuloModal && (
         <div
           onClick={() => setArticuloModal(null)}
-          style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
+          style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 60 }}
         >
           <div
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
-            style={{ background: 'var(--c-superficie)', borderRadius: '22px 22px 0 0', padding: '16px 1.25rem', paddingBottom: 'calc(18px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 560, maxHeight: '82vh', overflowY: 'auto', boxShadow: '0 -8px 30px rgba(15,23,42,0.2)' }}
+            style={{ background: 'var(--c-superficie)', border: '1px solid var(--c-borde)', borderRadius: '22px 22px 0 0', padding: '16px 1.25rem', paddingBottom: 'calc(18px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 560, maxHeight: '82vh', overflowY: 'auto', boxShadow: '0 -8px 30px rgba(15,23,42,0.2)' }}
           >
             <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--c-borde)', margin: '0 auto 14px' }} />
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>

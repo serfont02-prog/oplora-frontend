@@ -58,8 +58,8 @@ function ModalNoticia({ noticia, onClose }: { noticia: Noticia; onClose: () => v
   const t = TIPO[noticia.tipo] ?? TIPO.oficial;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.45)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 560, maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--c-overlay)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--c-superficie)', border: '1px solid var(--c-borde)', borderRadius: '20px 20px 0 0', padding: '1.25rem', width: '100%', maxWidth: 560, maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <t.Icon size={17} color={t.color} />
